@@ -7,6 +7,7 @@ public class GameplaySceneInstaller : MonoInstaller
 {
     public PanelManager tabsManager;
     public SaveManager saveManager;
+    public PrefabFactory prefabFactory;
 
     public override void InstallBindings()
     {

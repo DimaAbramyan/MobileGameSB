@@ -8,13 +8,14 @@ public class WeaponController : MonoBehaviour
     public ParentShip parentShip { get; private set; }
     public List<Weapon> weapons { get; private set; }
     public float reloadMultiplier = 1f;
-    private void Start()
+    public void Init(ParentShip ship)
     {
-        parentShip = GetComponent<ParentShip>();
+        parentShip = ship;
         UpdateWeapons();
     }
     public void UpdateWeapons()
     {
+        weapons = new List<Weapon>();
         weapons = parentShip.GetComponentsInChildren<Weapon>().ToList();
         foreach (Weapon weapon in weapons)
         {
@@ -52,7 +53,7 @@ public class WeaponController : MonoBehaviour
     }
     public void AddNewWeapon(Weapon weapon)
     {
-        this.weapons.Add(weapon);
+        weapons.Add(weapon);
     }
     public void StopShootingForSeconds(float seconds)
     {

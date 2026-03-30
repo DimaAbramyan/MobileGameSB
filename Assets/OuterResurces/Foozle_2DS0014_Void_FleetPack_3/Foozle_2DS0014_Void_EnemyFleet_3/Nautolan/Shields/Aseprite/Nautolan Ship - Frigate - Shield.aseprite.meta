@@ -8,6 +8,7 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: 62a9f0aa5b59740cfbadc7e5f9823bb0, type: 3}
+  importerVersion: 2
   textureImporterSettings:
     alphaSource: 1
     mipMapMode: 0
@@ -83,6 +84,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   asepriteImporterSettings:
     fileImportMode: 1
     importHiddenLayers: 0
@@ -96,6 +99,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   importFileNodeState: 1
   platformSettingsDirtyTick: 0
   textureAssetName: 
@@ -105,6 +110,7 @@ ScriptedImporter:
     pivot: {x: 0, y: 0}
     alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 0
@@ -126,6 +132,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -146,6 +153,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -166,6 +174,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -186,6 +195,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -206,6 +216,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -226,6 +237,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -246,6 +258,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -266,6 +279,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -286,6 +300,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -306,6 +321,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -326,6 +342,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -346,6 +363,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -366,6 +384,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -386,6 +405,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -406,6 +426,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -426,6 +447,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -446,6 +468,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -466,6 +489,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -486,6 +510,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -506,6 +531,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -526,6 +552,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -546,6 +573,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -566,6 +594,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -586,6 +615,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -606,6 +636,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -626,6 +657,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -646,6 +678,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -666,6 +699,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 108
@@ -686,6 +720,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -706,6 +741,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -726,6 +762,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -746,6 +783,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -766,6 +804,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -786,6 +825,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -806,6 +846,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -826,6 +867,7 @@ ScriptedImporter:
     pivot: {x: 0.49479166, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 212
@@ -842,15 +884,21 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 212, y: 508}
   spriteSheetImportData: []
+  tileSetImportData: []
   asepriteLayers:
   - layerIndex: 0
-    guid: 1302856497
+    uuid:
+      value0: 2307634485
+      value1: 0
+      value2: 0
+      value3: 0
+    guid: -1987332811
     name: Nautolan Ship - Frigate - Shield
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Nautolan Ship - Frigate - Shield_Frame_0
+    - name: Frame_0
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -859,7 +907,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: f390900b7c372eb4b81986ca3ecd2f22
-    - name: Nautolan Ship - Frigate - Shield_Frame_8
+    - name: Frame_8
       frameIndex: 8
       additiveSortOrder: 0
       cellRect:
@@ -868,7 +916,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: b0ac4fabc8979864690e17a9c7c483c1
-    - name: Nautolan Ship - Frigate - Shield_Frame_9
+    - name: Frame_9
       frameIndex: 9
       additiveSortOrder: 0
       cellRect:
@@ -877,7 +925,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 0e8abceef6601e942a38510b2d855962
-    - name: Nautolan Ship - Frigate - Shield_Frame_17
+    - name: Frame_17
       frameIndex: 17
       additiveSortOrder: 0
       cellRect:
@@ -886,7 +934,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: bcda27409568f3445b47ae6698cac419
-    - name: Nautolan Ship - Frigate - Shield_Frame_18
+    - name: Frame_18
       frameIndex: 18
       additiveSortOrder: 0
       cellRect:
@@ -895,7 +943,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: ad7ea64d5db82364aae9ef2184e2f962
-    - name: Nautolan Ship - Frigate - Shield_Frame_26
+    - name: Frame_26
       frameIndex: 26
       additiveSortOrder: 0
       cellRect:
@@ -904,7 +952,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 2524212862baf8f4db1533e0644a1982
-    - name: Nautolan Ship - Frigate - Shield_Frame_27
+    - name: Frame_27
       frameIndex: 27
       additiveSortOrder: 0
       cellRect:
@@ -913,7 +961,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 2557c48d3f23aff41bf171a384664fca
-    - name: Nautolan Ship - Frigate - Shield_Frame_35
+    - name: Frame_35
       frameIndex: 35
       additiveSortOrder: 0
       cellRect:
@@ -922,7 +970,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: ebb1468fb5ef24444b185f17f0c34942
-    - name: Nautolan Ship - Frigate - Shield_Frame_1
+    - name: Frame_1
       frameIndex: 1
       additiveSortOrder: 0
       cellRect:
@@ -931,7 +979,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: a0ec309300f26b9408d53381439838fd
-    - name: Nautolan Ship - Frigate - Shield_Frame_2
+    - name: Frame_2
       frameIndex: 2
       additiveSortOrder: 0
       cellRect:
@@ -940,7 +988,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 8966db7db21ed41469c222747adf502b
-    - name: Nautolan Ship - Frigate - Shield_Frame_3
+    - name: Frame_3
       frameIndex: 3
       additiveSortOrder: 0
       cellRect:
@@ -949,7 +997,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 2ce9c3c1c6497bb4097705fe5c27c8e3
-    - name: Nautolan Ship - Frigate - Shield_Frame_4
+    - name: Frame_4
       frameIndex: 4
       additiveSortOrder: 0
       cellRect:
@@ -958,7 +1006,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: afea072565fb80a47858e5f2a0f2c011
-    - name: Nautolan Ship - Frigate - Shield_Frame_5
+    - name: Frame_5
       frameIndex: 5
       additiveSortOrder: 0
       cellRect:
@@ -967,7 +1015,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: dd6dbc4c027d2774ba859bc9e7bea10e
-    - name: Nautolan Ship - Frigate - Shield_Frame_6
+    - name: Frame_6
       frameIndex: 6
       additiveSortOrder: 0
       cellRect:
@@ -976,7 +1024,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 24edafc56b76e7840bf7833d149101ac
-    - name: Nautolan Ship - Frigate - Shield_Frame_7
+    - name: Frame_7
       frameIndex: 7
       additiveSortOrder: 0
       cellRect:
@@ -985,7 +1033,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 7e938dd5d70a6244086e4e3fa87a248f
-    - name: Nautolan Ship - Frigate - Shield_Frame_10
+    - name: Frame_10
       frameIndex: 10
       additiveSortOrder: 0
       cellRect:
@@ -994,7 +1042,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 4f0e859b8c4556744acebdbfafe661cb
-    - name: Nautolan Ship - Frigate - Shield_Frame_11
+    - name: Frame_11
       frameIndex: 11
       additiveSortOrder: 0
       cellRect:
@@ -1003,7 +1051,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 05a3e121c29b2124e9f16aa4f46ce4cb
-    - name: Nautolan Ship - Frigate - Shield_Frame_12
+    - name: Frame_12
       frameIndex: 12
       additiveSortOrder: 0
       cellRect:
@@ -1012,7 +1060,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 632fe9380ca8dce4ea6c24eefcc4f9e3
-    - name: Nautolan Ship - Frigate - Shield_Frame_13
+    - name: Frame_13
       frameIndex: 13
       additiveSortOrder: 0
       cellRect:
@@ -1021,7 +1069,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: bb0211e8886947d4c895d81842d1f76b
-    - name: Nautolan Ship - Frigate - Shield_Frame_14
+    - name: Frame_14
       frameIndex: 14
       additiveSortOrder: 0
       cellRect:
@@ -1030,7 +1078,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 8ea86c054c5f44f4892b368134f02bfb
-    - name: Nautolan Ship - Frigate - Shield_Frame_15
+    - name: Frame_15
       frameIndex: 15
       additiveSortOrder: 0
       cellRect:
@@ -1039,7 +1087,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 4f53e2a3101ce734b98c5a939c060239
-    - name: Nautolan Ship - Frigate - Shield_Frame_16
+    - name: Frame_16
       frameIndex: 16
       additiveSortOrder: 0
       cellRect:
@@ -1048,7 +1096,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 0a3cfda3c7cdf70469ca1d15aa7c6d61
-    - name: Nautolan Ship - Frigate - Shield_Frame_19
+    - name: Frame_19
       frameIndex: 19
       additiveSortOrder: 0
       cellRect:
@@ -1057,7 +1105,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: e23263253cfab9a4b8cea76d625d5ea5
-    - name: Nautolan Ship - Frigate - Shield_Frame_20
+    - name: Frame_20
       frameIndex: 20
       additiveSortOrder: 0
       cellRect:
@@ -1066,7 +1114,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: ecb008505b1c72e46a4463676aebd1b1
-    - name: Nautolan Ship - Frigate - Shield_Frame_21
+    - name: Frame_21
       frameIndex: 21
       additiveSortOrder: 0
       cellRect:
@@ -1075,7 +1123,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 6958cbb39584b4d44a28a8a64c7517da
-    - name: Nautolan Ship - Frigate - Shield_Frame_22
+    - name: Frame_22
       frameIndex: 22
       additiveSortOrder: 0
       cellRect:
@@ -1084,7 +1132,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: a8398fdff8d1dc74d84d4e3b18a8cb2f
-    - name: Nautolan Ship - Frigate - Shield_Frame_23
+    - name: Frame_23
       frameIndex: 23
       additiveSortOrder: 0
       cellRect:
@@ -1093,7 +1141,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 9f6acb23edd589b4f8f1e0da46125609
-    - name: Nautolan Ship - Frigate - Shield_Frame_24
+    - name: Frame_24
       frameIndex: 24
       additiveSortOrder: 0
       cellRect:
@@ -1102,7 +1150,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 83249d2a6771f1243912e6add7d460ef
-    - name: Nautolan Ship - Frigate - Shield_Frame_25
+    - name: Frame_25
       frameIndex: 25
       additiveSortOrder: 0
       cellRect:
@@ -1111,7 +1159,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: aa1c6aec5243c324bb49e19f750e3fc7
-    - name: Nautolan Ship - Frigate - Shield_Frame_28
+    - name: Frame_28
       frameIndex: 28
       additiveSortOrder: 0
       cellRect:
@@ -1120,7 +1168,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 2b6a41c8cd292314cb2c28fd164b3459
-    - name: Nautolan Ship - Frigate - Shield_Frame_29
+    - name: Frame_29
       frameIndex: 29
       additiveSortOrder: 0
       cellRect:
@@ -1129,7 +1177,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: e58477fa5f7bcd940a144f5ee4aaf62c
-    - name: Nautolan Ship - Frigate - Shield_Frame_30
+    - name: Frame_30
       frameIndex: 30
       additiveSortOrder: 0
       cellRect:
@@ -1138,7 +1186,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 2b352322e8f9fdb4099dba7b2244cead
-    - name: Nautolan Ship - Frigate - Shield_Frame_31
+    - name: Frame_31
       frameIndex: 31
       additiveSortOrder: 0
       cellRect:
@@ -1147,7 +1195,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 493872e2e8431dd45ac645dd5c54df1d
-    - name: Nautolan Ship - Frigate - Shield_Frame_32
+    - name: Frame_32
       frameIndex: 32
       additiveSortOrder: 0
       cellRect:
@@ -1156,7 +1204,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: b3d1a1401844a5b40af5a19b8897153a
-    - name: Nautolan Ship - Frigate - Shield_Frame_33
+    - name: Frame_33
       frameIndex: 33
       additiveSortOrder: 0
       cellRect:
@@ -1165,7 +1213,7 @@ ScriptedImporter:
         width: 96
         height: 64
       spriteId: 3d7d16ff5886dba47a97c4d91665abc8
-    - name: Nautolan Ship - Frigate - Shield_Frame_34
+    - name: Frame_34
       frameIndex: 34
       additiveSortOrder: 0
       cellRect:
@@ -1175,9 +1223,13 @@ ScriptedImporter:
         height: 64
       spriteId: 77315bd542bd59640bfd4dd3bd9f2c8d
     linkedCells: []
+    tileCells: []
+    tileSetIndex: 0
     parentIndex: -1
+  tileSets: []
   platformSettings: []
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 63, y: 63}
+  previousTextureSize: {x: 512, y: 1024}

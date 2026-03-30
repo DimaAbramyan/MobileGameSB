@@ -1,167 +1,209 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class ParentShip : MonoBehaviour, iDamagable
 {
-    [SerializeField] private ActiveAbility ActiveAbility;
+    [Header("Abilities")]
+    [SerializeField] private ActiveAbility activeAbility;
     [SerializeField] private PassiveAbility passiveAbility;
+
+    [Header("References")]
     [SerializeField] public Transform ShieldAnchor;
     public ShipData ShipData;
 
-    bool IsVisible;
-    WaveManager waveManager;
+    [HideInInspector] public bool IsVisible;
+
+    private WaveManager waveManager;
+    private PlayerController playerController;
+
+    private int currentLevel;
+    private float currentShieldPoints;
+    private float currentHealthPoints;
+
+    public float MaximumHealthPoints { get; private set; }
+    public float MaximumShieldPoints { get; private set; }
+
+    #region Events
     public event Action<float> OnShieldChanged;
     public event Action<float> OnHealthChanged;
 
+    public event Action<int> OnLevelChanged;
     public event Func<float, float> OnHealOverflow;
+    public event Action<float> OnDamageDealt;
+    public event Func<float, float> OnDamagePipeline;
 
-    private float _currentShieldPoints;
-    private float _currentHealthPoints;
-    public void SubscribeHealth(Action<float> action)
+    public event Action<float> OnMaxHealthChanged;
+    public event Action<float> OnMaxShieldChanged;
+    #endregion
+
+    #region Properties
+    public float CurrentHealthPoints
     {
-        OnHealthChanged += action;
+        get => currentHealthPoints;
+        private set
+        {
+            float newValue = Mathf.Max(0, value);
+            if (Mathf.Approximately(currentHealthPoints, newValue)) return;
+            currentHealthPoints = newValue;
+            OnHealthChanged?.Invoke(currentHealthPoints);
+        }
     }
-    public void UnsubscribeHealth(Action<float> action)
+
+    public float CurrentShieldPoints
     {
-        OnHealthChanged -= action;
+        get => currentShieldPoints;
+        private set
+        {
+            float newValue = Mathf.Clamp(value, 0, MaximumShieldPoints);
+            if (Mathf.Approximately(currentShieldPoints, newValue)) return;
+            currentShieldPoints = newValue;
+            OnShieldChanged?.Invoke(currentShieldPoints);
+        }
     }
-    public void SubscribeShield(Action<float> action)
+    #endregion
+
+    #region Initialization
+    public virtual void Awake()
     {
-        OnShieldChanged += action;
+        MaximumHealthPoints = ShipData.maximumHealthPoints;
+        MaximumShieldPoints = ShipData.maximumShieldPoints;
+
+        CurrentHealthPoints = MaximumHealthPoints;
+        CurrentShieldPoints = MaximumShieldPoints;
     }
-    public void UnsubscribeShield(Action<float> action)
+    public virtual void Start()
     {
-        OnShieldChanged -= action;
+        waveManager = FindAnyObjectByType<WaveManager>();
+        playerController = GetComponent<PlayerController>();
+
+
+        currentLevel = 0;
+
+        passiveAbility?.Init(this);
     }
+    #endregion
+
+    #region Health & Shield
     public void SetHealthPoints(float healthPoints)
     {
         CurrentHealthPoints = healthPoints;
     }
+
     public void SetShieldPoints(float shieldPoints)
     {
         CurrentShieldPoints = shieldPoints;
     }
-    public void UseAbility()
-    {
-        ActiveAbility.TryActivate(this);
-    }
-    public float CurrentShieldPoints
-    {
-        get => _currentShieldPoints;
-        private set
-        {
-            if (_currentShieldPoints == value)
-                return;
 
-            _currentShieldPoints = Mathf.Max(0, value);
-
-            OnShieldChanged?.Invoke(_currentShieldPoints);
-        }
-    }
-    public float CurrentHealthPoints
-    {
-        get => _currentHealthPoints;
-        private set
-        {
-            if (_currentHealthPoints == value)
-                return;
-
-            _currentHealthPoints = Mathf.Max(0, value);
-
-            OnHealthChanged?.Invoke(_currentHealthPoints);
-        }
-    }
-    float currentHealthRegenTimer;
-    float currentShieldRegenTimer;
-    public void Update()
-    {
-        currentShieldRegenTimer -= Time.deltaTime;
-        if (currentShieldRegenTimer <= 0)
-        {
-            HealShield(ShipData.shieldRegenRate * Time.deltaTime);
-            currentShieldRegenTimer = 0;
-        }
-        if (!IsVisible)
-        {
-            currentHealthRegenTimer -= Time.deltaTime;
-            if (currentHealthRegenTimer <= 0)
-            {
-                HealHealth(ShipData.healthRegenRate * Time.deltaTime);
-                currentHealthRegenTimer = 0;
-            }
-        }
-    }
-    public void Start()
-    {
-        waveManager = FindObjectOfType<WaveManager>();
-
-        SetHealthPoints(ShipData.maximumHealthPoints);
-        SetShieldPoints(ShipData.maximumShieldPoints);
-        ShipData.currentLvl = 0;
-        if (passiveAbility != null)
-        passiveAbility.Init(this);
-
-    }
-    public void Dying()
-    {
-        waveManager.MainHeroIsDead();
-        Destroy(this.gameObject);
-    }
     public virtual void HealHealth(float heal)
     {
         CurrentHealthPoints += heal;
-        if (CurrentHealthPoints > ShipData.maximumHealthPoints)
+        if (CurrentHealthPoints > MaximumHealthPoints)
         {
-            CurrentHealthPoints = ShipData.maximumHealthPoints;
+            float difference = CurrentHealthPoints - MaximumHealthPoints ;
+            CurrentHealthPoints = MaximumHealthPoints;
+            OnHealOverflow?.Invoke(difference);
         }
     }
+
     public virtual void HealShield(float heal)
     {
         CurrentShieldPoints += heal;
-        if (CurrentShieldPoints > ShipData.maximumShieldPoints)
-        {
-            CurrentShieldPoints = ShipData.maximumShieldPoints;
-        }
+        if (CurrentShieldPoints > MaximumShieldPoints)
+            CurrentShieldPoints = MaximumShieldPoints;
     }
+
+    public void AddMaxHealthPoints(float addedHealth)
+    {
+        MaximumHealthPoints += addedHealth;
+        OnMaxHealthChanged?.Invoke(MaximumHealthPoints);
+        HealHealth(addedHealth);
+    }
+
+    public void AddMaxShieldPoints(float addedShield)
+    {
+        MaximumShieldPoints += addedShield;
+        OnMaxShieldChanged?.Invoke(MaximumShieldPoints);
+        HealShield(addedShield);
+    }
+    #endregion
+
+    #region Damage
     public virtual void TakeDamage(float damage)
     {
-        currentHealthRegenTimer = ShipData.healthRegenCooldown;
-        currentShieldRegenTimer = ShipData.shieldRegenCooldown;
+        if (OnDamagePipeline != null)
+        {
+            foreach (Func<float, float> handler in OnDamagePipeline.GetInvocationList())
+                damage = handler.Invoke(damage);
+        }
+
         if (CurrentShieldPoints > 0)
         {
             CurrentShieldPoints -= damage;
-            Debug.Log("”Â·‡ÎË ÔÓ Ÿ»“”");
-            Debug.Log($"Ÿ»“: {CurrentShieldPoints}");
-            Debug.Log($"{ShipData.shipId}");
             return;
         }
-        SetHealthPoints(CurrentHealthPoints - damage);
-        Debug.Log("”Â·‡ÎË ÔÓ «ƒŒ–Œ¬‹ﬁ");
-        Debug.Log($"«ƒŒ–Œ¬‹≈: {CurrentHealthPoints}");
+
+        CurrentHealthPoints -= damage;
+
+        OnDamageDealt?.Invoke(damage);
+
         if (CurrentHealthPoints <= 0)
-        {
             Dying();
-        }
     }
-    public void LvlUp()
+
+    public void NotifyDamageDealt(float damage)
     {
-        if (ShipData.currentLvl < 4)
-        {
-            ShipData.currentLvl++;
-        }
+        OnDamageDealt?.Invoke(damage);
     }
+    #endregion
+
+    #region Abilities
+    public void UseAbility()
+    {
+        activeAbility?.TryActivate(this);
+    }
+
     public void ShowShip()
     {
         IsVisible = true;
+        passiveAbility?.On();
     }
+
     public void HideShip()
     {
         IsVisible = false;
-        currentHealthRegenTimer = ShipData.healthRegenCooldown;
+        passiveAbility?.Off();
     }
+    #endregion
+
+    #region Leveling
+    public int GetLevel() => currentLevel;
+
+    public void SetLevel(int newLevel) => currentLevel = newLevel;
+
+    public void LevelUp()
+    {
+        if (currentLevel >= 4) return;
+
+        currentLevel++;
+        Debug.Log($"ÕÓ‚˚È ÛÓ‚ÂÌ¸: {currentLevel}");
+        OnLevelChanged?.Invoke(currentLevel);
+    }
+    #endregion
+
+    #region Death
+    public void Dying()
+    {
+        waveManager?.MainHeroIsDead();
+        Destroy(gameObject);
+    }
+    #endregion
+
+    #region Event Helpers
+    public void SubscribeHealth(Action<float> action) => OnHealthChanged += action;
+    public void UnsubscribeHealth(Action<float> action) => OnHealthChanged -= action;
+
+    public void SubscribeShield(Action<float> action) => OnShieldChanged += action;
+    public void UnsubscribeShield(Action<float> action) => OnShieldChanged -= action;
+    #endregion
 }
-
-

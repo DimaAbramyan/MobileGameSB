@@ -116,6 +116,7 @@ MonoBehaviour:
   passiveAbility: {fileID: 1944510079080559571}
   ShieldAnchor: {fileID: 4756945734813854271}
   ShipData: {fileID: 11400000, guid: eb1d5e307ce0c974aa413d83d3c4518c, type: 2}
+  IsVisible: 0
 --- !u!114 &4464506009196274525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,7 +142,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c29d9cf009b492e4aacbe51a6bb822e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  healthRegenRate: 0
 --- !u!114 &6427467547313428841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -167,7 +167,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2510948671603601103}
-  isActive: 0
   maxBonus: 0.5
 --- !u!114 &6689641140550846863
 MonoBehaviour:
@@ -277,7 +276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:
   m_ObjectHideFlags: 0

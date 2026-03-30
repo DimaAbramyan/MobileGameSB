@@ -12,16 +12,16 @@ public class WeaponDataSerializable:MonoBehaviour
 }
 
 [System.Serializable]
-public class WeaponData
+public class WeaponDataSer
 {
     public int ID;
     public Vector3 place;
-    public WeaponData(int id, Vector3 position)
+    public WeaponDataSer(int id, Vector3 position)
     {
         ID = id;
         place = position;
     }
-    public WeaponData()
+    public WeaponDataSer()
     {
         ID = 0;
         place = new Vector3(0,0,0);

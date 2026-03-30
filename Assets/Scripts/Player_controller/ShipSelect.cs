@@ -60,15 +60,12 @@ public class ShipSelect : MonoBehaviour
 
 
     List<ShipVisual> shipsVisual;
-    private void Awake()
-    {
-        shipsVisual = new List<ShipVisual>();
-        CollectInfoAboutShips();
-    }
-    void Start()
+    void Awake()
     {
         playerRB = GetComponent<PlayerController>();
-        SelectShip(0);
+        shipsVisual = new List<ShipVisual>();
+        CollectInfoAboutShips();
+        InitFirstShip();
     }
     void CollectInfoAboutShips()
     {
@@ -81,7 +78,32 @@ public class ShipSelect : MonoBehaviour
             i++;
         }
     }
-    public void SelectShip(int selectedShip)
+    public void InitFirstShip()
+    {
+        int i = 0;
+        foreach (Transform child in transform)
+        {
+            child.GetComponent<WeaponController>().Init(child.GetComponent<ParentShip>());
+            ParentShip ship = child.GetComponent<ParentShip>();
+            if (ship == null)
+                continue;
+            if (i == 0)
+            {
+                playerRB.ChangeShipData(ship);
+                shipsVisual[i].ShowShip();
+                ship.ShowShip();
+                ship.GetComponent<WeaponController>().ShowWeapons();
+            }
+            else
+            {
+                shipsVisual[i].HideShip();
+                ship.HideShip();
+                ship.GetComponent<WeaponController>().HideWeapons();
+            }
+            i++;
+        }
+    }
+    public void SwitchShip()
     {
         int i = 0;
         foreach (Transform child in transform)
@@ -89,16 +111,18 @@ public class ShipSelect : MonoBehaviour
             ParentShip ship = child.GetComponent<ParentShip>();
             if (ship == null)
                 continue;
-            if (i == selectedShip)
+            if (!ship.IsVisible)
             {
                 playerRB.ChangeShipData(ship);
                 shipsVisual[i].ShowShip();
                 ship.ShowShip();
+                ship.GetComponent<WeaponController>().ShowWeapons();
             }
             else
             { 
                 shipsVisual[i].HideShip();
                 ship.HideShip();
+                ship.GetComponent<WeaponController>().HideWeapons();
             }
             i++;
         }

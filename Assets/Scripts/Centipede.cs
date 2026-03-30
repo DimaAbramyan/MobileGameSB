@@ -13,8 +13,9 @@ public class Centipede : ParentShip, iHaveAbilities
         get { return weapons; }
         set { weapons = value; }
     }
-    public void Start()
+    public override void Start()
     {
+        base.Start();
         weapons = GetComponent<WeaponController>()
                     .weapons
                     .Take(2)

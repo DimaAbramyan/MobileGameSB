@@ -48,7 +48,6 @@ public class EnemyManager : MonoBehaviour
     }
     public void NotifyEnemyDestroyed(Enemy enemy)
     {
-        Debug.Log("ﬂ ”¡»À");
         enemyList.Remove(enemy);
         OnEnemyDestroyed?.Invoke(enemy);
     }

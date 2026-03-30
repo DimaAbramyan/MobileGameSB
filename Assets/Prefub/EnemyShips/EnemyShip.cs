@@ -22,7 +22,7 @@ public class Enemy : MonoBehaviour, iDamagable
     private SpriteRenderer spriteRenderer;
     public void Awake()
     {
-        
+        EnemyManager.instance.AddEnemy(this);
         spriteRenderer = GetComponent<SpriteRenderer>();
         
         if (Buff != null)
@@ -66,6 +66,7 @@ public class Enemy : MonoBehaviour, iDamagable
         }
         if (this.Buff != null) 
         PointsCollector.Points += _maxHealth;
+        EnemyManager.instance.NotifyEnemyDestroyed(this);
         isDead = true;
         Destroy(gameObject);
     }

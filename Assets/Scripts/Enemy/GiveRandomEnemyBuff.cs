@@ -14,19 +14,13 @@ public class GiveRandomEnemyBuff : MonoBehaviour
            .Where(e => e.Buff != null)
            .ToList();
         List<int> Cnt = CreateNumbOfBuffingEnemy(CountOfGettingBuff, ships);
-        Debug.Log(ships.Count());
+        //Debug.Log(ships.Count());
         for (int i = 0; i < ships.Count; i++)
         {
             {
                 if (Cnt.Contains(i))
                 ships[i].gameObject.AddComponent<IHaveBuff>();
             }
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
         }
 
         List<int> CreateNumbOfBuffingEnemy(int cnt, List<Enemy> lnght)

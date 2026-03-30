@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5278495111493766213
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2539299177923406830}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2539299177923406830
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5278495111493766213}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.24, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4566505693581904494}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6336481848825274547
 GameObject:
   m_ObjectHideFlags: 0
@@ -10,8 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4566505693581904494}
   - component: {fileID: 5250969008595903662}
-  - component: {fileID: -1016283323454110567}
-  - component: {fileID: 7445710686402782230}
+  - component: {fileID: 4931512201741163556}
   m_Layer: 0
   m_Name: Flamethrower
   m_TagString: Untagged
@@ -29,13 +59,15 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
-  m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2539299177923406830}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5250969008595903662
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -51,6 +83,11 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -72,9 +109,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: d24a50a58132ffb41bca9a1c0cbf71ed, type: 3}
   m_Color: {r: 0.9892183, g: 0.75912875, b: 0, a: 1}
   m_FlipX: 0
@@ -84,9 +123,8 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &-1016283323454110567
+--- !u!114 &4931512201741163556
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -95,32 +133,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6336481848825274547}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb4d7a102be6be749bb9b077611fc0f2, type: 3}
+  m_Script: {fileID: 11500000, guid: 041b810495b8bdc4db2fcb015a2f63a9, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  _fireRate: 0.15
-  ship: {fileID: 0}
-  Fire: {fileID: 7119849618174454473, guid: b9f84f0e4062f874ab497e4a5b4d14b5, type: 3}
-  RandomFire:
-  - {fileID: 21300000, guid: 23e8c12628f792946925fbe96f35e5d2, type: 3}
-  - {fileID: 21300000, guid: 228fa8c3528a56b4c97f8b8c0a83b5d7, type: 3}
-  - {fileID: 21300000, guid: 70c69ff282312854fab4d7d1fc96662d, type: 3}
-  _rangeByLevel:
-  - 1.5
-  - 2
-  - 2.25
-  - 2.5
-  - 2.75
---- !u!114 &7445710686402782230
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6336481848825274547}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f42bbca9f36748143bb68034b59109a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  posOfCenter: {x: 0, y: 0.015, z: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::Weapon
+  projectilePrefab: {fileID: 6144194406446952310, guid: b9f84f0e4062f874ab497e4a5b4d14b5, type: 3}
+  projectileSpawn: {fileID: 2539299177923406830}
+  weaponData: {fileID: 11400000, guid: c64c8a6f8a618574f8a3c62c7e2a29b0, type: 2}

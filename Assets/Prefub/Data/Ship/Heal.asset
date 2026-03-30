@@ -16,8 +16,8 @@ MonoBehaviour:
   mass: 5
   drag: 7.5
   maximumHealthPoints: 50
-  healthRegenCooldown: 8
-  healthRegenRate: 5
+  healthRegenCooldown: 1
+  healthRegenRate: 1
   maximumShieldPoints: 30
   shieldRegenCooldown: 15
   shieldRegenRate: 5

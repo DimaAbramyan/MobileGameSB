@@ -4,7 +4,7 @@ public class HealthRegeneration : MonoBehaviour
 {
     private ParentShip parentShip;
     private float healthRegenCooldown;
-    public float healthRegenRate;
+    float healthRegenRate;
     private float lastDamageTime;
 
     private bool CanRegenerate => Time.time - lastDamageTime >= healthRegenCooldown;
@@ -36,7 +36,7 @@ public class HealthRegeneration : MonoBehaviour
 
         if (!CanRegenerate) return;
 
-        if (parentShip.isVisible) return;
+        if (parentShip.IsVisible) return;
 
         parentShip.HealHealth(healthRegenRate * Time.deltaTime);
     }

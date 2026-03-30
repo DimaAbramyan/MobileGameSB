@@ -5,6 +5,8 @@ public abstract class EnemyProjectile: MonoBehaviour
 {
     protected float _start_pos;
     protected Vector3 _current_pos;
+    protected float SpeedMultiplier = 1;
+    [SerializeField] protected float Speed;
     [SerializeField] protected float _damage;
 
     public virtual void TransformPosition(){}
@@ -22,8 +24,6 @@ public abstract class EnemyProjectile: MonoBehaviour
 
         Destroy(gameObject);
     }
-    private void Start()
-    {
-        
-    }
+    public void SetMultiplier(float multiplier)
+    { this.SpeedMultiplier = multiplier; }
 }

@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using System.IO;
 using System.Linq;
 using System.Collections;
+using Zenject;
 public class SaveLoadUI : MonoBehaviour
 {
-    [SerializeField] private GameObject[] weapons;
-    [SerializeField] private GameObject[] ships;
+    [Inject] PrefabFactory prefabFactory;
     public GameObject buttonPrefab;  // Префаб кнопки (сохранения)
     public Transform content;        // Контейнер для кнопок
     public Save LoadTo;              // Куда сохраняется выбранный корабль
@@ -70,13 +70,9 @@ public class SaveLoadUI : MonoBehaviour
 
     void LoadSave(string filePath)
     {
-       // Debug.Log("Загружаем файл: " + filePath);
         string json = File.ReadAllText(filePath);
         SaveShip Ship = JsonUtility.FromJson<SaveShip>(json);
         LoadTo.save = Ship;
-        //Debug.Log(LoadTo.save.shipId);
-        Sprite image = LoadTo.GetComponent<ShowPanel>().SelectStatus[2];
-        LoadTo.GetComponent<Image>().sprite = image;
         this.gameObject.SetActive(false);
     }
     void TryToFindCreatedShip(string filePath)
@@ -85,13 +81,11 @@ public class SaveLoadUI : MonoBehaviour
     }
     void PrintShip(GameObject newButton, SaveShip Ship)
     {
-        Debug.Log(newButton);
-        Debug.Log(Ship.weaponData.Length);
         Image ImageOfShip = newButton.GetComponentsInChildren<Image>().Skip(1).FirstOrDefault();
-        GameObject CreatedShip = Instantiate<GameObject>(ships[Ship.shipId], ImageOfShip.transform);
-        foreach (WeaponData weaponsToDraw in Ship.weaponData)
+        GameObject CreatedShip = Instantiate<GameObject>(prefabFactory.GetShip(Ship.shipId), ImageOfShip.transform);
+        foreach (WeaponDataSer weaponsToDraw in Ship.weaponData)
         {
-            GameObject weap = Instantiate(weapons[weaponsToDraw.ID], ImageOfShip.transform);
+            GameObject weap = Instantiate(prefabFactory.GetWeapon(weaponsToDraw.ID), ImageOfShip.transform);
             weap.transform.localPosition = weaponsToDraw.place/2;
         }
         GameObject[] obj = ImageOfShip.GetComponentsInChildren<Transform>().Skip(1).Select(t => t.gameObject).ToArray();

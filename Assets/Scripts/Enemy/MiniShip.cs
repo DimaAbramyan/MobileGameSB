@@ -28,7 +28,7 @@ public class MiniShip : Enemy
     }
     public void Launch()
     {
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2((transform.rotation.eulerAngles.z - 180)/(_speed/40), 0));
         transform.SetParent(null);
         //Debug.Log();

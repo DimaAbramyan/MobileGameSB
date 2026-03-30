@@ -8,6 +8,7 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: 62a9f0aa5b59740cfbadc7e5f9823bb0, type: 3}
+  importerVersion: 2
   textureImporterSettings:
     alphaSource: 1
     mipMapMode: 0
@@ -83,6 +84,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   asepriteImporterSettings:
     fileImportMode: 1
     importHiddenLayers: 0
@@ -96,6 +99,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   importFileNodeState: 1
   platformSettingsDirtyTick: 0
   textureAssetName: 
@@ -105,6 +110,7 @@ ScriptedImporter:
     pivot: {x: 0, y: 0}
     alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 0
@@ -126,6 +132,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -146,6 +153,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -166,6 +174,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -186,6 +195,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -206,6 +216,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -226,6 +237,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -246,6 +258,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -266,6 +279,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -286,6 +300,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -306,6 +321,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -326,6 +342,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -346,6 +363,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -366,6 +384,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -386,6 +405,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 76
@@ -406,6 +426,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 148
@@ -426,6 +447,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 148
@@ -446,6 +468,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 148
@@ -466,6 +489,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: 0}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 148
@@ -482,15 +506,21 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 148, y: 220}
   spriteSheetImportData: []
+  tileSetImportData: []
   asepriteLayers:
   - layerIndex: 0
-    guid: -572579538
+    uuid:
+      value0: 2952023910
+      value1: 0
+      value2: 0
+      value3: 0
+    guid: -1342943386
     name: Nairan - Fighter -  Destruction
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Nairan - Fighter -  Destruction_Frame_0
+    - name: Frame_0
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -499,7 +529,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: b5c78ae376b4e504aa018a443c1ebec4
-    - name: Nairan - Fighter -  Destruction_Frame_9
+    - name: Frame_9
       frameIndex: 9
       additiveSortOrder: 0
       cellRect:
@@ -508,7 +538,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 3207f60674248db469250c3dc85039e2
-    - name: Nairan - Fighter -  Destruction_Frame_13
+    - name: Frame_13
       frameIndex: 13
       additiveSortOrder: 0
       cellRect:
@@ -517,7 +547,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: da6c01f06666a6849bcbe783c98ceb4e
-    - name: Nairan - Fighter -  Destruction_Frame_14
+    - name: Frame_14
       frameIndex: 14
       additiveSortOrder: 0
       cellRect:
@@ -526,7 +556,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 9d64491ae7c651944a41f21783a294ee
-    - name: Nairan - Fighter -  Destruction_Frame_15
+    - name: Frame_15
       frameIndex: 15
       additiveSortOrder: 0
       cellRect:
@@ -535,7 +565,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 3e9bf13ae237e04428aaa518a27ecd0a
-    - name: Nairan - Fighter -  Destruction_Frame_16
+    - name: Frame_16
       frameIndex: 16
       additiveSortOrder: 0
       cellRect:
@@ -544,7 +574,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 3486871333de72f47bcb1266708d0426
-    - name: Nairan - Fighter -  Destruction_Frame_17
+    - name: Frame_17
       frameIndex: 17
       additiveSortOrder: 0
       cellRect:
@@ -553,7 +583,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 5e8fbee0a474c234eb6318e354f29f4b
-    - name: Nairan - Fighter -  Destruction_Frame_1
+    - name: Frame_1
       frameIndex: 1
       additiveSortOrder: 0
       cellRect:
@@ -562,7 +592,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 8b57b32c8017f6e40a833a5f12a8e926
-    - name: Nairan - Fighter -  Destruction_Frame_2
+    - name: Frame_2
       frameIndex: 2
       additiveSortOrder: 0
       cellRect:
@@ -571,7 +601,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: af45d43e0add85346ac395d1d3c020ad
-    - name: Nairan - Fighter -  Destruction_Frame_3
+    - name: Frame_3
       frameIndex: 3
       additiveSortOrder: 0
       cellRect:
@@ -580,7 +610,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 9089cd91d492e384bb277680f1214baf
-    - name: Nairan - Fighter -  Destruction_Frame_4
+    - name: Frame_4
       frameIndex: 4
       additiveSortOrder: 0
       cellRect:
@@ -589,7 +619,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: e127c62836158984581c8273d0fa0910
-    - name: Nairan - Fighter -  Destruction_Frame_5
+    - name: Frame_5
       frameIndex: 5
       additiveSortOrder: 0
       cellRect:
@@ -598,7 +628,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: bd530b45f48c768408907012d0321f60
-    - name: Nairan - Fighter -  Destruction_Frame_6
+    - name: Frame_6
       frameIndex: 6
       additiveSortOrder: 0
       cellRect:
@@ -607,7 +637,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 6af0eba9dfa966a4c89ecb7bae252857
-    - name: Nairan - Fighter -  Destruction_Frame_7
+    - name: Frame_7
       frameIndex: 7
       additiveSortOrder: 0
       cellRect:
@@ -616,7 +646,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: b0c02d3d402a3a147859ca11ab8c2d6b
-    - name: Nairan - Fighter -  Destruction_Frame_8
+    - name: Frame_8
       frameIndex: 8
       additiveSortOrder: 0
       cellRect:
@@ -625,7 +655,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 4ddfb3ea20e69e14c988a89c9a78d9e4
-    - name: Nairan - Fighter -  Destruction_Frame_10
+    - name: Frame_10
       frameIndex: 10
       additiveSortOrder: 0
       cellRect:
@@ -634,7 +664,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: 38394990b0c7a734db8bb4c10d9e7eff
-    - name: Nairan - Fighter -  Destruction_Frame_11
+    - name: Frame_11
       frameIndex: 11
       additiveSortOrder: 0
       cellRect:
@@ -643,7 +673,7 @@ ScriptedImporter:
         width: 64
         height: 64
       spriteId: d1caa7739fe0f9b4ba0bc1c046ec0008
-    - name: Nairan - Fighter -  Destruction_Frame_12
+    - name: Frame_12
       frameIndex: 12
       additiveSortOrder: 0
       cellRect:
@@ -653,9 +683,13 @@ ScriptedImporter:
         height: 64
       spriteId: 09fced6ed484ba74883ccfe2b7a3170f
     linkedCells: []
+    tileCells: []
+    tileSetIndex: 0
     parentIndex: -1
+  tileSets: []
   platformSettings: []
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 64, y: 64}
+  previousTextureSize: {x: 256, y: 512}

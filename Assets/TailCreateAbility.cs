@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class TailCreateAbility : ActiveAbility
 {
+    float baseMaxHealth;
+    float baseMaxShield;
     int tailsCreated;
     [SerializeField] GameObject tailPrefab;
     WeaponController controller;
@@ -11,6 +14,7 @@ public class TailCreateAbility : ActiveAbility
     ParentShip parentShip;
     public override bool Activate(ParentShip owner)
     {
+        tailsCreated++;
         if (owner.GetLevel() < 4)
             return false;
         owner.SetLevel(0);
@@ -20,7 +24,7 @@ public class TailCreateAbility : ActiveAbility
         GameObject newTale = Instantiate(tailPrefab, transform);
         newTale.transform.position += offset;
 
-        foreach (Weapon weapon in weapons)
+        foreach (Weapon weapon in weapons.Take(2))
         {
             GameObject newWeapon = Instantiate(weapon, transform).gameObject;
             newWeapon.transform.position += offset;
@@ -28,10 +32,9 @@ public class TailCreateAbility : ActiveAbility
         }
         controller.UpdateWeapons();
 
-        parentShip.AddMaxHealthPoints(parentShip.ShipData.maximumHealthPoints);
-        parentShip.AddMaxShieldPoints(parentShip.ShipData.maximumHealthPoints);
+        parentShip.AddMaxHealthPoints(baseMaxHealth);
+        parentShip.AddMaxShieldPoints(baseMaxShield);
 
-        tailsCreated++;
         return true;
     }
     public void Init(Centipede owner)
@@ -39,5 +42,9 @@ public class TailCreateAbility : ActiveAbility
         weapons = owner.Weapons;
         parentShip = GetComponent<ParentShip>();
         controller = GetComponent<WeaponController>();
+        baseMaxHealth = parentShip.MaximumHealthPoints;
+        baseMaxShield = parentShip.MaximumShieldPoints;
+        Debug.Log(weapons.Count);
+        
     }
 }

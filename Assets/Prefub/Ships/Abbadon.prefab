@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 3
+  forceAmount: 10
 --- !u!58 &8667883072356674578
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -55,6 +55,7 @@ CircleCollider2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8128127461024283948}
   m_Enabled: 1
+  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -78,13 +79,13 @@ CircleCollider2D:
     m_Bits: 4294967295
   m_IsTrigger: 1
   m_UsedByEffector: 0
-  m_UsedByComposite: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  serializedVersion: 2
   m_Radius: 3
 --- !u!50 &272988863124933397
 Rigidbody2D:
-  serializedVersion: 4
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -95,8 +96,8 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_GravityScale: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -119,8 +120,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3168836169764405267}
   - component: {fileID: 6492350162876726541}
-  - component: {fileID: 6599850508554749288}
-  - component: {fileID: 4605587332036167296}
+  - component: {fileID: 5285426273082633558}
   - component: {fileID: 5454967858469618443}
   - component: {fileID: 5771524811993262087}
   - component: {fileID: 8640688427689708874}
@@ -153,6 +153,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6492350162876726541
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -168,6 +169,11 @@ SpriteRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -189,9 +195,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300006, guid: 8aeb9e233fbb8f14db39770841b78b94, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -201,9 +209,8 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &6599850508554749288
+--- !u!114 &5285426273082633558
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -212,25 +219,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 8319398997891705606}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e28a78e8671523468abadacb26def1b, type: 3}
+  m_Script: {fileID: 11500000, guid: 392875b082635b448afe230af6c27869, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::ParentShip
   activeAbility: {fileID: 8640688427689708874}
   passiveAbility: {fileID: 2632787861353036407}
   ShieldAnchor: {fileID: 4802379084338690410}
   ShipData: {fileID: 11400000, guid: 79426622f3aa3d14895139e928da60f7, type: 2}
---- !u!114 &4605587332036167296
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8319398997891705606}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 773ef33107506594bb36e436392aed4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  IsVisible: 0
 --- !u!114 &5454967858469618443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -255,7 +251,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c29d9cf009b492e4aacbe51a6bb822e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  healthRegenRate: 0
 --- !u!114 &8640688427689708874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -269,7 +264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cooldown: 4
-  owner: {fileID: 6599850508554749288}
+  owner: {fileID: 0}
   duration: 4
 --- !u!114 &2632787861353036407
 MonoBehaviour:
@@ -283,8 +278,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d66251cd27b91b846bd026980849d277, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  owner: {fileID: 6599850508554749288}
-  isActive: 0
+  owner: {fileID: 0}
   healthIncreasePerKill: 10
 --- !u!114 &818567992442832061
 MonoBehaviour:
@@ -298,6 +292,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0f3e7dcc7c7ad4ab5447c2efc6a16f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  reloadMultiplier: 1
 --- !u!61 &275594395805899214
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -306,6 +301,7 @@ BoxCollider2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8319398997891705606}
   m_Enabled: 1
+  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -329,7 +325,8 @@ BoxCollider2D:
     m_Bits: 4294967295
   m_IsTrigger: 0
   m_UsedByEffector: 0
-  m_UsedByComposite: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
@@ -340,7 +337,6 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  serializedVersion: 2
   m_Size: {x: 2.46, y: 1.53}
   m_EdgeRadius: 0
 --- !u!1 &8757784699801437982

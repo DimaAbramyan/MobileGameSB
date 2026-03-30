@@ -1,31 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class EnemyTurretBullet : EnemyProjectile
 {
-    [SerializeField] private float Speed;
-    Rigidbody2D rb;
-    GameObject target;
-    private Vector3 direction;
+    private Rigidbody2D rb;
+    private Transform target;
+    private Vector2 direction;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        target = GameObject.Find("MainHero");
-        direction = target.transform.position - transform.position;
-        Shoot();
+        target = GameObject.Find("MainHero").transform;
+
+        // вычисляем направление один раз
+        direction = (target.position - transform.position).normalized;
+
         Destroy(gameObject, 6f);
     }
-    private void Update()
-    {
 
-    }
-    void Shoot()
+    private void FixedUpdate()
     {
-        rb.velocity = new Vector2(direction.x, direction.y).normalized * Speed;
+        MovePosition();
     }
-    // Update is called once per frame
-    
+
+    void MovePosition()
+    {
+        Vector2 newPosition =
+            rb.position + direction * Speed * SpeedMultiplier * Time.fixedDeltaTime;
+
+        rb.MovePosition(newPosition);
+    }
 }

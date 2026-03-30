@@ -8,6 +8,7 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: 62a9f0aa5b59740cfbadc7e5f9823bb0, type: 3}
+  importerVersion: 2
   textureImporterSettings:
     alphaSource: 1
     mipMapMode: 0
@@ -83,6 +84,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   asepriteImporterSettings:
     fileImportMode: 1
     importHiddenLayers: 0
@@ -96,6 +99,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   importFileNodeState: 1
   platformSettingsDirtyTick: 0
   textureAssetName: 
@@ -105,6 +110,7 @@ ScriptedImporter:
     pivot: {x: 0, y: 0}
     alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 0
@@ -126,6 +132,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.21348315}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -146,6 +153,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.21348315}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -166,6 +174,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.21348315}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -186,6 +195,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.21348315}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -206,6 +216,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.21348315}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -226,6 +237,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.21348315}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 84
@@ -246,6 +258,7 @@ ScriptedImporter:
     pivot: {x: 0.46938774, y: -0.38750002}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 164
@@ -266,6 +279,7 @@ ScriptedImporter:
     pivot: {x: 0.51724136, y: -0.3068182}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 84
@@ -286,6 +300,7 @@ ScriptedImporter:
     pivot: {x: 0.5151515, y: -0.3068182}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 84
@@ -306,6 +321,7 @@ ScriptedImporter:
     pivot: {x: 0.5151515, y: -0.38750002}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 84
@@ -326,6 +342,7 @@ ScriptedImporter:
     pivot: {x: 0.5151515, y: -0.5441176}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 84
@@ -346,6 +363,7 @@ ScriptedImporter:
     pivot: {x: 0.52500004, y: -4.529412}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -362,15 +380,21 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 4, y: 489}
   spriteSheetImportData: []
+  tileSetImportData: []
   asepriteLayers:
   - layerIndex: 0
-    guid: 1812226702
+    uuid:
+      value0: 1064783430
+      value1: 0
+      value2: 0
+      value3: 0
+    guid: 1064783430
     name: Nautolan Ship - Battlecruiser
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Nautolan Ship - Battlecruiser_Frame_0
+    - name: Frame_0
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -379,7 +403,7 @@ ScriptedImporter:
         width: 72
         height: 89
       spriteId: d7c3c2799aeda92409949862f5ba243a
-    - name: Nautolan Ship - Battlecruiser_Frame_1
+    - name: Frame_1
       frameIndex: 1
       additiveSortOrder: 0
       cellRect:
@@ -388,7 +412,7 @@ ScriptedImporter:
         width: 72
         height: 89
       spriteId: 379a60016904e4641a4514524d1a83ec
-    - name: Nautolan Ship - Battlecruiser_Frame_2
+    - name: Frame_2
       frameIndex: 2
       additiveSortOrder: 0
       cellRect:
@@ -397,7 +421,7 @@ ScriptedImporter:
         width: 72
         height: 89
       spriteId: 8fd1899184d4dde4e9e2261a15982b82
-    - name: Nautolan Ship - Battlecruiser_Frame_3
+    - name: Frame_3
       frameIndex: 3
       additiveSortOrder: 0
       cellRect:
@@ -406,7 +430,7 @@ ScriptedImporter:
         width: 72
         height: 89
       spriteId: c60976368579bd543986f24da9fba1b5
-    - name: Nautolan Ship - Battlecruiser_Frame_4
+    - name: Frame_4
       frameIndex: 4
       additiveSortOrder: 0
       cellRect:
@@ -415,7 +439,7 @@ ScriptedImporter:
         width: 72
         height: 89
       spriteId: 45bd7cf0090ee484f9ccc5117855edfb
-    - name: Nautolan Ship - Battlecruiser_Frame_5
+    - name: Frame_5
       frameIndex: 5
       additiveSortOrder: 0
       cellRect:
@@ -424,7 +448,7 @@ ScriptedImporter:
         width: 72
         height: 89
       spriteId: c9904bf73fb11da4386fa182f213b3c7
-    - name: Nautolan Ship - Battlecruiser_Frame_6
+    - name: Frame_6
       frameIndex: 6
       additiveSortOrder: 0
       cellRect:
@@ -433,7 +457,7 @@ ScriptedImporter:
         width: 49
         height: 80
       spriteId: d717c871ca5efe14da8c87dc17ee192d
-    - name: Nautolan Ship - Battlecruiser_Frame_7
+    - name: Frame_7
       frameIndex: 7
       additiveSortOrder: 0
       cellRect:
@@ -442,7 +466,7 @@ ScriptedImporter:
         width: 58
         height: 88
       spriteId: 009384a4493a7a747849ed9f8629fb5b
-    - name: Nautolan Ship - Battlecruiser_Frame_8
+    - name: Frame_8
       frameIndex: 8
       additiveSortOrder: 0
       cellRect:
@@ -451,7 +475,7 @@ ScriptedImporter:
         width: 66
         height: 88
       spriteId: 5dd133e825d3baa4f9091264cb577679
-    - name: Nautolan Ship - Battlecruiser_Frame_9
+    - name: Frame_9
       frameIndex: 9
       additiveSortOrder: 0
       cellRect:
@@ -460,7 +484,7 @@ ScriptedImporter:
         width: 66
         height: 80
       spriteId: 8b26e6f45fa6af54ebf1a81f54477e7c
-    - name: Nautolan Ship - Battlecruiser_Frame_10
+    - name: Frame_10
       frameIndex: 10
       additiveSortOrder: 0
       cellRect:
@@ -469,7 +493,7 @@ ScriptedImporter:
         width: 66
         height: 68
       spriteId: 12df93e11838d514f91c8a620fef9405
-    - name: Nautolan Ship - Battlecruiser_Frame_11
+    - name: Frame_11
       frameIndex: 11
       additiveSortOrder: 0
       cellRect:
@@ -479,9 +503,13 @@ ScriptedImporter:
         height: 17
       spriteId: 83a145bf37f51064db6c2a9ccdc96ef8
     linkedCells: []
+    tileCells: []
+    tileSetIndex: 0
     parentIndex: -1
+  tileSets: []
   platformSettings: []
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 128, y: 128}
+  previousTextureSize: {x: 256, y: 512}

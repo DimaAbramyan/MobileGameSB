@@ -5,11 +5,11 @@ using UnityEngine;
 [System.Serializable]
 public class SaveShip
 {
-    public WeaponData[] weaponData;
+    public WeaponDataSer[] weaponData;
     public int shipId;
     public string shipName;
     public string shipDescr;
-    public SaveShip(int shipId, WeaponData[] weaponData, string name, string descr)
+    public SaveShip(int shipId, WeaponDataSer[] weaponData, string name, string descr)
     {
         this.shipId = shipId;
         this.weaponData = weaponData;

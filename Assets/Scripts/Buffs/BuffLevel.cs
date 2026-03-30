@@ -4,20 +4,18 @@ using UnityEngine;
 
 public class BuffLevel : Buff
 {
-    [SerializeField] GameObject parentObject;
     private void FixedUpdate()
     {
-        parentObject.transform.localPosition += new Vector3(0, -1, 0) * speed;
+        transform.localPosition += new Vector3(0, -1, 0) * speed;
     }
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D collision2D)
     {
-        ParentShip colliderShip = collision.gameObject.GetComponent<ParentShip>();
+        ParentShip colliderShip = collision2D.gameObject.GetComponent<ParentShip>();
         if (colliderShip == null)
             return;
 
-        Debug.Log(colliderShip.gameObject.transform.position);
-        colliderShip.LvlUp();
+        colliderShip.LevelUp();
             PointsCollector.Bonuses += 1;
-            Destroy(parentObject);    
+            Destroy(gameObject);    
     }
 }

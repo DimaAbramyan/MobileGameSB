@@ -41,8 +41,6 @@ public class CollectAllSaves : MonoBehaviour
     bool CheckingAllSaves(Save[] saves)
     {
         return ((saves[0].save.shipId != saves[1].save.shipId) &&
-                (saves[1].save.shipId != saves[2].save.shipId) &&
-                (saves[0].save.shipId != saves[2].save.shipId) &&
                 saves[0].save.shipName != "" && saves[1].save.shipName != "" && saves[1].save.shipName != "");
     }
 }

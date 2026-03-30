@@ -8,6 +8,7 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: 62a9f0aa5b59740cfbadc7e5f9823bb0, type: 3}
+  importerVersion: 2
   textureImporterSettings:
     alphaSource: 1
     mipMapMode: 0
@@ -83,6 +84,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   asepriteImporterSettings:
     fileImportMode: 1
     importHiddenLayers: 0
@@ -96,6 +99,8 @@ ScriptedImporter:
     generateAnimationClips: 1
     addSortingGroup: 1
     addShadowCasters: 0
+    generateIndividualEvents: 1
+    generateSpriteAtlas: 1
   importFileNodeState: 1
   platformSettingsDirtyTick: 0
   textureAssetName: 
@@ -105,6 +110,7 @@ ScriptedImporter:
     pivot: {x: 0, y: 0}
     alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 0
@@ -126,6 +132,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -146,6 +153,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -166,6 +174,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -186,6 +195,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -206,6 +216,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -226,6 +237,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -246,6 +258,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -266,6 +279,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -286,6 +300,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 4
@@ -306,6 +321,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -326,6 +342,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -346,6 +363,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -366,6 +384,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -386,6 +405,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -406,6 +426,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -426,6 +447,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -446,6 +468,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -466,6 +489,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 80
@@ -486,6 +510,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -506,6 +531,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -526,6 +552,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -546,6 +573,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -566,6 +594,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -586,6 +615,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -606,6 +636,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -626,6 +657,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -646,6 +678,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 156
@@ -666,6 +699,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -686,6 +720,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -706,6 +741,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -726,6 +762,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -746,6 +783,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -766,6 +804,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -786,6 +825,7 @@ ScriptedImporter:
     pivot: {x: 0.5, y: -0.17346938}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
     rect:
       serializedVersion: 2
       x: 232
@@ -802,15 +842,21 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 232, y: 640}
   spriteSheetImportData: []
+  tileSetImportData: []
   asepriteLayers:
   - layerIndex: 0
-    guid: 575690947
+    uuid:
+      value0: 975120271
+      value1: 0
+      value2: 0
+      value3: 0
+    guid: 975120271
     name: Nairan - Dreadnought - Weapons
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Nairan - Dreadnought - Weapons_Frame_0
+    - name: Frame_0
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -819,7 +865,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 96bd1c8996072524cbd2e8b69d48770a
-    - name: Nairan - Dreadnought - Weapons_Frame_1
+    - name: Frame_1
       frameIndex: 1
       additiveSortOrder: 0
       cellRect:
@@ -828,7 +874,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 1de8f001e1fbace408d565371be2ffe5
-    - name: Nairan - Dreadnought - Weapons_Frame_2
+    - name: Frame_2
       frameIndex: 2
       additiveSortOrder: 0
       cellRect:
@@ -837,7 +883,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 1678657299503384ab8363dddaca5400
-    - name: Nairan - Dreadnought - Weapons_Frame_3
+    - name: Frame_3
       frameIndex: 3
       additiveSortOrder: 0
       cellRect:
@@ -846,7 +892,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 6864d75aafbf89540a6fdf55953af3c6
-    - name: Nairan - Dreadnought - Weapons_Frame_4
+    - name: Frame_4
       frameIndex: 4
       additiveSortOrder: 0
       cellRect:
@@ -855,7 +901,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 129b9025e653e73449fde1744f45b553
-    - name: Nairan - Dreadnought - Weapons_Frame_5
+    - name: Frame_5
       frameIndex: 5
       additiveSortOrder: 0
       cellRect:
@@ -864,7 +910,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: d2044f2a863bb884cb0ce82c1f0f4f04
-    - name: Nairan - Dreadnought - Weapons_Frame_6
+    - name: Frame_6
       frameIndex: 6
       additiveSortOrder: 0
       cellRect:
@@ -873,7 +919,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 0b329462b4d1e354b9f6b016c3fa3a82
-    - name: Nairan - Dreadnought - Weapons_Frame_7
+    - name: Frame_7
       frameIndex: 7
       additiveSortOrder: 0
       cellRect:
@@ -882,7 +928,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 289f1e346dd312243b469134936373e5
-    - name: Nairan - Dreadnought - Weapons_Frame_8
+    - name: Frame_8
       frameIndex: 8
       additiveSortOrder: 0
       cellRect:
@@ -891,7 +937,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: c0d60e6dcfeac4840ac39f8b1dbccd98
-    - name: Nairan - Dreadnought - Weapons_Frame_9
+    - name: Frame_9
       frameIndex: 9
       additiveSortOrder: 0
       cellRect:
@@ -900,7 +946,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 57f3bc15913163b4aa34dd0eed79b243
-    - name: Nairan - Dreadnought - Weapons_Frame_10
+    - name: Frame_10
       frameIndex: 10
       additiveSortOrder: 0
       cellRect:
@@ -909,7 +955,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 291dd667dad54884c83c4779de03572c
-    - name: Nairan - Dreadnought - Weapons_Frame_11
+    - name: Frame_11
       frameIndex: 11
       additiveSortOrder: 0
       cellRect:
@@ -918,7 +964,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: bdb62faed2dd7af4385f79e8e5a23654
-    - name: Nairan - Dreadnought - Weapons_Frame_12
+    - name: Frame_12
       frameIndex: 12
       additiveSortOrder: 0
       cellRect:
@@ -927,7 +973,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 53a92c01d89f3844a9f8ab8bde6e4c27
-    - name: Nairan - Dreadnought - Weapons_Frame_13
+    - name: Frame_13
       frameIndex: 13
       additiveSortOrder: 0
       cellRect:
@@ -936,7 +982,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: f50d1294951ffda408c86b69f674d73c
-    - name: Nairan - Dreadnought - Weapons_Frame_14
+    - name: Frame_14
       frameIndex: 14
       additiveSortOrder: 0
       cellRect:
@@ -945,7 +991,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 979aa48ca5fe92245b24f8a49ce02a6a
-    - name: Nairan - Dreadnought - Weapons_Frame_15
+    - name: Frame_15
       frameIndex: 15
       additiveSortOrder: 0
       cellRect:
@@ -954,7 +1000,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: d2555a4312d05b74785255d90999e741
-    - name: Nairan - Dreadnought - Weapons_Frame_16
+    - name: Frame_16
       frameIndex: 16
       additiveSortOrder: 0
       cellRect:
@@ -963,7 +1009,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 36d57fb8c0dc1da4293786e03aa90962
-    - name: Nairan - Dreadnought - Weapons_Frame_17
+    - name: Frame_17
       frameIndex: 17
       additiveSortOrder: 0
       cellRect:
@@ -972,7 +1018,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 774eb6431cb41534ba32afcd601ac0f3
-    - name: Nairan - Dreadnought - Weapons_Frame_18
+    - name: Frame_18
       frameIndex: 18
       additiveSortOrder: 0
       cellRect:
@@ -981,7 +1027,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 2b700e2e3ec5875469f9ae96dd73ed1b
-    - name: Nairan - Dreadnought - Weapons_Frame_19
+    - name: Frame_19
       frameIndex: 19
       additiveSortOrder: 0
       cellRect:
@@ -990,7 +1036,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: cbf1bc32b00c05941a058f2d2af5adaa
-    - name: Nairan - Dreadnought - Weapons_Frame_20
+    - name: Frame_20
       frameIndex: 20
       additiveSortOrder: 0
       cellRect:
@@ -999,7 +1045,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: f3172bebe83cbd44e908fad7408d0c27
-    - name: Nairan - Dreadnought - Weapons_Frame_21
+    - name: Frame_21
       frameIndex: 21
       additiveSortOrder: 0
       cellRect:
@@ -1008,7 +1054,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 2962e7d846ed2da4eb4fdcbd58b3eebe
-    - name: Nairan - Dreadnought - Weapons_Frame_22
+    - name: Frame_22
       frameIndex: 22
       additiveSortOrder: 0
       cellRect:
@@ -1017,7 +1063,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: a188613ab551cfe47b2ae59ae7d318ac
-    - name: Nairan - Dreadnought - Weapons_Frame_23
+    - name: Frame_23
       frameIndex: 23
       additiveSortOrder: 0
       cellRect:
@@ -1026,7 +1072,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 7975183c1af87f944b09ed493c33adde
-    - name: Nairan - Dreadnought - Weapons_Frame_24
+    - name: Frame_24
       frameIndex: 24
       additiveSortOrder: 0
       cellRect:
@@ -1035,7 +1081,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 780eade0c948de04ab41834ba118c027
-    - name: Nairan - Dreadnought - Weapons_Frame_25
+    - name: Frame_25
       frameIndex: 25
       additiveSortOrder: 0
       cellRect:
@@ -1044,7 +1090,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 0979755e86bcf4548bc5f11c1185ad0b
-    - name: Nairan - Dreadnought - Weapons_Frame_26
+    - name: Frame_26
       frameIndex: 26
       additiveSortOrder: 0
       cellRect:
@@ -1053,7 +1099,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 8bb065ba064f74b4ba30600afd77402f
-    - name: Nairan - Dreadnought - Weapons_Frame_27
+    - name: Frame_27
       frameIndex: 27
       additiveSortOrder: 0
       cellRect:
@@ -1062,7 +1108,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: d1e311a30d0494f418aed75fe1366bd5
-    - name: Nairan - Dreadnought - Weapons_Frame_28
+    - name: Frame_28
       frameIndex: 28
       additiveSortOrder: 0
       cellRect:
@@ -1071,7 +1117,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 02547cb9c2ebf664bac5bcb9dfed992c
-    - name: Nairan - Dreadnought - Weapons_Frame_29
+    - name: Frame_29
       frameIndex: 29
       additiveSortOrder: 0
       cellRect:
@@ -1080,7 +1126,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 258d9c1fcfa61c94cbdf52aa24624bdf
-    - name: Nairan - Dreadnought - Weapons_Frame_30
+    - name: Frame_30
       frameIndex: 30
       additiveSortOrder: 0
       cellRect:
@@ -1089,7 +1135,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: b3109282d39a2cd419b30050026c7c0d
-    - name: Nairan - Dreadnought - Weapons_Frame_31
+    - name: Frame_31
       frameIndex: 31
       additiveSortOrder: 0
       cellRect:
@@ -1098,7 +1144,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 0be972047b9faaf488ddd3193b00bf09
-    - name: Nairan - Dreadnought - Weapons_Frame_32
+    - name: Frame_32
       frameIndex: 32
       additiveSortOrder: 0
       cellRect:
@@ -1107,7 +1153,7 @@ ScriptedImporter:
         width: 68
         height: 98
       spriteId: 2bad3971a8b41f1449cc373b656cdc4c
-    - name: Nairan - Dreadnought - Weapons_Frame_33
+    - name: Frame_33
       frameIndex: 33
       additiveSortOrder: 0
       cellRect:
@@ -1117,9 +1163,13 @@ ScriptedImporter:
         height: 98
       spriteId: 0573b5e9207335241bcda4fbe73db7e0
     linkedCells: []
+    tileCells: []
+    tileSetIndex: 0
     parentIndex: -1
+  tileSets: []
   platformSettings: []
   generatePhysicsShape: 0
   secondarySpriteTextures: []
   spritePackingTag: 
   canvasSize: {x: 128, y: 128}
+  previousTextureSize: {x: 512, y: 1024}

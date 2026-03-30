@@ -8,7 +8,7 @@ public class SaveBluePrint : MonoBehaviour
 {
     public BodyData shipBody;
     private WeaponDataSerializable[] weapons;
-    public WeaponData[] arr;
+    public WeaponDataSer[] arr;
     public InputFieldExample SendToText;
     [SerializeField] private GameObject field;
     public void CreateBluePrint()
@@ -18,11 +18,11 @@ public class SaveBluePrint : MonoBehaviour
         if (weapons.Length == shipBody.weaponCnt)
         {
             field.SetActive(true);
-            WeaponData[] arr = new WeaponData[weapons.Length];
+            WeaponDataSer[] arr = new WeaponDataSer[weapons.Length];
             Debug.Log(weapons.Length);
             for (int i = 0; i < weapons.Length; i++)
             {
-                arr[i] = new WeaponData(weapons[i].ID, weapons[i].place);
+                arr[i] = new WeaponDataSer(weapons[i].ID, weapons[i].place);
             }
             SendToText.GetValue(arr, shipBody);
         }

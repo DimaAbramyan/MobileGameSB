@@ -7,6 +7,6 @@ public class SaveData
 {
     public int shipId;
     public string shipName;
-    public WeaponData[] WeaponData;
+    public WeaponDataSer[] WeaponData;
 }
 

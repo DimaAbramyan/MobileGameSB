@@ -16,7 +16,7 @@ public class BlackHolePassive : PassiveAbility
         if (enemyProjectiles != null && enemyProjectiles.Count > 0 )
         foreach ( var EnemyProjectile  in enemyProjectiles)
         {
-            EnemyProjectile.SpeedMultiplier = 1;
+            EnemyProjectile.SetMultiplier(1);
         }
     }
     private void OnTriggerEnter2D(Collider2D collision)
@@ -35,8 +35,8 @@ public class BlackHolePassive : PassiveAbility
 
         if (enemyProjectile != null)
         {
-            enemyProjectile.SpeedMultiplier =
-                CountMultiplierPerDistance(transform.position, collision.transform.position);
+            enemyProjectile.SetMultiplier(
+                CountMultiplierPerDistance(transform.position, collision.transform.position));
         }
     }
 
@@ -46,7 +46,7 @@ public class BlackHolePassive : PassiveAbility
         if (enemyProjectile!=null && enemyProjectiles.Contains(enemyProjectile))
         enemyProjectiles.Remove(enemyProjectile);
         if (enemyProjectile != null)
-            enemyProjectile.SpeedMultiplier = 1;
+            enemyProjectile.SetMultiplier(1);
     }
     private float CountMultiplierPerDistance(Vector2 from, Vector2 to)
     {

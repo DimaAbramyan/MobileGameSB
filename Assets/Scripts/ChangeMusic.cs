@@ -9,7 +9,6 @@ public class ChangeMusic : MonoBehaviour
     List<AudioClip> musicList;
     void Start()
     {
-        
         AudioClip music = musicList[Random.Range(0, musicList.Count)];
         AudioSource MusicToChange = Camera.main.GetComponentInChildren<AudioSource>();
         if (music != null)

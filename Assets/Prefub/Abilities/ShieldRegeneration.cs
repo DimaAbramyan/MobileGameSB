@@ -37,9 +37,6 @@ public class ShieldRegeneration : MonoBehaviour
 
         if (!CanRegenerate) return;
 
-        if (parentShip.CurrentShieldPoints >= parentShip.ShipData.maximumShieldPoints)
-            return;
-
         parentShip.HealShield(shieldRegenRate*Time.deltaTime);
     }
 

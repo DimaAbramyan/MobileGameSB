@@ -22,17 +22,17 @@ public class GainHealthPassive : PassiveAbility
 
     private void OnEnemyKilled(Enemy enemy)
     {
+        //Debug.Log(isActive);
         if (!isActive)
             return;
-
         owner.AddMaxHealthPoints(healthIncreasePerKill);
     }
 
-    void OnDestroy()
+    void OnDisable()
     {
         if (owner != null)
         {
-            owner.OnEnemyKilledPipeline -= OnEnemyKilled;
+            EnemyManager.instance.OnEnemyDestroyed -= OnEnemyKilled;
         }
     }
 }

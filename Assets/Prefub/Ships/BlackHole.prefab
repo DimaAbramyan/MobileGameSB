@@ -112,10 +112,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 392875b082635b448afe230af6c27869, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
-  activeAbility: {fileID: 5531666038293898980}
+  ActiveAbility: {fileID: 5531666038293898980}
   passiveAbility: {fileID: 1399229729108214746}
   ShieldAnchor: {fileID: 3268154708046901353}
   ShipData: {fileID: 11400000, guid: 4f8412e53075b104ebf23726690ca4ff, type: 2}
+  IsVisible: 0
 --- !u!114 &4464506009196274525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,7 +143,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cooldown: 5
-  owner: {fileID: 0}
+  owner: {fileID: 8325040916063848254}
   blackHole: {fileID: -7898618861155031611, guid: 50fcf9903288ddf4ba160a6c58f2f5f3, type: 3}
 --- !u!114 &1747187658099963067
 MonoBehaviour:
@@ -261,7 +262,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
 --- !u!58 &1740260436722428528
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -402,8 +402,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e408cf47e966fdc48beb237e875115a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  owner: {fileID: 0}
-  isActive: 0
+  owner: {fileID: 8325040916063848254}
 --- !u!50 &2642637616911010921
 Rigidbody2D:
   serializedVersion: 5

@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb4f858a507b353499313b36b3edc0be, type: 3}
   m_Name: Heavy
   m_EditorClassIdentifier: 
-  currentLvl: 0
   speed: 2
   mass: 1
   drag: 2
   maximumHealthPoints: 300
-  maximumShieldPoints: 200
-  shipId: 1
-  shieldRegenCooldown: 10
-  shieldRegenRate: 20
   healthRegenCooldown: 5
   healthRegenRate: 10
+  maximumShieldPoints: 200
+  shieldRegenCooldown: 10
+  shieldRegenRate: 20
+  currentLvl: 0
+  shipId: 1

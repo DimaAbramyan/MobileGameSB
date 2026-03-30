@@ -19,7 +19,7 @@ public class MissingHealthPassive : PassiveAbility
     private void UpdateReloadModifier(float currentHp)
     {
 
-        float missingPercent = 1f -  currentHp / owner.MaximumHealthPoints ;
+        float missingPercent = 1f -  currentHp / owner.MaximumHealthPoints;
 
         float multiplier = 1f - missingPercent * maxBonus;
 

@@ -22,9 +22,9 @@ public class PassiveWeaponSpeed : PassiveAbility
         {
             return;
         }
-        speed = controller.CurrentVelocity.magnitude;
+        speed = controller.CurrentVelocity.magnitude*1.20f;
         normalizedSpeed = speed / maxSpeed;
-        multiplier =  Mathf.Lerp(1.5f, 0.3f, normalizedSpeed);
+        multiplier =  Mathf.Lerp(2f, 0.25f, normalizedSpeed);
         Debug.Log("Multiplier: "+ multiplier);
         Debug.Log(speed);
         Debug.Log(maxSpeed);

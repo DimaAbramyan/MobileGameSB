@@ -26,17 +26,22 @@ public class UIController : MonoBehaviour
     {
         healthBar.Setup(
             ship,
-            ship.ShipData.maximumHealthPoints,
+            () => ship.MaximumHealthPoints,
             ship.SubscribeHealth,
             ship.UnsubscribeHealth,
-            ship.CurrentHealthPoints);
+            ()=>ship.CurrentHealthPoints);
+        healthBar.UpdateMax(ship.MaximumHealthPoints); 
+        ship.OnMaxHealthChanged += healthBar.UpdateMax;
 
         shieldBar.Setup(
             ship,
-            ship.ShipData.maximumShieldPoints,
+            () => ship.MaximumShieldPoints,
             ship.SubscribeShield,
             ship.UnsubscribeShield,
-            ship.CurrentShieldPoints);
+            () => ship.CurrentShieldPoints);
+
+        shieldBar.UpdateMax(ship.MaximumShieldPoints); 
+        ship.OnMaxShieldChanged += shieldBar.UpdateMax;
 
         ExtraHealthPassive extraHealth = ship.GetComponent<ExtraHealthPassive>();
 
@@ -44,15 +49,16 @@ public class UIController : MonoBehaviour
         {
             extraHealthBar.Setup(
                 ship,
-                extraHealth.ExtraHealth,
+                () => extraHealth.MaximumExtraHealth,
                 extraHealth.SubscribeExtraHealth,
                 extraHealth.UnsubscribeExtraHealth,
-                extraHealth.ExtraHealth);
+                () => extraHealth.ExtraHealth);
         }
         else
         {
             extraHealthBar.SetValue(0);
         }
+
     }
 
 }
