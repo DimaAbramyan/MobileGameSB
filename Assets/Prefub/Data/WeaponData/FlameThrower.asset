@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: FlameThrower
+  m_EditorClassIdentifier: 
+  reloadTimeByLevel:
+  - 0.1
+  - 0.1
+  - 0.1
+  - 0.1
+  - 0.1
+  angleByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  damageByLevel:
+  - 30
+  - 30
+  - 30
+  - 30
+  - 30
+  rangeByLevel:
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  speedByLevel:
+  - 7
+  - 7
+  - 7
+  - 7
+  - 7
+  startLevel: 0
+  maxLevel: 4
+  movementStrategy: {fileID: 11400000, guid: a197daabd22e98345a61d832ec4c71ca, type: 2}
+  impactBehavior: {fileID: 11400000, guid: 57e914447e4e4394bad13d8afa475dbd, type: 2}
+  continiousImpactBehavior: {fileID: 0}
+  projectileBehaviour:
+  - {fileID: 11400000, guid: 7ff1e3e6567c5d54ca2f8b8b1e3aeefc, type: 2}

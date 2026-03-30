@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: RocketLauncher
+  m_EditorClassIdentifier: 
+  reloadTimeByLevel:
+  - 2
+  - 1.8
+  - 1.7
+  - 1.6
+  - 1.5
+  angleByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  damageByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  rangeByLevel:
+  - 8
+  - 8
+  - 8
+  - 8
+  - 8
+  speedByLevel:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  startLevel: 0
+  maxLevel: 4
+  movementStrategy: {fileID: 11400000, guid: 5e45f883b51715b40ab40d563acce7aa, type: 2}
+  impactBehavior: {fileID: 11400000, guid: 848a0a7bce1594646af064d8282ac443, type: 2}
+  continiousImpactBehavior: {fileID: 0}
+  projectileBehaviour: []

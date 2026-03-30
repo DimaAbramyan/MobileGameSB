@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: MiniGun
+  m_EditorClassIdentifier: 
+  reloadTimeByLevel:
+  - 0.15
+  - 0.12
+  - 0.1
+  - 0.08
+  - 0.06
+  angleByLevel:
+  - 25
+  - 25
+  - 25
+  - 25
+  - 25
+  damageByLevel:
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  rangeByLevel:
+  - 8
+  - 8
+  - 8
+  - 8
+  - 8
+  speedByLevel:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  startLevel: 0
+  maxLevel: 4
+  movementStrategy: {fileID: 11400000, guid: a197daabd22e98345a61d832ec4c71ca, type: 2}
+  impactBehavior: {fileID: 11400000, guid: 131a19a1d421e154ca66eb4e54313934, type: 2}
+  continiousImpactBehavior: {fileID: 0}
+  projectileBehaviour: []

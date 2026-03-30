@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb4f858a507b353499313b36b3edc0be, type: 3}
+  m_Name: Blade
+  m_EditorClassIdentifier: 
+  speed: 250
+  mass: 7.5
+  drag: 5
+  maximumHealthPoints: 60
+  healthRegenCooldown: 10
+  healthRegenRate: 1
+  maximumShieldPoints: 50
+  shieldRegenCooldown: 7
+  shieldRegenRate: 5
+  currentLvl: 0
+  shipId: 0

@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: GammaRay
+  m_EditorClassIdentifier: 
+  reloadTimeByLevel:
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  angleByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  damageByLevel:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  rangeByLevel:
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  speedByLevel:
+  - 3
+  - 3
+  - 3
+  - 3
+  - 3
+  startLevel: 0
+  maxLevel: 4
+  movementStrategy: {fileID: 11400000, guid: a197daabd22e98345a61d832ec4c71ca, type: 2}
+  impactBehavior: {fileID: 0}
+  continiousImpactBehavior: {fileID: 11400000, guid: 4dda88f85a1bf9b4d8e34dbcc37ae448, type: 2}
+  projectileBehaviour:
+  - {fileID: 11400000, guid: 7a4a5b782dbe9c5408d26190940e2e28, type: 2}
