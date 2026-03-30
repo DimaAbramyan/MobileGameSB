@@ -10,13 +10,13 @@ GameObject:
   m_Component:
   - component: {fileID: 3803585345440432862}
   - component: {fileID: 1298812954484520535}
-  - component: {fileID: 5866452624992183893}
   - component: {fileID: 4994187641433343154}
   - component: {fileID: 2349222869333892340}
   - component: {fileID: 2461732464396383616}
   - component: {fileID: 5390445489851723966}
   - component: {fileID: 7637382628131592135}
   - component: {fileID: 768791944755482801}
+  - component: {fileID: 7666066709233752712}
   m_Layer: 8
   m_Name: Healer
   m_TagString: Player
@@ -99,23 +99,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &5866452624992183893
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3189292671061134204}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e28a78e8671523468abadacb26def1b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  activeAbility: {fileID: 2349222869333892340}
-  passiveAbility: {fileID: 2461732464396383616}
-  ShieldAnchor: {fileID: 2665527242222670206}
-  ShipData: {fileID: 11400000, guid: 0d9d8840c3fe6de4cb4056d7d1b54472, type: 2}
-  IsVisible: 0
 --- !u!61 &4994187641433343154
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -175,7 +158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cooldown: 0
-  owner: {fileID: 5866452624992183893}
+  owner: {fileID: 0}
   healBuff: {fileID: 9134227816973463294, guid: b4cba67278381234ca9d070c51848fdb, type: 3}
 --- !u!114 &2461732464396383616
 MonoBehaviour:
@@ -189,8 +172,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b880daa3862fe2a4aabd2de5127763de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  owner: {fileID: 5866452624992183893}
-  MaximumExtraHealth: 100
+  owner: {fileID: 0}
+  MaximumExtraHealth: 800
 --- !u!114 &5390445489851723966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,6 +211,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponController
   reloadMultiplier: 1
+--- !u!114 &7666066709233752712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3189292671061134204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 392875b082635b448afe230af6c27869, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ParentShip
+  activeAbility: {fileID: 2349222869333892340}
+  passiveAbility: {fileID: 2461732464396383616}
+  ShieldAnchor: {fileID: 2665527242222670206}
+  ShipData: {fileID: 11400000, guid: 0d9d8840c3fe6de4cb4056d7d1b54472, type: 2}
+  IsVisible: 0
 --- !u!1 &6583357205300149050
 GameObject:
   m_ObjectHideFlags: 0
@@ -253,7 +253,7 @@ Transform:
   m_GameObject: {fileID: 6583357205300149050}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
-  m_LocalPosition: {x: 0, y: -0.9, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

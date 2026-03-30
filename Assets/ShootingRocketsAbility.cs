@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class ExtraHealAbility : ActiveAbility
@@ -9,13 +10,25 @@ public class ExtraHealAbility : ActiveAbility
     public override bool Activate(ParentShip owner)
     {
         extraHealthPassive = owner.GetComponent<ExtraHealthPassive>();
-        if (extraHealthPassive.ExtraHealth <= 0)
-        {
+        if (extraHealthPassive == null || extraHealthPassive.ExtraHealth <= 0)
             return false;
-        }
-        Instantiate(healBuff, transform.position + new Vector3(0,7.5f,0),Quaternion.identity);
-        healBuff.Init(owner, extraHealthPassive.ExtraHealth);
-        extraHealthPassive.SetExtraHealth(0);
+
+        ShipSelect shipSelect = owner.GetComponentInParent<ShipSelect>();
+        ParentShip[] ships = shipSelect.GetComponentsInChildren<ParentShip>();
+
+        ParentShip otherShip = ships.FirstOrDefault(ship => ship != owner);
+        if (otherShip == null)
+            return false;
+
+        float missingHP = otherShip.MaximumHealthPoints - otherShip.CurrentHealthPoints;
+        if (missingHP <= 0)
+            return false;
+
+        float healAmount = Mathf.Min(extraHealthPassive.ExtraHealth, missingHP);
+
+        otherShip.HealHealth(healAmount);
+        extraHealthPassive.SetExtraHealth(extraHealthPassive.ExtraHealth - healAmount);
+
         return true;
     }
 }
