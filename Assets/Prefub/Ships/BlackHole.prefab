@@ -112,7 +112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 392875b082635b448afe230af6c27869, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
-  ActiveAbility: {fileID: 5531666038293898980}
+  activeAbility: {fileID: 5531666038293898980}
   passiveAbility: {fileID: 1399229729108214746}
   ShieldAnchor: {fileID: 3268154708046901353}
   ShipData: {fileID: 11400000, guid: 4f8412e53075b104ebf23726690ca4ff, type: 2}
@@ -157,7 +157,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c29d9cf009b492e4aacbe51a6bb822e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  healthRegenRate: 0
 --- !u!114 &6427467547313428841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,6 +261,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:
   m_ObjectHideFlags: 0

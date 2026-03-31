@@ -1,7 +1,10 @@
 using UnityEngine;
+using Zenject;
 
 public abstract class ActiveAbility : MonoBehaviour
 {
+    [Inject] protected AudioDatabase audioDatabase;
+    [Inject] protected AudioManager audioManager;
     [SerializeField] protected float cooldown;
     protected float cooldownTimer;
     [SerializeField]

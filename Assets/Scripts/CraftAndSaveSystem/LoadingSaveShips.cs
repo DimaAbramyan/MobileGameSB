@@ -1,9 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
+using Zenject.Asteroids;
 
-public class LoadingSaveShips : MonoBehaviour
+public class CreatePlayerShips : MonoBehaviour
 {
+    [Inject] private DiContainer _container;
+    public event Action<PlayerController> OnPlayerSpawned;
     [SerializeField] PlayerController player;
     [SerializeField]
     private GameObject[] Ships; 
@@ -14,18 +19,23 @@ public class LoadingSaveShips : MonoBehaviour
         SaveData[] saveData = FindObjectOfType<GotSaves>().allSaves.AllSavesThatLoaded;
         for (int i = 0; i < saveData.Length; i++)
         {
-            //GameObject ShipCreated = Instantiate(Ships[CurrentShipIBuild.save.shipId]);
             BuildingShip(saveData[i], i);
+
         }
+        OnPlayerSpawned?.Invoke(player);
+
     }
     private void BuildingShip(SaveData Ship, int j)
     {
-        GameObject ShipCreated = Instantiate(Ships[Ship.shipId], player.transform);
-        Debug.Log(Ship.WeaponData.Length);
+        PlayerController shipInstance = _container
+            .InstantiatePrefabForComponent<PlayerController>(Ships[Ship.shipId], player.transform.position, Quaternion.identity, player.transform);
+        _container.InjectGameObject(shipInstance.gameObject);
         foreach (WeaponDataSer weaponData in Ship.WeaponData)
         {
-            GameObject WeaponICreate = Instantiate(Weapons[weaponData.ID], ShipCreated.transform);
-            WeaponICreate.transform.position = weaponData.place/400f;
+            GameObject weaponInstance = _container
+                .InstantiatePrefab(Weapons[weaponData.ID], shipInstance.transform.position, Quaternion.identity, shipInstance.transform);
+            weaponInstance.transform.localPosition = weaponData.place / 400f;
+            _container.InjectGameObject(weaponInstance.gameObject);
         }
     }
 }

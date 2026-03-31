@@ -1042,8 +1042,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3b3ab8af281beb45963a70967a72eb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  musicList:
-  - {fileID: 8300000, guid: c3a9eeefa17a6304f8a9deaeb79e1623, type: 3}
 --- !u!1 &576804276
 GameObject:
   m_ObjectHideFlags: 0
@@ -3227,9 +3225,9 @@ SceneRoots:
   - {fileID: 59263955}
   - {fileID: 516181382}
   - {fileID: 219824808}
-  - {fileID: 578233402}
-  - {fileID: 1697554920}
   - {fileID: 38664986}
+  - {fileID: 1697554920}
+  - {fileID: 578233402}
   - {fileID: 2086040334}
   - {fileID: 562918286}
   - {fileID: 1866840217}
