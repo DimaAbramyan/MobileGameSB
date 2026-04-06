@@ -1,11 +1,11 @@
+﻿using UnityEngine;
 using Zenject;
-using UnityEngine;
-using FMODUnity;
 
 public class ProjectManagerInstaller : MonoInstaller
 {
     [SerializeField] private AudioDatabase audioDatabase;
     [SerializeField] private AudioServiceHost audioHostPrefab;
+    [SerializeField] private ImpactBehaviorSO[] impactBehaviours;
 
     public override void InstallBindings()
     {
@@ -13,17 +13,19 @@ public class ProjectManagerInstaller : MonoInstaller
                  .FromInstance(audioDatabase)
                  .AsSingle();
 
-        Container.Bind<AudioServiceHost>()
-                 .FromComponentInNewPrefab(audioHostPrefab)
+        if (audioHostPrefab != null)
+        {
+            Container.Bind<AudioServiceHost>()
+                     .FromComponentInNewPrefab(audioHostPrefab)
+                     .AsSingle()
+                     .NonLazy();
+        }
+
+        Container.Bind<SoundManager>()
                  .AsSingle()
                  .NonLazy();
 
-        Container.Bind<AudioManager>()
-                 .AsSingle();
-
-        Container.BindInterfacesTo<FMODAttenuationService>()
-                 .AsSingle();
-        Debug.Log(audioDatabase);
-        Debug.Log(audioHostPrefab);
+        foreach (var impact in impactBehaviours)
+            Container.Inject(impact);
     }
 }

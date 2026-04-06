@@ -1,35 +1,46 @@
-using System;
+﻿using System;
 using UnityEngine;
 using Zenject;
 
 public class FMODAttenuationService : IInitializable, IDisposable
 {
-    private readonly CreatePlayerShips playerSpawner;
-    private readonly FMODUnity.StudioListener listener;
-
-    private Transform playerTransform;
+    private readonly LazyInject<CreatePlayerShips> _playerSpawner;
+    private FMODUnity.StudioListener _listener;
 
     public FMODAttenuationService(
-        CreatePlayerShips playerSpawner,
-        FMODUnity.StudioListener listener)
+        LazyInject<CreatePlayerShips> playerSpawner)
     {
-        this.playerSpawner = playerSpawner;
-        this.listener = listener;
+        _playerSpawner = playerSpawner;
     }
 
     public void Initialize()
     {
-        playerSpawner.OnPlayerSpawned += OnPlayerSpawned;
+        // Находим StudioListener в сцене
+        _listener = GameObject.FindObjectOfType<FMODUnity.StudioListener>();
+
+        if (_listener == null)
+        {
+            Debug.LogError("❌ StudioListener not found in scene! Please add a GameObject with StudioListener component.");
+            return;
+        }
+
+        _playerSpawner.Value.OnPlayerSpawned += OnPlayerSpawned;
+        Debug.Log("✅ FMODAttenuationService initialized with StudioListener");
     }
 
     private void OnPlayerSpawned(PlayerController player)
     {
-        listener.attenuationObject = player.gameObject;
+        if (_listener != null)
+        {
+            _listener.attenuationObject = player.gameObject;
+        }
     }
 
     public void Dispose()
     {
-        listener.attenuationObject = null;
-        playerSpawner.OnPlayerSpawned -= OnPlayerSpawned;
+        if (_playerSpawner.Value != null)
+        {
+            _playerSpawner.Value.OnPlayerSpawned -= OnPlayerSpawned;
+        }
     }
 }

@@ -6,6 +6,7 @@ using System.Collections;
 using Zenject;
 public class SaveLoadUI : MonoBehaviour
 {
+    [Inject] private DiContainer _container;
     [Inject] PrefabFactory prefabFactory;
     public GameObject buttonPrefab;  // Префаб кнопки (сохранения)
     public Transform content;        // Контейнер для кнопок
@@ -30,10 +31,8 @@ public class SaveLoadUI : MonoBehaviour
             newButton.GetComponent<Image>().color = new Color(0.5f, 0.8f, 1f);
         }
     }
-    // Загрузка сохранений в Content
     public void LoadSaveFiles()
     {
-        // Очистка старых кнопок
         foreach (Transform child in content)
         {
             Destroy(child.gameObject);
@@ -53,27 +52,20 @@ public class SaveLoadUI : MonoBehaviour
         }
     }
 
-    // Создание самой кнопки
     void CreateSaveButton(string saveName, string filePath)
     {
         string json = File.ReadAllText(filePath);
-        SaveShip Ship = JsonUtility.FromJson<SaveShip>(json);
-        
-        if (savesThatAlreadyExist.Contains(Ship.shipName))
-            return;
-        GameObject newButton = Instantiate(buttonPrefab, content);
-        newButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = saveName;
-        newButton.GetComponentsInChildren<TMPro.TextMeshProUGUI>()[1].text = Ship.shipDescr;
-        newButton.GetComponent<Button>().onClick.AddListener(() => LoadSave(filePath));
-        PrintShip(newButton, Ship);
-    }
+        SaveShip ship = JsonUtility.FromJson<SaveShip>(json);
 
-    void LoadSave(string filePath)
-    {
-        string json = File.ReadAllText(filePath);
-        SaveShip Ship = JsonUtility.FromJson<SaveShip>(json);
-        LoadTo.save = Ship;
-        this.gameObject.SetActive(false);
+        if (savesThatAlreadyExist.Contains(ship.shipName))
+            return;
+
+        GameObject newButton = _container.InstantiatePrefab(buttonPrefab, content);
+        newButton.GetComponent<SaveButtonView>().Init(filePath, LoadTo);
+        newButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = saveName;
+        newButton.GetComponentsInChildren<TMPro.TextMeshProUGUI>()[1].text = ship.shipDescr;
+
+        PrintShip(newButton, ship);
     }
     void TryToFindCreatedShip(string filePath)
     {

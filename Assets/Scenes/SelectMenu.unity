@@ -425,25 +425,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1697554919}
-        m_TargetAssemblyTypeName: PanelManager, Assembly-CSharp
-        m_MethodName: OpenThisPanel
-        m_Mode: 2
-        m_Arguments:
-          m_ObjectArgument: {fileID: 702131925}
-          m_ObjectArgumentAssemblyTypeName: PanelVisual, Assembly-CSharp
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: ShowPantel, Assembly-CSharp
-        m_MethodName: 
+      - m_Target: {fileID: 59836469}
+        m_TargetAssemblyTypeName: ButtonState, Assembly-CSharp
+        m_MethodName: ShowingPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -521,6 +509,7 @@ MonoBehaviour:
     shipId: 0
     shipName: 
     shipDescr: 
+  id: 0
 --- !u!1 &71241758
 GameObject:
   m_ObjectHideFlags: 0
@@ -698,6 +687,7 @@ MonoBehaviour:
     shipId: 0
     shipName: 
     shipDescr: 
+  id: 1
 --- !u!114 &375629463
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -759,25 +749,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1697554919}
-        m_TargetAssemblyTypeName: PanelManager, Assembly-CSharp
-        m_MethodName: OpenThisPanel
-        m_Mode: 2
-        m_Arguments:
-          m_ObjectArgument: {fileID: 2060115906}
-          m_ObjectArgumentAssemblyTypeName: PanelVisual, Assembly-CSharp
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: ShowPantel, Assembly-CSharp
-        m_MethodName: 
+      - m_Target: {fileID: 375629463}
+        m_TargetAssemblyTypeName: ButtonState, Assembly-CSharp
+        m_MethodName: ShowingPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1661,7 +1639,7 @@ GameObject:
   - component: {fileID: 1070717085}
   - component: {fileID: 1070717084}
   - component: {fileID: 1070717083}
-  - component: {fileID: 1070717082}
+  - component: {fileID: 1070717086}
   m_Layer: 5
   m_Name: CreateShip
   m_TagString: Untagged
@@ -1688,18 +1666,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1070717082
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1070717080}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 82c170c7b590d77429086a8caf07fe81, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1070717083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1744,14 +1710,14 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1070717082}
-        m_TargetAssemblyTypeName: ToBuildScene, Assembly-CSharp
-        m_MethodName: SwitchToBuilding
+      - m_Target: {fileID: 1070717086}
+        m_TargetAssemblyTypeName: CollectAllSaves, Assembly-CSharp
+        m_MethodName: Collecting
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 3
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -1794,6 +1760,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1070717080}
   m_CullTransparentMesh: 1
+--- !u!114 &1070717086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070717080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5207b0bb1dadabe46aab7e38e19c7ff0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollectAllSaves
+  sceneID: 3
+  needToCheck: 0
+  WarningToShow: {fileID: 0}
+  SaveThatChecked: {fileID: 1866840216}
 --- !u!1 &1166180376
 GameObject:
   m_ObjectHideFlags: 0
@@ -2276,6 +2258,7 @@ GameObject:
   - component: {fileID: 1658356338}
   - component: {fileID: 1658356337}
   - component: {fileID: 1658356340}
+  - component: {fileID: 1658356341}
   m_Layer: 5
   m_Name: Button (1)
   m_TagString: Untagged
@@ -2411,6 +2394,22 @@ MonoBehaviour:
   IsNextLevel: 0
   IsThatRepat: 0
   m_Level: 0
+--- !u!114 &1658356341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658356334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5207b0bb1dadabe46aab7e38e19c7ff0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollectAllSaves
+  sceneID: 0
+  needToCheck: 0
+  WarningToShow: {fileID: 0}
+  SaveThatChecked: {fileID: 0}
 --- !u!1 &1697554918
 GameObject:
   m_ObjectHideFlags: 0
@@ -2467,7 +2466,7 @@ GameObject:
   - component: {fileID: 1866840218}
   - component: {fileID: 1866840219}
   m_Layer: 5
-  m_Name: GameObject
+  m_Name: SaveHandler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2857,6 +2856,7 @@ GameObject:
   - component: {fileID: 2072736141}
   - component: {fileID: 2072736140}
   - component: {fileID: 2072736143}
+  - component: {fileID: 2072736144}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -2989,8 +2989,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5207b0bb1dadabe46aab7e38e19c7ff0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sceneID: 4
+  needToCheck: 1
   WarningToShow: {fileID: 925203519}
   SaveThatChecked: {fileID: 1866840216}
+--- !u!114 &2072736144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2072736137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54decd39578201745be2e55bbe645654, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &2086040333
 GameObject:
   m_ObjectHideFlags: 0

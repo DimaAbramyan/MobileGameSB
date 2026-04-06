@@ -145,6 +145,7 @@ MonoBehaviour:
   cooldown: 5
   owner: {fileID: 8325040916063848254}
   blackHole: {fileID: -7898618861155031611, guid: 50fcf9903288ddf4ba160a6c58f2f5f3, type: 3}
+  duration: 5.2
 --- !u!114 &1747187658099963067
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -3623,8 +3623,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41c8d49eb2545eb4194fb092948b730e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  shipLoader: {fileID: 43668350}
-  listener: {fileID: 0}
 --- !u!4 &1934558241
 Transform:
   m_ObjectHideFlags: 0

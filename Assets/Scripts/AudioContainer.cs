@@ -11,6 +11,7 @@ public class AudioDatabase : ScriptableObject
     public EventReference shoot;
     public EventReference explosion;
     public EventReference buttonClick;
+    public EventReference LevelUp;
 
     [Header("Abilities")]
     public EventReference blackHole;

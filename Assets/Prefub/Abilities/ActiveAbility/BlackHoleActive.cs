@@ -7,15 +7,13 @@ public class BlackHoleActive : ActiveAbility
 {
     [SerializeField]
     BlackHolePrefab blackHole;
+    [SerializeField] float duration;
     public override bool Activate(ParentShip owner)
     {
-        float seconds = 3;
         BlackHolePrefab currentBlackHole = Instantiate(blackHole, transform);
-        currentBlackHole.Init(seconds);
-        Debug.Log(audioManager);
-        Debug.Log(audioDatabase);
-        audioManager.PlayOneShot(audioDatabase.blackHole, this.transform.position);
-        GetComponent<WeaponController>().StopShootingForSeconds(seconds);
+        currentBlackHole.Init(duration);
+        audioManager.PlaySound(audioDatabase.blackHole, transform.position);
+        GetComponent<WeaponController>().StopShootingForSeconds(duration);
         return true;
     }
 }

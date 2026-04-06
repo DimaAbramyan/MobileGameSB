@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 public class ParentShip : MonoBehaviour, iDamagable
 {
+    [Inject] SoundManager soundManager;
+    [Inject] AudioDatabase audioDatabase;
+
     [Header("Abilities")]
     [SerializeField] private ActiveAbility activeAbility;
     [SerializeField] private PassiveAbility passiveAbility;
@@ -184,7 +188,7 @@ public class ParentShip : MonoBehaviour, iDamagable
     public void LevelUp()
     {
         if (currentLevel >= 4) return;
-
+        soundManager.PlaySound(audioDatabase.LevelUp, transform.position);
         currentLevel++;
         Debug.Log($"Новый уровень: {currentLevel}");
         OnLevelChanged?.Invoke(currentLevel);

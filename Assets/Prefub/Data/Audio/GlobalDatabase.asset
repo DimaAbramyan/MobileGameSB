@@ -47,6 +47,13 @@ MonoBehaviour:
       Data3: 0
       Data4: 0
     Path: 
+  LevelUp:
+    Guid:
+      Data1: 72379515
+      Data2: 1095975159
+      Data3: 811031224
+      Data4: 1969630173
+    Path: event:/LevelUp
   blackHole:
     Guid:
       Data1: 1689350951

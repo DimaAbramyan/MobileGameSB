@@ -1,27 +1,21 @@
+
 using UnityEngine;
 using Zenject;
 
 [CreateAssetMenu(menuName = "Impact/RocketExplosion")]
 public class RocketExplosionImpact : ImpactBehaviorSO
 {
+    [SerializeField] Explode explosionPrefab;
     public float explosionRadius = 3f;
     public float explosionDamage = 30f;
     public override void OnImpact(iDamagable target, Projectile projectile)
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
+        Explode exp = Container.InstantiatePrefabForComponent<Explode>(
+            explosionPrefab,
             projectile.transform.position,
-            explosionRadius
-        );
-
-        foreach (var hit in hits)
-        {
-            if (hit.TryGetComponent<iDamagable>(out var enemy))
-            {
-                if (!(hit.gameObject.layer == LayerMask.NameToLayer("Player")))
-                    DealDamageManager.instanse.DealDamage(target, projectile);
-            }
-        }
-
+            Quaternion.identity,
+            null);
+        exp.SetDamage(explosionDamage);
         Destroy(projectile.gameObject);
     }
 }

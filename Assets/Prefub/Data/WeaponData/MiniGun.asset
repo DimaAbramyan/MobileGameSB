@@ -48,3 +48,17 @@ MonoBehaviour:
   impactBehavior: {fileID: 11400000, guid: 131a19a1d421e154ca66eb4e54313934, type: 2}
   continiousImpactBehavior: {fileID: 0}
   projectileBehaviour: []
+  audioClipDefault:
+    Guid:
+      Data1: 1351821195
+      Data2: 1149134096
+      Data3: 1808923781
+      Data4: -1137653982
+    Path: event:/MiniGun
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 

@@ -49,3 +49,17 @@ MonoBehaviour:
   continiousImpactBehavior: {fileID: 0}
   projectileBehaviour:
   - {fileID: 11400000, guid: 7ff1e3e6567c5d54ca2f8b8b1e3aeefc, type: 2}
+  audioClipDefault:
+    Guid:
+      Data1: 1970168122
+      Data2: 1253470343
+      Data3: -488035455
+      Data4: -1262188869
+    Path: event:/FlameThrower
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 

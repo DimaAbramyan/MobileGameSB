@@ -5,7 +5,7 @@ public class Weapon : MonoBehaviour
 {
     [SerializeField] protected Projectile projectilePrefab;
     [SerializeField] protected Transform projectileSpawn;
-    [SerializeField] protected WeaponData weaponData;
+    [SerializeField] public  WeaponData weaponData;
 
     private ParentShip owner;
     private SpriteRenderer spriteRenderer;
@@ -49,7 +49,7 @@ public class Weapon : MonoBehaviour
             owner.OnLevelChanged += HandleLevelChanged;
         }
 
-        reloadTime = weaponData.reloadTimeByLevel[level];
+        reloadTime = weaponData.ReloadTimeByLevel[level];
         currentReloadTime = reloadTime;
     }
     private void HandleLevelChanged(int newLevel)
@@ -83,19 +83,19 @@ public class Weapon : MonoBehaviour
 
         ProjectileParams param = new ProjectileParams
         {
-            speed = weaponData.speedByLevel[level],
-            damage = weaponData.damageByLevel[level],
-            maxLength = weaponData.rangeByLevel[level],
+            speed = weaponData.SpeedByLevel[level],
+            damage = weaponData.DamageByLevel[level],
+            maxLength = weaponData.RangeByLevel[level],
             direction = transform.up,
-            maxAngle = weaponData.angleByLevel[level],
+            maxAngle = weaponData.AngleByLevel[level],
         };
 
         Projectile proj = Instantiate(projectilePrefab, projectileSpawn.position, Quaternion.identity);
         proj.Init(param,
-                  weaponData.movementStrategy,
-                  weaponData.impactBehavior,
-                  weaponData.continiousImpactBehavior,
-                  weaponData.projectileBehaviour,
+                  weaponData.MovementStrategy,
+                  weaponData.ImpactBehavior,
+                  weaponData.ContiniousImpactBehavior,
+                  weaponData.ProjectileBehaviour,
                   owner);
     }
 
@@ -106,8 +106,8 @@ public class Weapon : MonoBehaviour
 
     public void SetLevel(int newLevel)
     {
-        level = Mathf.Clamp(newLevel, 0, weaponData.reloadTimeByLevel.Count - 1);
-        reloadTime = weaponData.reloadTimeByLevel[level];
+        level = Mathf.Clamp(newLevel, 0, weaponData.ReloadTimeByLevel.Count - 1);
+        reloadTime = weaponData.ReloadTimeByLevel[level];
         currentReloadTime = reloadTime;
 
         OnLevelChanged?.Invoke(level);

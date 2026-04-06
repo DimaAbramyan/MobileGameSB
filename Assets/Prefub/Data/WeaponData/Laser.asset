@@ -49,3 +49,17 @@ MonoBehaviour:
   continiousImpactBehavior: {fileID: 0}
   projectileBehaviour:
   - {fileID: 11400000, guid: d8a52650c50cd894099026f3f260ac09, type: 2}
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: -1852796316
+      Data2: 1169992039
+      Data3: 87734423
+      Data4: -1813489500
+    Path: event:/LaserShoot

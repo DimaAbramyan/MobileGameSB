@@ -1,9 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
+using FMODUnity;
 
 public class Explode : MonoBehaviour
 {
+    [Inject] SoundManager soundManager;
+    [SerializeField] EventReference explosionSound;
     [SerializeField] private float damage;
     [SerializeField] private Collider2D explosionCollider;
     [SerializeField] private float activeTime = 0.1f;
@@ -14,12 +18,12 @@ public class Explode : MonoBehaviour
 
     private void Awake()
     {
+        soundManager.PlaySound(explosionSound, transform.position);
         if (explosionCollider == null)
         {
             explosionCollider = GetComponent<Collider2D>();
         }
 
-        // Убедимся, что коллайдер настроен как триггер
         explosionCollider.isTrigger = true;
 
         StartCoroutine(ExplosionRoutine());
@@ -27,13 +31,10 @@ public class Explode : MonoBehaviour
 
     private IEnumerator ExplosionRoutine()
     {
-        // Даем коллайдеру время поработать
         yield return new WaitForSeconds(activeTime);
 
-        // Отключаем коллайдер
         explosionCollider.enabled = false;
 
-        // Очищаем список
         damagedObjects.Clear();
 
         if (destroyAfterExplosion)
@@ -59,7 +60,6 @@ public class Explode : MonoBehaviour
 
     protected virtual void OnTriggerStay2D(Collider2D collision)
     {
-        // То же самое, что и OnTriggerEnter2D
         if (damagedObjects.Contains(collision.gameObject))
             return;
 

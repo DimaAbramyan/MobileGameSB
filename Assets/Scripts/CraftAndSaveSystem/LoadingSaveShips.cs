@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Zenject;
-using Zenject.Asteroids;
 
 public class CreatePlayerShips : MonoBehaviour
 {
@@ -15,7 +15,20 @@ public class CreatePlayerShips : MonoBehaviour
     [SerializeField]
     private GameObject[] Weapons;
     private void Awake()
-    {
+    {    // Проверяем видимость AudioDatabase
+        Debug.Log($"AudioDatabase bound in current container: {_container.HasBinding<AudioDatabase>()}");
+        Debug.Log($"AudioDatabase bound in parent: {_container.ParentContainers.Count() > 0 && _container.ParentContainers[0].HasBinding<AudioDatabase>()}");
+
+        // Пытаемся получить AudioDatabase
+        try
+        {
+            var audioDb = _container.Resolve<AudioDatabase>();
+            Debug.Log($"AudioDatabase resolved successfully: {audioDb != null}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Failed to resolve AudioDatabase: {e.Message}");
+        }
         SaveData[] saveData = FindObjectOfType<GotSaves>().allSaves.AllSavesThatLoaded;
         for (int i = 0; i < saveData.Length; i++)
         {
@@ -27,15 +40,13 @@ public class CreatePlayerShips : MonoBehaviour
     }
     private void BuildingShip(SaveData Ship, int j)
     {
-        PlayerController shipInstance = _container
-            .InstantiatePrefabForComponent<PlayerController>(Ships[Ship.shipId], player.transform.position, Quaternion.identity, player.transform);
-        _container.InjectGameObject(shipInstance.gameObject);
+        ParentShip shipInstance = _container
+            .InstantiatePrefabForComponent<ParentShip>(Ships[Ship.shipId], player.transform.position, Quaternion.identity, player.transform);
         foreach (WeaponDataSer weaponData in Ship.WeaponData)
         {
             GameObject weaponInstance = _container
                 .InstantiatePrefab(Weapons[weaponData.ID], shipInstance.transform.position, Quaternion.identity, shipInstance.transform);
             weaponInstance.transform.localPosition = weaponData.place / 400f;
-            _container.InjectGameObject(weaponInstance.gameObject);
         }
     }
 }

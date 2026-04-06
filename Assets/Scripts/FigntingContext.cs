@@ -1,19 +1,31 @@
-using System.ComponentModel;
-using UnityEngine;
+﻿using UnityEngine;
 using Zenject;
 
 public class FightingInstaller : MonoInstaller
 {
-    [SerializeField] private CreatePlayerShips shipLoader;
-    [SerializeField] private FMODUnity.StudioListener listener;
-
     public override void InstallBindings()
     {
-        Container.Bind<CreatePlayerShips>().FromInstance(shipLoader).AsSingle();
-        Camera cam = DontDestroy.instance.GetComponentInChildren<Camera>();
-        FMODUnity.StudioListener listener = cam.GetComponent<FMODUnity.StudioListener>();
+        Debug.Log("========== FightingInstaller InstallBindings ==========");
+
+        // Регистрируем CreatePlayerShips (нужен для FMODAttenuationService)
+        var createPlayerShips = FindObjectOfType<CreatePlayerShips>();
+        if (createPlayerShips != null)
+        {
+            Container.Bind<CreatePlayerShips>()
+                     .FromInstance(createPlayerShips)
+                     .AsSingle();
+            Debug.Log("✅ CreatePlayerShips registered");
+        }
+        else
+        {
+            Debug.LogError("❌ CreatePlayerShips not found in scene!");
+        }
+
+        // Регистрируем FMODAttenuationService
         Container.BindInterfacesTo<FMODAttenuationService>()
-                .AsSingle()
-                .WithArguments(listener);
+                 .AsSingle();
+        Debug.Log("✅ FMODAttenuationService registered");
+
+        Debug.Log("========== FightingInstaller Complete ==========");
     }
 }

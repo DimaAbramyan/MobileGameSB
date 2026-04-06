@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 4546754005450569875}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 12, z: 0}
+  m_LocalPosition: {x: 0, y: 6.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -136,6 +136,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 041b810495b8bdc4db2fcb015a2f63a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Weapon
-  projectilePrefab: {fileID: 6480419827223043894, guid: 1bd52e490237be6448fa3b85deff8f78, type: 3}
+  projectilePrefab: {fileID: -284135369012748406, guid: 70e4ae90b3ba87648be8c0a2a1e8d7c2, type: 3}
   projectileSpawn: {fileID: 4239190224082967472}
   weaponData: {fileID: 11400000, guid: 0d952a161559bbb4883e93aa8dff88c4, type: 2}

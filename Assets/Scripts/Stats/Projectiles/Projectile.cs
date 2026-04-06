@@ -1,8 +1,10 @@
 using UnityEngine;
 using Zenject;
-
+using System.Collections.Generic;
 public class Projectile : MonoBehaviour
 {
+    [Inject] protected AudioDatabase audioDatabase;
+    [Inject] protected SoundManager audioManager;
     public float speed { get; private set; }
     public float damage { get; private set; }
     public float baseDamage;
@@ -14,7 +16,7 @@ public class Projectile : MonoBehaviour
     MovementStrategySO movement;
     ImpactBehaviorSO impact;
     ContiniousImpactBehaviorSO continiousImpact;
-    ProjectileBehaviourSO[] behaviours;
+    IReadOnlyList<ProjectileBehaviourSO> behaviours;
     SpriteRenderer spriteRenderer;
     public ParentShip Owner { get; set; }
     Vector3 startPosition;
@@ -47,7 +49,7 @@ public class Projectile : MonoBehaviour
         MovementStrategySO movement, 
         ImpactBehaviorSO impact, 
         ContiniousImpactBehaviorSO continiousImpact, 
-        ProjectileBehaviourSO[] projectileBehaviour,
+        IReadOnlyList<ProjectileBehaviourSO> projectileBehaviour,
         ParentShip owner)
     {
         speed = param.speed;

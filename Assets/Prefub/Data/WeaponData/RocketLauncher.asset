@@ -48,3 +48,17 @@ MonoBehaviour:
   impactBehavior: {fileID: 11400000, guid: 848a0a7bce1594646af064d8282ac443, type: 2}
   continiousImpactBehavior: {fileID: 0}
   projectileBehaviour: []
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: 1597313851
+      Data2: 1155285688
+      Data3: -846330741
+      Data4: 674951930
+    Path: event:/RocketLaunch

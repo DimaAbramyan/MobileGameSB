@@ -2,9 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Zenject;
 
 public class WeaponController : MonoBehaviour
 {
+    [Inject] SoundManager soundManager;
     public ParentShip parentShip { get; private set; }
     public List<Weapon> weapons { get; private set; }
     public float reloadMultiplier = 1f;
@@ -24,12 +26,14 @@ public class WeaponController : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        Debug.Log(soundManager);
         foreach (Weapon weapon in weapons)
         {
             if (weapon == null) continue;
             if (weapon.TryToShoot())
             {
                 weapon.Reload(reloadMultiplier);
+                soundManager.PlaySound(weapon.weaponData.AudioClipProjectileShot, transform.position);
             }
         }
     }
@@ -41,6 +45,7 @@ public class WeaponController : MonoBehaviour
     {
         foreach (Weapon weapon in weapons)
         {
+            soundManager.StopContiniousSound(weapon.weaponData.AudioClipDefault, transform.position);
             weapon.HideWeapon();
         }
     }
@@ -48,6 +53,7 @@ public class WeaponController : MonoBehaviour
     {
         foreach (Weapon weapon in weapons)
         {
+            soundManager.PlayContiniousSound(weapon.weaponData.AudioClipDefault, transform.position);
             weapon.ShowWeapon();
         }
     }
@@ -64,13 +70,15 @@ public class WeaponController : MonoBehaviour
         foreach (Weapon weapon in weapons)
         {
             weapon.AbleToShoot(false);
+            soundManager.StopContiniousSound(weapon.weaponData.AudioClipDefault, transform.position);
         }
-        Debug.LogError("Нельзя стрелять");
+        Debug.Log("Нельзя стрелять");
         yield return new WaitForSeconds(seconds);
         foreach (Weapon weapon in weapons)
         {
-            weapon.AbleToShoot(true);
+           weapon.AbleToShoot(true);
+           soundManager.PlayContiniousSound(weapon.weaponData.AudioClipDefault, transform.position);
         }
-        Debug.LogError("Можно стрелять");
+        Debug.Log("Можно стрелять");
     }
 }

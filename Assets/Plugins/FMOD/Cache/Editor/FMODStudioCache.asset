@@ -1,5 +1,25 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8900194941662568222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18180ecb35941f4682ae60107b85b7c, type: 3}
+  m_Name: bank:/Weapon.bank
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorBankRef
+  Path: ../Users/Dima/SoundManager/Build/Desktop/Weapon.bank
+  Name: Weapon
+  StudioPath: bank:/Weapon
+  lastModified: 639108991104436219
+  FileSizes:
+  - Name: Desktop
+    Value: 742048
+  Exists: 1
 --- !u!114 &-6529355689570748248
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26,7 +46,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 7750
 --- !u!114 &-5124900996043737591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41,19 +61,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
   Path: event:/LaserShoot
   Guid:
-    Data1: 1157394919
-    Data2: 1150877476
-    Data3: 270156964
-    Data4: 2054678948
+    Data1: -1852796316
+    Data2: 1169992039
+    Data3: 87734423
+    Data4: -1813489500
   Banks:
-  - {fileID: 4959354803176307314}
+  - {fileID: -8900194941662568222}
   IsStream: 0
   Is3D: 0
   IsOneShot: 1
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 1300
 --- !u!114 &-2146817417169884247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69,10 +89,10 @@ MonoBehaviour:
   Path: ../Users/Dima/SoundManager/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639105841449871720
+  lastModified: 639108991102249881
   FileSizes:
   - Name: Desktop
-    Value: 876
+    Value: 1216
   Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
@@ -90,21 +110,124 @@ MonoBehaviour:
   - {fileID: -2146817417169884247}
   - {fileID: 1964770722362413742}
   - {fileID: 4959354803176307314}
+  - {fileID: -8900194941662568222}
   EditorEvents:
   - {fileID: -5124900996043737591}
   - {fileID: -6529355689570748248}
+  - {fileID: 1504508254444233173}
+  - {fileID: 664908841273705097}
+  - {fileID: 8216477963890187398}
+  - {fileID: 840315691497549305}
+  - {fileID: 8429268037663464680}
+  - {fileID: 7545864595777521250}
+  - {fileID: 5436083303193764434}
   EditorParameters: []
   MasterBanks:
   - {fileID: 1964770722362413742}
   StringsBanks:
   - {fileID: -2146817417169884247}
   cacheVersion: 131858
-  cacheTime: 639105841451593834
+  cacheTime: 639109449398495970
   SerializableEventsDict:
   - key: event:/LaserShoot
     index: 0
   - key: event:/BlackHoleActive
     index: 1
+  - key: event:/BlackHolePassive
+    index: 2
+  - key: event:/FlameThrower
+    index: 3
+  - key: "event:/Soni\u0441Beam"
+    index: 4
+  - key: event:/LevelUp
+    index: 5
+  - key: event:/MiniGun
+    index: 6
+  - key: event:/RocketLaunch
+    index: 7
+  - key: event:/Explosion
+    index: 8
+--- !u!114 &664908841273705097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/FlameThrower
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/FlameThrower
+  Guid:
+    Data1: 1970168122
+    Data2: 1253470343
+    Data3: -488035455
+    Data4: -1262188869
+  Banks:
+  - {fileID: -8900194941662568222}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 22261
+--- !u!114 &840315691497549305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/LevelUp
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/LevelUp
+  Guid:
+    Data1: 72379515
+    Data2: 1095975159
+    Data3: 811031224
+    Data4: 1969630173
+  Banks:
+  - {fileID: 4959354803176307314}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 800
+--- !u!114 &1504508254444233173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/BlackHolePassive
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/BlackHolePassive
+  Guid:
+    Data1: 71110417
+    Data2: 1292416072
+    Data3: -1261431149
+    Data4: 82094586
+  Banks:
+  - {fileID: 4959354803176307314}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &1964770722362413742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,7 +243,7 @@ MonoBehaviour:
   Path: ../Users/Dima/SoundManager/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639105841449871720
+  lastModified: 639108991102239882
   FileSizes:
   - Name: Desktop
     Value: 1074
@@ -140,8 +263,116 @@ MonoBehaviour:
   Path: ../Users/Dima/SoundManager/Build/Desktop/SFX.bank
   Name: SFX
   StudioPath: bank:/SFX
-  lastModified: 639105841451593834
+  lastModified: 639109449398495970
   FileSizes:
   - Name: Desktop
-    Value: 70912
+    Value: 203840
   Exists: 1
+--- !u!114 &5436083303193764434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Explosion
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Explosion
+  Guid:
+    Data1: -687173075
+    Data2: 1181760451
+    Data3: -1367245409
+    Data4: 1452050113
+  Banks:
+  - {fileID: -8900194941662568222}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 5000
+--- !u!114 &7545864595777521250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/RocketLaunch
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/RocketLaunch
+  Guid:
+    Data1: 1597313851
+    Data2: 1155285688
+    Data3: -846330741
+    Data4: 674951930
+  Banks:
+  - {fileID: -8900194941662568222}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 773
+--- !u!114 &8216477963890187398
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: "event:/Soni\u0441Beam"
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: "event:/Soni\u0441Beam"
+  Guid:
+    Data1: 1824267394
+    Data2: 1205303200
+    Data3: 1484861844
+    Data4: 402998246
+  Banks:
+  - {fileID: -8900194941662568222}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 560
+--- !u!114 &8429268037663464680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/MiniGun
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/MiniGun
+  Guid:
+    Data1: 1351821195
+    Data2: 1149134096
+    Data3: 1808923781
+    Data4: -1137653982
+  Banks:
+  - {fileID: -8900194941662568222}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 2160

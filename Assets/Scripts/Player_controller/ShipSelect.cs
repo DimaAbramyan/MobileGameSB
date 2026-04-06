@@ -105,6 +105,7 @@ public class ShipSelect : MonoBehaviour
     }
     public void SwitchShip()
     {
+        WeaponController controller = new WeaponController();
         int i = 0;
         foreach (Transform child in transform)
         {
@@ -116,7 +117,7 @@ public class ShipSelect : MonoBehaviour
                 playerRB.ChangeShipData(ship);
                 shipsVisual[i].ShowShip();
                 ship.ShowShip();
-                ship.GetComponent<WeaponController>().ShowWeapons();
+                controller = ship.GetComponent<WeaponController>();
             }
             else
             { 
@@ -126,5 +127,6 @@ public class ShipSelect : MonoBehaviour
             }
             i++;
         }
+        controller.ShowWeapons();
     }
 }

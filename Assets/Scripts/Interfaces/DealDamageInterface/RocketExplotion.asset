@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac3cc71e918aebf48b92a9ba0bdf9abb, type: 3}
   m_Name: RocketExplotion
   m_EditorClassIdentifier: 
+  explosionPrefab: {fileID: 0}
   explosionRadius: 3
   explosionDamage: 50

@@ -6,6 +6,8 @@ using UnityEngine.SceneManagement;
 
 public class CollectAllSaves : MonoBehaviour
 {
+    [SerializeField] int sceneID;
+    [SerializeField] bool needToCheck;
     [SerializeField] GameObject WarningToShow;
     [SerializeField]
     public GameObject SaveThatChecked;
@@ -18,7 +20,7 @@ public class CollectAllSaves : MonoBehaviour
     {
         Save[] AllSaves = FindObjectsOfType<Save>();
 
-        if (CheckingAllSaves(AllSaves))
+        if (!needToCheck || CheckingAllSaves(AllSaves))
         {
             var saveDataArray = AllSaves.Select(save => new SaveData
             {
@@ -28,9 +30,8 @@ public class CollectAllSaves : MonoBehaviour
             }).ToArray();
 
             SaveThatChecked.GetComponent<GotSaves>().allSaves.AllSavesThatLoaded = saveDataArray;
-
+            SceneManager.LoadScene(sceneID);
             DontDestroyOnLoad(SaveThatChecked.gameObject);
-            SceneManager.LoadScene(4);
         }
         else
         {

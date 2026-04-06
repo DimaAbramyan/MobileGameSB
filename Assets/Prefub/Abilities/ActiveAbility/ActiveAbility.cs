@@ -4,7 +4,7 @@ using Zenject;
 public abstract class ActiveAbility : MonoBehaviour
 {
     [Inject] protected AudioDatabase audioDatabase;
-    [Inject] protected AudioManager audioManager;
+    [Inject] protected SoundManager audioManager;
     [SerializeField] protected float cooldown;
     protected float cooldownTimer;
     [SerializeField]
