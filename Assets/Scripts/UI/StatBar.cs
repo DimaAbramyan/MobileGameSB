@@ -43,7 +43,7 @@ public class StatBar : MonoBehaviour
         if (maxValue <= 0)
             return;
         float normalized = Mathf.Clamp01(value / maxValue)*100;
-        Debug.Log("Максимальное здоровье: " + maxValue.ToString());
+        //Debug.Log("Максимальное здоровье: " + maxValue.ToString());
         slider.value = normalized;
 
         if (gradient != null)

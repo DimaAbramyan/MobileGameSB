@@ -1,42 +1,52 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
+using Zenject;
 
-public class Wave_Creating : MonoBehaviour
+public class Wave : MonoBehaviour
 {
-
-    [SerializeField] public List<GameObject> WaveToCreate;
-    [SerializeField] public List<InfoAboutWave> info;
-    [SerializeField] public List<float> Timer;
-    [SerializeField] public List<Vector2> position;
-    public float AbsoluteTimer;
-    void Start()
+    [Inject] DiContainer container;
+    [SerializeField] public List<GameObject> WavesToCreate;
+    private int subWavesLeft;
+    WaveManager waveManager;
+    public void Init(WaveManager waveManager)
     {
-        int i = 0;
-        foreach (GameObject wave in WaveToCreate)
+        this.waveManager = waveManager;
+
+        List<GameObject> instantiatedWaves = new List<GameObject>();
+
+        subWavesLeft = WavesToCreate.Count;
+        Debug.Log("Все подволны: " + subWavesLeft);
+        foreach (GameObject wave in WavesToCreate)
         {
-            info.Add(wave.GetComponent<InfoAboutWave>());
-            i++;
+            GameObject waveInstance = container.InstantiatePrefab(wave, transform);
+
+            InfoAboutSubWave subWave = waveInstance.GetComponent<InfoAboutSubWave>();
+
+            subWave.OnSubWaveCleared += WhenSubWaveCleared;
+
+            instantiatedWaves.Add(waveInstance);
+        }
+        WavesToCreate = instantiatedWaves;
+    }
+    public void WhenSubWaveCleared()
+    {
+        subWavesLeft--;
+        Debug.Log("Вызвали, осталось: " + subWavesLeft);
+        if (subWavesLeft <= 0)
+        {
+            waveManager.GoToNextWave();
+            Destroy(gameObject);
         }
     }
-
-    // Update is called once per frame
-    void Update()
+    void OnDestroy()
     {
-        
-        AbsoluteTimer -= Time.deltaTime;
-        int i = 0;
-        foreach (GameObject wave in WaveToCreate)
+        foreach (GameObject wave in WavesToCreate)
         {
-            Timer[i] -= Time.deltaTime;
-            
-            if (Timer[i] < 0)
-            {
-                GameObject createdWave = Instantiate(wave, transform);
-                createdWave.transform.position = position[i];
-                Timer[i] = 100000000f;
-            }
-            i++;
+            if (wave != null)
+                wave.GetComponent<InfoAboutSubWave>().OnSubWaveCleared -= WhenSubWaveCleared;
         }
     }
 }

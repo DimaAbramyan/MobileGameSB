@@ -4,10 +4,12 @@ using UnityEngine;
 using System.Transactions;
 using JetBrains.Annotations;
 using System.Linq;
+using Zenject;
 public class ShipSelect : MonoBehaviour
 {
     PlayerController playerRB;
     ParentShip allShips;
+    public event System.Action<int> OnShipChanged;
     class ShipVisual
     {
         int number;
@@ -67,6 +69,14 @@ public class ShipSelect : MonoBehaviour
         CollectInfoAboutShips();
         InitFirstShip();
     }
+    public void OnEnable()
+    {
+        
+    }
+    public void OnDisable()
+    {
+
+    }
     void CollectInfoAboutShips()
     {
         int i = 0;
@@ -83,12 +93,13 @@ public class ShipSelect : MonoBehaviour
         int i = 0;
         foreach (Transform child in transform)
         {
-            child.GetComponent<WeaponController>().Init(child.GetComponent<ParentShip>());
             ParentShip ship = child.GetComponent<ParentShip>();
+            child.GetComponent<WeaponController>().Init(ship);
             if (ship == null)
                 continue;
             if (i == 0)
             {
+                OnShipChanged?.Invoke(ship.GetLevel());
                 playerRB.ChangeShipData(ship);
                 shipsVisual[i].ShowShip();
                 ship.ShowShip();
@@ -114,6 +125,7 @@ public class ShipSelect : MonoBehaviour
                 continue;
             if (!ship.IsVisible)
             {
+                OnShipChanged?.Invoke(ship.GetLevel());
                 playerRB.ChangeShipData(ship);
                 shipsVisual[i].ShowShip();
                 ship.ShowShip();

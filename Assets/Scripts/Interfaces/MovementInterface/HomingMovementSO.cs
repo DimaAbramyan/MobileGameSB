@@ -1,8 +1,17 @@
 using UnityEngine;
+using Zenject;
 
 [CreateAssetMenu(menuName = "Movement/Homing")]
 public class HomingMovementSO : MovementStrategySO
 {
+    EnemyManager enemyManager;
+
+    [Inject]
+    public void Construct(EnemyManager enemyManager)
+    {
+        this.enemyManager = enemyManager;
+    }
+
     public float rotationSpeed = 360f;
     Vector3 _direction;
     float _speed;
@@ -11,7 +20,7 @@ public class HomingMovementSO : MovementStrategySO
     {
         if (target == null)
         {
-            target = EnemyManager.instance.FindNearestEnemy(projectile.transform.position);
+            target = enemyManager.FindNearestEnemy(projectile.transform.position);
         }
         _direction = projectile.direction;
         _speed = projectile.speed;

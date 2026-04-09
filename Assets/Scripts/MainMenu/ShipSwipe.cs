@@ -9,8 +9,6 @@ public class ShipSwipe : MonoBehaviour
      private Vector2 range;
      private Vector2 startPos;
      private Vector2 endPos;
-    [SerializeField]
-    private GameObject gameObject;
     private void Start()
     {
         range.x = Screen.width/10;

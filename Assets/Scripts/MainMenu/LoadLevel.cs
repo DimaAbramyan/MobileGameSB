@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 
 public class LoadLevel : MonoBehaviour
 {
-
     [SerializeField]
     private bool IsNextLevel;
     [SerializeField]
@@ -19,12 +18,13 @@ public class LoadLevel : MonoBehaviour
         if (IsThatRepat)
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            LevelLoader.LevelIndex = (SceneManager.GetActiveScene().buildIndex);
             return;
         }
         if (IsNextLevel)
         {
-            Debug.Log("Нажал");
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+1);
+            LevelLoader.LevelIndex = SceneManager.GetActiveScene().buildIndex + 1;
             return;
         }
         SceneManager.LoadScene(m_Level);

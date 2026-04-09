@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 public class GainHealthPassive : PassiveAbility
 {
+    [Inject] EnemyManager enemyManager;
     [Header("Настройки")]
     [SerializeField] private float healthIncreasePerKill = 10f;
     
@@ -17,7 +19,7 @@ public class GainHealthPassive : PassiveAbility
     public override void Init(ParentShip ship)
     {
         owner = ship;
-        EnemyManager.instance.OnEnemyDestroyed += OnEnemyKilled;
+        enemyManager.OnEnemyDestroyed += OnEnemyKilled;
     }
 
     private void OnEnemyKilled(Enemy enemy)
@@ -32,7 +34,7 @@ public class GainHealthPassive : PassiveAbility
     {
         if (owner != null)
         {
-            EnemyManager.instance.OnEnemyDestroyed -= OnEnemyKilled;
+            enemyManager.OnEnemyDestroyed -= OnEnemyKilled;
         }
     }
 }

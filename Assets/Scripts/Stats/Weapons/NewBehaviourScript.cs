@@ -66,8 +66,7 @@ public class WeaponData : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (Application.isPlaying)
-            Debug.LogError($"{name} ScriptableObject is being modified during Play Mode!");
+        
     }
 #endif
 }

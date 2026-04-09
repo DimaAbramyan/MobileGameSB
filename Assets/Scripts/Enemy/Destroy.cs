@@ -6,7 +6,7 @@ public class Destroy : MonoBehaviour
 {
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision != null && collision.gameObject.name != "MainHero")  
+        if (collision != null && collision.gameObject.GetComponent<Projectile>() != null)  
         {
             Destroy(collision.gameObject);
         }

@@ -7,6 +7,7 @@ public class ParentShip : MonoBehaviour, iDamagable
 {
     [Inject] SoundManager soundManager;
     [Inject] AudioDatabase audioDatabase;
+    [Inject] PlayerLevelVisualController playerLevelVisualController;
 
     [Header("Abilities")]
     [SerializeField] private ActiveAbility activeAbility;
@@ -70,6 +71,8 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Initialization
     public virtual void Awake()
     {
+
+
         MaximumHealthPoints = ShipData.maximumHealthPoints;
         MaximumShieldPoints = ShipData.maximumShieldPoints;
 
@@ -104,7 +107,7 @@ public class ParentShip : MonoBehaviour, iDamagable
         CurrentHealthPoints += heal;
         if (CurrentHealthPoints > MaximumHealthPoints)
         {
-            float difference = CurrentHealthPoints - MaximumHealthPoints ;
+            float difference = CurrentHealthPoints - MaximumHealthPoints;
             CurrentHealthPoints = MaximumHealthPoints;
             OnHealOverflow?.Invoke(difference);
         }
@@ -183,14 +186,17 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Leveling
     public int GetLevel() => currentLevel;
 
-    public void SetLevel(int newLevel) => currentLevel = newLevel;
+    public void SetLevel(int newLevel) 
+    {
+        currentLevel = newLevel;
+        OnLevelChanged?.Invoke(newLevel);
+    }
 
     public void LevelUp()
     {
         if (currentLevel >= 4) return;
         soundManager.PlaySound(audioDatabase.LevelUp, transform.position);
         currentLevel++;
-        Debug.Log($"Новый уровень: {currentLevel}");
         OnLevelChanged?.Invoke(currentLevel);
     }
     #endregion

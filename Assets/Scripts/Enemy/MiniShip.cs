@@ -15,7 +15,7 @@ public class MiniShip : Enemy
     private void Start()
     {
         rb = GetComponent <Rigidbody2D>();
-        player = FindObjectOfType<ParentShip>().gameObject;
+        player = FindAnyObjectByType<ParentShip>().gameObject;
     }
     private void Update()
     {

@@ -14,7 +14,7 @@ public class DoubleBuffPassiveAbility : PassiveAbility
         owner.OnLevelChanged -= OnOwnerLevelChanged;
     }
 
-    private void OnOwnerLevelChanged(int level)
+    private void OnOwnerLevelChanged(int ship)
     {
         if (isTriggeredByBuff) return;
         isTriggeredByBuff = true;

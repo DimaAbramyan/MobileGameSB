@@ -3,29 +3,31 @@ using Zenject;
 
 public class FightingInstaller : MonoInstaller
 {
+    [SerializeField]
+    PlayerLevelVisualController playerLevelVisualController;
+    [SerializeField]
+    PlayerController playerController;
     public override void InstallBindings()
     {
-        Debug.Log("========== FightingInstaller InstallBindings ==========");
+        Container.Bind<CreatePlayerShips>()
+            .FromComponentInHierarchy()
+            .AsSingle();
 
-        // Регистрируем CreatePlayerShips (нужен для FMODAttenuationService)
-        var createPlayerShips = FindObjectOfType<CreatePlayerShips>();
-        if (createPlayerShips != null)
-        {
-            Container.Bind<CreatePlayerShips>()
-                     .FromInstance(createPlayerShips)
-                     .AsSingle();
-            Debug.Log("✅ CreatePlayerShips registered");
-        }
-        else
-        {
-            Debug.LogError("❌ CreatePlayerShips not found in scene!");
-        }
-
-        // Регистрируем FMODAttenuationService
         Container.BindInterfacesTo<FMODAttenuationService>()
-                 .AsSingle();
-        Debug.Log("✅ FMODAttenuationService registered");
+            .AsSingle();
 
-        Debug.Log("========== FightingInstaller Complete ==========");
+        Container.Bind<PlayerLevelVisualController>()
+            .FromComponentInHierarchy()
+            .AsSingle();
+
+        Container.Bind<PlayerController>()
+            .FromComponentInHierarchy()
+            .AsSingle();
+
+        Container.Bind<ShipSelect>()
+            .FromComponentInHierarchy()
+            .AsSingle();
+
+        Container.Bind<EnemyManager>().AsSingle();
     }
 }

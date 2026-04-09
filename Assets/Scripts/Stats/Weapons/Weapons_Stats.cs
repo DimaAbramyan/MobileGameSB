@@ -1,8 +1,11 @@
 using UnityEngine;
 using System;
+using Zenject;
 
 public class Weapon : MonoBehaviour
 {
+    [Inject] DiContainer container;
+
     [SerializeField] protected Projectile projectilePrefab;
     [SerializeField] protected Transform projectileSpawn;
     [SerializeField] public  WeaponData weaponData;
@@ -89,7 +92,6 @@ public class Weapon : MonoBehaviour
             direction = transform.up,
             maxAngle = weaponData.AngleByLevel[level],
         };
-
         Projectile proj = Instantiate(projectilePrefab, projectileSpawn.position, Quaternion.identity);
         proj.Init(param,
                   weaponData.MovementStrategy,

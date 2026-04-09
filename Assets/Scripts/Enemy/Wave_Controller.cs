@@ -1,88 +1,68 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Zenject;
 
 
 public class WaveManager : MonoBehaviour
 {
+    [Inject] DiContainer container;
     [SerializeField] private GameObject GameOver;
     [SerializeField] private GameObject EndGame;
-    public GameObject[] waves; // Массив всех волн
-    private int currentWaveIndex = 0; // Индекс текущей волны
-    private float absTimer;
-    private bool IsPlaying = true;
+    public event Action OnWaveCleared;
+    private List<Wave> waves;
+    private int currentWaveIndex = 0;
+    private int levelID;
+    private void Awake()
+    {
+        waves = new List<Wave>();
+        levelID = LevelLoader.LevelIndex;
+        Debug.Log(levelID);
+        List<GameObject> loadedWaves = Resources.LoadAll<GameObject>("Levels/Level_" + levelID + "/").ToList<GameObject>();
+        foreach (GameObject prefab in loadedWaves)
+        {
+            GameObject Instance = 
+                container.InstantiatePrefab(prefab,
+                transform);
+            Wave waveInstance = Instance.GetComponent<Wave>();
+            waveInstance.Init(this);
+            Instance.SetActive(false);
+            waves.Add(waveInstance);
+        }
+        Debug.Log(waves[0].GetComponentsInChildren<Wave>().Length);
+    }
     void Start()
     {
         Time.timeScale = 1.0f;
         ActivateWave();
     }
-
-    void Update()
+    public void GoToNextWave()
     {
-        if (IsPlaying)
-        {
-            absTimer = waves[currentWaveIndex].GetComponent<Wave_Creating>().AbsoluteTimer;
-        //Debug.Log(AbsTimer);
-        // Проверяем текущую волну
-        
-            if (IsWaveCleared())
-            {
-                // Переход к следующей волне
-                currentWaveIndex++;
-                Debug.Log(currentWaveIndex);
-                if (currentWaveIndex < waves.Length)
-                {
-                    ActivateWave();
-                }
-                else
-                {
-                    ReturnToMap();
-                }
-            }
-        }
+        currentWaveIndex++;
+        ActivateWave();
     }
-
-    // Проверяем, уничтожены ли все враги текущей волны
-    private bool IsWaveCleared()
-    {
-        if (currentWaveIndex >= waves.Length) return false;
-
-        Transform wave = waves[currentWaveIndex].transform;
-        if (absTimer >= 0)
-        {
-            return false;
-        }
-        foreach (Transform child in wave)
-        {
-            //Debug.Log(child.name);  
-            if (child.GetComponentInChildren<Enemy>() != null)
-            {
-                return false;
-            }
-        }
-        absTimer = 4;
-        return true; // Все враги уничтожены
-    }
-    
-    // Активируем текущую волну
     private void ActivateWave()
     {
-        if (currentWaveIndex < waves.Length)
+        if (currentWaveIndex < waves.Count)
         {
             Activate();
+        }
+        else
+        {
+            ReturnToMap();
         }
     }
     private void Activate()
     {
-        waves[currentWaveIndex].SetActive(true);
-       // absTimer = waves[currentWaveIndex].GetComponent<Wave_Creating>().AbsoluteTimer;
+        waves[currentWaveIndex].gameObject.SetActive(true);
+        Debug.Log($"Активировали волну : " +waves[currentWaveIndex].gameObject.name);
     }
     void ReturnToMap()
     {
-        IsPlaying = false;
         EndGame.SetActive(true);
     }
     public void MainHeroIsDead()

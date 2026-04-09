@@ -12,9 +12,9 @@ public class CollectAllSaves : MonoBehaviour
     [SerializeField]
     public GameObject SaveThatChecked;
 
-    private void Awake()
+    private void Start()
     {
-        SaveThatChecked = FindObjectOfType<GotSaves>().gameObject;
+        SaveThatChecked = GameObject.Find("SaveHandler");
     }
     public void Collecting()
     {
@@ -28,10 +28,13 @@ public class CollectAllSaves : MonoBehaviour
                 shipName = save.save.shipName,
                 WeaponData = save.save.weaponData
             }).ToArray();
-
+            if (SaveThatChecked == null)
+            {
+                Debug.LogError("œ»«ƒ¿¿¿");
+            }
             SaveThatChecked.GetComponent<GotSaves>().allSaves.AllSavesThatLoaded = saveDataArray;
-            SceneManager.LoadScene(sceneID);
             DontDestroyOnLoad(SaveThatChecked.gameObject);
+            SceneManager.LoadScene(sceneID);
         }
         else
         {

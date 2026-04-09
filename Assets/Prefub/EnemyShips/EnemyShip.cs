@@ -5,9 +5,12 @@ using UnityEngine.UI;
 using UnityEngine;
 using TMPro;
 using static UnityEngine.GraphicsBuffer;
+using Zenject;
 
 public class Enemy : MonoBehaviour, iDamagable 
 {
+    [Inject] EnemyManager enemyManager;
+    [SerializeField] private bool DoHaveBuff = true;
     public bool isDead = false;
     [SerializeField] TextMeshPro DamageShowing;
     [SerializeField] public GameObject Buff;
@@ -17,32 +20,25 @@ public class Enemy : MonoBehaviour, iDamagable
     [SerializeField] protected float _fireRate;
     [SerializeField] protected float _damage;
     [SerializeField] protected float _speed;
-    DamageNumbPool damageToShow;
     Parameters par;
     private SpriteRenderer spriteRenderer;
     public void Awake()
     {
-        EnemyManager.instance.AddEnemy(this);
+        if (DoHaveBuff)
+        enemyManager.AddEnemy(this);
         spriteRenderer = GetComponent<SpriteRenderer>();
         
         if (Buff != null)
         {
             PointsCollector.MaxPoints += _maxHealth;
         }
-        damageToShow = FindObjectOfType<DamageNumbPool>();
         _currentHealth = _maxHealth;
         par = FindAnyObjectByType<Parameters>();
     }
     public void TakeDamage(float t)
     {
-        if (!spriteRenderer.isVisible)
-            return;
         GameObject ShowIcon = null;
         _currentHealth -= t;
-        if ((t > 3) && (par.IsParticlesOn))
-        {
-            ShowIcon = damageToShow.GetDamageNumber(t);
-        }
         if (healthBar != null)
         {
             healthBar.SetHealth(_currentHealth / (_maxHealth / 100));
@@ -66,9 +62,13 @@ public class Enemy : MonoBehaviour, iDamagable
         }
         if (this.Buff != null) 
         PointsCollector.Points += _maxHealth;
-        EnemyManager.instance.NotifyEnemyDestroyed(this);
+        enemyManager.NotifyEnemyDestroyed(this);
         isDead = true;
         Destroy(gameObject);
+    }
+    public bool CanContainBuff()
+    {
+        return DoHaveBuff;
     }
     
 }

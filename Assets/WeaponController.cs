@@ -26,14 +26,13 @@ public class WeaponController : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        Debug.Log(soundManager);
         foreach (Weapon weapon in weapons)
         {
             if (weapon == null) continue;
             if (weapon.TryToShoot())
             {
                 weapon.Reload(reloadMultiplier);
-                soundManager.PlaySound(weapon.weaponData.AudioClipProjectileShot, transform.position);
+                //soundManager.PlaySound(weapon.weaponData.AudioClipProjectileShot, transform.position);
             }
         }
     }
