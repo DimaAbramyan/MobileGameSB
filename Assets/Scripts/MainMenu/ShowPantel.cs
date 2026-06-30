@@ -7,15 +7,16 @@ using Zenject;
 public class ButtonState : MonoBehaviour
 {
     [Inject] PanelManager manager;
-    [SerializeField] public List<Sprite> SelectStatus; // 0 - НЕ выбран (бел), 1 - спрашивает (желт), 2 - выбран (зел)
+    [SerializeField] public List<Sprite> SelectStatus; // 0 - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ), 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅ), 2 - пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ)
     [SerializeField] private PanelVisual PanelToShow;
     Image Image;
     public void Awake()
     {
         Image = GetComponent<Image>();
     }
-    public void Start()
+    public IEnumerator Start()
     {
+        yield return null;
         SwitchImage();
     }
     public void OnEnable()
@@ -58,5 +59,9 @@ public class ButtonState : MonoBehaviour
 
         if (Image.sprite != null && SelectStatus[0] != null)
             Image.sprite = SelectStatus[id];
+            else
+        {
+            Debug.LogError("Image or SelectStatus[0] is null. Cannot change sprite.");
+        }
     }
 }

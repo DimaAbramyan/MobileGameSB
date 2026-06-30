@@ -13,10 +13,11 @@ public class Save : MonoBehaviour
     {
         save.shipName = "";
     }
-    public void Awake()
+    public void Start()
     {
-        if (TeamSave.Instance.AllSavesThatLoaded[id] != null)
+        if (TeamSave.Instance.AllSavesThatLoaded != null)
         {
+            Debug.Log("Loading save with ID: " + TeamSave.Instance.AllSavesThatLoaded[id]);
             save = TeamSave.Instance.AllSavesThatLoaded[id].ConvertToSaveShip();
         }
     }

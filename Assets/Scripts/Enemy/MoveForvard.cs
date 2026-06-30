@@ -13,12 +13,6 @@ public class MoveForvard : MonoBehaviour
     [SerializeField] float duration = 0;
     private float timeElapsed = 0f;
 
-    void Start()
-    {
-        
-    }
-
-
     void Update()
     {
         if (timeElapsed < duration)

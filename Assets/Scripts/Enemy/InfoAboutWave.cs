@@ -8,11 +8,14 @@ using Zenject;
 public class InfoAboutSubWave : MonoBehaviour
 {
     [Inject] EnemyManager enemyManager;
+    MovementSequencePlayer movementSequencePlayer;
     int childCount = 0;
+    [SerializeField] float timerOffset;
     List<Enemy> EnemiesInWave;
     public event Action OnSubWaveCleared;
     private void Awake()
     {
+        movementSequencePlayer = GetComponent<MovementSequencePlayer>();
         EnemiesInWave = transform.GetComponentsInChildren<Enemy>().Where(enemy => enemy.CanContainBuff() == true).ToList();
         childCount = EnemiesInWave.Count;
         enemyManager.OnEnemyDestroyed += WhenEnemyKilled;
@@ -21,6 +24,10 @@ public class InfoAboutSubWave : MonoBehaviour
     {
         if (enemyManager != null)
             enemyManager.OnEnemyDestroyed -= WhenEnemyKilled;
+    }
+    public void ActivateSubWave()
+    {
+        gameObject.SetActive(true);
     }
     public void WhenEnemyKilled(Enemy enemy)
     {
@@ -32,5 +39,9 @@ public class InfoAboutSubWave : MonoBehaviour
             OnSubWaveCleared?.Invoke();
             Debug.Log("”ничтожил волну");
         }
+    }
+    public float GetTimer()
+    {
+        return timerOffset;
     }
 }

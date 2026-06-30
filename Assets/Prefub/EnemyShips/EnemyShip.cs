@@ -22,8 +22,10 @@ public class Enemy : MonoBehaviour, iDamagable
     [SerializeField] protected float _speed;
     Parameters par;
     private SpriteRenderer spriteRenderer;
+    Animator animator;
     public void Awake()
     {
+        animator = GetComponent<Animator>();
         if (DoHaveBuff)
         enemyManager.AddEnemy(this);
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -64,7 +66,8 @@ public class Enemy : MonoBehaviour, iDamagable
         PointsCollector.Points += _maxHealth;
         enemyManager.NotifyEnemyDestroyed(this);
         isDead = true;
-        Destroy(gameObject);
+        animator.SetBool("IsDead", true);
+        //Destroy(gameObject);
     }
     public bool CanContainBuff()
     {

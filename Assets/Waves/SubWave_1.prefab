@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2177028273511885370}
   - component: {fileID: 6182381904124559754}
-  - component: {fileID: 2405485888880793351}
   - component: {fileID: 8849808309228302981}
+  - component: {fileID: -5129633981387451778}
   m_Layer: 0
   m_Name: SubWave_1
   m_TagString: Untagged
@@ -57,23 +57,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CountOfGettingBuff: 0
---- !u!114 &2405485888880793351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5716978262748324324}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2010e27f2ef5844d96f68b3d2affcc9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  looped: 0
-  speed: 0.005
-  startPos: {x: 0, y: 8, z: 0}
-  endPos: {x: 0, y: 5, z: 0}
-  duration: 2
 --- !u!114 &8849808309228302981
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86,6 +69,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe34cda70fd6df4887726ac04fc176e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-5129633981387451778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5716978262748324324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b121eaff293d07a4eb8359f6e4359f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovementSequencePlayer
+  movements:
+  - {fileID: 0}
 --- !u!1001 &162198570903736732
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -7,7 +7,7 @@ public class CheckIsAlive : MonoBehaviour
     Enemy check;
     void Start()
     {
-       check = GetComponentInChildren<Enemy>();
+        check = GetComponentInChildren<Enemy>();
     }
     
     void Update()

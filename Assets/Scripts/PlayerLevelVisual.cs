@@ -9,15 +9,11 @@ using Unity.VectorGraphics;
 public class PlayerLevelVisualController : MonoBehaviour
 {
     [Inject] ShipSelect shipSelect;
-    List<PlayerLevelVisual> levelVisuals;
+    [SerializeField]
+    List<Image> levelVisuals;
     List<ParentShip> ships;
     [SerializeField] Sprite HaveLevel;
     [SerializeField] Sprite DontHaveLevel; 
-    public void Awake()
-    {
-        levelVisuals = GetComponentsInChildren<PlayerLevelVisual>().ToList();
-        Debug.Log(levelVisuals.Count);
-    }
     public void Start()
     {
         ships = shipSelect.GetComponentsInChildren<ParentShip>().ToList();
@@ -30,7 +26,6 @@ public class PlayerLevelVisualController : MonoBehaviour
     private void OnEnable()
     {
         shipSelect.OnShipChanged += UpdateUI;
-        
     }
 
     private void OnDisable()
@@ -43,23 +38,16 @@ public class PlayerLevelVisualController : MonoBehaviour
     }
     public void UpdateUI(int level)
     {
-        Image currentImage;
-        foreach (PlayerLevelVisual item in levelVisuals)
+        foreach (Image item in levelVisuals)
         {
-            currentImage = item.GetComponent<Image>();
-            currentImage.sprite = DontHaveLevel;
+            item.sprite = DontHaveLevel;
         }
         int i = 0;
-        foreach (PlayerLevelVisual item in levelVisuals)
+        foreach (Image item in levelVisuals)
         {
-            currentImage = item.GetComponent<Image>();
             if (i < level)
             {
-                currentImage.sprite = HaveLevel;
-            }
-            else
-            {
-                currentImage.sprite = DontHaveLevel;
+                item.sprite = HaveLevel;
             }
             i++;
         }

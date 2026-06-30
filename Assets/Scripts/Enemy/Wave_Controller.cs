@@ -29,16 +29,14 @@ public class WaveManager : MonoBehaviour
                 container.InstantiatePrefab(prefab,
                 transform);
             Wave waveInstance = Instance.GetComponent<Wave>();
-            waveInstance.Init(this);
-            Instance.SetActive(false);
             waves.Add(waveInstance);
         }
         Debug.Log(waves[0].GetComponentsInChildren<Wave>().Length);
+        ActivateWave();
     }
     void Start()
     {
         Time.timeScale = 1.0f;
-        ActivateWave();
     }
     public void GoToNextWave()
     {
@@ -58,7 +56,7 @@ public class WaveManager : MonoBehaviour
     }
     private void Activate()
     {
-        waves[currentWaveIndex].gameObject.SetActive(true);
+        waves[currentWaveIndex].Init(this);
         Debug.Log($"Активировали волну : " +waves[currentWaveIndex].gameObject.name);
     }
     void ReturnToMap()

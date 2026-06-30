@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Zenject;
@@ -8,28 +9,51 @@ using Zenject;
 public class Wave : MonoBehaviour
 {
     [Inject] DiContainer container;
-    [SerializeField] public List<GameObject> WavesToCreate;
+    [SerializeField] public List<GameObject> SubWavesToCreate;
+    private List<InfoAboutSubWave> subWavesInfo;
     private int subWavesLeft;
     WaveManager waveManager;
     public void Init(WaveManager waveManager)
     {
         this.waveManager = waveManager;
 
-        List<GameObject> instantiatedWaves = new List<GameObject>();
+        subWavesInfo = new List<InfoAboutSubWave>();
 
-        subWavesLeft = WavesToCreate.Count;
-        Debug.Log("Все подволны: " + subWavesLeft);
-        foreach (GameObject wave in WavesToCreate)
+        subWavesLeft = SubWavesToCreate.Count;
+
+        foreach (GameObject prefab in SubWavesToCreate)
         {
-            GameObject waveInstance = container.InstantiatePrefab(wave, transform);
-
-            InfoAboutSubWave subWave = waveInstance.GetComponent<InfoAboutSubWave>();
+            GameObject instance = container.InstantiatePrefab(prefab, transform);
+            InfoAboutSubWave subWave = instance.GetComponent<InfoAboutSubWave>();
 
             subWave.OnSubWaveCleared += WhenSubWaveCleared;
 
-            instantiatedWaves.Add(waveInstance);
+            instance.SetActive(false);
+
+            subWavesInfo.Add(subWave);
         }
-        WavesToCreate = instantiatedWaves;
+        SpawnSubWave();
+    }
+    public void SpawnSubWave()
+    {
+        StartCoroutine(SpawnSubWavesRoutine());
+    }
+    IEnumerator SpawnSubWavesRoutine()
+    {
+        var ordered = subWavesInfo.OrderBy(s => s.GetTimer()).ToArray();
+        Debug.Log(ordered.Length);
+        float currentTime = 0f;
+
+        foreach (var subWave in ordered)
+        {
+            float waitTime = subWave.GetTimer() - currentTime;
+            yield return new WaitForSeconds(waitTime);
+
+            Debug.Log(waitTime);
+            subWave.ActivateSubWave();
+
+            currentTime = subWave.GetTimer();
+        }
     }
     public void WhenSubWaveCleared()
     {
@@ -43,10 +67,12 @@ public class Wave : MonoBehaviour
     }
     void OnDestroy()
     {
-        foreach (GameObject wave in WavesToCreate)
+        foreach (var subWave in subWavesInfo)
         {
-            if (wave != null)
-                wave.GetComponent<InfoAboutSubWave>().OnSubWaveCleared -= WhenSubWaveCleared;
+            if (subWave != null)
+                subWave.OnSubWaveCleared -= WhenSubWaveCleared;
         }
     }
+
+    
 }

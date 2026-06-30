@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 5212052724621385386}
   - component: {fileID: 2286018712511838222}
-  - component: {fileID: 5935893445771959307}
   - component: {fileID: 8082676324204806344}
+  - component: {fileID: 4426526533156841623}
   m_Layer: 0
   m_Name: 2
   m_TagString: Untagged
@@ -60,22 +60,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CountOfGettingBuff: 0
---- !u!114 &5935893445771959307
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5142897750625784009}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2010e27f2ef5844d96f68b3d2affcc9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 0.01
-  startPos: {x: 0, y: 0, z: 0}
-  endPos: {x: 0, y: 0, z: 0}
-  duration: 0
 --- !u!114 &8082676324204806344
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -88,6 +72,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe34cda70fd6df4887726ac04fc176e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4426526533156841623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142897750625784009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b121eaff293d07a4eb8359f6e4359f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MovementSequencePlayer
+  movements:
+  - {fileID: 11400000, guid: e8b0d45cb48ace342887c758ae4f82b9, type: 2}
 --- !u!1001 &1146305203165648926
 PrefabInstance:
   m_ObjectHideFlags: 0
