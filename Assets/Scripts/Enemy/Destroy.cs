@@ -6,9 +6,8 @@ public class Destroy : MonoBehaviour
 {
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision != null && collision.gameObject.GetComponent<Projectile>() != null)  
-        {
-            Destroy(collision.gameObject);
-        }
+        if (collision != null
+            && collision.gameObject.TryGetComponent(out Projectile projectile))
+            projectile.ReturnToPool();
     }
 }

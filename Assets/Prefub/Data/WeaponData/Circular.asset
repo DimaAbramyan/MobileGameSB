@@ -44,7 +44,29 @@ MonoBehaviour:
   - 2
   startLevel: 0
   maxLevel: 4
-  movementStrategy: {fileID: 11400000, guid: a197daabd22e98345a61d832ec4c71ca, type: 2}
-  impactBehavior: {fileID: 0}
-  continiousImpactBehavior: {fileID: 11400000, guid: 4dda88f85a1bf9b4d8e34dbcc37ae448, type: 2}
-  projectileBehaviour: []
+  flightMode: 0
+  contactMode: 1
+  homingRotationSpeed: 360
+  growDuringFlight: 0
+  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  projectileLifetime: 10
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 30
+  continuousDamageInterval: 0.25
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 

@@ -9,6 +9,7 @@ public class Weapon : MonoBehaviour
     [SerializeField] protected Projectile projectilePrefab;
     [SerializeField] protected Transform projectileSpawn;
     [SerializeField] public  WeaponData weaponData;
+    private ProjectilePoolController projectilePoolController;
 
     private ParentShip owner;
     private SpriteRenderer spriteRenderer;
@@ -92,13 +93,34 @@ public class Weapon : MonoBehaviour
             direction = transform.up,
             maxAngle = weaponData.AngleByLevel[level],
         };
-        Projectile proj = Instantiate(projectilePrefab, projectileSpawn.position, Quaternion.identity);
-        proj.Init(param,
-                  weaponData.MovementStrategy,
-                  weaponData.ImpactBehavior,
-                  weaponData.ContiniousImpactBehavior,
-                  weaponData.ProjectileBehaviour,
-                  owner);
+        if (projectilePoolController == null)
+            projectilePoolController = FindFirstObjectByType<ProjectilePoolController>();
+
+        Projectile proj = projectilePoolController != null
+            ? projectilePoolController.Spawn(projectilePrefab, projectileSpawn.position, Quaternion.identity)
+            : Instantiate(projectilePrefab, projectileSpawn.position, Quaternion.identity);
+
+        if (proj != null)
+        {
+            ProjectileRuntimeConfig runtimeConfig = new ProjectileRuntimeConfig
+            {
+                flightMode = weaponData.FlightMode,
+                contactMode = weaponData.ContactMode,
+                homingRotationSpeed = weaponData.HomingRotationSpeed,
+                growDuringFlight = weaponData.GrowDuringFlight,
+                scaleGrowthPerSecond = weaponData.ScaleGrowthPerSecond,
+                projectileLifetime = weaponData.ProjectileLifetime,
+                disableColliderAfterFirstPhysicsStep =
+                    weaponData.DisableColliderAfterFirstPhysicsStep,
+                fadeDuringLifetime = weaponData.FadeDuringLifetime,
+                fadeDuration = weaponData.FadeDuration,
+                explosionPrefab = weaponData.ExplosionPrefab,
+                explosionDamage = weaponData.ExplosionDamage,
+                continuousDamageInterval = weaponData.ContinuousDamageInterval
+            };
+
+            proj.Init(param, runtimeConfig, owner);
+        }
     }
 
     public void Reload(float multiplier)

@@ -68,7 +68,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe34cda70fd6df4887726ac04fc176e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timerOffset: 0
 --- !u!114 &-6191436727498644474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -81,8 +80,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b121eaff293d07a4eb8359f6e4359f08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovementSequencePlayer
-  movements:
-  - {fileID: 11400000, guid: 6c119a59aa7eaf6459debf2a08cf61fb, type: 2}
+  commands:
+  - type: 5
+    position: {x: 0, y: -7, z: 0}
+    duration: 0
+    ease: 0
+    degrees: 0
+    fromAction: 2
+    toAction: 3
+    repeatCount: 0
+    infinite: 1
+    waitDuration: 0
+    deactivateDuration: 1
+  - type: 0
+    position: {x: -1.5, y: 5.6, z: 0}
+    duration: 0
+    ease: 0
+    degrees: 0
+    fromAction: 1
+    toAction: 1
+    repeatCount: 0
+    infinite: 0
+    waitDuration: 0
+    deactivateDuration: 1
+  - type: 1
+    position: {x: 0, y: -11.2, z: 0}
+    duration: 10
+    ease: 1
+    degrees: 0
+    fromAction: 1
+    toAction: 1
+    repeatCount: 0
+    infinite: 0
+    waitDuration: 0
+    deactivateDuration: 1
+  - type: 1
+    position: {x: 0, y: 10, z: 0}
+    duration: 0
+    ease: 1
+    degrees: 0
+    fromAction: 2
+    toAction: 2
+    repeatCount: 0
+    infinite: 1
+    waitDuration: 0
+    deactivateDuration: 1
+  - type: 4
+    position: {x: 0, y: -7, z: 0}
+    duration: 0
+    ease: 0
+    degrees: 0
+    fromAction: 2
+    toAction: 3
+    repeatCount: 0
+    infinite: 1
+    waitDuration: 0
+    deactivateDuration: 1
+  movements: []
 --- !u!1001 &90554174879147571
 PrefabInstance:
   m_ObjectHideFlags: 0

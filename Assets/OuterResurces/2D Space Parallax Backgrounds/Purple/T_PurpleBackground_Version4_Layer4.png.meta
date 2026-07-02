@@ -1,0 +1,1820 @@
+fileFormatVersion: 2
+guid: 896eff9eb98f27748bba7d6af6105935
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7944517652563125729
+    second: T_PurpleBackground_Version4_Layer4_0
+  - first:
+      213: 3262823190815291285
+    second: T_PurpleBackground_Version4_Layer4_1
+  - first:
+      213: -589266532563890045
+    second: T_PurpleBackground_Version4_Layer4_2
+  - first:
+      213: -928974883356877447
+    second: T_PurpleBackground_Version4_Layer4_3
+  - first:
+      213: -1504369934102622288
+    second: T_PurpleBackground_Version4_Layer4_4
+  - first:
+      213: 7588358841900499615
+    second: T_PurpleBackground_Version4_Layer4_5
+  - first:
+      213: 1226299391486903813
+    second: T_PurpleBackground_Version4_Layer4_6
+  - first:
+      213: 8899295172202527734
+    second: T_PurpleBackground_Version4_Layer4_7
+  - first:
+      213: -2912310110156629912
+    second: T_PurpleBackground_Version4_Layer4_8
+  - first:
+      213: 8478623676738478264
+    second: T_PurpleBackground_Version4_Layer4_9
+  - first:
+      213: 4275988600508937844
+    second: T_PurpleBackground_Version4_Layer4_10
+  - first:
+      213: 4627784199439853829
+    second: T_PurpleBackground_Version4_Layer4_11
+  - first:
+      213: -4294985165956098252
+    second: T_PurpleBackground_Version4_Layer4_12
+  - first:
+      213: -3573906926574656488
+    second: T_PurpleBackground_Version4_Layer4_13
+  - first:
+      213: -5377672269113498715
+    second: T_PurpleBackground_Version4_Layer4_14
+  - first:
+      213: -5440548752806145030
+    second: T_PurpleBackground_Version4_Layer4_15
+  - first:
+      213: 2364381365263818099
+    second: T_PurpleBackground_Version4_Layer4_16
+  - first:
+      213: 4642540498977031767
+    second: T_PurpleBackground_Version4_Layer4_17
+  - first:
+      213: 1907740700565672925
+    second: T_PurpleBackground_Version4_Layer4_18
+  - first:
+      213: -1363595249258318940
+    second: T_PurpleBackground_Version4_Layer4_19
+  - first:
+      213: 1655696732426106939
+    second: T_PurpleBackground_Version4_Layer4_20
+  - first:
+      213: 372305114156070335
+    second: T_PurpleBackground_Version4_Layer4_21
+  - first:
+      213: -4138585994551451714
+    second: T_PurpleBackground_Version4_Layer4_22
+  - first:
+      213: 6922592687288061320
+    second: T_PurpleBackground_Version4_Layer4_23
+  - first:
+      213: 1582210793292653375
+    second: T_PurpleBackground_Version4_Layer4_24
+  - first:
+      213: -3595108537796796263
+    second: T_PurpleBackground_Version4_Layer4_25
+  - first:
+      213: 2997702240611980163
+    second: T_PurpleBackground_Version4_Layer4_26
+  - first:
+      213: 5792082316808293339
+    second: T_PurpleBackground_Version4_Layer4_27
+  - first:
+      213: -1660050587234004537
+    second: T_PurpleBackground_Version4_Layer4_28
+  - first:
+      213: 5718570441075674161
+    second: T_PurpleBackground_Version4_Layer4_29
+  - first:
+      213: -4075114413134211911
+    second: T_PurpleBackground_Version4_Layer4_30
+  - first:
+      213: 5114748318904137799
+    second: T_PurpleBackground_Version4_Layer4_31
+  - first:
+      213: -1862165169183624460
+    second: T_PurpleBackground_Version4_Layer4_32
+  - first:
+      213: -4769173468139037630
+    second: T_PurpleBackground_Version4_Layer4_33
+  - first:
+      213: 8995881949651826191
+    second: T_PurpleBackground_Version4_Layer4_34
+  - first:
+      213: 2761832870188666816
+    second: T_PurpleBackground_Version4_Layer4_35
+  - first:
+      213: -2790033896401489134
+    second: T_PurpleBackground_Version4_Layer4_36
+  - first:
+      213: -116882784134419856
+    second: T_PurpleBackground_Version4_Layer4_37
+  - first:
+      213: 167105025929253587
+    second: T_PurpleBackground_Version4_Layer4_38
+  - first:
+      213: -8514875098800894255
+    second: T_PurpleBackground_Version4_Layer4_39
+  - first:
+      213: 2397104855677510355
+    second: T_PurpleBackground_Version4_Layer4_40
+  - first:
+      213: 2230076645175687962
+    second: T_PurpleBackground_Version4_Layer4_41
+  - first:
+      213: 7451606149164411978
+    second: T_PurpleBackground_Version4_Layer4_42
+  - first:
+      213: 8945754598730261742
+    second: T_PurpleBackground_Version4_Layer4_43
+  - first:
+      213: -677553497280417968
+    second: T_PurpleBackground_Version4_Layer4_44
+  - first:
+      213: 1390656861253476453
+    second: T_PurpleBackground_Version4_Layer4_45
+  - first:
+      213: 8360853799931639871
+    second: T_PurpleBackground_Version4_Layer4_46
+  - first:
+      213: -4430391197711274527
+    second: T_PurpleBackground_Version4_Layer4_47
+  - first:
+      213: -519284353930299728
+    second: T_PurpleBackground_Version4_Layer4_48
+  - first:
+      213: -3578200884483302831
+    second: T_PurpleBackground_Version4_Layer4_49
+  - first:
+      213: -6248720029142390774
+    second: T_PurpleBackground_Version4_Layer4_50
+  - first:
+      213: 7721140666168116024
+    second: T_PurpleBackground_Version4_Layer4_51
+  - first:
+      213: 2364248538229956952
+    second: T_PurpleBackground_Version4_Layer4_52
+  - first:
+      213: 7337721392679232940
+    second: T_PurpleBackground_Version4_Layer4_53
+  - first:
+      213: 6113102376199576624
+    second: T_PurpleBackground_Version4_Layer4_54
+  - first:
+      213: -7361659805203760262
+    second: T_PurpleBackground_Version4_Layer4_55
+  - first:
+      213: -6283309561083763543
+    second: T_PurpleBackground_Version4_Layer4_56
+  - first:
+      213: 6555433319108648551
+    second: T_PurpleBackground_Version4_Layer4_57
+  - first:
+      213: 4846404519152783509
+    second: T_PurpleBackground_Version4_Layer4_58
+  - first:
+      213: 6495717340926237456
+    second: T_PurpleBackground_Version4_Layer4_59
+  - first:
+      213: -4811358127136905012
+    second: T_PurpleBackground_Version4_Layer4_60
+  - first:
+      213: -55045672226591862
+    second: T_PurpleBackground_Version4_Layer4_61
+  - first:
+      213: -1687698124046250189
+    second: T_PurpleBackground_Version4_Layer4_62
+  - first:
+      213: 3762072991820809497
+    second: T_PurpleBackground_Version4_Layer4_63
+  - first:
+      213: 2124754260330781021
+    second: T_PurpleBackground_Version4_Layer4_64
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_0
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 4091
+        width: 20
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1a972f69476fb190800000000000000
+      internalID: -7944517652563125729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_1
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 4064
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 597b375a760e74d20800000000000000
+      internalID: 3262823190815291285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_2
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 4025
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 380d080f53182d7f0800000000000000
+      internalID: -589266532563890045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_3
+      rect:
+        serializedVersion: 2
+        x: 1295
+        y: 4007
+        width: 31
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97dd048f34e9b13f0800000000000000
+      internalID: -928974883356877447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_4
+      rect:
+        serializedVersion: 2
+        x: 1613
+        y: 3982
+        width: 31
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bf0903f3876f1be0800000000000000
+      internalID: -1504369934102622288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_5
+      rect:
+        serializedVersion: 2
+        x: 1879
+        y: 3965
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f928caf69244f4960800000000000000
+      internalID: 7588358841900499615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_6
+      rect:
+        serializedVersion: 2
+        x: 1201
+        y: 3929
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 506cad1acc0b40110800000000000000
+      internalID: 1226299391486903813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_7
+      rect:
+        serializedVersion: 2
+        x: 1347
+        y: 3939
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6fbfa720fc5a08b70800000000000000
+      internalID: 8899295172202527734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_8
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 3903
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 868d55882656597d0800000000000000
+      internalID: -2912310110156629912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_9
+      rect:
+        serializedVersion: 2
+        x: 613
+        y: 3881
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b0a634ff4f1aa570800000000000000
+      internalID: 8478623676738478264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_10
+      rect:
+        serializedVersion: 2
+        x: 1013
+        y: 3860
+        width: 41
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47674fc1afc575b30800000000000000
+      internalID: 4275988600508937844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_11
+      rect:
+        serializedVersion: 2
+        x: 1487
+        y: 3857
+        width: 31
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50927c8d531393040800000000000000
+      internalID: 4627784199439853829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_12
+      rect:
+        serializedVersion: 2
+        x: 721
+        y: 3857
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4375d935fb52564c0800000000000000
+      internalID: -4294985165956098252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_13
+      rect:
+        serializedVersion: 2
+        x: 975
+        y: 3866
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 814a53de59ee66ec0800000000000000
+      internalID: -3573906926574656488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_14
+      rect:
+        serializedVersion: 2
+        x: 1050
+        y: 3852
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a36509309bae55b0800000000000000
+      internalID: -5377672269113498715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_15
+      rect:
+        serializedVersion: 2
+        x: 957
+        y: 3831
+        width: 10
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af39bcd0cb94f74b0800000000000000
+      internalID: -5440548752806145030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_16
+      rect:
+        serializedVersion: 2
+        x: 1055
+        y: 3826
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37d5a1e1358ffc020800000000000000
+      internalID: 2364381365263818099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_17
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 3802
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75604e09cfd9d6040800000000000000
+      internalID: 4642540498977031767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_18
+      rect:
+        serializedVersion: 2
+        x: 1052
+        y: 3815
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd395cc3f08a97a10800000000000000
+      internalID: 1907740700565672925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_19
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 3803
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a33c8e6859831de0800000000000000
+      internalID: -1363595249258318940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_20
+      rect:
+        serializedVersion: 2
+        x: 971
+        y: 3793
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b387808e7673af610800000000000000
+      internalID: 1655696732426106939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_21
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 3780
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb5755d5781ba2500800000000000000
+      internalID: 372305114156070335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_22
+      rect:
+        serializedVersion: 2
+        x: 1007
+        y: 3776
+        width: 6
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebf9a5217f9c096c0800000000000000
+      internalID: -4138585994551451714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_23
+      rect:
+        serializedVersion: 2
+        x: 1031
+        y: 3784
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88d85822f5df11060800000000000000
+      internalID: 6922592687288061320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_24
+      rect:
+        serializedVersion: 2
+        x: 1038
+        y: 3790
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f336ff5655425f510800000000000000
+      internalID: 1582210793292653375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_25
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 3747
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 990e5a325db9b1ec0800000000000000
+      internalID: -3595108537796796263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_26
+      rect:
+        serializedVersion: 2
+        x: 1818
+        y: 3749
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 383d11a2e4af99920800000000000000
+      internalID: 2997702240611980163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_27
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1505
+        width: 1981
+        height: 2232
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdb0e2bed2c916050800000000000000
+      internalID: 5792082316808293339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_28
+      rect:
+        serializedVersion: 2
+        x: 1597
+        y: 3728
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c11db649c056f8e0800000000000000
+      internalID: -1660050587234004537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_29
+      rect:
+        serializedVersion: 2
+        x: 2006
+        y: 3555
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13c4d5394817c5f40800000000000000
+      internalID: 5718570441075674161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 1056
+        height: 1907
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b49f0a38094277c0800000000000000
+      internalID: -4075114413134211911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_31
+      rect:
+        serializedVersion: 2
+        x: 1953
+        y: 2066
+        width: 95
+        height: 233
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 748bec73f7c3bf640800000000000000
+      internalID: 5114748318904137799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_32
+      rect:
+        serializedVersion: 2
+        x: 2021
+        y: 1684
+        width: 27
+        height: 141
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f274b115a24826e0800000000000000
+      internalID: -1862165169183624460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_33
+      rect:
+        serializedVersion: 2
+        x: 1171
+        y: 1271
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24cda57bffd70ddb0800000000000000
+      internalID: -4769173468139037630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_34
+      rect:
+        serializedVersion: 2
+        x: 1197
+        y: 0
+        width: 851
+        height: 1610
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f06785298fac7dc70800000000000000
+      internalID: 8995881949651826191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_35
+      rect:
+        serializedVersion: 2
+        x: 1098
+        y: 840
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cfc794dc50045620800000000000000
+      internalID: 2761832870188666816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_36
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 761
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 213b0b514fec749d0800000000000000
+      internalID: -2790033896401489134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_37
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 493
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07a2f432abfb06ef0800000000000000
+      internalID: -116882784134419856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_38
+      rect:
+        serializedVersion: 2
+        x: 1183
+        y: 468
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d212beb22da15200800000000000000
+      internalID: 167105025929253587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_39
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 195
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1de472d163615d980800000000000000
+      internalID: -8514875098800894255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_40
+      rect:
+        serializedVersion: 2
+        x: 1079
+        y: 191
+        width: 30
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d2a5047a2a344120800000000000000
+      internalID: 2397104855677510355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_41
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 195
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a1b7791b4e2d2fe10800000000000000
+      internalID: 2230076645175687962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_42
+      rect:
+        serializedVersion: 2
+        x: 1478
+        y: 186
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4caf07ff4c696760800000000000000
+      internalID: 7451606149164411978
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_43
+      rect:
+        serializedVersion: 2
+        x: 695
+        y: 179
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee462213964b52c70800000000000000
+      internalID: 8945754598730261742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_44
+      rect:
+        serializedVersion: 2
+        x: 1199
+        y: 161
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05fe64e1fa8d896f0800000000000000
+      internalID: -677553497280417968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_45
+      rect:
+        serializedVersion: 2
+        x: 1484
+        y: 180
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 560297b1c0b9c4310800000000000000
+      internalID: 1390656861253476453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_46
+      rect:
+        serializedVersion: 2
+        x: 1392
+        y: 161
+        width: 10
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3876ebbb38b70470800000000000000
+      internalID: 8360853799931639871
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_47
+      rect:
+        serializedVersion: 2
+        x: 1487
+        y: 152
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ede66ccda61482c0800000000000000
+      internalID: -4430391197711274527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_48
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 133
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b6f092a1a12bc8f0800000000000000
+      internalID: -519284353930299728
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_49
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 145
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15a5261f04da75ec0800000000000000
+      internalID: -3578200884483302831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_50
+      rect:
+        serializedVersion: 2
+        x: 1486
+        y: 143
+        width: 12
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a08691a9d361849a0800000000000000
+      internalID: -6248720029142390774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_51
+      rect:
+        serializedVersion: 2
+        x: 1397
+        y: 134
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83306cb0780072b60800000000000000
+      internalID: 7721140666168116024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_52
+      rect:
+        serializedVersion: 2
+        x: 1404
+        y: 124
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851eee9e48f7fc020800000000000000
+      internalID: 2364248538229956952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_53
+      rect:
+        serializedVersion: 2
+        x: 976
+        y: 0
+        width: 118
+        height: 126
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca52e6fcab2d4d560800000000000000
+      internalID: 7337721392679232940
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_54
+      rect:
+        serializedVersion: 2
+        x: 1427
+        y: 108
+        width: 18
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03cd8f8f83a16d450800000000000000
+      internalID: 6113102376199576624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_55
+      rect:
+        serializedVersion: 2
+        x: 1464
+        y: 112
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7bfe81396126d990800000000000000
+      internalID: -7361659805203760262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_56
+      rect:
+        serializedVersion: 2
+        x: 1469
+        y: 120
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a469cd9e333dc8a0800000000000000
+      internalID: -6283309561083763543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_57
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 95
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76e1b3e1fd399fa50800000000000000
+      internalID: 6555433319108648551
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_58
+      rect:
+        serializedVersion: 2
+        x: 405
+        y: 93
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 59013f99b33e14340800000000000000
+      internalID: 4846404519152783509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_59
+      rect:
+        serializedVersion: 2
+        x: 335
+        y: 52
+        width: 36
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01bd04b718c652a50800000000000000
+      internalID: 6495717340926237456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_60
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 65
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc8e0d8664f9a3db0800000000000000
+      internalID: -4811358127136905012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_61
+      rect:
+        serializedVersion: 2
+        x: 341
+        y: 22
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8be284b0407c3ff0800000000000000
+      internalID: -55045672226591862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_62
+      rect:
+        serializedVersion: 2
+        x: 802
+        y: 33
+        width: 30
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33f412c7f771498e0800000000000000
+      internalID: -1687698124046250189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_63
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 0
+        width: 8
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91502982471953430800000000000000
+      internalID: 3762072991820809497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_PurpleBackground_Version4_Layer4_64
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 9
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d59930a0eb4ac7d10800000000000000
+      internalID: 2124754260330781021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      T_PurpleBackground_Version4_Layer4_0: -7944517652563125729
+      T_PurpleBackground_Version4_Layer4_1: 3262823190815291285
+      T_PurpleBackground_Version4_Layer4_10: 4275988600508937844
+      T_PurpleBackground_Version4_Layer4_11: 4627784199439853829
+      T_PurpleBackground_Version4_Layer4_12: -4294985165956098252
+      T_PurpleBackground_Version4_Layer4_13: -3573906926574656488
+      T_PurpleBackground_Version4_Layer4_14: -5377672269113498715
+      T_PurpleBackground_Version4_Layer4_15: -5440548752806145030
+      T_PurpleBackground_Version4_Layer4_16: 2364381365263818099
+      T_PurpleBackground_Version4_Layer4_17: 4642540498977031767
+      T_PurpleBackground_Version4_Layer4_18: 1907740700565672925
+      T_PurpleBackground_Version4_Layer4_19: -1363595249258318940
+      T_PurpleBackground_Version4_Layer4_2: -589266532563890045
+      T_PurpleBackground_Version4_Layer4_20: 1655696732426106939
+      T_PurpleBackground_Version4_Layer4_21: 372305114156070335
+      T_PurpleBackground_Version4_Layer4_22: -4138585994551451714
+      T_PurpleBackground_Version4_Layer4_23: 6922592687288061320
+      T_PurpleBackground_Version4_Layer4_24: 1582210793292653375
+      T_PurpleBackground_Version4_Layer4_25: -3595108537796796263
+      T_PurpleBackground_Version4_Layer4_26: 2997702240611980163
+      T_PurpleBackground_Version4_Layer4_27: 5792082316808293339
+      T_PurpleBackground_Version4_Layer4_28: -1660050587234004537
+      T_PurpleBackground_Version4_Layer4_29: 5718570441075674161
+      T_PurpleBackground_Version4_Layer4_3: -928974883356877447
+      T_PurpleBackground_Version4_Layer4_30: -4075114413134211911
+      T_PurpleBackground_Version4_Layer4_31: 5114748318904137799
+      T_PurpleBackground_Version4_Layer4_32: -1862165169183624460
+      T_PurpleBackground_Version4_Layer4_33: -4769173468139037630
+      T_PurpleBackground_Version4_Layer4_34: 8995881949651826191
+      T_PurpleBackground_Version4_Layer4_35: 2761832870188666816
+      T_PurpleBackground_Version4_Layer4_36: -2790033896401489134
+      T_PurpleBackground_Version4_Layer4_37: -116882784134419856
+      T_PurpleBackground_Version4_Layer4_38: 167105025929253587
+      T_PurpleBackground_Version4_Layer4_39: -8514875098800894255
+      T_PurpleBackground_Version4_Layer4_4: -1504369934102622288
+      T_PurpleBackground_Version4_Layer4_40: 2397104855677510355
+      T_PurpleBackground_Version4_Layer4_41: 2230076645175687962
+      T_PurpleBackground_Version4_Layer4_42: 7451606149164411978
+      T_PurpleBackground_Version4_Layer4_43: 8945754598730261742
+      T_PurpleBackground_Version4_Layer4_44: -677553497280417968
+      T_PurpleBackground_Version4_Layer4_45: 1390656861253476453
+      T_PurpleBackground_Version4_Layer4_46: 8360853799931639871
+      T_PurpleBackground_Version4_Layer4_47: -4430391197711274527
+      T_PurpleBackground_Version4_Layer4_48: -519284353930299728
+      T_PurpleBackground_Version4_Layer4_49: -3578200884483302831
+      T_PurpleBackground_Version4_Layer4_5: 7588358841900499615
+      T_PurpleBackground_Version4_Layer4_50: -6248720029142390774
+      T_PurpleBackground_Version4_Layer4_51: 7721140666168116024
+      T_PurpleBackground_Version4_Layer4_52: 2364248538229956952
+      T_PurpleBackground_Version4_Layer4_53: 7337721392679232940
+      T_PurpleBackground_Version4_Layer4_54: 6113102376199576624
+      T_PurpleBackground_Version4_Layer4_55: -7361659805203760262
+      T_PurpleBackground_Version4_Layer4_56: -6283309561083763543
+      T_PurpleBackground_Version4_Layer4_57: 6555433319108648551
+      T_PurpleBackground_Version4_Layer4_58: 4846404519152783509
+      T_PurpleBackground_Version4_Layer4_59: 6495717340926237456
+      T_PurpleBackground_Version4_Layer4_6: 1226299391486903813
+      T_PurpleBackground_Version4_Layer4_60: -4811358127136905012
+      T_PurpleBackground_Version4_Layer4_61: -55045672226591862
+      T_PurpleBackground_Version4_Layer4_62: -1687698124046250189
+      T_PurpleBackground_Version4_Layer4_63: 3762072991820809497
+      T_PurpleBackground_Version4_Layer4_64: 2124754260330781021
+      T_PurpleBackground_Version4_Layer4_7: 8899295172202527734
+      T_PurpleBackground_Version4_Layer4_8: -2912310110156629912
+      T_PurpleBackground_Version4_Layer4_9: 8478623676738478264
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

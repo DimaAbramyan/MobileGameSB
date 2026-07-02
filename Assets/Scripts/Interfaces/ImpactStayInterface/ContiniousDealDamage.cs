@@ -9,7 +9,7 @@ public class ContiniousDealDamage : ContiniousImpactBehaviorSO
     {
         if (target != null)
         {
-            DealDamageManager.instanse.DealDamage(target, projectile);
+           // DealDamageManager.instanse.DealDamage(target, projectile);
         }
     }
 }

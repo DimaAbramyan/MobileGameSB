@@ -21,7 +21,10 @@ public class PlayerController : MonoBehaviour
     Vector3 _currentSpeed;
     Vector3 _currentPosition;
     private int activeTouchId = -1;
+    private float controlsLockedUntil;
     ShipSelect shipSelect;
+
+    public bool ControlsLocked => Time.time < controlsLockedUntil;
 
     void Awake()
     {
@@ -32,12 +35,30 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (ControlsLocked)
+            return;
+
         PositionController();
     }
 
     private void Update()
     {
+        if (ControlsLocked)
+            return;
+
         ShipController();
+    }
+
+    public void LockControls(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        controlsLockedUntil = Mathf.Max(
+            controlsLockedUntil,
+            Time.time + duration);
+
+        activeTouchId = -1;
     }
 
     private void PositionController()
@@ -96,7 +117,7 @@ public class PlayerController : MonoBehaviour
     }
 
     /// <summary>
-    /// Смена текущего корабля
+    /// РЎРјРµРЅР° С‚РµРєСѓС‰РµРіРѕ РєРѕСЂР°Р±Р»СЏ
     /// </summary>
     /// <param name="currShip"></param>
     public void ChangeShipData(ParentShip currShip)

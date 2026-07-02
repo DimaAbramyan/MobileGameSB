@@ -47,10 +47,8 @@ public class MiniShip : Enemy
     private void OnCollisionEnter2D(Collision2D collision)
     {
         ParentShip receiver = collision.gameObject.GetComponentInChildren<ParentShip>();
-        Debug.Log(receiver);
         if (receiver != null)
         {
-            receiver.TakeDamage(_damage);
             Destroy(gameObject);
         }
     }

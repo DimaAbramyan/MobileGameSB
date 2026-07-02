@@ -9,6 +9,9 @@ using Zenject;
 
 public class Enemy : MonoBehaviour, iDamagable 
 {
+    private static readonly int DeathStateHash =
+        Animator.StringToHash("Base Layer.Death");
+
     [Inject] EnemyManager enemyManager;
     [SerializeField] private bool DoHaveBuff = true;
     public bool isDead = false;
@@ -39,6 +42,9 @@ public class Enemy : MonoBehaviour, iDamagable
     }
     public void TakeDamage(float t)
     {
+        if (isDead)
+            return;
+
         GameObject ShowIcon = null;
         _currentHealth -= t;
         if (healthBar != null)
@@ -57,6 +63,9 @@ public class Enemy : MonoBehaviour, iDamagable
     public void Dying()
     {
         if (isDead) return;
+
+        isDead = true;
+
         if (GetComponent<IHaveBuff>() != null && Buff != null)
         {
             Instantiate(Buff, transform.position, Quaternion.identity);
@@ -64,10 +73,51 @@ public class Enemy : MonoBehaviour, iDamagable
         }
         if (this.Buff != null) 
         PointsCollector.Points += _maxHealth;
-        enemyManager.NotifyEnemyDestroyed(this);
-        isDead = true;
-        animator.SetBool("IsDead", true);
-        //Destroy(gameObject);
+
+        enemyManager?.NotifyEnemyDestroyed(this);
+        DisableCombat();
+
+        if (animator != null
+            && animator.runtimeAnimatorController != null
+            && animator.HasState(0, DeathStateHash))
+        {
+            animator.Play(DeathStateHash, 0, 0f);
+            return;
+        }
+
+        Debug.LogWarning(
+            $"Death animation is not configured for enemy {name}. Destroying immediately.",
+            this);
+        Destroy(gameObject);
+    }
+
+    private void DisableCombat()
+    {
+        foreach (Collider2D enemyCollider in GetComponentsInChildren<Collider2D>(true))
+            enemyCollider.enabled = false;
+
+        Rigidbody2D body = GetComponent<Rigidbody2D>();
+        if (body != null)
+        {
+            body.linearVelocity = Vector2.zero;
+            body.angularVelocity = 0f;
+            body.simulated = false;
+        }
+
+        foreach (MonoBehaviour behaviour in GetComponentsInChildren<MonoBehaviour>(true))
+        {
+            if (behaviour == this)
+                continue;
+
+            behaviour.StopAllCoroutines();
+            behaviour.enabled = false;
+        }
+    }
+
+    public void OnDeathAnimationFinished()
+    {
+        if (isDead)
+            Destroy(gameObject);
     }
     public bool CanContainBuff()
     {
@@ -75,4 +125,3 @@ public class Enemy : MonoBehaviour, iDamagable
     }
     
 }
-    

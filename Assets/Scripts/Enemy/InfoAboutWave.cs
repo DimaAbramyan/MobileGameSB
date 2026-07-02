@@ -10,7 +10,6 @@ public class InfoAboutSubWave : MonoBehaviour
     [Inject] EnemyManager enemyManager;
     MovementSequencePlayer movementSequencePlayer;
     int childCount = 0;
-    [SerializeField] float timerOffset;
     List<Enemy> EnemiesInWave;
     public event Action OnSubWaveCleared;
     private void Awake()
@@ -37,11 +36,7 @@ public class InfoAboutSubWave : MonoBehaviour
         if (childCount <= 0)
         {
             OnSubWaveCleared?.Invoke();
-            Debug.Log("Уничтожил волну");
+            Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ");
         }
-    }
-    public float GetTimer()
-    {
-        return timerOffset;
     }
 }

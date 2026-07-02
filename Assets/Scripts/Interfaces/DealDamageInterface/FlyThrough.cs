@@ -8,7 +8,7 @@ public class FlyThroughSO : ImpactBehaviorSO
 {
     public override void OnImpact(iDamagable target, Projectile projectile)
     {
-        if (target != null)
-            DealDamageManager.instanse.DealDamage(target, projectile);
+        //if (target != null)
+            //DealDamageManager.instanse.DealDamage(target, projectile);
     }
 }

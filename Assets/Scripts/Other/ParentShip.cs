@@ -82,7 +82,7 @@ public class ParentShip : MonoBehaviour, iDamagable
     public virtual void Start()
     {
         waveManager = FindAnyObjectByType<WaveManager>();
-        playerController = GetComponent<PlayerController>();
+        playerController = GetComponentInParent<PlayerController>();
 
 
         currentLevel = 0;
@@ -138,6 +138,12 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Damage
     public virtual void TakeDamage(float damage)
     {
+        if (playerController == null)
+            playerController = GetComponentInParent<PlayerController>();
+
+        if (playerController != null && playerController.ControlsLocked)
+            return;
+
         if (OnDamagePipeline != null)
         {
             foreach (Func<float, float> handler in OnDamagePipeline.GetInvocationList())

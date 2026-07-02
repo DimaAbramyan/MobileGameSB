@@ -8,4 +8,5 @@
   <Project Path="FMODUnity.csproj" />
   <Project Path="FMODUnityHaptics.csproj" />
   <Project Path="FMODUnityResonance.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>

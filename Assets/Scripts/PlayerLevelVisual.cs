@@ -11,7 +11,7 @@ public class PlayerLevelVisualController : MonoBehaviour
     [Inject] ShipSelect shipSelect;
     [SerializeField]
     List<Image> levelVisuals;
-    List<ParentShip> ships;
+    List<ParentShip> ships = new List<ParentShip>();
     [SerializeField] Sprite HaveLevel;
     [SerializeField] Sprite DontHaveLevel; 
     public void Start()
@@ -25,15 +25,19 @@ public class PlayerLevelVisualController : MonoBehaviour
     }
     private void OnEnable()
     {
-        shipSelect.OnShipChanged += UpdateUI;
+        if (shipSelect != null)
+            shipSelect.OnShipChanged += UpdateUI;
     }
 
     private void OnDisable()
     {
-        shipSelect.OnShipChanged -= UpdateUI; 
+        if (shipSelect != null)
+            shipSelect.OnShipChanged -= UpdateUI;
+
         foreach (ParentShip ship in ships)
         {
-            ship.OnLevelChanged -= UpdateUI;
+            if (ship != null)
+                ship.OnLevelChanged -= UpdateUI;
         }
     }
     public void UpdateUI(int level)

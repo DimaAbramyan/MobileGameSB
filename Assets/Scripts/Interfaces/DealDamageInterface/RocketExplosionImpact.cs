@@ -16,6 +16,6 @@ public class RocketExplosionImpact : ImpactBehaviorSO
             Quaternion.identity,
             null);
         exp.SetDamage(explosionDamage);
-        Destroy(projectile.gameObject);
+        projectile.ReturnToPool();
     }
 }

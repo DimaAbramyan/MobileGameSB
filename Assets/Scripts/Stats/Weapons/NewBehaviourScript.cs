@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using FMODUnity;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "NewShipData", menuName = "Game/Weapon Data")]
 public class WeaponData : ScriptableObject
@@ -17,10 +18,23 @@ public class WeaponData : ScriptableObject
     [SerializeField] private int maxLevel = 4;
 
     [Header("Behaviours")]
-    [SerializeField] private MovementStrategySO movementStrategy;
-    [SerializeField] private ImpactBehaviorSO impactBehavior;
-    [SerializeField] private ContiniousImpactBehaviorSO continiousImpactBehavior;
-    [SerializeField] private ProjectileBehaviourSO[] projectileBehaviour;
+    [FormerlySerializedAs("movementMode")]
+    [SerializeField] private ProjectileFlightMode flightMode = ProjectileFlightMode.Straight;
+    [SerializeField] private ProjectileContactMode contactMode = ProjectileContactMode.DamageAndDestroy;
+    [SerializeField] private float homingRotationSpeed = 360f;
+    [SerializeField] private bool growDuringFlight;
+    [SerializeField] private Vector2 scaleGrowthPerSecond = Vector2.one * 0.5f;
+
+    [Header("Lifetime")]
+    [SerializeField, Min(0.02f)] private float projectileLifetime = 10f;
+    [SerializeField] private bool disableColliderAfterFirstPhysicsStep;
+    [SerializeField] private bool fadeDuringLifetime;
+    [SerializeField, Min(0.02f)] private float fadeDuration = 0.5f;
+
+    [Header("Contact")]
+    [SerializeField] private Explode explosionPrefab;
+    [SerializeField] private float explosionDamage = 30f;
+    [SerializeField, Min(0.02f)] private float continuousDamageInterval = 0.25f;
 
     [Header("Audio")]
     [SerializeField] private EventReference audioClipDefault;
@@ -37,10 +51,19 @@ public class WeaponData : ScriptableObject
     public int StartLevel => startLevel;
     public int MaxLevel => maxLevel;
 
-    public MovementStrategySO MovementStrategy => movementStrategy;
-    public ImpactBehaviorSO ImpactBehavior => impactBehavior;
-    public ContiniousImpactBehaviorSO ContiniousImpactBehavior => continiousImpactBehavior;
-    public IReadOnlyList<ProjectileBehaviourSO> ProjectileBehaviour => projectileBehaviour;
+    public ProjectileFlightMode FlightMode => flightMode;
+    public ProjectileContactMode ContactMode => contactMode;
+    public float HomingRotationSpeed => homingRotationSpeed;
+    public bool GrowDuringFlight => growDuringFlight;
+    public Vector2 ScaleGrowthPerSecond => scaleGrowthPerSecond;
+    public float ProjectileLifetime => projectileLifetime;
+    public bool DisableColliderAfterFirstPhysicsStep =>
+        disableColliderAfterFirstPhysicsStep;
+    public bool FadeDuringLifetime => fadeDuringLifetime;
+    public float FadeDuration => fadeDuration;
+    public Explode ExplosionPrefab => explosionPrefab;
+    public float ExplosionDamage => explosionDamage;
+    public float ContinuousDamageInterval => continuousDamageInterval;
 
     public EventReference AudioClipDefault => audioClipDefault;
     public EventReference AudioClipProjectileShot => audioClipProjectileShot;
@@ -66,7 +89,11 @@ public class WeaponData : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        
+        projectileLifetime = Mathf.Max(0.02f, projectileLifetime);
+        fadeDuration = Mathf.Clamp(
+            fadeDuration,
+            0.02f,
+            projectileLifetime);
     }
 #endif
 }

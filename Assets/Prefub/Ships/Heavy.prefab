@@ -188,7 +188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cooldown: 45
-  owner: {fileID: 0}
+  owner: {fileID: 8805669471898869038}
   shieldPrefab: {fileID: 8305870783315438970, guid: 45a98c068b94d4144ab997fa6be83528, type: 3}
 --- !u!114 &-4343980810145654782
 MonoBehaviour:

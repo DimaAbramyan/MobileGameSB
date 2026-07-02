@@ -61,12 +61,25 @@ public class ShipSelect : MonoBehaviour
     }
 
 
-    List<ShipVisual> shipsVisual;
+    List<ShipVisual> shipsVisual = new List<ShipVisual>();
+
     void Awake()
     {
-        playerRB = GetComponent<PlayerController>();
-        shipsVisual = new List<ShipVisual>();
+        playerRB ??= GetComponent<PlayerController>();
+    }
+
+    public void InitializeShips()
+    {
+        playerRB ??= GetComponent<PlayerController>();
+        shipsVisual.Clear();
         CollectInfoAboutShips();
+
+        if (shipsVisual.Count == 0)
+        {
+            Debug.LogError("ShipSelect cannot initialize: no player ships were created.");
+            return;
+        }
+
         InitFirstShip();
     }
     public void OnEnable()
@@ -80,7 +93,7 @@ public class ShipSelect : MonoBehaviour
     void CollectInfoAboutShips()
     {
         int i = 0;
-        List<ParentShip> ships = FindAnyObjectByType<PlayerController>().GetComponentsInChildren<ParentShip>().ToList();
+        List<ParentShip> ships = GetComponentsInChildren<ParentShip>(true).ToList();
         foreach (ParentShip ship in ships)
         {
             shipsVisual.Add(new ShipVisual(i, ship.ShipData.shipId, ship.GetComponent<SpriteRenderer>(), ship.GetComponent<Collider2D>(), ship.GetComponentsInChildren<Weapon>().ToList()));
@@ -94,29 +107,37 @@ public class ShipSelect : MonoBehaviour
         foreach (Transform child in transform)
         {
             ParentShip ship = child.GetComponent<ParentShip>();
-            child.GetComponent<WeaponController>().Init(ship);
             if (ship == null)
                 continue;
+
+            WeaponController weaponController = child.GetComponent<WeaponController>();
+            if (weaponController == null)
+            {
+                Debug.LogError($"WeaponController is missing on ship {ship.name}.");
+                continue;
+            }
+
+            weaponController.Init(ship);
             if (i == 0)
             {
                 OnShipChanged?.Invoke(ship.GetLevel());
                 playerRB.ChangeShipData(ship);
                 shipsVisual[i].ShowShip();
                 ship.ShowShip();
-                ship.GetComponent<WeaponController>().ShowWeapons();
+                weaponController.ShowWeapons();
             }
             else
             {
                 shipsVisual[i].HideShip();
                 ship.HideShip();
-                ship.GetComponent<WeaponController>().HideWeapons();
+                weaponController.HideWeapons();
             }
             i++;
         }
     }
     public void SwitchShip()
     {
-        WeaponController controller = new WeaponController();
+        WeaponController controller = null;
         int i = 0;
         foreach (Transform child in transform)
         {
@@ -139,6 +160,6 @@ public class ShipSelect : MonoBehaviour
             }
             i++;
         }
-        controller.ShowWeapons();
+        controller?.ShowWeapons();
     }
 }

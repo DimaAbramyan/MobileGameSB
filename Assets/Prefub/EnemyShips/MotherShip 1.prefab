@@ -87,6 +87,7 @@ GameObject:
   - component: {fileID: 7215484021747695753}
   - component: {fileID: 5103314237464159404}
   - component: {fileID: 5956947415747151793}
+  - component: {fileID: 910000000000000003}
   m_Layer: 9
   m_Name: MotherShip 1
   m_TagString: Enemy
@@ -94,6 +95,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &910000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2026090162212468704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71ab3dad966b4596b383b4a4ff5e847e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contactDamage: 5
+  impactCooldown: 0.5
+  controlLockDuration: 0.5
+  baseImpulse: 30
+  velocityMultiplier: 3.75
+  maximumImpulse: 70
 --- !u!4 &893814678715784961
 Transform:
   m_ObjectHideFlags: 0

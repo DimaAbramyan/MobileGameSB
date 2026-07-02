@@ -1,0 +1,1820 @@
+fileFormatVersion: 2
+guid: 527c733c9ba60fd4badf29cd96a8244e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3268113938147042720
+    second: T_YellowBackground_Version4_Layer4_0
+  - first:
+      213: -8845588373176618928
+    second: T_YellowBackground_Version4_Layer4_1
+  - first:
+      213: -7765404295391642355
+    second: T_YellowBackground_Version4_Layer4_2
+  - first:
+      213: -2344719997681401757
+    second: T_YellowBackground_Version4_Layer4_3
+  - first:
+      213: 1747022368090734772
+    second: T_YellowBackground_Version4_Layer4_4
+  - first:
+      213: 6630358653648050888
+    second: T_YellowBackground_Version4_Layer4_5
+  - first:
+      213: 7298296034767663713
+    second: T_YellowBackground_Version4_Layer4_6
+  - first:
+      213: 331956471051145419
+    second: T_YellowBackground_Version4_Layer4_7
+  - first:
+      213: 1050216866411611045
+    second: T_YellowBackground_Version4_Layer4_8
+  - first:
+      213: 4512423434261045857
+    second: T_YellowBackground_Version4_Layer4_9
+  - first:
+      213: 8868638497238268625
+    second: T_YellowBackground_Version4_Layer4_10
+  - first:
+      213: -6728635092713858559
+    second: T_YellowBackground_Version4_Layer4_11
+  - first:
+      213: 8460442500846381237
+    second: T_YellowBackground_Version4_Layer4_12
+  - first:
+      213: -4496257664157685256
+    second: T_YellowBackground_Version4_Layer4_13
+  - first:
+      213: 4036979714242557969
+    second: T_YellowBackground_Version4_Layer4_14
+  - first:
+      213: -172266465050963744
+    second: T_YellowBackground_Version4_Layer4_15
+  - first:
+      213: -7445300502822523239
+    second: T_YellowBackground_Version4_Layer4_16
+  - first:
+      213: 8262854826309552638
+    second: T_YellowBackground_Version4_Layer4_17
+  - first:
+      213: 5699772702597527710
+    second: T_YellowBackground_Version4_Layer4_18
+  - first:
+      213: -6878500195228041106
+    second: T_YellowBackground_Version4_Layer4_19
+  - first:
+      213: 7421035650456436935
+    second: T_YellowBackground_Version4_Layer4_20
+  - first:
+      213: -750773538451533824
+    second: T_YellowBackground_Version4_Layer4_21
+  - first:
+      213: 7261858580604371353
+    second: T_YellowBackground_Version4_Layer4_22
+  - first:
+      213: 9188855666780954253
+    second: T_YellowBackground_Version4_Layer4_23
+  - first:
+      213: 1664321355261564535
+    second: T_YellowBackground_Version4_Layer4_24
+  - first:
+      213: 5013837638775695709
+    second: T_YellowBackground_Version4_Layer4_25
+  - first:
+      213: -4387769100880111569
+    second: T_YellowBackground_Version4_Layer4_26
+  - first:
+      213: 2020757035283016800
+    second: T_YellowBackground_Version4_Layer4_27
+  - first:
+      213: 1931337800788626219
+    second: T_YellowBackground_Version4_Layer4_28
+  - first:
+      213: 8497137097846648582
+    second: T_YellowBackground_Version4_Layer4_29
+  - first:
+      213: -168251140722228358
+    second: T_YellowBackground_Version4_Layer4_30
+  - first:
+      213: 5380320448610868142
+    second: T_YellowBackground_Version4_Layer4_31
+  - first:
+      213: -6785534186860702727
+    second: T_YellowBackground_Version4_Layer4_32
+  - first:
+      213: -9130568586277524337
+    second: T_YellowBackground_Version4_Layer4_33
+  - first:
+      213: -7100258452158543630
+    second: T_YellowBackground_Version4_Layer4_34
+  - first:
+      213: 7397493717372080981
+    second: T_YellowBackground_Version4_Layer4_35
+  - first:
+      213: 8068704840586413855
+    second: T_YellowBackground_Version4_Layer4_36
+  - first:
+      213: -9139272482949731954
+    second: T_YellowBackground_Version4_Layer4_37
+  - first:
+      213: -5158883492528896988
+    second: T_YellowBackground_Version4_Layer4_38
+  - first:
+      213: 768827085474129701
+    second: T_YellowBackground_Version4_Layer4_39
+  - first:
+      213: -2208826867923892113
+    second: T_YellowBackground_Version4_Layer4_40
+  - first:
+      213: 5147725055279903123
+    second: T_YellowBackground_Version4_Layer4_41
+  - first:
+      213: 5793742632006281279
+    second: T_YellowBackground_Version4_Layer4_42
+  - first:
+      213: 1231414906393908147
+    second: T_YellowBackground_Version4_Layer4_43
+  - first:
+      213: -8117318870708566057
+    second: T_YellowBackground_Version4_Layer4_44
+  - first:
+      213: -608797004621829644
+    second: T_YellowBackground_Version4_Layer4_45
+  - first:
+      213: 7103333912007729181
+    second: T_YellowBackground_Version4_Layer4_46
+  - first:
+      213: 4431567880251652822
+    second: T_YellowBackground_Version4_Layer4_47
+  - first:
+      213: -3510558249777706683
+    second: T_YellowBackground_Version4_Layer4_48
+  - first:
+      213: -3217730035838833252
+    second: T_YellowBackground_Version4_Layer4_49
+  - first:
+      213: -6903071961867329362
+    second: T_YellowBackground_Version4_Layer4_50
+  - first:
+      213: -190734419354265822
+    second: T_YellowBackground_Version4_Layer4_51
+  - first:
+      213: 3007006937842919753
+    second: T_YellowBackground_Version4_Layer4_52
+  - first:
+      213: -3285502018175573831
+    second: T_YellowBackground_Version4_Layer4_53
+  - first:
+      213: -7187163932955291228
+    second: T_YellowBackground_Version4_Layer4_54
+  - first:
+      213: 8804672957091553816
+    second: T_YellowBackground_Version4_Layer4_55
+  - first:
+      213: 637534941250320923
+    second: T_YellowBackground_Version4_Layer4_56
+  - first:
+      213: 8929377783434831459
+    second: T_YellowBackground_Version4_Layer4_57
+  - first:
+      213: 6894212540265048697
+    second: T_YellowBackground_Version4_Layer4_58
+  - first:
+      213: 4629535888188061140
+    second: T_YellowBackground_Version4_Layer4_59
+  - first:
+      213: 5355578488076288750
+    second: T_YellowBackground_Version4_Layer4_60
+  - first:
+      213: -3673620611339004304
+    second: T_YellowBackground_Version4_Layer4_61
+  - first:
+      213: -5765594334278707319
+    second: T_YellowBackground_Version4_Layer4_62
+  - first:
+      213: -2502812186542561403
+    second: T_YellowBackground_Version4_Layer4_63
+  - first:
+      213: 1231663035906837158
+    second: T_YellowBackground_Version4_Layer4_64
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_0
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 4091
+        width: 20
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a5e1c0cf4caa5d20800000000000000
+      internalID: 3268113938147042720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_1
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 4064
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0507b739d382e3580800000000000000
+      internalID: -8845588373176618928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_2
+      rect:
+        serializedVersion: 2
+        x: 1069
+        y: 4025
+        width: 14
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0d73ebafedbb3490800000000000000
+      internalID: -7765404295391642355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_3
+      rect:
+        serializedVersion: 2
+        x: 1295
+        y: 4007
+        width: 31
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3600270c591e57fd0800000000000000
+      internalID: -2344719997681401757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_4
+      rect:
+        serializedVersion: 2
+        x: 1613
+        y: 3982
+        width: 31
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b0c5b0769bae3810800000000000000
+      internalID: 1747022368090734772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_5
+      rect:
+        serializedVersion: 2
+        x: 1879
+        y: 3965
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ca112cf014c30c50800000000000000
+      internalID: 6630358653648050888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_6
+      rect:
+        serializedVersion: 2
+        x: 1201
+        y: 3929
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 162f7f95391c84560800000000000000
+      internalID: 7298296034767663713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_7
+      rect:
+        serializedVersion: 2
+        x: 1347
+        y: 3939
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bc055e1d6a85b9400800000000000000
+      internalID: 331956471051145419
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_8
+      rect:
+        serializedVersion: 2
+        x: 813
+        y: 3903
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a3869bfcae139e00800000000000000
+      internalID: 1050216866411611045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_9
+      rect:
+        serializedVersion: 2
+        x: 613
+        y: 3881
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1622743a4395f9e30800000000000000
+      internalID: 4512423434261045857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_10
+      rect:
+        serializedVersion: 2
+        x: 1013
+        y: 3860
+        width: 41
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dabd35a9bbb31b70800000000000000
+      internalID: 8868638497238268625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_11
+      rect:
+        serializedVersion: 2
+        x: 1487
+        y: 3857
+        width: 31
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 10a109378061f92a0800000000000000
+      internalID: -6728635092713858559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_12
+      rect:
+        serializedVersion: 2
+        x: 721
+        y: 3857
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b8e09111a7896570800000000000000
+      internalID: 8460442500846381237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_13
+      rect:
+        serializedVersion: 2
+        x: 975
+        y: 3866
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f9e0450a751a91c0800000000000000
+      internalID: -4496257664157685256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_14
+      rect:
+        serializedVersion: 2
+        x: 1050
+        y: 3852
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 118b2e849ab360830800000000000000
+      internalID: 4036979714242557969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_15
+      rect:
+        serializedVersion: 2
+        x: 957
+        y: 3831
+        width: 10
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e0dcef009cfb9df0800000000000000
+      internalID: -172266465050963744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_16
+      rect:
+        serializedVersion: 2
+        x: 1055
+        y: 3826
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99ee93bb3aafca890800000000000000
+      internalID: -7445300502822523239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_17
+      rect:
+        serializedVersion: 2
+        x: 768
+        y: 3802
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef98dc0afae8ba270800000000000000
+      internalID: 8262854826309552638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_18
+      rect:
+        serializedVersion: 2
+        x: 1052
+        y: 3815
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e983bc60319a91f40800000000000000
+      internalID: 5699772702597527710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_19
+      rect:
+        serializedVersion: 2
+        x: 966
+        y: 3803
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e604afb2488aa80a0800000000000000
+      internalID: -6878500195228041106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_20
+      rect:
+        serializedVersion: 2
+        x: 971
+        y: 3793
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c047f21b90dcf660800000000000000
+      internalID: 7421035650456436935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_21
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 3780
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00055ddc177b495f0800000000000000
+      internalID: -750773538451533824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_22
+      rect:
+        serializedVersion: 2
+        x: 1007
+        y: 3776
+        width: 6
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 991cb0277ed47c460800000000000000
+      internalID: 7261858580604371353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_23
+      rect:
+        serializedVersion: 2
+        x: 1031
+        y: 3784
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8e50d65b8f558f70800000000000000
+      internalID: 9188855666780954253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_24
+      rect:
+        serializedVersion: 2
+        x: 1038
+        y: 3790
+        width: 13
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7765674647bd81710800000000000000
+      internalID: 1664321355261564535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_25
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 3747
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5965bc94cab49540800000000000000
+      internalID: 5013837638775695709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_26
+      rect:
+        serializedVersion: 2
+        x: 1818
+        y: 3749
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f281b9900438b13c0800000000000000
+      internalID: -4387769100880111569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_27
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1505
+        width: 1981
+        height: 2232
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06c6a6131db2b0c10800000000000000
+      internalID: 2020757035283016800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_28
+      rect:
+        serializedVersion: 2
+        x: 1597
+        y: 3728
+        width: 14
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2b4a454f7d7dca10800000000000000
+      internalID: 1931337800788626219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_29
+      rect:
+        serializedVersion: 2
+        x: 2006
+        y: 3555
+        width: 14
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60f61f4bb25ebe570800000000000000
+      internalID: 8497137097846648582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_30
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 1056
+        height: 1907
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a73823c9a704aadf0800000000000000
+      internalID: -168251140722228358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_31
+      rect:
+        serializedVersion: 2
+        x: 1953
+        y: 2066
+        width: 95
+        height: 233
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eab983d11fcbaaa40800000000000000
+      internalID: 5380320448610868142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_32
+      rect:
+        serializedVersion: 2
+        x: 2021
+        y: 1684
+        width: 27
+        height: 141
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f316ecbb90f4d1a0800000000000000
+      internalID: -6785534186860702727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_33
+      rect:
+        serializedVersion: 2
+        x: 1171
+        y: 1271
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8c66912f34b94180800000000000000
+      internalID: -9130568586277524337
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_34
+      rect:
+        serializedVersion: 2
+        x: 1197
+        y: 0
+        width: 851
+        height: 1610
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f800a97e80d67d90800000000000000
+      internalID: -7100258452158543630
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_35
+      rect:
+        serializedVersion: 2
+        x: 1098
+        y: 840
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5539524a75d29a660800000000000000
+      internalID: 7397493717372080981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_36
+      rect:
+        serializedVersion: 2
+        x: 1099
+        y: 761
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f17c0ac7d4cc9ff60800000000000000
+      internalID: 8068704840586413855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_37
+      rect:
+        serializedVersion: 2
+        x: 1057
+        y: 493
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8967444918ca2180800000000000000
+      internalID: -9139272482949731954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_38
+      rect:
+        serializedVersion: 2
+        x: 1183
+        y: 468
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4244036ebc6f768b0800000000000000
+      internalID: -5158883492528896988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_39
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 195
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 527626b292c6baa00800000000000000
+      internalID: 768827085474129701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_40
+      rect:
+        serializedVersion: 2
+        x: 1079
+        y: 191
+        width: 30
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f68ce0f9aaba851e0800000000000000
+      internalID: -2208826867923892113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_41
+      rect:
+        serializedVersion: 2
+        x: 1408
+        y: 195
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3913659f9a4607740800000000000000
+      internalID: 5147725055279903123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_42
+      rect:
+        serializedVersion: 2
+        x: 1478
+        y: 186
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3865cc2a32876050800000000000000
+      internalID: 5793742632006281279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_43
+      rect:
+        serializedVersion: 2
+        x: 695
+        y: 179
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b3dab2455dd61110800000000000000
+      internalID: 1231414906393908147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_44
+      rect:
+        serializedVersion: 2
+        x: 1199
+        y: 161
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7d747d69e7d795f80800000000000000
+      internalID: -8117318870708566057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_45
+      rect:
+        serializedVersion: 2
+        x: 1484
+        y: 180
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4f9a13f895e1d87f0800000000000000
+      internalID: -608797004621829644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_46
+      rect:
+        serializedVersion: 2
+        x: 1392
+        y: 161
+        width: 10
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d10e432de8c149260800000000000000
+      internalID: 7103333912007729181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_47
+      rect:
+        serializedVersion: 2
+        x: 1487
+        y: 152
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6da3e64f187108d30800000000000000
+      internalID: 4431567880251652822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_48
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 133
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 549ceae1fddf74fc0800000000000000
+      internalID: -3510558249777706683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_49
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 145
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9da8b6a4935853d0800000000000000
+      internalID: -3217730035838833252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_50
+      rect:
+        serializedVersion: 2
+        x: 1486
+        y: 143
+        width: 12
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea060fdef9c5330a0800000000000000
+      internalID: -6903071961867329362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_51
+      rect:
+        serializedVersion: 2
+        x: 1397
+        y: 134
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 227d2ff5e006a5df0800000000000000
+      internalID: -190734419354265822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_52
+      rect:
+        serializedVersion: 2
+        x: 1404
+        y: 124
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 949234fc0e80bb920800000000000000
+      internalID: 3007006937842919753
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_53
+      rect:
+        serializedVersion: 2
+        x: 976
+        y: 0
+        width: 118
+        height: 126
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9b0e0d1625d8762d0800000000000000
+      internalID: -3285502018175573831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_54
+      rect:
+        serializedVersion: 2
+        x: 1427
+        y: 108
+        width: 18
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a153b17b70124c90800000000000000
+      internalID: -7187163932955291228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_55
+      rect:
+        serializedVersion: 2
+        x: 1464
+        y: 112
+        width: 8
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8122ee2c76b703a70800000000000000
+      internalID: 8804672957091553816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_56
+      rect:
+        serializedVersion: 2
+        x: 1469
+        y: 120
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1aff19b6aaf8d800800000000000000
+      internalID: 637534941250320923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_57
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 95
+        width: 13
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 366e5eeb8c58beb70800000000000000
+      internalID: 8929377783434831459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_58
+      rect:
+        serializedVersion: 2
+        x: 405
+        y: 93
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97aaa8c37c92daf50800000000000000
+      internalID: 6894212540265048697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_59
+      rect:
+        serializedVersion: 2
+        x: 335
+        y: 52
+        width: 36
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d53f5aac5a6f3040800000000000000
+      internalID: 4629535888188061140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_60
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 65
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee2c2848246d25a40800000000000000
+      internalID: 5355578488076288750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_61
+      rect:
+        serializedVersion: 2
+        x: 341
+        y: 22
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 076d595848da40dc0800000000000000
+      internalID: -3673620611339004304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_62
+      rect:
+        serializedVersion: 2
+        x: 802
+        y: 33
+        width: 30
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 987105a108e7cffa0800000000000000
+      internalID: -5765594334278707319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_63
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 0
+        width: 8
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 587ac99a399344dd0800000000000000
+      internalID: -2502812186542561403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_YellowBackground_Version4_Layer4_64
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 9
+        height: 5
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6aac43a610fb71110800000000000000
+      internalID: 1231663035906837158
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      T_YellowBackground_Version4_Layer4_0: 3268113938147042720
+      T_YellowBackground_Version4_Layer4_1: -8845588373176618928
+      T_YellowBackground_Version4_Layer4_10: 8868638497238268625
+      T_YellowBackground_Version4_Layer4_11: -6728635092713858559
+      T_YellowBackground_Version4_Layer4_12: 8460442500846381237
+      T_YellowBackground_Version4_Layer4_13: -4496257664157685256
+      T_YellowBackground_Version4_Layer4_14: 4036979714242557969
+      T_YellowBackground_Version4_Layer4_15: -172266465050963744
+      T_YellowBackground_Version4_Layer4_16: -7445300502822523239
+      T_YellowBackground_Version4_Layer4_17: 8262854826309552638
+      T_YellowBackground_Version4_Layer4_18: 5699772702597527710
+      T_YellowBackground_Version4_Layer4_19: -6878500195228041106
+      T_YellowBackground_Version4_Layer4_2: -7765404295391642355
+      T_YellowBackground_Version4_Layer4_20: 7421035650456436935
+      T_YellowBackground_Version4_Layer4_21: -750773538451533824
+      T_YellowBackground_Version4_Layer4_22: 7261858580604371353
+      T_YellowBackground_Version4_Layer4_23: 9188855666780954253
+      T_YellowBackground_Version4_Layer4_24: 1664321355261564535
+      T_YellowBackground_Version4_Layer4_25: 5013837638775695709
+      T_YellowBackground_Version4_Layer4_26: -4387769100880111569
+      T_YellowBackground_Version4_Layer4_27: 2020757035283016800
+      T_YellowBackground_Version4_Layer4_28: 1931337800788626219
+      T_YellowBackground_Version4_Layer4_29: 8497137097846648582
+      T_YellowBackground_Version4_Layer4_3: -2344719997681401757
+      T_YellowBackground_Version4_Layer4_30: -168251140722228358
+      T_YellowBackground_Version4_Layer4_31: 5380320448610868142
+      T_YellowBackground_Version4_Layer4_32: -6785534186860702727
+      T_YellowBackground_Version4_Layer4_33: -9130568586277524337
+      T_YellowBackground_Version4_Layer4_34: -7100258452158543630
+      T_YellowBackground_Version4_Layer4_35: 7397493717372080981
+      T_YellowBackground_Version4_Layer4_36: 8068704840586413855
+      T_YellowBackground_Version4_Layer4_37: -9139272482949731954
+      T_YellowBackground_Version4_Layer4_38: -5158883492528896988
+      T_YellowBackground_Version4_Layer4_39: 768827085474129701
+      T_YellowBackground_Version4_Layer4_4: 1747022368090734772
+      T_YellowBackground_Version4_Layer4_40: -2208826867923892113
+      T_YellowBackground_Version4_Layer4_41: 5147725055279903123
+      T_YellowBackground_Version4_Layer4_42: 5793742632006281279
+      T_YellowBackground_Version4_Layer4_43: 1231414906393908147
+      T_YellowBackground_Version4_Layer4_44: -8117318870708566057
+      T_YellowBackground_Version4_Layer4_45: -608797004621829644
+      T_YellowBackground_Version4_Layer4_46: 7103333912007729181
+      T_YellowBackground_Version4_Layer4_47: 4431567880251652822
+      T_YellowBackground_Version4_Layer4_48: -3510558249777706683
+      T_YellowBackground_Version4_Layer4_49: -3217730035838833252
+      T_YellowBackground_Version4_Layer4_5: 6630358653648050888
+      T_YellowBackground_Version4_Layer4_50: -6903071961867329362
+      T_YellowBackground_Version4_Layer4_51: -190734419354265822
+      T_YellowBackground_Version4_Layer4_52: 3007006937842919753
+      T_YellowBackground_Version4_Layer4_53: -3285502018175573831
+      T_YellowBackground_Version4_Layer4_54: -7187163932955291228
+      T_YellowBackground_Version4_Layer4_55: 8804672957091553816
+      T_YellowBackground_Version4_Layer4_56: 637534941250320923
+      T_YellowBackground_Version4_Layer4_57: 8929377783434831459
+      T_YellowBackground_Version4_Layer4_58: 6894212540265048697
+      T_YellowBackground_Version4_Layer4_59: 4629535888188061140
+      T_YellowBackground_Version4_Layer4_6: 7298296034767663713
+      T_YellowBackground_Version4_Layer4_60: 5355578488076288750
+      T_YellowBackground_Version4_Layer4_61: -3673620611339004304
+      T_YellowBackground_Version4_Layer4_62: -5765594334278707319
+      T_YellowBackground_Version4_Layer4_63: -2502812186542561403
+      T_YellowBackground_Version4_Layer4_64: 1231663035906837158
+      T_YellowBackground_Version4_Layer4_7: 331956471051145419
+      T_YellowBackground_Version4_Layer4_8: 1050216866411611045
+      T_YellowBackground_Version4_Layer4_9: 4512423434261045857
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

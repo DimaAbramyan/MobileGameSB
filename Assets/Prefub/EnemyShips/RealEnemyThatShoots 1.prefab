@@ -415,6 +415,7 @@ GameObject:
   - component: {fileID: 5037478290123640376}
   - component: {fileID: 6096623289230616641}
   - component: {fileID: 8845289246894337151}
+  - component: {fileID: 910000000000000005}
   m_Layer: 9
   m_Name: RealEnemyThatShoots 1
   m_TagString: Enemy
@@ -422,6 +423,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &910000000000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6259211620933785818}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71ab3dad966b4596b383b4a4ff5e847e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  contactDamage: 5
+  impactCooldown: 0.5
+  controlLockDuration: 0.5
+  baseImpulse: 30
+  velocityMultiplier: 3.75
+  maximumImpulse: 70
 --- !u!4 &5496427839679504837
 Transform:
   m_ObjectHideFlags: 0

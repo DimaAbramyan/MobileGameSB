@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,22 +9,22 @@ public class LoadLevel : MonoBehaviour
     private bool IsThatRepat;
     [SerializeField]
     private int m_Level = 0;
+
     public void LoadScene()
     {
-        GameObject NotToDestroy = FindObjectOfType<TeamSave>().gameObject;
-        DontDestroyOnLoad(NotToDestroy);
+        int targetLevel;
+
         if (IsThatRepat)
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            LevelLoader.LevelIndex = (SceneManager.GetActiveScene().buildIndex);
-            return;
-        }
-        if (IsNextLevel)
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex+1);
-            LevelLoader.LevelIndex = SceneManager.GetActiveScene().buildIndex + 1;
-            return;
-        }
-        SceneManager.LoadScene(m_Level);
+            targetLevel = SceneManager.GetActiveScene().buildIndex;
+        else if (IsNextLevel)
+            targetLevel = SceneManager.GetActiveScene().buildIndex + 1;
+        else
+            targetLevel = m_Level;
+
+        if (targetLevel >= LevelLoader.FirstFightingSceneBuildIndex)
+            LevelLoader.LevelIndex = LevelLoader.GetLevelIndex(targetLevel);
+
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(targetLevel);
     }
 }

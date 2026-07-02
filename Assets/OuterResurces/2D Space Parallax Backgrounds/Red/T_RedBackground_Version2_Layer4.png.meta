@@ -1,0 +1,442 @@
+fileFormatVersion: 2
+guid: daf9116e02d8a9c44b8eadc5ddbccac0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7333043593923508954
+    second: T_RedBackground_Version2_Layer4_0
+  - first:
+      213: 1408724013613405809
+    second: T_RedBackground_Version2_Layer4_1
+  - first:
+      213: -3984655554942377124
+    second: T_RedBackground_Version2_Layer4_2
+  - first:
+      213: -3563393056822011456
+    second: T_RedBackground_Version2_Layer4_3
+  - first:
+      213: -2848700141623266903
+    second: T_RedBackground_Version2_Layer4_4
+  - first:
+      213: -728933909536872355
+    second: T_RedBackground_Version2_Layer4_5
+  - first:
+      213: 9035358739882030441
+    second: T_RedBackground_Version2_Layer4_6
+  - first:
+      213: 1416107585440574046
+    second: T_RedBackground_Version2_Layer4_7
+  - first:
+      213: -4005184282657541574
+    second: T_RedBackground_Version2_Layer4_8
+  - first:
+      213: 6473113267287144279
+    second: T_RedBackground_Version2_Layer4_9
+  - first:
+      213: -6250482327636946403
+    second: T_RedBackground_Version2_Layer4_10
+  - first:
+      213: -6085073613248979613
+    second: T_RedBackground_Version2_Layer4_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 221
+        width: 2048
+        height: 3875
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: adab34aeb4434c560800000000000000
+      internalID: 7333043593923508954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_1
+      rect:
+        serializedVersion: 2
+        x: 1276
+        y: 4065
+        width: 22
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1765df1d60bcc8310800000000000000
+      internalID: 1408724013613405809
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_2
+      rect:
+        serializedVersion: 2
+        x: 1564
+        y: 4075
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c536f5762e8a3b8c0800000000000000
+      internalID: -3984655554942377124
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_3
+      rect:
+        serializedVersion: 2
+        x: 1627
+        y: 218
+        width: 22
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c9d70df4e84c8ec0800000000000000
+      internalID: -3563393056822011456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_4
+      rect:
+        serializedVersion: 2
+        x: 1471
+        y: 197
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a1b0f270526778d0800000000000000
+      internalID: -2848700141623266903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_5
+      rect:
+        serializedVersion: 2
+        x: 855
+        y: 179
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d586159a87e42e5f0800000000000000
+      internalID: -728933909536872355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_6
+      rect:
+        serializedVersion: 2
+        x: 1529
+        y: 158
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 965b3ec07ea046d70800000000000000
+      internalID: 9035358739882030441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_7
+      rect:
+        serializedVersion: 2
+        x: 783
+        y: 146
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5aebe9985607a310800000000000000
+      internalID: 1416107585440574046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_8
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 120
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a3238348d1aba68c0800000000000000
+      internalID: -4005184282657541574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_9
+      rect:
+        serializedVersion: 2
+        x: 1673
+        y: 91
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 757b487783e15d950800000000000000
+      internalID: 6473113267287144279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_10
+      rect:
+        serializedVersion: 2
+        x: 1437
+        y: 58
+        width: 21
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d12d7528073d149a0800000000000000
+      internalID: -6250482327636946403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: T_RedBackground_Version2_Layer4_11
+      rect:
+        serializedVersion: 2
+        x: 1311
+        y: 35
+        width: 10
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36d1132f9c97d8ba0800000000000000
+      internalID: -6085073613248979613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      T_RedBackground_Version2_Layer4_0: 7333043593923508954
+      T_RedBackground_Version2_Layer4_1: 1408724013613405809
+      T_RedBackground_Version2_Layer4_10: -6250482327636946403
+      T_RedBackground_Version2_Layer4_11: -6085073613248979613
+      T_RedBackground_Version2_Layer4_2: -3984655554942377124
+      T_RedBackground_Version2_Layer4_3: -3563393056822011456
+      T_RedBackground_Version2_Layer4_4: -2848700141623266903
+      T_RedBackground_Version2_Layer4_5: -728933909536872355
+      T_RedBackground_Version2_Layer4_6: 9035358739882030441
+      T_RedBackground_Version2_Layer4_7: 1416107585440574046
+      T_RedBackground_Version2_Layer4_8: -4005184282657541574
+      T_RedBackground_Version2_Layer4_9: 6473113267287144279
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

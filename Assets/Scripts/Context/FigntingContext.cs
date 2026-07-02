@@ -4,6 +4,8 @@ using Zenject;
 public class FightingInstaller : MonoInstaller
 {
     [SerializeField]
+    ProjectilePoolController projectilePoolController;
+    [SerializeField]
     PlayerLevelVisualController playerLevelVisualController;
     [SerializeField]
     PlayerController playerController;
@@ -27,6 +29,10 @@ public class FightingInstaller : MonoInstaller
         Container.Bind<ShipSelect>()
             .FromComponentInHierarchy()
             .AsSingle();
+
+        Container.Bind<DealDamageManager>()
+            .AsSingle()
+            .IfNotBound();
 
         Container.Bind<EnemyManager>().AsSingle();
     }

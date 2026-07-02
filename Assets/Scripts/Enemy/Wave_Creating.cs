@@ -36,37 +36,30 @@ public class Wave : MonoBehaviour
     }
     public void SpawnSubWave()
     {
-        StartCoroutine(SpawnSubWavesRoutine());
+        SpawnSubWaves();
     }
-    IEnumerator SpawnSubWavesRoutine()
+    void SpawnSubWaves()
     {
-        var ordered = subWavesInfo.OrderBy(s => s.GetTimer()).ToArray();
-        Debug.Log(ordered.Length);
-        float currentTime = 0f;
-
-        foreach (var subWave in ordered)
+        foreach (var subWave in subWavesInfo)
         {
-            float waitTime = subWave.GetTimer() - currentTime;
-            yield return new WaitForSeconds(waitTime);
-
-            Debug.Log(waitTime);
             subWave.ActivateSubWave();
-
-            currentTime = subWave.GetTimer();
         }
     }
     public void WhenSubWaveCleared()
     {
         subWavesLeft--;
-        Debug.Log("Вызвали, осталось: " + subWavesLeft);
+        Debug.Log("Р’С‹Р·РІР°Р»Рё, РѕСЃС‚Р°Р»РѕСЃСЊ: " + subWavesLeft);
         if (subWavesLeft <= 0)
         {
-            waveManager.GoToNextWave();
+            waveManager?.GoToNextWave();
             Destroy(gameObject);
         }
     }
     void OnDestroy()
     {
+        if (subWavesInfo == null)
+            return;
+
         foreach (var subWave in subWavesInfo)
         {
             if (subWave != null)

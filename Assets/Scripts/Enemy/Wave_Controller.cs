@@ -19,8 +19,10 @@ public class WaveManager : MonoBehaviour
     private int levelID;
     private void Awake()
     {
+        Time.timeScale = 1f;
         waves = new List<Wave>();
-        levelID = LevelLoader.LevelIndex;
+        levelID = LevelLoader.GetLevelIndex(SceneManager.GetActiveScene().buildIndex);
+        LevelLoader.LevelIndex = levelID;
         Debug.Log(levelID);
         List<GameObject> loadedWaves = Resources.LoadAll<GameObject>("Levels/Level_" + levelID + "/").ToList<GameObject>();
         foreach (GameObject prefab in loadedWaves)
@@ -31,12 +33,19 @@ public class WaveManager : MonoBehaviour
             Wave waveInstance = Instance.GetComponent<Wave>();
             waves.Add(waveInstance);
         }
+
+        if (waves.Count == 0)
+        {
+            Debug.LogError($"No waves found for gameplay level {levelID}.");
+            return;
+        }
+
         Debug.Log(waves[0].GetComponentsInChildren<Wave>().Length);
         ActivateWave();
     }
     void Start()
     {
-        Time.timeScale = 1.0f;
+        Time.timeScale = 1f;
     }
     public void GoToNextWave()
     {
@@ -57,7 +66,7 @@ public class WaveManager : MonoBehaviour
     private void Activate()
     {
         waves[currentWaveIndex].Init(this);
-        Debug.Log($"Активировали волну : " +waves[currentWaveIndex].gameObject.name);
+        Debug.Log($"РђРєС‚РёРІРёСЂРѕРІР°Р»Рё РІРѕР»РЅСѓ : " +waves[currentWaveIndex].gameObject.name);
     }
     void ReturnToMap()
     {
