@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1747187658099963067}
   - component: {fileID: 6427467547313428841}
   - component: {fileID: 7130167820753412502}
+  - component: {fileID: 2925347647228451948}
   m_Layer: 8
   m_Name: BlackHole
   m_TagString: Player
@@ -114,6 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
   activeAbility: {fileID: 5531666038293898980}
   passiveAbility: {fileID: 1399229729108214746}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 3268154708046901353}
   ShipData: {fileID: 11400000, guid: 4f8412e53075b104ebf23726690ca4ff, type: 2}
   IsVisible: 0
@@ -216,6 +218,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.48546204, y: 0.43295503}
   m_EdgeRadius: 0
+--- !u!114 &2925347647228451948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0
@@ -262,6 +278,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetOffset: {x: 0, y: 0.3}
+  pickupSnapDistance: 0.08
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:

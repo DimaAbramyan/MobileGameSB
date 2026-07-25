@@ -18,12 +18,12 @@ public class IHaveBuff : MonoBehaviour
     {
         while (true)
         {
-            yield return StartCoroutine(ChangeColor(new Color(1f, 0.294f, 0.294f))); // Красный (255, 75, 75)
-            yield return StartCoroutine(ChangeColor(new Color(1f, 1f, 0.294f)));   // Жёлтый (255, 255, 75)
-            yield return StartCoroutine(ChangeColor(new Color(0.294f, 1f, 0.294f))); // Зелёный (75, 255, 75)
-            yield return StartCoroutine(ChangeColor(new Color(0.294f, 1f, 1f)));   // Голубой (75, 255, 255)
-            yield return StartCoroutine(ChangeColor(new Color(0.294f, 0.294f, 1f))); // Синий (75, 75, 255)
-            yield return StartCoroutine(ChangeColor(new Color(1f, 0.294f, 1f)));   // Фиолетовый (255, 75, 255)
+            yield return StartCoroutine(ChangeColor(new Color(1f, 0.294f, 0.294f))); // РљСЂР°СЃРЅС‹Р№ (255, 75, 75)
+            yield return StartCoroutine(ChangeColor(new Color(1f, 1f, 0.294f)));   // Р–С‘Р»С‚С‹Р№ (255, 255, 75)
+            yield return StartCoroutine(ChangeColor(new Color(0.294f, 1f, 0.294f))); // Р—РµР»С‘РЅС‹Р№ (75, 255, 75)
+            yield return StartCoroutine(ChangeColor(new Color(0.294f, 1f, 1f)));   // Р“РѕР»СѓР±РѕР№ (75, 255, 255)
+            yield return StartCoroutine(ChangeColor(new Color(0.294f, 0.294f, 1f))); // РЎРёРЅРёР№ (75, 75, 255)
+            yield return StartCoroutine(ChangeColor(new Color(1f, 0.294f, 1f)));   // Р¤РёРѕР»РµС‚РѕРІС‹Р№ (255, 75, 255)
         }
     }
 
@@ -39,6 +39,6 @@ public class IHaveBuff : MonoBehaviour
             yield return null;
         }
 
-        objectRenderer.material.color = newColor; // Устанавливаем точный цвет
+        objectRenderer.material.color = newColor; // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј С‚РѕС‡РЅС‹Р№ С†РІРµС‚
     }
 }

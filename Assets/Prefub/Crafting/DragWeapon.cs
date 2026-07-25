@@ -3,24 +3,35 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using TMPro;
 using UnityEngine.UI;
 
-public class DragWeapon : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler //сам объект
+public class DragWeapon : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler //СЃР°Рј РѕР±СЉРµРєС‚
 {
     [SerializeField] private RectTransform rectTransform;
+    [SerializeField] private TMP_Text energyCostText;
+    [SerializeField] private Image energyCostIconImage;
+    [SerializeField] private Sprite energyCostIcon;
     public Transform parentAfterDrag;
     private CanvasGroup canvasGroup;
     private void Start()
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
+        UpdateEnergyCostView();
     }
-    public void OnBeginDrag(PointerEventData eventData) //Начали нести
+
+    private void OnDestroy()
+    {
+        RefreshEnergyIndicator();
+    }
+
+    public void OnBeginDrag(PointerEventData eventData) //РќР°С‡Р°Р»Рё РЅРµСЃС‚Рё
     {
       //  Instantiate(gameObject);
         canvasGroup.alpha = 0.6f;
         parentAfterDrag = transform.parent;
-       // Debug.Log("Начали нести");
+       // Debug.Log("РќР°С‡Р°Р»Рё РЅРµСЃС‚Рё");
         transform.SetParent(transform.root);
        // Debug.Log(transform.root);
     }
@@ -39,19 +50,19 @@ public void OnDrag(PointerEventData eventData)
 
         if (target != null)
         {
-            // Ищем слот корабля выше по иерархии
+            // РС‰РµРј СЃР»РѕС‚ РєРѕСЂР°Р±Р»СЏ РІС‹С€Рµ РїРѕ РёРµСЂР°СЂС…РёРё
             var slot = target.GetComponentInParent<SetVeapon>();
 
             if (slot != null)
             {
-                Debug.Log("Попали в слот корабля");
+                Debug.Log("РџРѕРїР°Р»Рё РІ СЃР»РѕС‚ РєРѕСЂР°Р±Р»СЏ");
 
-                // Ищем уже установленное оружие
+                // РС‰РµРј СѓР¶Рµ СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅРѕРµ РѕСЂСѓР¶РёРµ
                 var oldWeapon = slot.GetComponentInChildren<weapon_Control>();
 
                 if (oldWeapon != null)
                 {
-                    Debug.Log("Удаляем старое оружие");
+                    Debug.Log("РЈРґР°Р»СЏРµРј СЃС‚Р°СЂРѕРµ РѕСЂСѓР¶РёРµ");
                     var wholeWeapon = oldWeapon.GetComponentInParent<DragWeapon>();
                     Debug.Log(wholeWeapon.name);
                     Destroy(wholeWeapon.gameObject);
@@ -59,13 +70,44 @@ public void OnDrag(PointerEventData eventData)
 
                 transform.SetParent(slot.transform);
                 rectTransform.localPosition = Vector3.zero;
+                RefreshEnergyIndicator();
 
                 return;
             }
         }
 
-        // Если не попали в слот — вернуть обратно
+        // Р•СЃР»Рё РЅРµ РїРѕРїР°Р»Рё РІ СЃР»РѕС‚ вЂ” РІРµСЂРЅСѓС‚СЊ РѕР±СЂР°С‚РЅРѕ
         Destroy(gameObject);
+        RefreshEnergyIndicator();
     }
 
+    private void UpdateEnergyCostView()
+    {
+        WeaponDataSerializable weaponData =
+            GetComponent<WeaponDataSerializable>()
+            ?? GetComponentInChildren<WeaponDataSerializable>(true);
+
+        if (energyCostText != null)
+        {
+            energyCostText.text = weaponData != null
+                ? weaponData.EnergyCost.ToString()
+                : string.Empty;
+        }
+
+        if (energyCostIconImage != null)
+        {
+            energyCostIconImage.sprite = energyCostIcon;
+            energyCostIconImage.enabled = energyCostIcon != null;
+        }
+    }
+
+    private static void RefreshEnergyIndicator()
+    {
+        CraftEnergyIndicator indicator =
+            FindFirstObjectByType<CraftEnergyIndicator>(
+                FindObjectsInactive.Include);
+
+        if (indicator != null)
+            indicator.RefreshNextFrame();
+    }
 }

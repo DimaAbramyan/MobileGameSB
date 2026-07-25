@@ -19,6 +19,6 @@ public class SelfControl : MonoBehaviour
     {
         if (LockedLook)
         transform.up = -Vector3.up;
-        // сброс поворота
+        // СЃР±СЂРѕСЃ РїРѕРІРѕСЂРѕС‚Р°
     }
 }

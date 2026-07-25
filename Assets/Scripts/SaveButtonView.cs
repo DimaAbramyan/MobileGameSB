@@ -20,4 +20,10 @@ public class SaveButtonView : MonoBehaviour
         LoadTo.save = ship;
         _panelManager.CloseEveryPanel();
     }
+
+    public void ClearTargetSlot()
+    {
+        if (LoadTo != null)
+            LoadTo.ErazeSave();
+    }
 }

@@ -37,17 +37,18 @@ MonoBehaviour:
   - 7
   - 8
   speedByLevel:
-  - 7
-  - 7
-  - 7
-  - 7
-  - 7
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
   startLevel: 0
   maxLevel: 4
+  energyCost: 3
   flightMode: 0
   contactMode: 1
   homingRotationSpeed: 360
-  growDuringFlight: 0
+  growDuringFlight: 1
   scaleGrowthPerSecond: {x: 0.5, y: 0.5}
   projectileLifetime: 10
   disableColliderAfterFirstPhysicsStep: 0

@@ -52,7 +52,7 @@ public class Explode : MonoBehaviour
         iDamagable receiver = collision.gameObject.GetComponent<iDamagable>();
         if (receiver != null)
         {
-            Debug.Log($"Взрыв наносит урон: {collision.gameObject.name}, урон: {damage}");
+            Debug.Log($"Р’Р·СЂС‹РІ РЅР°РЅРѕСЃРёС‚ СѓСЂРѕРЅ: {collision.gameObject.name}, СѓСЂРѕРЅ: {damage}");
             receiver.TakeDamage(damage);
             damagedObjects.Add(collision.gameObject);
         }
@@ -66,7 +66,7 @@ public class Explode : MonoBehaviour
         iDamagable receiver = collision.gameObject.GetComponent<iDamagable>();
         if (receiver != null)
         {
-            Debug.Log($"Взрыв наносит урон (Stay): {collision.gameObject.name}");
+            Debug.Log($"Р’Р·СЂС‹РІ РЅР°РЅРѕСЃРёС‚ СѓСЂРѕРЅ (Stay): {collision.gameObject.name}");
             receiver.TakeDamage(damage);
             damagedObjects.Add(collision.gameObject);
         }

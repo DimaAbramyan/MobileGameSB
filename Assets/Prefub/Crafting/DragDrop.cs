@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class Craft : MonoBehaviour, IPointerDownHandler // иконка
+public class Craft : MonoBehaviour, IPointerDownHandler // РёРєРѕРЅРєР°
 {
     [SerializeField] private RectTransform rectTransform;
   //  public Transform parentAfterDrag;
@@ -33,7 +33,7 @@ public void OnDrag(PointerEventData eventData)
 
 public void OnEndDrag(PointerEventData eventData)
 {
-   // Debug.Log("Отпустили");
+   // Debug.Log("РћС‚РїСѓСЃС‚РёР»Рё");
     //canvasGroup.blocksRaycasts = true;
     //transform.SetParent(parentAfterDrag);
     }

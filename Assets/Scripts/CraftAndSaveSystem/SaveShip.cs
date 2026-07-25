@@ -31,12 +31,12 @@ public class SaveSystem : MonoBehaviour
         string filePath = Path.Combine(directoryPath, $"{saveData.shipName}.json");
         if (File.Exists(filePath))
         {
-            Debug.Log("Данное название занято, переименуйте корабль");
+            Debug.Log("Р”Р°РЅРЅРѕРµ РЅР°Р·РІР°РЅРёРµ Р·Р°РЅСЏС‚Рѕ, РїРµСЂРµРёРјРµРЅСѓР№С‚Рµ РєРѕСЂР°Р±Р»СЊ");
             return;
         }
         if (saveData.shipName == "")
         {
-            Debug.Log("Введите название корабля");
+            Debug.Log("Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ РєРѕСЂР°Р±Р»СЏ");
             return;
         }
 
@@ -44,7 +44,7 @@ public class SaveSystem : MonoBehaviour
 
         File.WriteAllText(filePath, json);
 
-        Debug.Log($"Сохранение выполнено: {filePath}");
+        Debug.Log($"РЎРѕС…СЂР°РЅРµРЅРёРµ РІС‹РїРѕР»РЅРµРЅРѕ: {filePath}");
         SceneManager.LoadScene("SelectMenu");
     }
 }

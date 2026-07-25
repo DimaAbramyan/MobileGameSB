@@ -15,13 +15,23 @@ public abstract class ActiveAbility : MonoBehaviour
         owner = GetComponent<ParentShip>();
     }
     public abstract bool Activate(ParentShip owner);
+
+    protected virtual bool StartsCooldownOnActivation => true;
+
     public void TryActivate(ParentShip owner)
     {
         if (cooldownTimer > 0)
             return;
 
-        if (Activate(owner))
-            cooldownTimer = cooldown;
+        if (Activate(owner) && StartsCooldownOnActivation)
+            StartCooldown();
+    }
+
+    public virtual void Release(ParentShip owner) { }
+
+    protected void StartCooldown()
+    {
+        cooldownTimer = cooldown;
     }
 
     protected virtual void Update()

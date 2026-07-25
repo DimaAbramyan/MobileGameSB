@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "75aab0f625c2da60c3f32f7baf546233daa2ae10",
+    "indexed_at": "2026-07-25T08:49:05Z",
+    "project": "C-My-project",
+    "nodes": 13657,
+    "edges": 32147,
+    "original_size": 27656192,
+    "compressed_size": 5333392,
+    "compression_level": 3
+}

@@ -8,17 +8,22 @@ public class SaveLoadUI : MonoBehaviour
 {
     [Inject] private DiContainer _container;
     [Inject] PrefabFactory prefabFactory;
-    public GameObject buttonPrefab;  // Префаб кнопки (сохранения)
-    public Transform content;        // Контейнер для кнопок
-    public Save LoadTo;              // Куда сохраняется выбранный корабль
+    [Inject] private System.Collections.Generic.List<Save> saveSlots;
+    public GameObject buttonPrefab;  // РџСЂРµС„Р°Р± РєРЅРѕРїРєРё (СЃРѕС…СЂР°РЅРµРЅРёСЏ)
+    public Transform content;        // РљРѕРЅС‚РµР№РЅРµСЂ РґР»СЏ РєРЅРѕРїРѕРє
+    public Save LoadTo;              // РљСѓРґР° СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ РІС‹Р±СЂР°РЅРЅС‹Р№ РєРѕСЂР°Р±Р»СЊ
     private string savePath;
     private string[] savesThatAlreadyExist;
     void OnEnable()
     {
-        savesThatAlreadyExist = FindObjectsOfType<Save>().Select(obj => obj.save.shipName).ToArray();
-        //Debug.Log(savesThatAlreadyExist[0] + " - 1 корабль");
-        //Debug.Log(savesThatAlreadyExist[1] + " - 2 корабль");
-        //Debug.Log(savesThatAlreadyExist[2] + " - 3 корабль");
+        savesThatAlreadyExist =
+            saveSlots
+                .OrderBy(save => save.SlotIndex)
+                .Select(save => save.save.shipName)
+                .ToArray();
+        //Debug.Log(savesThatAlreadyExist[0] + " - 1 РєРѕСЂР°Р±Р»СЊ");
+        //Debug.Log(savesThatAlreadyExist[1] + " - 2 РєРѕСЂР°Р±Р»СЊ");
+        //Debug.Log(savesThatAlreadyExist[2] + " - 3 РєРѕСЂР°Р±Р»СЊ");
         savePath = Application.persistentDataPath + "/Saves";
         LoadSaveFiles();
         if (LoadTo.save.shipName != "")
@@ -38,11 +43,11 @@ public class SaveLoadUI : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // Проверяем, есть ли папка с сохранениями
+        // РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё РїР°РїРєР° СЃ СЃРѕС…СЂР°РЅРµРЅРёСЏРјРё
         if (!Directory.Exists(savePath))
             return;
 
-        // Получаем список файлов сохранений
+        // РџРѕР»СѓС‡Р°РµРј СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ СЃРѕС…СЂР°РЅРµРЅРёР№
         string[] files = Directory.GetFiles(savePath, "*.json");
 
         foreach (string file in files)

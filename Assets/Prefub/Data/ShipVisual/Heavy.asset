@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83356a60238264547ac8735423a7f23b, type: 3}
+  m_Name: Heavy
+  m_EditorClassIdentifier: Assembly-CSharp::ShipSelectionVisualConfig
+  shipData: {fileID: 11400000, guid: 11afd57821af69f4d93f026d1794cdaa, type: 2}
+  shipName: "\u0417\u0430\u0433\u043B\u0443\u0448\u043A\u0430"
+  activeAbilityDescription: "\u0430"
+  passiveAbilityDescription: "\u0438"
+  radarChartConfig: {fileID: 11400000, guid: 30b837b223807b24aafc376e511fc5dd, type: 2}
+  radarChartValues: 0700000008000000000000000100000006000000010000000300000009000000

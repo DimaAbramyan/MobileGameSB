@@ -1,22 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 public class PlazmaTurret : Enemy
 {
+    [Inject] private DiContainer container;
+    [Inject] private PlayerController playerController;
     [SerializeField] private EnemyTurretBullet EnBullet;
     [SerializeField] Transform ShootPos;
     float ReloadingTimer;
     Transform playerPosition;
     private void Start()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        playerPosition = player.transform;
+        playerPosition = playerController.transform;
         ReloadingTimer = Random.Range(2f, 7f); ;
     }
     private void FixedUpdate()
     {
-        // Рассчитываем направление на игрока
+        // Р Р°СЃСЃС‡РёС‚С‹РІР°РµРј РЅР°РїСЂР°РІР»РµРЅРёРµ РЅР° РёРіСЂРѕРєР°
         ReloadingTimer -= Time.deltaTime;
         if (ReloadingTimer < 0)
         {
@@ -24,16 +26,20 @@ public class PlazmaTurret : Enemy
         }
             Vector3 direction = playerPosition.position - ShootPos.position;
 
-        // Угол поворота (в радианах, переводим в градусы)
+        // РЈРіРѕР» РїРѕРІРѕСЂРѕС‚Р° (РІ СЂР°РґРёР°РЅР°С…, РїРµСЂРµРІРѕРґРёРј РІ РіСЂР°РґСѓСЃС‹)
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        // Поворачиваем объект
+        // РџРѕРІРѕСЂР°С‡РёРІР°РµРј РѕР±СЉРµРєС‚
         transform.rotation = Quaternion.Euler(0, 0, angle - 90);
     }
     private void Shoot()
     {
         ReloadingTimer = Random.Range(8f, 12f);
-        Instantiate(EnBullet, ShootPos.position, Quaternion.identity);
+        container.InstantiatePrefabForComponent<EnemyTurretBullet>(
+            EnBullet,
+            ShootPos.position,
+            Quaternion.identity,
+            null);
     }
    
 }

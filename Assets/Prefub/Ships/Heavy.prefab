@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: -2282784921560003257}
   - component: {fileID: 7738458321414886633}
   - component: {fileID: 8805669471898869038}
+  - component: {fileID: 3267561703122267529}
   m_Layer: 8
   m_Name: Heavy
   m_TagString: Untagged
@@ -241,6 +242,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
   activeAbility: {fileID: 2869759765365770400}
   passiveAbility: {fileID: 0}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 8048745723011680577}
   ShipData: {fileID: 11400000, guid: 11afd57821af69f4d93f026d1794cdaa, type: 2}
   IsVisible: 0
+--- !u!114 &3267561703122267529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5377600966933766361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1

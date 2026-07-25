@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 public abstract class EnemyProjectile: MonoBehaviour
 {
+    [Inject] private GameSettings gameSettings;
     protected float _start_pos;
     protected Vector3 _current_pos;
     protected float SpeedMultiplier = 1;
@@ -14,10 +16,10 @@ public abstract class EnemyProjectile: MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        ParentShip receiver = collision.collider.GetComponent<ParentShip>();
-        Parameters param = FindAnyObjectByType<Parameters>();
+        ParentShip receiver =
+            collision.collider.GetComponentInParent<ParentShip>();
 
-        if (receiver != null && !param.IsGodModeOn)
+        if (receiver != null && !gameSettings.IsGodModeOn)
         {
             receiver.TakeDamage(_damage);
         }

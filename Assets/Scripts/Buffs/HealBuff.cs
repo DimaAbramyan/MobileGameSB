@@ -16,6 +16,8 @@ public class HealBuff : Buff
         ParentShip colliderShip = collision.gameObject.GetComponent<ParentShip>();
         if ((timer > 0f || shipCreator != colliderShip) && colliderShip == null)
             return;
+        if (colliderShip.IsIntangible)
+            return;
 
         colliderShip.SetHealthPoints(health);
         PointsCollector.Bonuses += 1;

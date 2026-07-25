@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3384991692524799735}
   - component: {fileID: 7510122182290028595}
+  - component: {fileID: 2377905987328292322}
   m_Layer: 8
   m_Name: Tail
   m_TagString: Player
@@ -91,3 +92,15 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &2377905987328292322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5da7f7608a794f6cb2c95ffdd3a88af0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TailSegmentFollower

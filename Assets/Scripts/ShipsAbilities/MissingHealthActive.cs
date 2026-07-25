@@ -14,13 +14,13 @@ public class MissingHealthActive : ActiveAbility
         if (handler != null)
             return false;
 
-        // подписка на событие нанесения урона
+        // РїРѕРґРїРёСЃРєР° РЅР° СЃРѕР±С‹С‚РёРµ РЅР°РЅРµСЃРµРЅРёСЏ СѓСЂРѕРЅР°
         handler = (damage) => HealFromDamage(owner, damage);
         owner.OnDamageDealt += handler;
 
         Debug.Log("Buff ON");
 
-        // запускаем таймер баффа
+        // Р·Р°РїСѓСЃРєР°РµРј С‚Р°Р№РјРµСЂ Р±Р°С„С„Р°
         StartCoroutine(BuffRoutine(owner));
 
         return true;

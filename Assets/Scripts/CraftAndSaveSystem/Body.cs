@@ -1,9 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BodyData : MonoBehaviour
 {
-   public int shipId = 0;
-   public int weaponCnt = 4;
+   [SerializeField] private ShipSelectionVisualConfig visualConfig;
+
+   public ShipSelectionVisualConfig VisualConfig => visualConfig;
+   public int ShipId =>
+      visualConfig != null && visualConfig.ShipData != null
+         ? visualConfig.ShipData.shipId
+         : 0;
+
+   public int shipId => ShipId;
 }

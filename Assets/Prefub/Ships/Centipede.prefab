@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -7381795805903229388}
   - component: {fileID: 3345805154680533543}
   - component: {fileID: 7130167820753412502}
+  - component: {fileID: 1118160487284969821}
   m_Layer: 8
   m_Name: Centipede
   m_TagString: Player
@@ -151,6 +152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   activeAbility: {fileID: 3345805154680533543}
   passiveAbility: {fileID: -7381795805903229388}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 1480243585401683899}
   ShipData: {fileID: 11400000, guid: 48ffb830f1b47f64993f79795521a1b1, type: 2}
   IsVisible: 0
@@ -182,6 +184,10 @@ MonoBehaviour:
   cooldown: 0
   owner: {fileID: 3190795294016698373}
   tailPrefab: {fileID: 3387013190401639, guid: 87dedaf2c39668546a3e4ec8bc4c3538, type: 3}
+  tailSpacing: 0.5
+  baseFollowSmoothTime: 0.04
+  followSmoothTimePerSegment: 0.025
+  maxFollowSpeed: 30
 --- !u!61 &7130167820753412502
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -228,6 +234,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.48546204, y: 0.43295503}
   m_EdgeRadius: 0
+--- !u!114 &1118160487284969821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,6 +294,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetOffset: {x: 0, y: 0.3}
+  pickupSnapDistance: 0.08
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:

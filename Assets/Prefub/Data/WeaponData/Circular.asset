@@ -44,8 +44,9 @@ MonoBehaviour:
   - 2
   startLevel: 0
   maxLevel: 4
+  energyCost: 3
   flightMode: 0
-  contactMode: 1
+  contactMode: 2
   homingRotationSpeed: 360
   growDuringFlight: 0
   scaleGrowthPerSecond: {x: 0.5, y: 0.5}
@@ -55,7 +56,7 @@ MonoBehaviour:
   fadeDuration: 0.5
   explosionPrefab: {fileID: 0}
   explosionDamage: 30
-  continuousDamageInterval: 0.25
+  continuousDamageInterval: 0.02
   audioClipDefault:
     Guid:
       Data1: 0

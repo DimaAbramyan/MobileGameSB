@@ -12,7 +12,7 @@ public class BuffLevel : Buff
     private void OnTriggerEnter2D(Collider2D collision2D)
     {
         ParentShip colliderShip = collision2D.gameObject.GetComponent<ParentShip>();
-        if (colliderShip == null)
+        if (colliderShip == null || colliderShip.IsIntangible)
             return;
 
         colliderShip.LevelUp();

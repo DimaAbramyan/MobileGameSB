@@ -7,14 +7,13 @@ public class From1to2State : MonoBehaviour
 {
     [SerializeField] GameObject[] State1;
     [SerializeField] GameObject[] State2;
-    [SerializeField] BodyData SpaceCraft;
+    [SerializeField] private ShipSwipe shipSelector;
     [SerializeField] GameObject parent;
     [SerializeField] GameObject body;
     public void ChangeState()
     {
-        SpaceCraft = FindAnyObjectByType<BodyData>();
-        //Debug.Log(SpaceCraft);
-        SpaceCraft.transform.SetParent(parent.transform);
+        BodyData spaceCraft = shipSelector.SelectedBody;
+        spaceCraft.transform.SetParent(parent.transform);
         foreach (var item in State1)
         {
             item.SetActive(false);
@@ -23,11 +22,11 @@ public class From1to2State : MonoBehaviour
         {
             item.SetActive(true);
         }
-        foreach (DragWeapon it in SpaceCraft.GetComponentsInChildren<DragWeapon>()) 
+        foreach (DragWeapon it in spaceCraft.GetComponentsInChildren<DragWeapon>())
         {
             Destroy(it.gameObject);
         }
 
-        SpaceCraft.gameObject.SetActive(true);
+        spaceCraft.gameObject.SetActive(true);
     }
 }

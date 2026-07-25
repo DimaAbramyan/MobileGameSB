@@ -7,7 +7,7 @@ public class MoveForvard : MonoBehaviour
 {
     [SerializeField] bool looped = false;
     [SerializeField] private float speed = 0.01f;
-    [Header("Быстрое появление на сцене")]
+    [Header("Р‘С‹СЃС‚СЂРѕРµ РїРѕСЏРІР»РµРЅРёРµ РЅР° СЃС†РµРЅРµ")]
     [SerializeField] Vector3 startPos;
     [SerializeField] Vector3 endPos;
     [SerializeField] float duration = 0;
@@ -19,7 +19,7 @@ public class MoveForvard : MonoBehaviour
         {
             timeElapsed += Time.deltaTime;
             float t = timeElapsed / duration;
-            float smoothT = Mathf.SmoothStep(0, 1, t); // ускорение + замедление
+            float smoothT = Mathf.SmoothStep(0, 1, t); // СѓСЃРєРѕСЂРµРЅРёРµ + Р·Р°РјРµРґР»РµРЅРёРµ
             transform.position = Vector3.Lerp(startPos, endPos, smoothT);
         }
         else

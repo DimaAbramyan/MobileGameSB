@@ -37,25 +37,26 @@ MonoBehaviour:
   - 10
   - 10
   speedByLevel:
-  - 3
-  - 3
-  - 3
-  - 3
-  - 3
+  - 1.5
+  - 1.5
+  - 1.5
+  - 1.5
+  - 1.5
   startLevel: 0
   maxLevel: 4
+  energyCost: 6
   flightMode: 0
-  contactMode: 1
+  contactMode: 2
   homingRotationSpeed: 360
-  growDuringFlight: 0
-  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  growDuringFlight: 1
+  scaleGrowthPerSecond: {x: 0.4, y: 0}
   projectileLifetime: 10
   disableColliderAfterFirstPhysicsStep: 0
   fadeDuringLifetime: 0
   fadeDuration: 0.5
   explosionPrefab: {fileID: 0}
   explosionDamage: 30
-  continuousDamageInterval: 0.25
+  continuousDamageInterval: 0.02
   audioClipDefault:
     Guid:
       Data1: 0

@@ -1,21 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class HideShipAbility : ActiveAbility
+/// <summary>
+/// Compatibility wrapper for old prefab references.
+/// Use PhantomPhaseActiveAbility for new Phantom setups.
+/// </summary>
+public sealed class HideShipAbility : PhantomPhaseActiveAbility
 {
-    private float currentCooldown;
-    [SerializeField]
-    BoxCollider colliderToHide;
-    List<SpriteRenderer> shipRender;
-    public override bool Activate(ParentShip owner)
-    {
-        colliderToHide.enabled = false;
-        foreach (SpriteRenderer sprite in shipRender)
-        {
-            sprite.enabled = false;
-        }
-        return true;
-    }
 }
 

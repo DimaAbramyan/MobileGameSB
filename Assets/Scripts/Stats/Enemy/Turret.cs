@@ -1,9 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 public class Turret : Enemy
 {
+    [Inject] private DiContainer container;
+    [Inject] private PlayerController playerController;
     [SerializeField] private EnemyTurretBullet EnBullet;
     [SerializeField] private int shoots;
     [SerializeField] Transform ShootPos;
@@ -13,21 +16,20 @@ public class Turret : Enemy
     Transform playerPosition;
     private void Start()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        playerPosition = player.transform;
+        playerPosition = playerController.transform;
         ReloadingTimer = 1;
         changing_shoots = shoots;
         StartCoroutine(Shoot());
     }
     private void Update()
     {
-        // Ðàññ÷èòûâàåì íàïðàâëåíèå íà èãðîêà
+        // Ð Ð°ÑÑÑ‡Ð¸Ñ‚Ñ‹Ð²Ð°ÐµÐ¼ Ð½Ð°Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð½Ð° Ð¸Ð³Ñ€Ð¾ÐºÐ°
         Vector3 direction = playerPosition.position - ShootPos.position;
 
-        // Óãîë ïîâîðîòà (â ðàäèàíàõ, ïåðåâîäèì â ãðàäóñû)
+        // Ð£Ð³Ð¾Ð» Ð¿Ð¾Ð²Ð¾Ñ€Ð¾Ñ‚Ð° (Ð² Ñ€Ð°Ð´Ð¸Ð°Ð½Ð°Ñ…, Ð¿ÐµÑ€ÐµÐ²Ð¾Ð´Ð¸Ð¼ Ð² Ð³Ñ€Ð°Ð´ÑƒÑÑ‹)
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        // Ïîâîðà÷èâàåì îáúåêò
+        // ÐŸÐ¾Ð²Ð¾Ñ€Ð°Ñ‡Ð¸Ð²Ð°ÐµÐ¼ Ð¾Ð±ÑŠÐµÐºÑ‚
         transform.rotation = Quaternion.Euler(0, 0, angle - 90);
     }
     IEnumerator Shoot()
@@ -38,7 +40,11 @@ public class Turret : Enemy
             while (changing_shoots > 0)
             {
                 yield return new WaitForSeconds(0.4f);
-                Instantiate(EnBullet, ShootPos.position, Quaternion.Euler(0, 0, 0));
+                container.InstantiatePrefabForComponent<EnemyTurretBullet>(
+                    EnBullet,
+                    ShootPos.position,
+                    Quaternion.identity,
+                    null);
                 MinusShoot();
                 //Debug.Log(shoots);
             }

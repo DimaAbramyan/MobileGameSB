@@ -3,7 +3,7 @@ using TMPro;
 
 public class NumberShowingToPlayer : MonoBehaviour
 {
-    public DamageNumbPool Pool; // Сделал public для явного назначения
+    public DamageNumbPool Pool; // РЎРґРµР»Р°Р» public РґР»СЏ СЏРІРЅРѕРіРѕ РЅР°Р·РЅР°С‡РµРЅРёСЏ
     private float VertDirection;
     private float HorDirection;
     Vector3 StartSpeed;
@@ -18,7 +18,7 @@ public class NumberShowingToPlayer : MonoBehaviour
     {
         if (Text != null)
         {
-            Text.alpha = 1f; // Сбрасываем прозрачность при активации
+            Text.alpha = 1f; // РЎР±СЂР°СЃС‹РІР°РµРј РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ РїСЂРё Р°РєС‚РёРІР°С†РёРё
         }
 
         float randDir = Random.Range(0.25f, 2.8915f);

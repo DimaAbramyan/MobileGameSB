@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Serialization;
+using Zenject;
 
 public sealed class EnemyContactImpact : MonoBehaviour
 {
@@ -9,12 +11,25 @@ public sealed class EnemyContactImpact : MonoBehaviour
     [Header("Control")]
     [SerializeField, Min(0f)] private float controlLockDuration = 0.5f;
 
-    [Header("Knockback")]
+    [Header("Enemy Impact")]
     [SerializeField, Min(0f)] private float baseImpulse = 30f;
-    [SerializeField, Min(0f)] private float velocityMultiplier = 3.75f;
+    [FormerlySerializedAs("velocityMultiplier")]
+    [SerializeField, Min(0f)] private float relativeSpeedMultiplier = 3.75f;
     [SerializeField, Min(0f)] private float maximumImpulse = 70f;
 
+    [Header("Ship Resistance")]
+    [SerializeField, Min(0.001f)] private float referenceMass = 5f;
+    [SerializeField, Min(0.001f)] private float referenceSpeed = 100f;
+    [SerializeField, Min(0f)] private float massInfluence = 2f;
+    [SerializeField, Min(0f)] private float speedInfluence = 0.1f;
+    [SerializeField, Min(0f)] private float dragInfluence = 0.02f;
+
+    [InjectOptional] private ShipKnockbackService knockbackService;
+
     private float nextImpactTime;
+
+    private ShipKnockbackService KnockbackService =>
+        knockbackService ??= new ShipKnockbackService();
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -27,16 +42,24 @@ public sealed class EnemyContactImpact : MonoBehaviour
 
         if (playerShip == null || playerBody == null)
             return;
+        if (collision.collider.GetComponentInParent<TwinCloneController>() != null)
+            return;
 
         nextImpactTime = Time.time + impactCooldown;
 
         playerShip.TakeDamage(contactDamage);
         playerBody.GetComponent<PlayerController>()
             ?.LockControls(controlLockDuration);
-        ApplyKnockback(playerBody, collision.relativeVelocity.magnitude);
+        ApplyKnockback(
+            playerShip,
+            playerBody,
+            collision.relativeVelocity.magnitude);
     }
 
-    private void ApplyKnockback(Rigidbody2D playerBody, float relativeSpeed)
+    private void ApplyKnockback(
+        ParentShip playerShip,
+        Rigidbody2D playerBody,
+        float relativeSpeed)
     {
         Vector2 direction =
             playerBody.worldCenterOfMass - (Vector2)transform.position;
@@ -46,11 +69,32 @@ public sealed class EnemyContactImpact : MonoBehaviour
 
         direction.Normalize();
 
-        float impulse = Mathf.Clamp(
-            baseImpulse + relativeSpeed * velocityMultiplier,
-            0f,
-            maximumImpulse);
+        float impulse = KnockbackService.CalculateImpulse(
+            playerShip.ShipData,
+            relativeSpeed,
+            CreateKnockbackSettings());
 
         playerBody.AddForce(direction * impulse, ForceMode2D.Impulse);
+    }
+
+    private ShipKnockbackService.Settings CreateKnockbackSettings()
+    {
+        return new ShipKnockbackService.Settings
+        {
+            baseImpulse = baseImpulse,
+            relativeSpeedMultiplier = relativeSpeedMultiplier,
+            maximumImpulse = maximumImpulse,
+            referenceMass = referenceMass,
+            referenceSpeed = referenceSpeed,
+            massInfluence = massInfluence,
+            speedInfluence = speedInfluence,
+            dragInfluence = dragInfluence
+        };
+    }
+
+    private void OnValidate()
+    {
+        referenceMass = Mathf.Max(0.001f, referenceMass);
+        referenceSpeed = Mathf.Max(0.001f, referenceSpeed);
     }
 }

@@ -1,7 +1,9 @@
 using UnityEngine;
+using Zenject;
 
 public class EnemyTurretBullet : EnemyProjectile
 {
+    [Inject] private PlayerController playerController;
     private Rigidbody2D rb;
     private Transform target;
     private Vector2 direction;
@@ -9,9 +11,9 @@ public class EnemyTurretBullet : EnemyProjectile
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        target = GameObject.Find("MainHero").transform;
+        target = playerController.transform;
 
-        // вычисляем направление один раз
+        // РІС‹С‡РёСЃР»СЏРµРј РЅР°РїСЂР°РІР»РµРЅРёРµ РѕРґРёРЅ СЂР°Р·
         direction = (target.position - transform.position).normalized;
 
         Destroy(gameObject, 6f);

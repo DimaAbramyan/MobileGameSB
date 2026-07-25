@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 7637382628131592135}
   - component: {fileID: 768791944755482801}
   - component: {fileID: 7666066709233752712}
+  - component: {fileID: -1398125898839763678}
   m_Layer: 8
   m_Name: Healer
   m_TagString: Player
@@ -225,9 +226,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
   activeAbility: {fileID: 2349222869333892340}
   passiveAbility: {fileID: 2461732464396383616}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 2665527242222670206}
   ShipData: {fileID: 11400000, guid: 0d9d8840c3fe6de4cb4056d7d1b54472, type: 2}
   IsVisible: 0
+--- !u!114 &-1398125898839763678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3189292671061134204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
 --- !u!1 &6583357205300149050
 GameObject:
   m_ObjectHideFlags: 0

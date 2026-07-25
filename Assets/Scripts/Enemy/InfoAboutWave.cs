@@ -12,19 +12,19 @@ public class InfoAboutSubWave : MonoBehaviour
     int childCount = 0;
     List<Enemy> EnemiesInWave;
     public event Action OnSubWaveCleared;
-    private void Awake()
+    protected virtual void Awake()
     {
         movementSequencePlayer = GetComponent<MovementSequencePlayer>();
         EnemiesInWave = transform.GetComponentsInChildren<Enemy>().Where(enemy => enemy.CanContainBuff() == true).ToList();
         childCount = EnemiesInWave.Count;
         enemyManager.OnEnemyDestroyed += WhenEnemyKilled;
     }
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         if (enemyManager != null)
             enemyManager.OnEnemyDestroyed -= WhenEnemyKilled;
     }
-    public void ActivateSubWave()
+    public virtual void ActivateSubWave()
     {
         gameObject.SetActive(true);
     }
@@ -35,8 +35,13 @@ public class InfoAboutSubWave : MonoBehaviour
         childCount--;
         if (childCount <= 0)
         {
-            OnSubWaveCleared?.Invoke();
+            NotifySubWaveCleared();
             Debug.Log("��������� �����");
         }
+    }
+
+    protected void NotifySubWaveCleared()
+    {
+        OnSubWaveCleared?.Invoke();
     }
 }

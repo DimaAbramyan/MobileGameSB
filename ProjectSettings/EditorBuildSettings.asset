@@ -23,14 +23,5 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Fighting/Fighting.unity
     guid: bcf1f7919fa0e034abf7bd193c6cc754
-  - enabled: 1
-    path: Assets/Scenes/Fighting/Fighting 1.unity
-    guid: 9a58baca9e503f14b982747c53bf70d2
-  - enabled: 1
-    path: Assets/Scenes/Fighting/Fighting 2.unity
-    guid: 81b602a4dfad8f9469681d47b552f1d1
-  - enabled: 1
-    path: Assets/Scenes/Fighting/Fighting 3.unity
-    guid: 512813162d2ffa24d8ba43eba33e8b0e
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

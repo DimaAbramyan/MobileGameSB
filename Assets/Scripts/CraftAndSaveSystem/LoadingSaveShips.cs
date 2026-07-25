@@ -5,6 +5,7 @@ using Zenject;
 public class CreatePlayerShips : MonoBehaviour
 {
     [Inject] private DiContainer _container;
+    [Inject] private TeamSave teamSave;
 
     public event Action<PlayerController> OnPlayerSpawned;
 
@@ -14,11 +15,7 @@ public class CreatePlayerShips : MonoBehaviour
 
     private void Awake()
     {
-        TeamSave teamSave = TeamSave.Instance != null
-            ? TeamSave.Instance
-            : FindFirstObjectByType<TeamSave>();
-
-        if (teamSave == null || teamSave.AllSavesThatLoaded == null)
+        if (teamSave.AllSavesThatLoaded == null)
         {
             Debug.LogError("Cannot create player ships: TeamSave data is missing.");
             return;

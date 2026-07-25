@@ -1,13 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 [System.Serializable]
 public class Save : MonoBehaviour
 {
+    [Inject] private TeamSave teamSave;
+
     public SaveShip save;
     [SerializeField]
-    private int id; 
+    private int id;
+
+    public int SlotIndex => id;
 
     public void ErazeSave()
     {
@@ -15,10 +20,12 @@ public class Save : MonoBehaviour
     }
     public void Start()
     {
-        if (TeamSave.Instance.AllSavesThatLoaded != null)
+        if (teamSave.AllSavesThatLoaded != null
+            && id >= 0
+            && id < teamSave.AllSavesThatLoaded.Length)
         {
-            Debug.Log("Loading save with ID: " + TeamSave.Instance.AllSavesThatLoaded[id]);
-            save = TeamSave.Instance.AllSavesThatLoaded[id].ConvertToSaveShip();
+            Debug.Log("Loading save with ID: " + teamSave.AllSavesThatLoaded[id]);
+            save = teamSave.AllSavesThatLoaded[id].ConvertToSaveShip();
         }
     }
 }

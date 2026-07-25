@@ -5,17 +5,17 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
+using Zenject;
 
 public class MiniShip : Enemy
 {
+    [Inject] private PlayerController playerController;
     private bool FlyingToPlayer = false;
-    GameObject player;
     private Rigidbody2D rb;
     private float timer;
     private void Start()
     {
         rb = GetComponent <Rigidbody2D>();
-        player = FindAnyObjectByType<ParentShip>().gameObject;
     }
     private void Update()
     {
@@ -37,9 +37,8 @@ public class MiniShip : Enemy
     }
     protected void MoveForvard()
     {
-        if (player == null) return;
-
-        Vector2 direction = (player.transform.position - transform.position).normalized;
+        Vector2 direction =
+            (playerController.transform.position - transform.position).normalized;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle+90);
         rb.AddForce(direction * _speed/25, ForceMode2D.Force);

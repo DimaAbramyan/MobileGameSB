@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 1944510079080559571}
   - component: {fileID: 6689641140550846863}
   - component: {fileID: 7130167820753412502}
+  - component: {fileID: 4697166279271204568}
   m_Layer: 8
   m_Name: huskar
   m_TagString: Player
@@ -114,6 +115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
   activeAbility: {fileID: 6689641140550846863}
   passiveAbility: {fileID: 1944510079080559571}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 4756945734813854271}
   ShipData: {fileID: 11400000, guid: eb1d5e307ce0c974aa413d83d3c4518c, type: 2}
   IsVisible: 0
@@ -230,6 +232,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.48546204, y: 0.43295503}
   m_EdgeRadius: 0
+--- !u!114 &4697166279271204568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0
@@ -276,6 +292,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetOffset: {x: 0, y: 0.3}
+  pickupSnapDistance: 0.08
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:

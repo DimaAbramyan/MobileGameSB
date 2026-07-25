@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1531940249903446721}
   - component: {fileID: 2813279097986571634}
   - component: {fileID: 2925823615902409459}
-  - component: {fileID: 4902013763599386804}
+  - component: {fileID: 4319921813067521654}
   m_Layer: 5
   m_Name: Button 1
   m_TagString: Untagged
@@ -116,14 +116,14 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 2813279097986571634}
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 4902013763599386804}
-        m_TargetAssemblyTypeName: LoadLevel, Assembly-CSharp
-        m_MethodName: LoadScene
+      - m_Target: {fileID: 4319921813067521654}
+        m_TargetAssemblyTypeName: LoadLevelConfig, Assembly-CSharp
+        m_MethodName: Load
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -133,7 +133,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &4902013763599386804
+--- !u!114 &4319921813067521654
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -142,7 +142,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 1852762012565815029}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d854c4816e7f5c4791262ae0b1fbb6f, type: 3}
+  m_Script: {fileID: 11500000, guid: 436f34f7e33ba6d4abced1782df00086, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  m_Level: 5
+  m_EditorClassIdentifier: Assembly-CSharp::LoadLevelConfig
+  levelConfig: {fileID: 0}
+  lockedWarning: {fileID: 0}

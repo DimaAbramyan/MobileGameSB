@@ -18,18 +18,18 @@ public class ExtraHealthPassive : PassiveAbility
     {
         owner = ship;
 
-        // Подписываемся на пайплайн урона
+        // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° РїР°Р№РїР»Р°Р№РЅ СѓСЂРѕРЅР°
         owner.OnDamagePipeline += HandleDamage;
 
-        // Подписываемся на переполнение исцеления
+        // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ РЅР° РїРµСЂРµРїРѕР»РЅРµРЅРёРµ РёСЃС†РµР»РµРЅРёСЏ
         owner.OnHealOverflow += HandleOverflow;
     }
 
-    // При получении урона сначала тратим ExtraHealth
+    // РџСЂРё РїРѕР»СѓС‡РµРЅРёРё СѓСЂРѕРЅР° СЃРЅР°С‡Р°Р»Р° С‚СЂР°С‚РёРј ExtraHealth
     private float HandleDamage(float incomingDamage)
     {
         if (ExtraHealth <= 0f)
-            return incomingDamage; // если сверхздоровья нет, передаём урон дальше
+            return incomingDamage; // РµСЃР»Рё СЃРІРµСЂС…Р·РґРѕСЂРѕРІСЊСЏ РЅРµС‚, РїРµСЂРµРґР°С‘Рј СѓСЂРѕРЅ РґР°Р»СЊС€Рµ
 
         float damageTaken = Mathf.Min(ExtraHealth, incomingDamage);
         ExtraHealth -= damageTaken;

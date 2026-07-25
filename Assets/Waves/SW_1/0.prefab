@@ -59,7 +59,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe34cda70fd6df4887726ac04fc176e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timerOffset: 0
 --- !u!114 &-1519018980646096216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -72,4 +71,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b121eaff293d07a4eb8359f6e4359f08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovementSequencePlayer
+  commands: []
   movements: []

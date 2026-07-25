@@ -22,8 +22,8 @@ public class PlayerHealthBar : MonoBehaviour
     }
     public void SetHealth(float health)
     {
-        Debug.Log($"Текущее здоровье - {health}");
-        Debug.Log($"Макс здоровье - {maxHealth}");
+        Debug.Log($"РўРµРєСѓС‰РµРµ Р·РґРѕСЂРѕРІСЊРµ - {health}");
+        Debug.Log($"РњР°РєСЃ Р·РґРѕСЂРѕРІСЊРµ - {maxHealth}");
 
         if (maxHealth <= 0f)
             return;

@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+
 [CreateAssetMenu(fileName = "NewShipData", menuName = "Game/Ship Data")]
 public class ShipData : ScriptableObject
 {
@@ -24,6 +22,11 @@ public class ShipData : ScriptableObject
     public float shieldRegenRate;
 
     [Space(10)]
+    [Header("Build Limits")]
+    [Min(0)] public int maximumEnergy = 10;
+    [Min(0)] public int maximumWeaponCount = 4;
+
+    [Space(10)]
     [Header("StartLevel")]
     public int currentLvl;
 
@@ -31,5 +34,12 @@ public class ShipData : ScriptableObject
     [Header("Meta")]
     public int shipId;
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        maximumEnergy = Mathf.Max(0, maximumEnergy);
+        maximumWeaponCount = Mathf.Max(0, maximumWeaponCount);
+    }
+#endif
 }
 

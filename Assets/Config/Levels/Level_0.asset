@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4772704e5af14f878e9327d364c0ade4, type: 3}
+  m_Name: Level_0
+  m_EditorClassIdentifier: 
+  id: 0
+  displayName: Level 1
+  requiredLevel: {fileID: 0}
+  bonusLevel: 0
+  metalReward: 300
+  coreReward: 1
+  music:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  autoScaleParallaxSpeedByDepth: 0
+  farthestLayerSpeedMultiplier: 0.25
+  parallaxLayers:
+  - name: Nebula
+    sprite: {fileID: 21300000, guid: 35313af049b4a2f42a0325330c51d74a, type: 3}
+    position: {x: 0, y: 0}
+    scale: {x: 0.25, y: 0.25}
+    scrollSpeed: {x: 0, y: 0.005}
+    sortingOrder: -100
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - name: Nebula
+    sprite: {fileID: 21300000, guid: 25b1c6c15a2e1324e918e9e46f0ad32d, type: 3}
+    position: {x: 0, y: 0}
+    scale: {x: 0.25, y: 0.25}
+    scrollSpeed: {x: 0, y: 0.01}
+    sortingOrder: -98
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - name: Nebula
+    sprite: {fileID: 21300000, guid: 4f64e60ea06b2d74085eb297f31dbaff, type: 3}
+    position: {x: 0, y: 0}
+    scale: {x: 0.25, y: 0.25}
+    scrollSpeed: {x: 0, y: 0.0225}
+    sortingOrder: -97
+    color: {r: 1, g: 1, b: 1, a: 1}
+  randomBackgroundObjects:
+  - name: 
+    sprite: {fileID: 21300000, guid: d7cd3cce2fc5c084eb7dab8f4c559963, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 0}
+    count: 1
+    positionMin: {x: -2.5, y: -5}
+    positionMax: {x: 2.5, y: 5}
+    ySpeedMin: -0.3
+    ySpeedMax: -0.5
+    scaleMin: 0.15
+    scaleMax: 0.2
+    sortingOrder: -90
+    respawnPadding: 1
+  - name: 
+    sprite: {fileID: 21300000, guid: b4b46f397c9379144b897273484d1510, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 0}
+    count: 1
+    positionMin: {x: -2.5, y: -5}
+    positionMax: {x: 2.5, y: 5}
+    ySpeedMin: -0.3
+    ySpeedMax: -0.5
+    scaleMin: 0.05
+    scaleMax: 0.07
+    sortingOrder: -85
+    respawnPadding: 1
+  waves:
+  - {fileID: 549544237492067451, guid: f704e0848c68c064ba78d1e68e185c69, type: 3}
+  - {fileID: 5142897750625784009, guid: d3415d68c27510c4798a1036b3fed25e, type: 3}
+  - {fileID: 2898561680101012244, guid: f670e517e87a9c74c8c821606e1e2b3a, type: 3}

@@ -13,7 +13,23 @@ public class PrefabFactory
 
     public GameObject GetShip(int id)
     {
-        if (id < 0 || id >= shipPrefabs.Length) return null;
+        if (shipPrefabs == null)
+            return null;
+
+        for (int i = 0; i < shipPrefabs.Length; i++)
+        {
+            if (shipPrefabs[i] == null)
+                continue;
+
+            BodyData bodyData =
+                shipPrefabs[i].GetComponentInChildren<BodyData>(true);
+            if (bodyData != null && bodyData.ShipId == id)
+                return shipPrefabs[i];
+        }
+
+        if (id < 0 || id >= shipPrefabs.Length)
+            return null;
+
         return shipPrefabs[id];
     }
 

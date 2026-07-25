@@ -45,8 +45,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   audioDatabase: {fileID: 11400000, guid: c37f2bbae054c3142a342a3f487d7bda, type: 2}
+  levelCatalog: {fileID: 11400000, guid: 07c97954fb4d421fa7cf3efa8e637078, type: 2}
   audioHostPrefab: {fileID: 0}
-  impactBehaviours:
-  - {fileID: 11400000, guid: 848a0a7bce1594646af064d8282ac443, type: 2}
-  - {fileID: 11400000, guid: 57e914447e4e4394bad13d8afa475dbd, type: 2}
-  - {fileID: 11400000, guid: 131a19a1d421e154ca66eb4e54313934, type: 2}

@@ -12,14 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb4f858a507b353499313b36b3edc0be, type: 3}
   m_Name: Centricope
   m_EditorClassIdentifier: 
-  speed: 75
+  speed: 68
   mass: 7.5
-  drag: 10
+  drag: 9
   maximumHealthPoints: 80
   healthRegenCooldown: 5
   healthRegenRate: 10
   maximumShieldPoints: 20
   shieldRegenCooldown: 10
   shieldRegenRate: 4
+  maximumEnergy: 10
+  maximumWeaponCount: 3
   currentLvl: 0
   shipId: 5

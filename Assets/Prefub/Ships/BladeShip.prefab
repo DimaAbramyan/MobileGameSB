@@ -11,12 +11,14 @@ GameObject:
   - component: {fileID: 3384991692524799735}
   - component: {fileID: 7510122182290028595}
   - component: {fileID: 5713520068090865019}
+  - component: {fileID: 8398465633140859630}
   - component: {fileID: 1343159532784850340}
   - component: {fileID: 328189634753894930}
   - component: {fileID: 4464506009196274525}
   - component: {fileID: 1747187658099963067}
   - component: {fileID: 6427467547313428841}
   - component: {fileID: 7130167820753412502}
+  - component: {fileID: -3269076823158159154}
   m_Layer: 8
   m_Name: BladeShip
   m_TagString: Player
@@ -112,11 +114,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 392875b082635b448afe230af6c27869, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
-  ActiveAbility: {fileID: 328189634753894930}
+  activeAbility: {fileID: 8398465633140859630}
   passiveAbility: {fileID: 1343159532784850340}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 4756945734813854271}
   ShipData: {fileID: 11400000, guid: 60dc0b5f9e0240f419b80d75e876dcd1, type: 2}
   IsVisible: 0
+--- !u!114 &8398465633140859630
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3878e54b962c17b4090b693499f26d1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CreateBladeAbility
+  cooldown: 0
+  owner: {fileID: 5713520068090865019}
+  blade: {fileID: 1957978335653931824, guid: e433bb5a5fb9f9749b7aba45c2ef19e7, type: 3}
+  recordingDuration: 5
+  sampleInterval: 0.1
+  bladeWidth: 0.45
+  bladeSpeed: 12
+  bladeDamage: 50
+  bladeLifetime: 4
+  previewSortingOrder: 19
 --- !u!114 &1343159532784850340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,6 +170,13 @@ MonoBehaviour:
   cooldown: 0
   owner: {fileID: 5713520068090865019}
   blade: {fileID: 1957978335653931824, guid: e433bb5a5fb9f9749b7aba45c2ef19e7, type: 3}
+  recordingDuration: 5
+  sampleInterval: 0.1
+  bladeWidth: 0.45
+  bladeSpeed: 12
+  bladeDamage: 50
+  bladeLifetime: 4
+  previewSortingOrder: 19
 --- !u!114 &4464506009196274525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -170,7 +202,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c29d9cf009b492e4aacbe51a6bb822e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  healthRegenRate: 0
 --- !u!114 &6427467547313428841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,6 +260,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.48546204, y: 0.43295503}
   m_EdgeRadius: 0
+--- !u!114 &-3269076823158159154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,6 +320,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetOffset: {x: 0, y: 0.3}
+  pickupSnapDistance: 0.08
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:
   m_ObjectHideFlags: 0

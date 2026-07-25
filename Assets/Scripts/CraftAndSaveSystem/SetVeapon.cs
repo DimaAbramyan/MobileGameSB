@@ -22,7 +22,7 @@ public class SetVeapon : MonoBehaviour
         }
         else
         {
-            Debug.Log("≈·Î‡Ì?");
+            Debug.Log("–ï–±–ª–∞–Ω?");
         }
     }
 }

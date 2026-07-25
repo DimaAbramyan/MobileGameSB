@@ -46,6 +46,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetOffset: {x: 0, y: 0.3}
+  pickupSnapDistance: 0.08
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   forceAmount: 10
 --- !u!58 &8667883072356674578
 CircleCollider2D:
@@ -127,6 +132,7 @@ GameObject:
   - component: {fileID: 2632787861353036407}
   - component: {fileID: 818567992442832061}
   - component: {fileID: 275594395805899214}
+  - component: {fileID: -8013081517341462785}
   m_Layer: 8
   m_Name: Abbadon
   m_TagString: Player
@@ -224,6 +230,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ParentShip
   activeAbility: {fileID: 8640688427689708874}
   passiveAbility: {fileID: 2632787861353036407}
+  intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 4802379084338690410}
   ShipData: {fileID: 11400000, guid: 79426622f3aa3d14895139e928da60f7, type: 2}
   IsVisible: 0
@@ -339,6 +346,20 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.46, y: 1.53}
   m_EdgeRadius: 0
+--- !u!114 &-8013081517341462785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8319398997891705606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
 --- !u!1 &8757784699801437982
 GameObject:
   m_ObjectHideFlags: 0

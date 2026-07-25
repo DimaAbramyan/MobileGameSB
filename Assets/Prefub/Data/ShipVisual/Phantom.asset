@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83356a60238264547ac8735423a7f23b, type: 3}
+  m_Name: Phantom
+  m_EditorClassIdentifier: Assembly-CSharp::ShipSelectionVisualConfig
+  shipData: {fileID: 11400000, guid: 71777804cd809b54ca2ba4d9a3183254, type: 2}
+  shipName: Phantom
+  activeAbilityDescription: "\u0430"
+  passiveAbilityDescription: "\u0438"
+  radarChartConfig: {fileID: 11400000, guid: 30b837b223807b24aafc376e511fc5dd, type: 2}
+  radarChartValues: 0400000008000000040000000700000004000000020000000100000005000000

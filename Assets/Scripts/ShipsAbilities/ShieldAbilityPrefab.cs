@@ -1,20 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 public class ShieldAbilityPrefab : MonoBehaviour, iDamagable
 {
     private float shieldHealth;
     private float multiplier = 2;
-    [SerializeField] private PlayerController controller;
+    [Inject] private PlayerController controller;
 
     private Transform currentAnchor;
-    public void Awake()
-    {
-        controller = FindAnyObjectByType<PlayerController>();
-        if (controller == null)
-            Debug.LogError("Controller not found");
-    }
     private void OnEnable()
     {
         controller.OnCurrentShipChanged += HandleShipChanged;

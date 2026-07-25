@@ -13,6 +13,7 @@ public sealed class WeaponDataEditor : Editor
 
     private SerializedProperty startLevel;
     private SerializedProperty maxLevel;
+    private SerializedProperty energyCost;
 
     private SerializedProperty flightMode;
     private SerializedProperty contactMode;
@@ -40,6 +41,7 @@ public sealed class WeaponDataEditor : Editor
 
         startLevel = serializedObject.FindProperty("startLevel");
         maxLevel = serializedObject.FindProperty("maxLevel");
+        energyCost = serializedObject.FindProperty("energyCost");
 
         flightMode = serializedObject.FindProperty("flightMode");
         contactMode = serializedObject.FindProperty("contactMode");
@@ -67,6 +69,7 @@ public sealed class WeaponDataEditor : Editor
 
         DrawStats();
         DrawLevels();
+        DrawBuild();
         DrawBehaviors();
         DrawLifetime();
         DrawAudio();
@@ -90,6 +93,15 @@ public sealed class WeaponDataEditor : Editor
         EditorGUILayout.LabelField("Levels", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(startLevel);
         EditorGUILayout.PropertyField(maxLevel);
+        EditorGUILayout.Space();
+    }
+
+    private void DrawBuild()
+    {
+        EditorGUILayout.LabelField("Build", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(
+            energyCost,
+            new GUIContent("Energy Cost"));
         EditorGUILayout.Space();
     }
 

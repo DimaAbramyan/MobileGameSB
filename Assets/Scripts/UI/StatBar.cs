@@ -43,7 +43,7 @@ public class StatBar : MonoBehaviour
         if (maxValue <= 0)
             return;
         float normalized = Mathf.Clamp01(value / maxValue)*100;
-        //Debug.Log("Максимальное здоровье: " + maxValue.ToString());
+        //Debug.Log("РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ Р·РґРѕСЂРѕРІСЊРµ: " + maxValue.ToString());
         slider.value = normalized;
 
         if (gradient != null)
@@ -52,6 +52,6 @@ public class StatBar : MonoBehaviour
     public void UpdateMax(float newMax)
     {
         maxValue = newMax;
-        SetValue(currentValue); // обновляем UI под новый максимум
+        SetValue(currentValue); // РѕР±РЅРѕРІР»СЏРµРј UI РїРѕРґ РЅРѕРІС‹Р№ РјР°РєСЃРёРјСѓРј
     }
 }

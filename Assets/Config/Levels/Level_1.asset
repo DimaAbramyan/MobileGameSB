@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4772704e5af14f878e9327d364c0ade4, type: 3}
+  m_Name: Level_1
+  m_EditorClassIdentifier: 
+  id: 1
+  displayName: Level 2
+  requiredLevel: {fileID: 11400000, guid: 028361d96a9d43bb9855fa41b1bfa5f0, type: 2}
+  bonusLevel: 0
+  music:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  autoScaleParallaxSpeedByDepth: 1
+  farthestLayerSpeedMultiplier: 0.25
+  parallaxLayers:
+  - name: SEX
+    sprite: {fileID: 21300000, guid: fea3b9b57e5d390449c6ed94f04da701, type: 3}
+    position: {x: 0, y: 0}
+    scale: {x: 0.25, y: 0.25}
+    scrollSpeed: {x: 0, y: 0.05}
+    sortingOrder: -95
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - name: SEX2
+    sprite: {fileID: 21300000, guid: 4f64e60ea06b2d74085eb297f31dbaff, type: 3}
+    position: {x: 0, y: 0}
+    scale: {x: 0.25, y: 0.25}
+    scrollSpeed: {x: 0, y: 0.2}
+    sortingOrder: -90
+    color: {r: 1, g: 1, b: 1, a: 0}
+  randomBackgroundObjects: []
+  waves: []

@@ -12,7 +12,7 @@ public class InputFieldExample : MonoBehaviour
     private SaveBluePrint Save;
     public void ReadInput()
     {
-        SaveShip save = new SaveShip(Save.shipBody.shipId, Save.arr, inputField.text, inputFieldDescr.text);
+        SaveShip save = new SaveShip(Save.shipBody.ShipId, Save.arr, inputField.text, inputFieldDescr.text);
         SaveSystem.SaveShipData(save);  
     }
     public void GetValue(WeaponDataSer[] w, BodyData b)

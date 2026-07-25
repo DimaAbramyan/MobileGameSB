@@ -12,14 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb4f858a507b353499313b36b3edc0be, type: 3}
   m_Name: Blade
   m_EditorClassIdentifier: 
-  speed: 250
-  mass: 7.5
-  drag: 5
+  speed: 500
+  mass: 4.5
+  drag: 12
   maximumHealthPoints: 60
   healthRegenCooldown: 10
   healthRegenRate: 1
   maximumShieldPoints: 50
   shieldRegenCooldown: 7
   shieldRegenRate: 5
+  maximumEnergy: 10
+  maximumWeaponCount: 3
   currentLvl: 0
   shipId: 0

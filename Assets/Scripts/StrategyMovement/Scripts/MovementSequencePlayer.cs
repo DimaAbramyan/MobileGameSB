@@ -90,6 +90,11 @@ public class MovementSequencePlayer : MonoBehaviour
         currentTween.OnComplete(PlayNext);
     }
 
+    public void SetCommands(MovementCommandData[] newCommands)
+    {
+        commands = newCommands;
+    }
+
     private IEnumerator ExecuteCommands()
     {
         yield return ExecuteRange(0, commands.Length - 1, 0);

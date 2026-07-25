@@ -44,6 +44,7 @@ MonoBehaviour:
   - 0
   startLevel: 0
   maxLevel: 4
+  energyCost: 2
   flightMode: 0
   contactMode: 1
   homingRotationSpeed: 360

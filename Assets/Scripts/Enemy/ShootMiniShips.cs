@@ -41,7 +41,7 @@ public class ShootMiniShips : MonoBehaviour
     }
     private void  Reload()
     {
-        Debug.Log("Пенис");
+        Debug.Log("РџРµРЅРёСЃ");
         Instantiate(this, motherShip.transform);
         Destroy(this);
     }

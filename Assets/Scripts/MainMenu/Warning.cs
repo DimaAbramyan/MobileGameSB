@@ -10,7 +10,7 @@ public class Warning : MonoBehaviour
     private void OnEnable()
     {
         StartCoroutine("StopShowing");
-        Debug.Log("ПРЯЧУ");
+        Debug.Log("РџР РЇР§РЈ");
     }
     IEnumerator StopShowing()
     {
@@ -26,7 +26,7 @@ public class Warning : MonoBehaviour
             timeElapsed += Time.deltaTime;
             float newAlpha = Mathf.Lerp(startAlpha, 0, timeElapsed / 2);
 
-            // Обновляем прозрачность
+            // РћР±РЅРѕРІР»СЏРµРј РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ
             Color color = targetImage.color;
             color.a = newAlpha;
             Color c = Text.color;
@@ -34,7 +34,7 @@ public class Warning : MonoBehaviour
             targetImage.color = color;
             Text.color = c;
             yield return null;
-            // Ждем следующий кадр
+            // Р–РґРµРј СЃР»РµРґСѓСЋС‰РёР№ РєР°РґСЂ
         }
         targetImage.color = new Color(1, 1, 1, 1);
         Text.color = new Color(0, 0, 0, 1);

@@ -17,7 +17,7 @@ public class DamageNumbPool : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Очищаем пул и создаем новые объекты
+        // РћС‡РёС‰Р°РµРј РїСѓР» Рё СЃРѕР·РґР°РµРј РЅРѕРІС‹Рµ РѕР±СЉРµРєС‚С‹
         ClearPool();
         InitializePool();
     }
@@ -35,19 +35,19 @@ public class DamageNumbPool : MonoBehaviour
         GameObject obj = Instantiate(damageNumberPrefab, transform);
         obj.SetActive(false);
         var numberScript = obj.GetComponent<NumberShowingToPlayer>();
-        numberScript.Pool = this; // Устанавливаем ссылку на пул
+        numberScript.Pool = this; // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃСЃС‹Р»РєСѓ РЅР° РїСѓР»
         _pool.Enqueue(obj);
         return obj;
     }
 
     private void ClearPool()
     {
-        _pool.Clear(); // Просто очищаем очередь, объекты уничтожатся автоматически
+        _pool.Clear(); // РџСЂРѕСЃС‚Рѕ РѕС‡РёС‰Р°РµРј РѕС‡РµСЂРµРґСЊ, РѕР±СЉРµРєС‚С‹ СѓРЅРёС‡С‚РѕР¶Р°С‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё
     }
 
     public GameObject GetDamageNumber(float numb)
     {
-        // Удаляем уничтоженные объекты из начала очереди
+        // РЈРґР°Р»СЏРµРј СѓРЅРёС‡С‚РѕР¶РµРЅРЅС‹Рµ РѕР±СЉРµРєС‚С‹ РёР· РЅР°С‡Р°Р»Р° РѕС‡РµСЂРµРґРё
         while (_pool.Count > 0 && _pool.Peek() == null)
         {
             _pool.Dequeue();
@@ -62,12 +62,12 @@ public class DamageNumbPool : MonoBehaviour
             if (text != null)
             {
                 text.text = numb.ToString();
-                text.alpha = 1f; // Сбрасываем прозрачность
+                text.alpha = 1f; // РЎР±СЂР°СЃС‹РІР°РµРј РїСЂРѕР·СЂР°С‡РЅРѕСЃС‚СЊ
             }
             return obj;
         }
 
-        return CreateNewPoolObject(); // На случай, если что-то пошло не так
+        return CreateNewPoolObject(); // РќР° СЃР»СѓС‡Р°Р№, РµСЃР»Рё С‡С‚Рѕ-С‚Рѕ РїРѕС€Р»Рѕ РЅРµ С‚Р°Рє
     }
 
     public void ReturnToPool(GameObject obj)
