@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Level 2
   requiredLevel: {fileID: 11400000, guid: 028361d96a9d43bb9855fa41b1bfa5f0, type: 2}
   bonusLevel: 0
+  metalReward: 0
+  coreReward: 0
   music:
     Guid:
       Data1: 0
@@ -41,4 +43,8 @@ MonoBehaviour:
     sortingOrder: -90
     color: {r: 1, g: 1, b: 1, a: 0}
   randomBackgroundObjects: []
-  waves: []
+  waves:
+  - {fileID: 5142897750625784009, guid: e9128a6dcbdb8db4c813ff87c9d3f0a3, type: 3}
+  - {fileID: 5142897750625784009, guid: 7cb54c909f96d3446930675c9359babc, type: 3}
+  - {fileID: 5142897750625784009, guid: b17d10c381c7fed44b5b9f6f0e15198f, type: 3}
+  - {fileID: 5142897750625784009, guid: 88ddad6c233df9e42bc7c6b06234a82a, type: 3}

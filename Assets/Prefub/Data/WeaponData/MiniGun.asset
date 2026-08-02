@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: MiniGun
   m_EditorClassIdentifier: 
   reloadTimeByLevel:
-  - 0.15
-  - 0.12
-  - 0.1
-  - 0.08
-  - 0.06
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.05
+  - 0.05
   angleByLevel:
-  - 25
-  - 25
-  - 25
-  - 25
-  - 25
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
   damageByLevel:
   - 10
   - 10
@@ -37,11 +37,11 @@ MonoBehaviour:
   - 8
   - 8
   speedByLevel:
-  - 5
-  - 5
-  - 5
-  - 5
-  - 5
+  - 9
+  - 9
+  - 9
+  - 9
+  - 9
   startLevel: 0
   maxLevel: 4
   energyCost: 2

@@ -75,6 +75,7 @@ MonoBehaviour:
     sortingOrder: -85
     respawnPadding: 1
   waves:
-  - {fileID: 549544237492067451, guid: f704e0848c68c064ba78d1e68e185c69, type: 3}
-  - {fileID: 5142897750625784009, guid: d3415d68c27510c4798a1036b3fed25e, type: 3}
-  - {fileID: 2898561680101012244, guid: f670e517e87a9c74c8c821606e1e2b3a, type: 3}
+  - {fileID: 5142897750625784009, guid: 17dd05d6b6e3a0248b0f08909def48b8, type: 3}
+  - {fileID: 5142897750625784009, guid: f3ea4ede326ae3441bd0bd52e5a3eb7f, type: 3}
+  - {fileID: 5142897750625784009, guid: 0b7195310b606044cb1672ffca526e2e, type: 3}
+  - {fileID: 5142897750625784009, guid: 5352ab9337e10d6458cc1bfb5e8e1b5c, type: 3}

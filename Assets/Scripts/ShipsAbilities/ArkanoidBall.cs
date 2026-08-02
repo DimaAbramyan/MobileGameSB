@@ -205,6 +205,12 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (IsDestroyBoundary(collision.collider))
+        {
+            IgnoreDestroyBoundaryCollision(collision.collider);
+            return;
+        }
+
         ArkanoidPaddle hitPaddle =
             collision.collider.GetComponentInParent<ArkanoidPaddle>();
         if (hitPaddle != null)
@@ -229,6 +235,9 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (IsDestroyBoundary(other))
+            return;
+
         ArkanoidPaddle hitPaddle = other.GetComponentInParent<ArkanoidPaddle>();
         if (hitPaddle != null)
         {
@@ -243,9 +252,24 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D other)
     {
+        if (IsDestroyBoundary(other))
+            return;
+
         Enemy enemy = other.GetComponentInParent<Enemy>();
         if (enemy != null)
             DealContactDamage(enemy);
+    }
+
+    private bool IsDestroyBoundary(Collider2D other)
+    {
+        return other != null
+            && other.GetComponentInParent<IProjectileDestroyBoundary>() != null;
+    }
+
+    private void IgnoreDestroyBoundaryCollision(Collider2D boundaryCollider)
+    {
+        if (ballCollider != null && boundaryCollider != null)
+            Physics2D.IgnoreCollision(ballCollider, boundaryCollider, true);
     }
 
     private void BounceFromPaddle(ArkanoidPaddle hitPaddle, bool bounceUp)

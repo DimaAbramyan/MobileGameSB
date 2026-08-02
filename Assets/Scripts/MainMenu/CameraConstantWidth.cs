@@ -1,53 +1,124 @@
 using UnityEngine;
 
 /// <summary>
-/// Keeps constant camera width instead of height, works for both Orthographic & Perspective cameras
-/// Made for tutorial https://youtu.be/0cmxFjP375Y
+/// Keeps an orthographic camera's visible world width constant across devices.
+/// Can be placed either on the Camera itself or on a scene object that should
+/// apply the setting to Camera.main during gameplay.
 /// </summary>
-public class CameraConstantWidth : MonoBehaviour
+public sealed class CameraConstantWidth : MonoBehaviour
 {
-    public Vector2 DefaultResolution = new Vector2(720, 1280);
-    [Range(0f, 1f)] public float WidthOrHeight = 0;
+    [Header("Target")]
+    [SerializeField] private Camera targetCamera;
+    [SerializeField, Min(0.1f)] private float targetWorldWidth = 5.6f;
+    [SerializeField] private bool useMainCameraIfEmpty = true;
 
-    private Camera componentCamera;
-    
-    private float initialSize;
-    private float targetAspect;
+    [Header("Update")]
+    [SerializeField] private bool updateWhenResolutionChanges = true;
 
-    private float initialFov;
-    private float horizontalFov = 120f;
+    private int lastScreenWidth;
+    private int lastScreenHeight;
+    private float lastCameraAspect;
+    private bool warnedMissingCamera;
 
-    private void Start()
+    public float TargetWorldWidth
     {
-        componentCamera = GetComponent<Camera>();
-        initialSize = componentCamera.orthographicSize;
-
-        targetAspect = DefaultResolution.x / DefaultResolution.y;
-
-        initialFov = componentCamera.fieldOfView;
-        horizontalFov = CalcVerticalFov(initialFov, 1 / targetAspect);
-    }
-
-    private void Update()
-    {
-        if (componentCamera.orthographic)
+        get => targetWorldWidth;
+        set
         {
-            float constantWidthSize = initialSize * (targetAspect / componentCamera.aspect);
-            componentCamera.orthographicSize = Mathf.Lerp(constantWidthSize, initialSize, WidthOrHeight);
-        }
-        else
-        {
-            float constantWidthFov = CalcVerticalFov(horizontalFov, componentCamera.aspect);
-            componentCamera.fieldOfView = Mathf.Lerp(constantWidthFov, initialFov, WidthOrHeight);
+            targetWorldWidth = Mathf.Max(0.1f, value);
+            Apply();
         }
     }
 
-    private float CalcVerticalFov(float hFovInDeg, float aspectRatio)
+    private void Awake()
     {
-        float hFovInRads = hFovInDeg * Mathf.Deg2Rad;
+        ResolveCamera();
+        Apply();
+    }
 
-        float vFovInRads = 2 * Mathf.Atan(Mathf.Tan(hFovInRads / 2) / aspectRatio);
+    private void OnEnable()
+    {
+        ResolveCamera();
+        Apply();
+    }
 
-        return vFovInRads * Mathf.Rad2Deg;
+    private void LateUpdate()
+    {
+        if (targetCamera == null)
+            ResolveCamera();
+
+        if (targetCamera == null)
+            return;
+
+        if (!updateWhenResolutionChanges && lastScreenWidth > 0 && lastScreenHeight > 0)
+            return;
+
+        if (Screen.width == lastScreenWidth
+            && Screen.height == lastScreenHeight
+            && Mathf.Approximately(lastCameraAspect, targetCamera.aspect))
+        {
+            return;
+        }
+
+        Apply();
+    }
+
+    private void OnValidate()
+    {
+        targetWorldWidth = Mathf.Max(0.1f, targetWorldWidth);
+
+        if (!Application.isPlaying)
+            targetCamera = targetCamera != null ? targetCamera : GetComponent<Camera>();
+    }
+
+    public void Apply()
+    {
+        if (targetCamera == null)
+            ResolveCamera();
+
+        if (targetCamera == null)
+        {
+            WarnMissingCamera();
+            return;
+        }
+
+        if (!targetCamera.orthographic)
+        {
+            Debug.LogWarning(
+                $"{nameof(CameraConstantWidth)} on {name} expects an orthographic camera. "
+                + $"Camera '{targetCamera.name}' is perspective, so fixed width was not applied.",
+                this);
+            return;
+        }
+
+        float aspect = Mathf.Max(0.01f, targetCamera.aspect);
+        targetCamera.orthographicSize = targetWorldWidth / (2f * aspect);
+
+        lastScreenWidth = Screen.width;
+        lastScreenHeight = Screen.height;
+        lastCameraAspect = targetCamera.aspect;
+    }
+
+    private void ResolveCamera()
+    {
+        if (targetCamera != null)
+            return;
+
+        targetCamera = GetComponent<Camera>();
+
+        if (targetCamera == null && useMainCameraIfEmpty)
+            targetCamera = Camera.main;
+    }
+
+    private void WarnMissingCamera()
+    {
+        if (warnedMissingCamera)
+            return;
+
+        warnedMissingCamera = true;
+        Debug.LogWarning(
+            $"{nameof(CameraConstantWidth)} on {name} could not find a camera. "
+            + "Assign Target Camera or make sure a camera is tagged MainCamera.",
+            this);
     }
 }

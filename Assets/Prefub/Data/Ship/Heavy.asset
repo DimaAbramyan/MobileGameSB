@@ -21,7 +21,7 @@ MonoBehaviour:
   maximumShieldPoints: 200
   shieldRegenCooldown: 10
   shieldRegenRate: 20
-  maximumEnergy: 10
+  maximumEnergy: 30
   maximumWeaponCount: 6
   currentLvl: 0
   shipId: 1
