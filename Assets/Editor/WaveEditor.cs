@@ -20,7 +20,7 @@ public sealed class WaveEditor : Editor
     private const float DefaultDirectedPostPreviewDuration = 4f;
     private const float InfiniteParallelPreviewExtraDuration = 60f;
     private const float LoopingPipelinePreviewCycles = 3f;
-    private const int MaxPreviewLoopIterationsPerRepaint = 256;
+    private const int MaxPreviewCompletedLoopCyclesPerRepaint = 24;
 
     private SerializedProperty scheduledSubWaves;
     private SerializedProperty legacySubWaves;
@@ -1092,10 +1092,10 @@ public sealed class WaveEditor : Editor
             float time,
             Vector3 fallback)
         {
-            const int MaxPreviewPipelineCycles = 256;
             int completedCycles = 0;
 
-            while (time > 0f && completedCycles < MaxPreviewPipelineCycles)
+            while (time > 0f
+                && completedCycles < MaxPreviewCompletedLoopCyclesPerRepaint)
             {
                 bool usedAnyCommand = false;
                 for (int i = 0; i < postCommands.arraySize; i++)
@@ -1398,12 +1398,12 @@ public sealed class WaveEditor : Editor
                         GetPostCommandDuration(command),
                         true),
                 DirectedWavePostCommandType.Loop =>
-                    EvaluateLoopPostCommand(
-                        positions,
-                        command,
-                        float.IsInfinity(GetPostCommandDuration(command))
-                            ? InfiniteParallelPreviewExtraDuration
-                            : GetPostCommandDuration(command)),
+                    IsInfiniteLoopCommand(command)
+                        ? new Dictionary<int, Vector3>(positions)
+                        : EvaluateLoopPostCommand(
+                            positions,
+                            command,
+                            GetPostCommandDuration(command)),
                 _ => positions
             };
 
@@ -1478,26 +1478,51 @@ public sealed class WaveEditor : Editor
             if (iterationDuration <= 0f)
                 return frame;
 
-            bool infinite = command.FindPropertyRelative("infiniteLoop").boolValue;
-            int loopCount = infinite
-                ? MaxPreviewLoopIterationsPerRepaint
-                : Mathf.Max(1, command.FindPropertyRelative("loopCount").intValue);
-            loopCount = Mathf.Min(loopCount, MaxPreviewLoopIterationsPerRepaint);
-            float remaining = Mathf.Max(0f, elapsed);
-
-            for (int iteration = 0; iteration < loopCount; iteration++)
+            float safeElapsed = Mathf.Max(0f, elapsed);
+            if (IsInfiniteLoopCommand(command))
             {
-                if (remaining <= iterationDuration)
-                    return EvaluatePostCommandArrayUntil(
-                        frame,
-                        loopCommands,
-                        remaining);
-
-                ApplyPostCommandArrayFinal(frame, loopCommands);
-                remaining -= iterationDuration;
+                float cycleTime = Mathf.Repeat(safeElapsed, iterationDuration);
+                return EvaluatePostCommandArrayUntil(
+                    frame,
+                    loopCommands,
+                    cycleTime);
             }
 
-            return frame;
+            int loopCount = Mathf.Max(
+                1,
+                command.FindPropertyRelative("loopCount").intValue);
+            float totalDuration = iterationDuration * loopCount;
+            if (safeElapsed >= totalDuration)
+            {
+                ApplyLoopFinalCycles(frame, loopCommands, loopCount);
+                return frame;
+            }
+
+            int completedCycles = Mathf.FloorToInt(safeElapsed / iterationDuration);
+            float remaining = safeElapsed - completedCycles * iterationDuration;
+
+            ApplyLoopFinalCycles(frame, loopCommands, completedCycles);
+
+            return EvaluatePostCommandArrayUntil(
+                frame,
+                loopCommands,
+                remaining);
+        }
+
+        private void ApplyLoopFinalCycles(
+            Dictionary<int, Vector3> positions,
+            SerializedProperty loopCommands,
+            int completedCycles)
+        {
+            if (completedCycles <= 0)
+                return;
+
+            int safeCycles = Mathf.Min(
+                completedCycles,
+                MaxPreviewCompletedLoopCyclesPerRepaint);
+
+            for (int i = 0; i < safeCycles; i++)
+                ApplyPostCommandArrayFinal(positions, loopCommands);
         }
 
         private Dictionary<int, Vector3> EvaluatePostCommandArrayUntil(
@@ -1677,6 +1702,21 @@ public sealed class WaveEditor : Editor
                 && infiniteParallel != null
                 && type.enumValueIndex == (int)DirectedWavePostCommandType.Parallel
                 && infiniteParallel.boolValue;
+        }
+
+        private static bool IsInfiniteLoopCommand(SerializedProperty command)
+        {
+            if (command == null)
+                return false;
+
+            SerializedProperty type = command.FindPropertyRelative("type");
+            SerializedProperty infiniteLoop =
+                command.FindPropertyRelative("infiniteLoop");
+
+            return type != null
+                && infiniteLoop != null
+                && type.enumValueIndex == (int)DirectedWavePostCommandType.Loop
+                && infiniteLoop.boolValue;
         }
 
         private static bool HasInfiniteParallel(SerializedProperty commands)

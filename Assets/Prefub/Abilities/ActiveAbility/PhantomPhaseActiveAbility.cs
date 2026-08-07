@@ -39,7 +39,10 @@ public class PhantomPhaseActiveAbility : ActiveAbility
             SetVisualsTransparent(owner);
 
         isPhased = true;
-        phaseCoroutine = StartCoroutine(PhaseTimer());
+
+        if (AbilityMode != UltimateAbilityMode.Toggle)
+            phaseCoroutine = StartCoroutine(PhaseTimer());
+
         return true;
     }
 
@@ -145,8 +148,9 @@ public class PhantomPhaseActiveAbility : ActiveAbility
         }
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         EndPhase();
     }
 

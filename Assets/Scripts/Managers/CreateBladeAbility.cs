@@ -5,7 +5,7 @@ using System.Collections;
 public class CreateBladeAbility : ActiveAbility
 {
     [SerializeField] private GameObject blade;
-    [SerializeField] private float recordingDuration = 5f;
+    [SerializeField, Min(0.05f)] private float recordingDuration = 1f;
     [SerializeField] private float sampleInterval = 0.1f;
     [SerializeField] private float bladeWidth = 0.45f;
     [SerializeField] private float bladeSpeed = 12f;
@@ -16,6 +16,8 @@ public class CreateBladeAbility : ActiveAbility
     private readonly List<Vector2> savedPoints = new();
     private Coroutine collectCoroutine;
     private LineRenderer previewLine;
+    private ParentShip intangibleOwner;
+    private WeaponController suppressedWeaponController;
 
     public override bool Activate(ParentShip owner)
     {
@@ -23,7 +25,7 @@ public class CreateBladeAbility : ActiveAbility
             return false;
 
         owner?.LockShipSwitching(recordingDuration);
-        owner?.SetIntangibleForSeconds(recordingDuration);
+        BeginAbilityRestrictions(owner);
         collectCoroutine = StartCoroutine(CollectAndSpawn(owner));
         return true;
     }
@@ -36,6 +38,7 @@ public class CreateBladeAbility : ActiveAbility
         yield return StartCoroutine(CollectPoints(owner));
         SpawnBlade(owner);
         HidePreviewLine();
+        EndAbilityRestrictions();
         collectCoroutine = null;
     }
 
@@ -134,8 +137,34 @@ public class CreateBladeAbility : ActiveAbility
         previewLine.enabled = false;
     }
 
-    private void OnDisable()
+    private void BeginAbilityRestrictions(ParentShip owner)
     {
+        intangibleOwner = owner;
+        intangibleOwner?.EnterIntangibleState();
+
+        suppressedWeaponController = owner != null
+            ? owner.GetComponent<WeaponController>()
+            : GetComponent<WeaponController>();
+        suppressedWeaponController?.BeginShootingSuppression();
+    }
+
+    private void EndAbilityRestrictions()
+    {
+        if (intangibleOwner != null)
+            intangibleOwner.ExitIntangibleState();
+
+        intangibleOwner = null;
+
+        if (suppressedWeaponController != null)
+            suppressedWeaponController.EndShootingSuppression();
+
+        suppressedWeaponController = null;
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+
         if (collectCoroutine != null)
         {
             StopCoroutine(collectCoroutine);
@@ -144,6 +173,7 @@ public class CreateBladeAbility : ActiveAbility
 
         savedPoints.Clear();
         HidePreviewLine();
+        EndAbilityRestrictions();
     }
 }
 

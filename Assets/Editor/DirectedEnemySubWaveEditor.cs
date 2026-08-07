@@ -20,7 +20,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         "DirectedEnemySubWaveEditor.FinalPointFoldout";
     private const float PostBehaviorPreviewDuration = 4f;
     private const float InfiniteParallelPreviewExtraDuration = 60f;
-    private const int MaxPreviewLoopIterationsPerRepaint = 256;
+    private const int MaxPreviewCompletedLoopCyclesPerRepaint = 24;
 
     private SerializedProperty enemyPrefab;
     private SerializedProperty enemyCount;
@@ -4340,7 +4340,11 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         if (completedCycles <= 0)
             return;
 
-        for (int cycle = 0; cycle < completedCycles; cycle++)
+        int safeCycles = Mathf.Min(
+            completedCycles,
+            MaxPreviewCompletedLoopCyclesPerRepaint);
+
+        for (int cycle = 0; cycle < safeCycles; cycle++)
         {
             for (int i = 0; i < postCommands.arraySize; i++)
             {
@@ -4595,13 +4599,13 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                     GetPreviewCommandDuration(command),
                     true),
             DirectedWavePostCommandType.Loop =>
-                EvaluatePreviewLoopCommand(
-                    wave,
-                    positions,
-                    command,
-                    float.IsInfinity(GetPreviewCommandDuration(command))
-                        ? InfiniteParallelPreviewExtraDuration
-                        : GetPreviewCommandDuration(command)),
+                IsInfiniteLoopCommand(command)
+                    ? new Dictionary<int, Vector3>(positions)
+                    : EvaluatePreviewLoopCommand(
+                        wave,
+                        positions,
+                        command,
+                        GetPreviewCommandDuration(command)),
             _ => positions
         };
 
@@ -4681,29 +4685,58 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         if (iterationDuration <= 0f)
             return frame;
 
-        bool infinite = command.FindPropertyRelative("infiniteLoop").boolValue;
-        int loopCount = infinite
-            ? MaxPreviewLoopIterationsPerRepaint
-            : Mathf.Max(1, command.FindPropertyRelative("loopCount").intValue);
-        loopCount = Mathf.Min(loopCount, MaxPreviewLoopIterationsPerRepaint);
-        float remaining = Mathf.Max(0f, elapsed);
-
-        for (int iteration = 0; iteration < loopCount; iteration++)
+        float safeElapsed = Mathf.Max(0f, elapsed);
+        if (IsInfiniteLoopCommand(command))
         {
-            if (remaining <= iterationDuration)
-            {
-                return EvaluatePreviewCommandArrayUntil(
-                    wave,
-                    frame,
-                    loopCommands,
-                    remaining);
-            }
-
-            ApplyPreviewCommandArrayFinal(wave, frame, loopCommands);
-            remaining -= iterationDuration;
+            float cycleTime = Mathf.Repeat(safeElapsed, iterationDuration);
+            return EvaluatePreviewCommandArrayUntil(
+                wave,
+                frame,
+                loopCommands,
+                cycleTime);
         }
 
-        return frame;
+        int loopCount = Mathf.Max(
+            1,
+            command.FindPropertyRelative("loopCount").intValue);
+        float totalDuration = iterationDuration * loopCount;
+        if (safeElapsed >= totalDuration)
+        {
+            ApplyPreviewLoopFinalCycles(wave, frame, loopCommands, loopCount);
+            return frame;
+        }
+
+        int completedCycles = Mathf.FloorToInt(safeElapsed / iterationDuration);
+        float remaining = safeElapsed - completedCycles * iterationDuration;
+
+        ApplyPreviewLoopFinalCycles(
+            wave,
+            frame,
+            loopCommands,
+            completedCycles);
+
+        return EvaluatePreviewCommandArrayUntil(
+            wave,
+            frame,
+            loopCommands,
+            remaining);
+    }
+
+    private void ApplyPreviewLoopFinalCycles(
+        DirectedEnemySubWave wave,
+        Dictionary<int, Vector3> positions,
+        SerializedProperty loopCommands,
+        int completedCycles)
+    {
+        if (completedCycles <= 0)
+            return;
+
+        int safeCycles = Mathf.Min(
+            completedCycles,
+            MaxPreviewCompletedLoopCyclesPerRepaint);
+
+        for (int i = 0; i < safeCycles; i++)
+            ApplyPreviewCommandArrayFinal(wave, positions, loopCommands);
     }
 
     private Dictionary<int, Vector3> EvaluatePreviewCommandArrayUntil(
@@ -4863,6 +4896,21 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             && type.enumValueIndex == (int)DirectedWavePostCommandType.Parallel
             && parallelExecutionMode.enumValueIndex
                 == (int)DirectedWaveParallelExecutionMode.Background;
+    }
+
+    private static bool IsInfiniteLoopCommand(SerializedProperty command)
+    {
+        if (command == null)
+            return false;
+
+        SerializedProperty type = command.FindPropertyRelative("type");
+        SerializedProperty infiniteLoop =
+            command.FindPropertyRelative("infiniteLoop");
+
+        return type != null
+            && infiniteLoop != null
+            && type.enumValueIndex == (int)DirectedWavePostCommandType.Loop
+            && infiniteLoop.boolValue;
     }
 
     private static bool IsPostCommandEnabled(SerializedProperty command)

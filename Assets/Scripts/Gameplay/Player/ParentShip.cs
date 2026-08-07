@@ -28,6 +28,7 @@ public class ParentShip : MonoBehaviour, iDamagable
 
     public float MaximumHealthPoints { get; private set; }
     public float MaximumShieldPoints { get; private set; }
+    public ActiveAbility ActiveAbility => activeAbility;
     public bool IsIntangible =>
         intangibleState != null && intangibleState.IsActive;
 
@@ -179,7 +180,7 @@ public class ParentShip : MonoBehaviour, iDamagable
 
     public void ReleaseAbility()
     {
-        activeAbility?.Release(this);
+        activeAbility?.TryRelease(this);
     }
 
     public void LockShipSwitching(float duration)

@@ -61,8 +61,10 @@ public sealed class TwinCloneFleetActiveAbility : ActiveAbility
         clone.Configure(fleetOwner, container, true, cloneSpeed, cloneLifetime);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
+
         if (spawnRoutine != null)
         {
             StopCoroutine(spawnRoutine);
