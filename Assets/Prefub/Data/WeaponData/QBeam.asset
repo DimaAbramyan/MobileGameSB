@@ -1,0 +1,116 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17af4332be514469803c7c6169a5f9ec, type: 3}
+  m_Name: QBeam
+  m_EditorClassIdentifier: Assembly-CSharp::QBeamData
+  reloadTimeByLevel: []
+  angleByLevel: []
+  damageByLevel: []
+  rangeByLevel: []
+  speedByLevel: []
+  levelConfigs:
+  - reloadTime: 0.2
+    angle: 0
+    damage: 0
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.18
+    angle: 0
+    damage: 0
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.16
+    angle: 0
+    damage: 0
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.14
+    angle: 0
+    damage: 0
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.12
+    angle: 0
+    damage: 0
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  startLevel: 1
+  maxLevel: 10
+  energyCost: 2
+  damageType: 1
+  flightMode: 0
+  contactMode: 0
+  homingRotationSpeed: 360
+  growDuringFlight: 0
+  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  projectileLifetime: 10
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 30
+  continuousDamageInterval: 0.25
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  qBeamLevels:
+  - chargePerHit: 6
+  - chargePerHit: 8
+  - chargePerHit: 10
+  - chargePerHit: 12
+  - chargePerHit: 15
+  beamBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  chargeDecayDelay: 0.5
+  chargeDecayPerSecond: 12

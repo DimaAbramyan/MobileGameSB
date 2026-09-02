@@ -23,7 +23,7 @@ public class MotherShip : Enemy
     }
     protected void Shoot()
     {
-        Timer -= Time.deltaTime / Timer;
+        Timer -= Time.deltaTime * FireRateMultiplier / Timer;
         if (Timer <= 0)
         {
             handler.LaunchShips();

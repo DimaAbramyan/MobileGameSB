@@ -1,11 +1,25 @@
 public static class LevelLoader
 {
     public const int FirstFightingSceneBuildIndex = 5;
+    public const string MainMenuSceneName = "NewMainMenu";
     public const string FightingSceneName = "Fighting";
 
     public static string LevelName;
     public static int LevelIndex;
     public static LevelConfig SelectedLevelConfig;
+    private static bool openMapOnMainMenuLoad;
+
+    public static void RequestMapOnMainMenuLoad()
+    {
+        openMapOnMainMenuLoad = true;
+    }
+
+    public static bool ConsumeMapOnMainMenuLoadRequest()
+    {
+        bool requested = openMapOnMainMenuLoad;
+        openMapOnMainMenuLoad = false;
+        return requested;
+    }
 
     public static int GetLevelIndex(int sceneBuildIndex)
     {

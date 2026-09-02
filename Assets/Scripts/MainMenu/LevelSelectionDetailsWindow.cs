@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Zenject;
@@ -19,12 +20,14 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
 
     [Header("Rewards")]
     [SerializeField] private TMP_Text rewardText;
-    [SerializeField] private TMP_Text metalRewardText;
+    [FormerlySerializedAs("metalRewardText")]
+    [SerializeField] private TMP_Text goldRewardText;
     [SerializeField] private TMP_Text coreRewardText;
-    [SerializeField] private string rewardFormat = "Награда: металл {0}, ядра {1}";
+    [SerializeField] private string rewardFormat = "Награда: золото {0}, ядра {1}";
     [SerializeField] private string repeatRewardFormat =
-        "Повторная награда: металл {0}, ядра {1}";
-    [SerializeField] private string metalRewardFormat = "Металл: {0}";
+        "Повторная награда: золото {0}, ядра {1}";
+    [FormerlySerializedAs("metalRewardFormat")]
+    [SerializeField] private string goldRewardFormat = "Золото: {0}";
     [SerializeField] private string coreRewardFormat = "Ядра: {0}";
 
     [Header("Buttons")]
@@ -34,10 +37,8 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
     [Header("Team")]
     [SerializeField] private TeamPreviewPanel teamPreviewPanel;
 
-    [Header("Loading")]
-    [SerializeField] private int battleSceneIndex = 5;
-
     [InjectOptional] private LevelProgressService progressService;
+    [InjectOptional] private BattleLaunchService battleLaunchService;
 
     private LevelConfig selectedLevel;
     private LoadLevelConfig selectedLoader;
@@ -110,16 +111,19 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
             return;
         }
 
+        if (!TryPrepareBattle())
+        {
+            RefreshLockedState();
+            return;
+        }
+
         LevelLoader.SelectLevel(selectedLevel);
         Time.timeScale = 1f;
         Debug.Log(
             $"Loading level {selectedLevel.DisplayName} "
             + $"(ID: {selectedLevel.Id})");
 
-        SceneManager.LoadScene(
-            selectedLoader != null
-                ? selectedLoader.BattleSceneIndex
-                : battleSceneIndex);
+        SceneManager.LoadScene(LevelLoader.FightingSceneName);
     }
 
     private void RefreshLevelInfo()
@@ -145,21 +149,19 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
             return;
 
         bool alreadyCompleted = Progress.IsLevelCompleted(selectedLevel);
-        int metalReward = alreadyCompleted
-            ? Mathf.FloorToInt(selectedLevel.MetalReward * 0.2f)
-            : selectedLevel.MetalReward;
+        int goldReward = selectedLevel.GoldReward;
         int coreReward = alreadyCompleted ? 0 : selectedLevel.CoreReward;
 
         if (rewardText != null)
         {
             rewardText.text = string.Format(
                 alreadyCompleted ? repeatRewardFormat : rewardFormat,
-                metalReward,
+                goldReward,
                 coreReward);
         }
 
-        if (metalRewardText != null)
-            metalRewardText.text = string.Format(metalRewardFormat, metalReward);
+        if (goldRewardText != null)
+            goldRewardText.text = string.Format(goldRewardFormat, goldReward);
 
         if (coreRewardText != null)
             coreRewardText.text = string.Format(coreRewardFormat, coreReward);
@@ -167,7 +169,11 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
 
     private void RefreshLockedState()
     {
-        bool canStart = Progress.CanStartLevel(selectedLevel);
+        bool levelIsAvailable = Progress.CanStartLevel(selectedLevel);
+        BattleLaunchService launchService = ResolveBattleLaunchService();
+        bool shipsAreSelected = launchService != null
+            && launchService.HasCompleteShipSelection;
+        bool canStart = levelIsAvailable && shipsAreSelected;
 
         if (startButton != null)
             startButton.interactable = canStart;
@@ -179,11 +185,51 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
         if (canStart)
             return;
 
-        string requiredName = selectedLevel != null
-            && selectedLevel.RequiredLevel != null
-            ? selectedLevel.RequiredLevel.DisplayName
-            : "предыдущий уровень";
+        if (!levelIsAvailable)
+        {
+            string requiredName = selectedLevel != null
+                && selectedLevel.RequiredLevel != null
+                ? selectedLevel.RequiredLevel.DisplayName
+                : "предыдущий уровень";
 
-        lockedText.text = $"Закрыто. Сначала пройди: {requiredName}";
+            lockedText.text = $"Закрыто. Сначала пройди: {requiredName}";
+            return;
+        }
+
+        lockedText.text = "Выбери два корабля в главном меню.";
+    }
+
+    private bool TryPrepareBattle()
+    {
+        BattleLaunchService launchService = ResolveBattleLaunchService();
+        if (launchService == null)
+        {
+            Debug.LogError(
+                "Could not resolve BattleLaunchService from ProjectContext.",
+                this);
+            return false;
+        }
+
+        if (launchService.TryPrepareBattle(out string failureReason))
+            return true;
+
+        Debug.LogWarning(failureReason, this);
+        return false;
+    }
+
+    private BattleLaunchService ResolveBattleLaunchService()
+    {
+        if (battleLaunchService != null)
+            return battleLaunchService;
+
+        ProjectContext projectContext = ProjectContext.Instance;
+        if (projectContext == null)
+            return null;
+
+        DiContainer container = projectContext.Container;
+        if (container.HasBinding<BattleLaunchService>())
+            battleLaunchService = container.Resolve<BattleLaunchService>();
+
+        return battleLaunchService;
     }
 }

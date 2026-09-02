@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 
 using System.Collections.Generic;
@@ -24,14 +25,26 @@ public class Enemy : MonoBehaviour, iDamagable
     [SerializeField] protected float _fireRate;
     [SerializeField] protected float _damage;
     [SerializeField] protected float _speed;
+    [Header("Rewards")]
+    [SerializeField, Min(0.01f)] private float metalMultiplier = 1f;
+    [Header("Shield")]
+    [SerializeField, Min(0f)] private float shieldPoints = 10f;
     private SpriteRenderer spriteRenderer;
+    private EnemyShieldModifier shieldModifier;
+    private bool bypassShieldForNextDamage;
+    private bool hasDamageTypeForNextDamage;
+    private EnemyDamageType damageTypeForNextDamage = EnemyDamageType.Radiation;
+    private float damageMultiplier = 1f;
+    private float fireRateMultiplier = 1f;
     Animator animator;
-    public void Awake()
+    public event Action<Enemy> OnDied;
+    public virtual void Awake()
     {
         animator = GetComponent<Animator>();
         if (DoHaveBuff)
         enemyManager.AddEnemy(this);
         spriteRenderer = GetComponent<SpriteRenderer>();
+        shieldModifier = GetComponent<EnemyShieldModifier>();
         
         if (Buff != null)
         {
@@ -39,13 +52,21 @@ public class Enemy : MonoBehaviour, iDamagable
         }
         _currentHealth = _maxHealth;
     }
-    public void TakeDamage(float t)
+    public virtual void TakeDamage(float t)
     {
         if (isDead)
             return;
 
         GameObject ShowIcon = null;
-        _currentHealth -= t;
+        EnemyDamageProfile profile = EnemyDamageProfiles.Get(
+            hasDamageTypeForNextDamage
+                ? damageTypeForNextDamage
+                : EnemyDamageType.Radiation);
+        float hullDamage = CalculateHullDamage(t, profile);
+        if (Mathf.Approximately(hullDamage, 0f))
+            return;
+
+        _currentHealth -= hullDamage;
         if (healthBar != null)
         {
             healthBar.SetHealth(_currentHealth / (_maxHealth / 100));
@@ -59,11 +80,12 @@ public class Enemy : MonoBehaviour, iDamagable
             ShowIcon.GetComponent<RectTransform>().position = Camera.main.WorldToScreenPoint(this.transform.position);
         }
     }
-    public void Dying()
+    public virtual void Dying()
     {
         if (isDead) return;
 
         isDead = true;
+        OnDied?.Invoke(this);
 
         if (GetComponent<IHaveBuff>() != null && Buff != null)
         {
@@ -113,6 +135,88 @@ public class Enemy : MonoBehaviour, iDamagable
         }
     }
 
+    public void TakeDamageIgnoringShield(float damage)
+    {
+        TakeDamageWithType(damage, EnemyDamageType.Radiation, true);
+    }
+
+    public void MultiplyHealth(float multiplier)
+    {
+        float safeMultiplier = Mathf.Max(0.01f, multiplier);
+        _maxHealth *= safeMultiplier;
+        _currentHealth *= safeMultiplier;
+
+        if (healthBar != null)
+            healthBar.SetHealth(_currentHealth / (_maxHealth / 100f));
+    }
+
+    public float DamageMultiplier => damageMultiplier;
+
+    public float FireRateMultiplier => Mathf.Max(0.01f, fireRateMultiplier);
+
+    public float MetalMultiplier => Mathf.Max(0.01f, metalMultiplier);
+
+    public float ShieldPoints => Mathf.Max(0f, shieldPoints);
+
+    public void MultiplyDamage(float multiplier)
+    {
+        float safeMultiplier = Mathf.Max(0.01f, multiplier);
+        damageMultiplier *= safeMultiplier;
+        _damage *= safeMultiplier;
+    }
+
+    public void MultiplyFireRate(float multiplier)
+    {
+        fireRateMultiplier *= Mathf.Max(0.01f, multiplier);
+    }
+
+    public void MultiplyShieldPoints(float multiplier)
+    {
+        shieldPoints *= Mathf.Max(0.01f, multiplier);
+    }
+
+    public void TakeDamageWithType(
+        float damage,
+        EnemyDamageType damageType,
+        bool bypassesShield = false)
+    {
+        bool previousBypassShield = bypassShieldForNextDamage;
+        bool previousHasDamageType = hasDamageTypeForNextDamage;
+        EnemyDamageType previousDamageType = damageTypeForNextDamage;
+        bypassShieldForNextDamage = bypassesShield;
+        hasDamageTypeForNextDamage = true;
+        damageTypeForNextDamage = damageType;
+        try
+        {
+            TakeDamage(damage);
+        }
+        finally
+        {
+            bypassShieldForNextDamage = previousBypassShield;
+            hasDamageTypeForNextDamage = previousHasDamageType;
+            damageTypeForNextDamage = previousDamageType;
+        }
+    }
+
+    private float CalculateHullDamage(
+        float incomingDamage,
+        EnemyDamageProfile profile)
+    {
+        if (incomingDamage <= 0f || bypassShieldForNextDamage)
+            return incomingDamage * profile.HullMultiplier;
+
+        float shieldInput = incomingDamage
+            * (1f - profile.ShieldBypassFraction);
+        float shieldOverflow = shieldModifier == null
+            ? shieldInput
+            : shieldModifier.AbsorbDamage(
+                shieldInput,
+                profile.ShieldMultiplier);
+        float hullInput = incomingDamage * profile.ShieldBypassFraction
+            + shieldOverflow;
+        return hullInput * profile.HullMultiplier;
+    }
+
     public void OnDeathAnimationFinished()
     {
         if (isDead)
@@ -121,6 +225,12 @@ public class Enemy : MonoBehaviour, iDamagable
     public bool CanContainBuff()
     {
         return DoHaveBuff;
+    }
+
+    private void OnValidate()
+    {
+        shieldPoints = Mathf.Max(0f, shieldPoints);
+        metalMultiplier = Mathf.Max(0.01f, metalMultiplier);
     }
     
 }

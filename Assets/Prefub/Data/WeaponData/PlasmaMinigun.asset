@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: PlasmaMinigun
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  reloadTimeByLevel: []
+  angleByLevel: []
+  damageByLevel: []
+  rangeByLevel: []
+  speedByLevel: []
+  levelConfigs:
+  - reloadTime: 0.07
+    angle: 35
+    damage: 5
+    range: 10
+    speed: 12
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.065
+    angle: 35
+    damage: 6
+    range: 10
+    speed: 12
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.06
+    angle: 35
+    damage: 7
+    range: 10
+    speed: 12
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.055
+    angle: 35
+    damage: 8
+    range: 10
+    speed: 12
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.05
+    angle: 35
+    damage: 10
+    range: 10
+    speed: 12
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  startLevel: 1
+  maxLevel: 10
+  energyCost: 3
+  damageType: 4
+  flightMode: 0
+  contactMode: 1
+  homingRotationSpeed: 360
+  growDuringFlight: 0
+  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  projectileLifetime: 1.2
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 0
+  continuousDamageInterval: 0.25
+  audioClipDefault:
+    Guid:
+      Data1: 1351821195
+      Data2: 1149134096
+      Data3: 1808923781
+      Data4: -1137653982
+    Path: event:/MiniGun
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 

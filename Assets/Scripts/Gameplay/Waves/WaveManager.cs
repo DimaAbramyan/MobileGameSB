@@ -15,6 +15,8 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private bool enableDebugLogs = true;
     public event Action OnWaveCleared;
     private List<GameObject> wavePrefabs;
+    private List<int> waveConfigIndices;
+    private LevelConfig selectedLevelConfig;
     private GameObject currentWaveInstance;
     private InfoAboutSubWave currentInlineSubWave;
     private int currentWaveIndex = 0;
@@ -29,18 +31,22 @@ public class WaveManager : MonoBehaviour
         Time.timeScale = 1f;
         wavePrefabs = new List<GameObject>();
 
-        LevelConfig config = LevelLoader.GetSelectedLevel(levelCatalog);
-        if (config == null)
+        selectedLevelConfig = LevelLoader.GetSelectedLevel(levelCatalog);
+        if (selectedLevelConfig == null)
         {
             LogError("Selected LevelConfig is null. Waves cannot be loaded.");
             return;
         }
 
         Log(
-            $"Selected level: id={config.Id}, name={config.name}, configured waves={config.Waves?.Count ?? 0}");
+            $"Selected level: id={selectedLevelConfig.Id}, name={selectedLevelConfig.name}, configured waves={selectedLevelConfig.Waves?.Count ?? 0}");
 
-        foreach (GameObject prefab in config.Waves)
+        waveConfigIndices = new List<int>();
+        for (int configIndex = 0;
+             configIndex < selectedLevelConfig.Waves.Count;
+             configIndex++)
         {
+            GameObject prefab = selectedLevelConfig.Waves[configIndex];
             if (prefab == null)
             {
                 LogWarning("Skipped null wave prefab in LevelConfig.Waves.");
@@ -49,13 +55,14 @@ public class WaveManager : MonoBehaviour
 
             Log($"Registered wave prefab: {prefab.name}", prefab);
             wavePrefabs.Add(prefab);
+            waveConfigIndices.Add(configIndex);
         }
 
         if (wavePrefabs.Count == 0)
         {
             Debug.LogError(
-                $"No waves configured for level {config.Id} ({config.name}).",
-                config);
+                $"No waves configured for level {selectedLevelConfig.Id} ({selectedLevelConfig.name}).",
+                selectedLevelConfig);
             return;
         }
 
@@ -125,11 +132,18 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        Wave wave = currentWaveInstance.GetComponent<Wave>();
-        if (wave != null)
+        ConfigureMetalDropsForCurrentWave();
+        ConfigureEnemyDifficultyForCurrentWave();
+
+        IWaveEncounter encounter =
+            currentWaveInstance.GetComponent<IWaveEncounter>();
+        if (encounter != null)
         {
-            wave.Init(this);
-            Log($"Activated Wave component: {currentWaveInstance.name}", currentWaveInstance);
+            encounter.Init(this);
+            Log(
+                $"Activated {encounter.GetType().Name}: "
+                + currentWaveInstance.name,
+                currentWaveInstance);
             return;
         }
 
@@ -146,7 +160,8 @@ public class WaveManager : MonoBehaviour
         }
 
         Debug.LogError(
-            $"Wave prefab {prefab.name} has no Wave or InfoAboutSubWave component.",
+            $"Wave prefab {prefab.name} has no IWaveEncounter or "
+            + "InfoAboutSubWave component.",
             prefab);
         Destroy(currentWaveInstance);
         currentWaveInstance = null;
@@ -173,6 +188,46 @@ public class WaveManager : MonoBehaviour
         Log($"Cleaning inline subwave subscription: {currentInlineSubWave.name}", currentInlineSubWave);
         currentInlineSubWave.OnSubWaveCleared -= WhenInlineSubWaveCleared;
         currentInlineSubWave = null;
+    }
+
+    private void ConfigureMetalDropsForCurrentWave()
+    {
+        if (selectedLevelConfig == null
+            || waveConfigIndices == null
+            || currentWaveIndex < 0
+            || currentWaveIndex >= waveConfigIndices.Count)
+        {
+            return;
+        }
+
+        WaveMetalDropSettings settings =
+            selectedLevelConfig.GetWaveMetalDropSettings(
+                waveConfigIndices[currentWaveIndex]);
+        Wave wave = currentWaveInstance.GetComponent<Wave>();
+        if (wave != null)
+        {
+            wave.ConfigureMetalDrops(
+                settings,
+                selectedLevelConfig.MetalPickupPrefab);
+            return;
+        }
+
+        if (settings.IsEnabled)
+        {
+            LogWarning(
+                $"Metal drop is configured for {currentWaveInstance.name}, but it has no {nameof(Wave)} component.",
+                currentWaveInstance);
+        }
+    }
+
+    private void ConfigureEnemyDifficultyForCurrentWave()
+    {
+        if (selectedLevelConfig == null || currentWaveInstance == null)
+            return;
+
+        WaveEnemyDifficultyModifier modifier =
+            currentWaveInstance.GetComponent<WaveEnemyDifficultyModifier>();
+        modifier?.ConfigureLevelMultipliers(selectedLevelConfig);
     }
     void ReturnToMap()
     {

@@ -75,4 +75,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectManagerInstaller
   audioDatabase: {fileID: 11400000, guid: c37f2bbae054c3142a342a3f487d7bda, type: 2}
+  levelCatalog: {fileID: 11400000, guid: 07c97954fb4d421fa7cf3efa8e637078, type: 2}
+  hullCatalog: {fileID: 11400000, guid: 47812359f2474868afe50422ca5c424a, type: 2}
+  weaponCatalog: {fileID: 11400000, guid: 44362313c16b8a84391763a04f29e079, type: 2}
   audioHostPrefab: {fileID: 0}
+  audioVolumeSettings:
+    musicVolume: 100
+    sfxVolume: 100
+    musicMuted: 0
+    sfxMuted: 0

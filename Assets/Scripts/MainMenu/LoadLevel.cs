@@ -8,15 +8,8 @@ public class LoadLevel : MonoBehaviour
     private bool IsNextLevel;
     [SerializeField]
     private bool IsThatRepat;
-    [SerializeField]
-    private int m_Level = 0;
 
-    [InjectOptional] private LevelCatalog levelCatalog;
-    [InjectOptional] private LevelProgressService progressService;
-
-    private LevelProgressService Progress =>
-        progressService ??= new LevelProgressService();
-
+    [InjectOptional] private AudioVolumeService audioVolumeService;
     public void LoadScene()
     {
         if (IsThatRepat)
@@ -25,9 +18,7 @@ public class LoadLevel : MonoBehaviour
             return;
         }
 
-        if (IsNextLevel
-            && SceneManager.GetActiveScene().name
-                == LevelLoader.FightingSceneName)
+        if (IsNextLevel)
         {
             LevelLoader.LevelIndex++;
             LevelLoader.SelectedLevelConfig = null;
@@ -35,48 +26,12 @@ public class LoadLevel : MonoBehaviour
             return;
         }
 
-        int targetScene = IsNextLevel
-            ? SceneManager.GetActiveScene().buildIndex + 1
-            : m_Level;
-
-        if (targetScene >= LevelLoader.FirstFightingSceneBuildIndex)
-        {
-            LevelLoader.LevelIndex =
-                LevelLoader.GetLevelIndex(targetScene);
-            LevelLoader.SelectedLevelConfig = null;
-
-            LevelConfig targetLevel =
-                levelCatalog != null
-                    ? levelCatalog.GetLevel(LevelLoader.LevelIndex)
-                    : null;
-
-            if (targetLevel != null && !Progress.CanStartLevel(targetLevel))
-            {
-                Debug.LogWarning(
-                    $"Level {targetLevel.DisplayName} (ID: {targetLevel.Id}) is locked. "
-                    + $"Complete required level {targetLevel.RequiredLevel?.DisplayName} first.",
-                    this);
-                return;
-            }
-
-            LoadFightingScene();
-            return;
-        }
-
-        LoadSceneByBuildIndex(targetScene);
+        LoadMapScene();
     }
 
     private static void LoadCurrentLevelAgain()
     {
-        if (SceneManager.GetActiveScene().name
-            == LevelLoader.FightingSceneName)
-        {
-            LoadFightingScene();
-            return;
-        }
-
-        LoadSceneByBuildIndex(
-            SceneManager.GetActiveScene().buildIndex);
+        LoadFightingScene();
     }
 
     private static void LoadFightingScene()
@@ -85,9 +40,35 @@ public class LoadLevel : MonoBehaviour
         SceneManager.LoadScene(LevelLoader.FightingSceneName);
     }
 
-    private static void LoadSceneByBuildIndex(int buildIndex)
+    private void LoadMapScene()
     {
+        StopBattleAudio();
+        LevelLoader.RequestMapOnMainMenuLoad();
         Time.timeScale = 1f;
-        SceneManager.LoadScene(buildIndex);
+        SceneManager.LoadScene(LevelLoader.MainMenuSceneName);
+    }
+
+    private void StopBattleAudio()
+    {
+        if (audioVolumeService == null)
+        {
+            ProjectContext projectContext = ProjectContext.Instance;
+            if (projectContext != null
+                && projectContext.Container.HasBinding<AudioVolumeService>())
+            {
+                audioVolumeService = projectContext.Container
+                    .Resolve<AudioVolumeService>();
+            }
+        }
+
+        if (audioVolumeService == null)
+        {
+            Debug.LogError(
+                "Could not resolve AudioVolumeService while leaving the battle.",
+                this);
+            return;
+        }
+
+        audioVolumeService.StopAllPlayback();
     }
 }

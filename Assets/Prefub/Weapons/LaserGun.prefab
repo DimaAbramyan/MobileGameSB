@@ -41,7 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6541835800226650607}
   - component: {fileID: 4645660411130510273}
-  - component: {fileID: 752430467352378981}
+  - component: {fileID: 5708510641367092501}
   m_Layer: 7
   m_Name: LaserGun
   m_TagString: Untagged
@@ -124,7 +124,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &752430467352378981
+--- !u!114 &5708510641367092501
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -133,9 +133,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 6583894184910687482}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 041b810495b8bdc4db2fcb015a2f63a9, type: 3}
+  m_Script: {fileID: 11500000, guid: 10bb01f271baa734396a2778115b8fb2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Weapon
-  projectilePrefab: {fileID: -284135369012748406, guid: 70e4ae90b3ba87648be8c0a2a1e8d7c2, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::LaserWeapon
+  projectilePrefab: {fileID: 0}
   projectileSpawn: {fileID: 4239190224082967472}
   weaponData: {fileID: 11400000, guid: 0d952a161559bbb4883e93aa8dff88c4, type: 2}
+  beamRenderer: {fileID: 0}
+  beamMaterial: {fileID: 0}
+  beamColor: {r: 1, g: 0.25, b: 0.05, a: 0.9}
+  beamWidth: 0.16
+  beamSortingOrder: 4
+  projectileCollisionLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  beamBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295

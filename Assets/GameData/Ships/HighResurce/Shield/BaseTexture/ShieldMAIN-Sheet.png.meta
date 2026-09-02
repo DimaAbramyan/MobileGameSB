@@ -1,0 +1,782 @@
+fileFormatVersion: 2
+guid: 55f98db155945b3458e10ea94d66535c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6231329907839656963
+    second: ShieldMAIN-Sheet_0
+  - first:
+      213: 5269336253434946205
+    second: ShieldMAIN-Sheet_1
+  - first:
+      213: 4900741662597630394
+    second: ShieldMAIN-Sheet_2
+  - first:
+      213: 3040279386974759627
+    second: ShieldMAIN-Sheet_3
+  - first:
+      213: 7648334085410829740
+    second: ShieldMAIN-Sheet_4
+  - first:
+      213: 7527809760452131878
+    second: ShieldMAIN-Sheet_5
+  - first:
+      213: 6177887996250202467
+    second: ShieldMAIN-Sheet_6
+  - first:
+      213: -2147409347258901980
+    second: ShieldMAIN-Sheet_7
+  - first:
+      213: 5694628199670859006
+    second: ShieldMAIN-Sheet_8
+  - first:
+      213: 8431526144703609663
+    second: ShieldMAIN-Sheet_9
+  - first:
+      213: -5976767267313274122
+    second: ShieldMAIN-Sheet_10
+  - first:
+      213: 9197338479898004085
+    second: ShieldMAIN-Sheet_11
+  - first:
+      213: 2152282152822557969
+    second: ShieldMAIN-Sheet_12
+  - first:
+      213: 2661593219320535674
+    second: ShieldMAIN-Sheet_13
+  - first:
+      213: 3289040894218326539
+    second: ShieldMAIN-Sheet_14
+  - first:
+      213: -6659961561794926540
+    second: ShieldMAIN-Sheet_15
+  - first:
+      213: -764406083789057924
+    second: ShieldMAIN-Sheet_16
+  - first:
+      213: -7104296016401573310
+    second: ShieldMAIN-Sheet_17
+  - first:
+      213: -2828236972897148900
+    second: ShieldMAIN-Sheet_18
+  - first:
+      213: -9097454155203982808
+    second: ShieldMAIN-Sheet_19
+  - first:
+      213: 630130534185560042
+    second: ShieldMAIN-Sheet_20
+  - first:
+      213: -1571179521528894212
+    second: ShieldMAIN-Sheet_21
+  - first:
+      213: -595632174724313676
+    second: ShieldMAIN-Sheet_22
+  - first:
+      213: -291744303676396905
+    second: ShieldMAIN-Sheet_23
+  - first:
+      213: 1854449675592311591
+    second: ShieldMAIN-Sheet_24
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 64
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 0
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 43
+        width: 12
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 092ffbba61f9db34bb13279ec766248c
+      internalID: 720426829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 34
+        width: 10
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f5c44b49b8e265449dfb56783084d26
+      internalID: -465659681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 34
+        width: 10
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c987c312ed920945a8321cc3b6c823b
+      internalID: 762068662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 43
+        y: 43
+        width: 11
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4a4f9c9ced575584eaf34e6d26fd7732
+      internalID: 1126395870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 6
+        width: 7
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa2e8be7819e37b42b1e93278cb1e7f1
+      internalID: -1043653407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 18
+        width: 11
+        height: 41
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 71b691e08674f5a428a612d77b7286e9
+      internalID: 95769494
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 18
+        width: 11
+        height: 41
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c42dafa7daa36f54388eefa453493920
+      internalID: -2019284333
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 243
+        y: 6
+        width: 7
+        height: 57
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9779986842d89be428f1cd9b22dd8033
+      internalID: -1914324767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 388
+        y: 22
+        width: 5
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f8f20045695bd0d48b2b1fc44a5cd497
+      internalID: -1087834767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 399
+        y: 39
+        width: 4
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2dfaeedd117ba72409d31fcede3c11de
+      internalID: -363109682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 30
+        width: 4
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6ae8b741c0a6f6a4b9c55fef06ffe0f3
+      internalID: -1941091059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 420
+        y: 30
+        width: 4
+        height: 13
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dc8aceb0bbc80434cacf3ab41852e949
+      internalID: 813126223
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_12
+      rect:
+        serializedVersion: 2
+        x: 429
+        y: 39
+        width: 4
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c3d2892d054ebe64db71f568a7a51cb5
+      internalID: -126658777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_13
+      rect:
+        serializedVersion: 2
+        x: 439
+        y: 22
+        width: 5
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 395f0323f21982f49862079abb924bc7
+      internalID: 885501318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_14
+      rect:
+        serializedVersion: 2
+        x: 13
+        y: 17
+        width: 9
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ad5f755493bd3c4fa9bdff7be36389c
+      internalID: -1159395671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_15
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 26
+        width: 16
+        height: 7
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 715f570e28b5f4841afdf546f8c95378
+      internalID: -894839509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_16
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 17
+        width: 9
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d2e32ece330ebc45a50ba63f03adfe0
+      internalID: -1155833443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_17
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 16
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 743fff9026a322042b20b62f14f80aef
+      internalID: -1900392214
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_18
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 24
+        width: 4
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6fe6a35f106b9a4d8aa253ef5fdb961
+      internalID: -1461931043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_19
+      rect:
+        serializedVersion: 2
+        x: 428
+        y: 24
+        width: 4
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1763c61e04aa4ba46b19dc50e77bdeeb
+      internalID: -1239473571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_20
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 4
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0bc2478805796b4c9911f2160a1baf1
+      internalID: -1052935424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_21
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 4
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0c8597d361b271b42b001194c8fcd2a6
+      internalID: -1905467408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_22
+      rect:
+        serializedVersion: 2
+        x: 147
+        y: 7
+        width: 26
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 484b59ec302db32428563e3edb3ba239
+      internalID: 1321128584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_23
+      rect:
+        serializedVersion: 2
+        x: 335
+        y: 7
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dd1b22b5633bd4d4f87243636363e9e0
+      internalID: -1467846166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ShieldMAIN-Sheet_24
+      rect:
+        serializedVersion: 2
+        x: 355
+        y: 7
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d63abd373a46a16478a2aed91e4ade5d
+      internalID: 1384825472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      ShieldMAIN-Sheet_0: 720426829
+      ShieldMAIN-Sheet_1: -465659681
+      ShieldMAIN-Sheet_10: -1941091059
+      ShieldMAIN-Sheet_11: 813126223
+      ShieldMAIN-Sheet_12: -126658777
+      ShieldMAIN-Sheet_13: 885501318
+      ShieldMAIN-Sheet_14: -1159395671
+      ShieldMAIN-Sheet_15: -894839509
+      ShieldMAIN-Sheet_16: -1155833443
+      ShieldMAIN-Sheet_17: -1900392214
+      ShieldMAIN-Sheet_18: -1461931043
+      ShieldMAIN-Sheet_19: -1239473571
+      ShieldMAIN-Sheet_2: 762068662
+      ShieldMAIN-Sheet_20: -1052935424
+      ShieldMAIN-Sheet_21: -1905467408
+      ShieldMAIN-Sheet_22: 1321128584
+      ShieldMAIN-Sheet_23: -1467846166
+      ShieldMAIN-Sheet_24: 1384825472
+      ShieldMAIN-Sheet_3: 1126395870
+      ShieldMAIN-Sheet_4: -1043653407
+      ShieldMAIN-Sheet_5: 95769494
+      ShieldMAIN-Sheet_6: -2019284333
+      ShieldMAIN-Sheet_7: -1914324767
+      ShieldMAIN-Sheet_8: -1087834767
+      ShieldMAIN-Sheet_9: -363109682
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

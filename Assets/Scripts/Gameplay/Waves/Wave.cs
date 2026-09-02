@@ -23,9 +23,10 @@ public sealed class WaveSubWaveCue
     public float StartDelay => Mathf.Max(0f, startDelay);
 }
 
-public class Wave : MonoBehaviour
+public class Wave : MonoBehaviour, IWaveEncounter
 {
     [Inject] DiContainer container;
+    [Inject] MetalPickupController metalPickupController;
     [SerializeField] private List<WaveSubWaveCue> scheduledSubWaves = new();
     [SerializeField] public List<GameObject> SubWavesToCreate;
     [SerializeField] private bool enableDebugLogs = true;
@@ -34,8 +35,20 @@ public class Wave : MonoBehaviour
     private readonly List<Coroutine> activationRoutines = new();
     private int subWavesLeft;
     WaveManager waveManager;
+    private WaveMetalDropSettings metalDropSettings;
+    private MetalPickup metalPickupPrefab;
+    private WaveMetalDropPlan metalDropPlan;
 
     public IReadOnlyList<WaveSubWaveCue> ScheduledSubWaves => scheduledSubWaves;
+
+    public void ConfigureMetalDrops(
+        WaveMetalDropSettings settings,
+        MetalPickup pickupPrefab)
+    {
+        settings.Validate();
+        metalDropSettings = settings;
+        metalPickupPrefab = pickupPrefab;
+    }
 
     public void Init(WaveManager waveManager)
     {
@@ -43,7 +56,11 @@ public class Wave : MonoBehaviour
 
         subWavesInfo = new List<InfoAboutSubWave>();
         activationRoutines.Clear();
+        List<InfoAboutSubWave> pendingActivationSubWaves = new();
+        List<float> pendingActivationDelays = new();
         List<WaveSubWaveCue> schedule = GetEffectiveSchedule();
+        WaveDangerWarningController dangerWarning =
+            GetComponent<WaveDangerWarningController>();
 
         if (schedule.Count == 0)
         {
@@ -94,10 +111,14 @@ public class Wave : MonoBehaviour
             subWavesLeft++;
             Log($"Registered subwave instance: {instance.name}", instance);
 
-            Coroutine routine = StartCoroutine(
-                ActivateSubWaveAfterDelay(subWave, cue.StartDelay));
-            activationRoutines.Add(routine);
+            pendingActivationSubWaves.Add(subWave);
+            pendingActivationDelays.Add(cue.StartDelay);
         }
+
+        GetComponent<WaveEnemyDifficultyModifier>()?.PrepareForWave(subWavesInfo);
+        GetComponent<WaveBuffDropController>()?.PrepareDropAssignments(
+            subWavesInfo);
+        PrepareMetalDropPlan();
 
         if (subWavesLeft <= 0)
         {
@@ -105,6 +126,27 @@ public class Wave : MonoBehaviour
             waveManager?.GoToNextWave();
             Destroy(gameObject);
             return;
+        }
+
+        float warningDuration = dangerWarning != null
+            && dangerWarning.ShouldPlayWarning
+            ? dangerWarning.WarningDuration
+            : 0f;
+        if (warningDuration > 0f)
+        {
+            Log(
+                $"Playing danger warning for {warningDuration:0.###}s before subwaves start.",
+                dangerWarning);
+            activationRoutines.Add(StartCoroutine(dangerWarning.PlayWarning()));
+        }
+
+        for (int i = 0; i < pendingActivationSubWaves.Count; i++)
+        {
+            Coroutine routine = StartCoroutine(
+                ActivateSubWaveAfterDelay(
+                    pendingActivationSubWaves[i],
+                    pendingActivationDelays[i] + warningDuration));
+            activationRoutines.Add(routine);
         }
     }
 
@@ -159,6 +201,8 @@ public class Wave : MonoBehaviour
 
     void OnDestroy()
     {
+        metalDropPlan?.Dispose();
+
         for (int i = 0; i < activationRoutines.Count; i++)
         {
             if (activationRoutines[i] != null)
@@ -175,6 +219,18 @@ public class Wave : MonoBehaviour
             if (subWave != null)
                 subWave.OnSubWaveCleared -= WhenSubWaveCleared;
         }
+    }
+
+    private void PrepareMetalDropPlan()
+    {
+        metalDropPlan?.Dispose();
+        metalDropPlan = new WaveMetalDropPlan(
+            metalDropSettings,
+            metalPickupPrefab,
+            container,
+            metalPickupController,
+            this);
+        metalDropPlan.Prepare(subWavesInfo);
     }
 
     private List<WaveSubWaveCue> GetEffectiveSchedule()

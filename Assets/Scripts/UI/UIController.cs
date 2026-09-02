@@ -11,19 +11,45 @@ public class UIController : MonoBehaviour
     [SerializeField]
     StatBar extraHealthBar;
     [SerializeField] private PlayerController playerController;
+    private ParentShip boundShip;
 
     private void OnEnable()
     {
+        if (playerController == null)
+            return;
+
         playerController.OnCurrentShipChanged += BindUI;
+        BindCurrentShip();
+    }
+
+    private void Start()
+    {
+        BindCurrentShip();
     }
 
     private void OnDisable()
     {
-        playerController.OnCurrentShipChanged -= BindUI;
+        if (playerController != null)
+            playerController.OnCurrentShipChanged -= BindUI;
+
+        UnbindMaxValueEvents();
+        boundShip = null;
+    }
+
+    private void BindCurrentShip()
+    {
+        if (playerController != null && playerController.CurrentShip != null)
+            BindUI(playerController.CurrentShip);
     }
 
     private void BindUI(ParentShip ship)
     {
+        if (ship == null || ship == boundShip)
+            return;
+
+        UnbindMaxValueEvents();
+        boundShip = ship;
+
         healthBar.Setup(
             ship,
             () => ship.MaximumHealthPoints,
@@ -59,6 +85,15 @@ public class UIController : MonoBehaviour
             extraHealthBar.SetValue(0);
         }
 
+    }
+
+    private void UnbindMaxValueEvents()
+    {
+        if (boundShip == null)
+            return;
+
+        boundShip.OnMaxHealthChanged -= healthBar.UpdateMax;
+        boundShip.OnMaxShieldChanged -= shieldBar.UpdateMax;
     }
 
 }

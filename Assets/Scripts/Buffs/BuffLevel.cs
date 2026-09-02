@@ -5,18 +5,31 @@ using Zenject;
 
 public class BuffLevel : Buff
 {
-    private void FixedUpdate()
-    {
-        transform.localPosition += new Vector3(0, -1, 0) * speed;
-    }
+    private bool isCollected;
+
     private void OnTriggerEnter2D(Collider2D collision2D)
     {
-        ParentShip colliderShip = collision2D.gameObject.GetComponent<ParentShip>();
+        if (isCollected)
+            return;
+
+        ParentShip colliderShip =
+            collision2D.GetComponentInParent<ParentShip>();
         if (colliderShip == null || colliderShip.IsIntangible)
             return;
 
-        colliderShip.LevelUp();
-            PointsCollector.Bonuses += 1;
-            Destroy(gameObject);    
+        isCollected = true;
+        int previousLevel = colliderShip.GetLevel();
+        int upgradedShips = colliderShip.LevelUpAllPlayerShips();
+        int currentLevel = colliderShip.GetLevel();
+        if (currentLevel > previousLevel)
+        {
+            Debug.Log(
+                $"Level-up buff collected. {upgradedShips} ship(s) reached "
+                + $"level {currentLevel}.",
+                colliderShip);
+        }
+
+        PointsCollector.Bonuses += 1;
+        Destroy(gameObject);
     }
 }

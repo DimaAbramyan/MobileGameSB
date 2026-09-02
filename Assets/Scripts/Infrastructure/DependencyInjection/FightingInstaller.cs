@@ -9,6 +9,10 @@ public class FightingInstaller : MonoInstaller
             .FromComponentInHierarchy()
             .AsSingle();
 
+        Container.Bind<FMODUnity.StudioListener>()
+            .FromComponentInHierarchy()
+            .AsSingle();
+
         Container.BindInterfacesTo<FMODAttenuationService>()
             .AsSingle();
 
@@ -19,6 +23,12 @@ public class FightingInstaller : MonoInstaller
         Container.Bind<ProjectilePoolController>()
             .FromNewComponentOnNewGameObject()
             .WithGameObjectName("Projectile Pool")
+            .AsSingle()
+            .NonLazy();
+
+        Container.Bind<BossProjectilePool>()
+            .FromNewComponentOnNewGameObject()
+            .WithGameObjectName("Boss Projectile Pool")
             .AsSingle()
             .NonLazy();
 
@@ -39,5 +49,17 @@ public class FightingInstaller : MonoInstaller
             .IfNotBound();
 
         Container.Bind<EnemyManager>().AsSingle();
+
+        Container.BindInterfacesAndSelfTo<MetalPickupController>()
+            .AsSingle()
+            .NonLazy();
+
+        Container.BindInterfacesAndSelfTo<EnemyHeatSystem>()
+            .AsSingle()
+            .NonLazy();
+
+        Container.BindInterfacesAndSelfTo<EnemyDisintegrationSystem>()
+            .AsSingle()
+            .NonLazy();
     }
 }

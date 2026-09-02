@@ -16,8 +16,29 @@ MonoBehaviour:
   displayName: Level 2
   requiredLevel: {fileID: 11400000, guid: 028361d96a9d43bb9855fa41b1bfa5f0, type: 2}
   bonusLevel: 0
-  metalReward: 0
+  goldReward: 1000
   coreReward: 0
+  metalPickupPrefab: {fileID: 3886868107388774, guid: 5fa59a7895d3c6f4abe58c09fb53f0ce, type: 3}
+  waveMetalDrops:
+  - minMetal: 50
+    maxMetal: 75
+    carrierChance: 0.8
+  - minMetal: 100
+    maxMetal: 135
+    carrierChance: 0.75
+  - minMetal: 100
+    maxMetal: 125
+    carrierChance: 0.8
+  - minMetal: 140
+    maxMetal: 155
+    carrierChance: 0.703
+  - minMetal: 100
+    maxMetal: 125
+    carrierChance: 1
+  enemyHullHealthMultiplier: 1
+  enemyShieldHealthMultiplier: 1
+  enemyDamageMultiplier: 1
+  enemyFireRateMultiplier: 1
   music:
     Guid:
       Data1: 0
@@ -32,19 +53,27 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: fea3b9b57e5d390449c6ed94f04da701, type: 3}
     position: {x: 0, y: 0}
     scale: {x: 0.25, y: 0.25}
-    scrollSpeed: {x: 0, y: 0.05}
+    scrollSpeed: {x: 0, y: 0.005}
     sortingOrder: -95
     color: {r: 1, g: 1, b: 1, a: 0}
   - name: SEX2
-    sprite: {fileID: 21300000, guid: 4f64e60ea06b2d74085eb297f31dbaff, type: 3}
+    sprite: {fileID: 21300000, guid: 25b1c6c15a2e1324e918e9e46f0ad32d, type: 3}
     position: {x: 0, y: 0}
     scale: {x: 0.25, y: 0.25}
-    scrollSpeed: {x: 0, y: 0.2}
+    scrollSpeed: {x: 0, y: 0.01}
+    sortingOrder: -90
+    color: {r: 1, g: 1, b: 1, a: 0}
+  - name: SEX2
+    sprite: {fileID: 21300000, guid: 8157b5451f9ce954c8b631f5567cc374, type: 3}
+    position: {x: 0, y: 0}
+    scale: {x: 0.25, y: 0.25}
+    scrollSpeed: {x: 0, y: 0.0225}
     sortingOrder: -90
     color: {r: 1, g: 1, b: 1, a: 0}
   randomBackgroundObjects: []
   waves:
-  - {fileID: 5142897750625784009, guid: e9128a6dcbdb8db4c813ff87c9d3f0a3, type: 3}
+  - {fileID: 5142897750625784009, guid: 88ddad6c233df9e42bc7c6b06234a82a, type: 3}
   - {fileID: 5142897750625784009, guid: 7cb54c909f96d3446930675c9359babc, type: 3}
   - {fileID: 5142897750625784009, guid: b17d10c381c7fed44b5b9f6f0e15198f, type: 3}
-  - {fileID: 5142897750625784009, guid: 88ddad6c233df9e42bc7c6b06234a82a, type: 3}
+  - {fileID: 5142897750625784009, guid: e9128a6dcbdb8db4c813ff87c9d3f0a3, type: 3}
+  - {fileID: 5142897750625784009, guid: b4cb7b39c6afade4d9a05f256459a985, type: 3}

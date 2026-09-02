@@ -1,26 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 using FMODUnity;
-using Zenject;
 using FMOD.Studio;
 
 public class SoundManager
 {
     Dictionary<EventReference, EventInstance> playingLoops;
 
-    private readonly AudioDatabase db;
-    private readonly FMODAttenuationService fmodService;
+    private readonly AudioVolumeService audioVolumeService;
 
     private Dictionary<EventReference, float> lastPlayTime = new Dictionary<EventReference, float>();
 
-    public SoundManager(AudioDatabase db, [InjectOptional] FMODAttenuationService fmodService = null)
+    public SoundManager(AudioVolumeService audioVolumeService)
     {
-        this.db = db;
-
-        this.fmodService = fmodService;
-
+        this.audioVolumeService = audioVolumeService;
         playingLoops = new Dictionary<EventReference, EventInstance>();
-
     }
 
     public void PlaySound(EventReference audio, Vector3 position, float cooldown = 0.1f)
@@ -33,15 +27,8 @@ public class SoundManager
 
         if (now - lastTime >= cooldown)
         {
-            if (RuntimeManager.IsInitialized)
-            {
-                RuntimeManager.PlayOneShot(audio, position);
-                lastPlayTime[audio] = now;
-            }
-            else
-            {
-                //Debug.LogWarning($"Cannot play audio {audio.Path}, FMOD not initialized");
-            }
+            audioVolumeService.PlaySfx(audio, position);
+            lastPlayTime[audio] = now;
         }
     }
     public void PlayContiniousSound(EventReference audio, Vector3 position)
@@ -51,14 +38,13 @@ public class SoundManager
 
         if (playingLoops.TryGetValue(audio, out var existingInstance))
         {
-            existingInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-            existingInstance.release();
+            audioVolumeService.StopAndRelease(existingInstance);
             playingLoops.Remove(audio);
         }
 
-        var instance = RuntimeManager.CreateInstance(audio);
-        instance.set3DAttributes(RuntimeUtils.To3DAttributes(position));
-        instance.start();
+        EventInstance instance = audioVolumeService.PlaySfxLoop(audio, position);
+        if (!instance.isValid())
+            return;
 
         playingLoops[audio] = instance;
     }
@@ -68,8 +54,7 @@ public class SoundManager
             return;
         if (playingLoops.TryGetValue(audio, out var existingInstance))
         {
-            existingInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-            existingInstance.release();
+            audioVolumeService.StopAndRelease(existingInstance);
             playingLoops.Remove(audio);
         }
     }

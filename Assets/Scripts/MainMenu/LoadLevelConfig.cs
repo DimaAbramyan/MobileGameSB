@@ -6,12 +6,13 @@ public sealed class LoadLevelConfig : MonoBehaviour
 {
     [SerializeField] private LevelConfig levelConfig;
     [SerializeField] private GameObject lockedWarning;
+    [SerializeField] private NewMainMenuLevelSelectionController mainMenuDetailsWindow;
     [SerializeField] private LevelSelectionDetailsWindow detailsWindow;
 
     [InjectOptional] private LevelProgressService progressService;
+    [InjectOptional] private BattleLaunchService battleLaunchService;
 
     public LevelConfig LevelConfig => levelConfig;
-    public int BattleSceneIndex => 5;
 
     private LevelProgressService Progress =>
         progressService ??= new LevelProgressService();
@@ -52,16 +53,29 @@ public sealed class LoadLevelConfig : MonoBehaviour
             return;
         }
 
+        if (!TryPrepareBattle())
+            return;
+
         LevelLoader.SelectLevel(levelConfig);
         Time.timeScale = 1f;
         Debug.Log($"Loading level {levelConfig.DisplayName} (ID: {levelConfig.Id})");
-        SceneManager.LoadScene(5);
+        SceneManager.LoadScene(LevelLoader.FightingSceneName);
     }
 
     private bool TryShowDetailsWindow()
     {
         if (levelConfig == null)
             return false;
+
+        if (mainMenuDetailsWindow == null)
+            NewMainMenuLevelSelectionController.TryGetSceneController(
+                out mainMenuDetailsWindow);
+
+        if (mainMenuDetailsWindow != null)
+        {
+            mainMenuDetailsWindow.Show(levelConfig, this);
+            return true;
+        }
 
         if (detailsWindow == null)
             LevelSelectionDetailsWindow.TryGetSceneWindow(out detailsWindow);
@@ -71,5 +85,39 @@ public sealed class LoadLevelConfig : MonoBehaviour
 
         detailsWindow.Show(levelConfig, this);
         return true;
+    }
+
+    private bool TryPrepareBattle()
+    {
+        BattleLaunchService launchService = ResolveBattleLaunchService();
+        if (launchService == null)
+        {
+            Debug.LogError(
+                "Could not resolve BattleLaunchService from ProjectContext.",
+                this);
+            return false;
+        }
+
+        if (launchService.TryPrepareBattle(out string failureReason))
+            return true;
+
+        Debug.LogWarning(failureReason, this);
+        return false;
+    }
+
+    private BattleLaunchService ResolveBattleLaunchService()
+    {
+        if (battleLaunchService != null)
+            return battleLaunchService;
+
+        ProjectContext projectContext = ProjectContext.Instance;
+        if (projectContext == null)
+            return null;
+
+        DiContainer container = projectContext.Container;
+        if (container.HasBinding<BattleLaunchService>())
+            battleLaunchService = container.Resolve<BattleLaunchService>();
+
+        return battleLaunchService;
     }
 }

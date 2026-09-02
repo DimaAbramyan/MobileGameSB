@@ -12,6 +12,7 @@ public class InfoAboutSubWave : MonoBehaviour
     int childCount = 0;
     List<Enemy> EnemiesInWave;
     public event Action OnSubWaveCleared;
+    public event Action<Enemy, int, int> OnEnemySpawned;
     protected virtual void Awake()
     {
         movementSequencePlayer = GetComponent<MovementSequencePlayer>();
@@ -28,6 +29,11 @@ public class InfoAboutSubWave : MonoBehaviour
     {
         gameObject.SetActive(true);
     }
+
+    public virtual int GetRewardEligibleEnemyCount()
+    {
+        return 0;
+    }
     public void WhenEnemyKilled(Enemy enemy)
     {
         if (!EnemiesInWave.Contains(enemy))
@@ -43,5 +49,13 @@ public class InfoAboutSubWave : MonoBehaviour
     protected void NotifySubWaveCleared()
     {
         OnSubWaveCleared?.Invoke();
+    }
+
+    protected void NotifyEnemySpawned(
+        Enemy enemy,
+        int spawnIndex,
+        int plannedEnemyCount)
+    {
+        OnEnemySpawned?.Invoke(enemy, spawnIndex, plannedEnemyCount);
     }
 }

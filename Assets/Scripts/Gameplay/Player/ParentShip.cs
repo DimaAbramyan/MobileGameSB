@@ -6,6 +6,9 @@ using Zenject;
 
 public class ParentShip : MonoBehaviour, iDamagable
 {
+    public const int MinWeaponLevel = 1;
+    public const int MaxWeaponLevel = 10;
+
     [Inject] SoundManager soundManager;
     [Inject] AudioDatabase audioDatabase;
     [Inject] private PlayerController playerController;
@@ -19,6 +22,7 @@ public class ParentShip : MonoBehaviour, iDamagable
     [Header("References")]
     [SerializeField] public Transform ShieldAnchor;
     public ShipData ShipData;
+    [SerializeField] private Magnite buffMagnet;
 
     [HideInInspector] public bool IsVisible;
 
@@ -75,6 +79,7 @@ public class ParentShip : MonoBehaviour, iDamagable
     public virtual void Awake()
     {
         EnsureIntangibleState();
+        EnsureBuffMagnet();
 
         MaximumHealthPoints = ShipData.maximumHealthPoints;
         MaximumShieldPoints = ShipData.maximumShieldPoints;
@@ -84,7 +89,7 @@ public class ParentShip : MonoBehaviour, iDamagable
     }
     public virtual void Start()
     {
-        currentLevel = 0;
+        currentLevel = MinWeaponLevel;
 
         passiveAbility?.Init(this);
     }
@@ -222,6 +227,16 @@ public class ParentShip : MonoBehaviour, iDamagable
             intangibleState = gameObject.AddComponent<ShipIntangibleState>();
     }
 
+    private void EnsureBuffMagnet()
+    {
+        if (buffMagnet == null)
+            TryGetComponent(out buffMagnet);
+        if (buffMagnet == null)
+            buffMagnet = GetComponentInChildren<Magnite>(true);
+        if (buffMagnet == null)
+            buffMagnet = gameObject.AddComponent<Magnite>();
+    }
+
     public void ShowShip()
     {
         IsVisible = true;
@@ -237,16 +252,28 @@ public class ParentShip : MonoBehaviour, iDamagable
 
     #region Leveling
     public int GetLevel() => currentLevel;
+    public bool IsWeaponLevelMax => currentLevel >= MaxWeaponLevel;
+
+    public int LevelUpAllPlayerShips()
+    {
+        if (playerController == null)
+            playerController = GetComponentInParent<PlayerController>();
+
+        return playerController != null ? playerController.LevelUpAllShips() : 0;
+    }
 
     public void SetLevel(int newLevel) 
     {
-        currentLevel = newLevel;
-        OnLevelChanged?.Invoke(newLevel);
+        currentLevel = Mathf.Clamp(
+            newLevel,
+            MinWeaponLevel,
+            MaxWeaponLevel);
+        OnLevelChanged?.Invoke(currentLevel);
     }
 
     public void LevelUp()
     {
-        if (currentLevel >= 4) return;
+        if (IsWeaponLevelMax) return;
         soundManager.PlaySound(audioDatabase.LevelUp, transform.position);
         currentLevel++;
         OnLevelChanged?.Invoke(currentLevel);
@@ -256,7 +283,12 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Death
     public void Dying()
     {
-        waveManager?.MainHeroIsDead();
+        if (playerController == null)
+            playerController = GetComponentInParent<PlayerController>();
+
+        if (playerController == null || !playerController.HandleShipDeath(this))
+            waveManager?.MainHeroIsDead();
+
         Destroy(gameObject);
     }
     #endregion

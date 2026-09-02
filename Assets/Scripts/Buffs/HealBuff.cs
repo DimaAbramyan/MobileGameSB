@@ -4,34 +4,31 @@ using UnityEngine;
 
 public class HealBuff : Buff
 {
-    ParentShip shipCreator;
-    float timer = 0.25f;
-    public float health;
-    private void FixedUpdate()
-    {
-        transform.localPosition += new Vector3(0, -1, 0) * 0.46f;
-    }
+    [SerializeField, Min(0f)] private float health;
+
+    private bool isCollected;
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        ParentShip colliderShip = collision.gameObject.GetComponent<ParentShip>();
-        if ((timer > 0f || shipCreator != colliderShip) && colliderShip == null)
-            return;
-        if (colliderShip.IsIntangible)
+        if (isCollected)
             return;
 
-        colliderShip.SetHealthPoints(health);
+        ParentShip colliderShip =
+            collision.GetComponentInParent<ParentShip>();
+        if (colliderShip == null || colliderShip.IsIntangible)
+            return;
+
+        isCollected = true;
+        colliderShip.HealHealth(health);
         PointsCollector.Bonuses += 1;
         Destroy(gameObject);
     }
-    public void Update()
-    {
-        timer -= Time.deltaTime;
-    }
+
     public void Init(ParentShip parent, float extraHealth)
     {
-        shipCreator = parent;
         health = extraHealth;
     }
+
     public void SetHealth(float health)
     {
         this.health = health;

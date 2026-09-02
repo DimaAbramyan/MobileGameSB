@@ -211,6 +211,11 @@ public sealed class ArkanoidBall : MonoBehaviour
             return;
         }
 
+        EnemyProjectile projectile =
+            collision.collider.GetComponentInParent<EnemyProjectile>();
+        if (TryDestroyEnemyProjectile(projectile))
+            return;
+
         ArkanoidPaddle hitPaddle =
             collision.collider.GetComponentInParent<ArkanoidPaddle>();
         if (hitPaddle != null)
@@ -238,6 +243,11 @@ public sealed class ArkanoidBall : MonoBehaviour
         if (IsDestroyBoundary(other))
             return;
 
+        EnemyProjectile projectile =
+            other.GetComponentInParent<EnemyProjectile>();
+        if (TryDestroyEnemyProjectile(projectile))
+            return;
+
         ArkanoidPaddle hitPaddle = other.GetComponentInParent<ArkanoidPaddle>();
         if (hitPaddle != null)
         {
@@ -258,6 +268,18 @@ public sealed class ArkanoidBall : MonoBehaviour
         Enemy enemy = other.GetComponentInParent<Enemy>();
         if (enemy != null)
             DealContactDamage(enemy);
+    }
+
+    public bool TryDestroyEnemyProjectile(EnemyProjectile projectile)
+    {
+        if (projectile == null)
+            return false;
+
+        Destroy(projectile.gameObject);
+        if (!isStasisActive && !isRespawning && rb != null)
+            rb.linearVelocity = direction.normalized * speed;
+
+        return true;
     }
 
     private bool IsDestroyBoundary(Collider2D other)

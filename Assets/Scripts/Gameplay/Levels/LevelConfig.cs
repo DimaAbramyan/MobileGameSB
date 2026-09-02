@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FMODUnity;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "LevelConfig",
@@ -45,9 +46,20 @@ public sealed class LevelConfig : ScriptableObject
     [SerializeField] private LevelConfig requiredLevel;
     [SerializeField] private bool bonusLevel;
 
-    [Header("Rewards")]
-    [SerializeField, Min(0)] private int metalReward;
+    [Header("Completion Rewards")]
+    [FormerlySerializedAs("metalReward")]
+    [SerializeField, Min(0)] private int goldReward;
     [SerializeField, Min(0)] private int coreReward;
+
+    [Header("Metal Drops")]
+    [SerializeField] private MetalPickup metalPickupPrefab;
+    [SerializeField] private List<WaveMetalDropSettings> waveMetalDrops = new();
+
+    [Header("Enemy Difficulty Multipliers")]
+    [SerializeField, Min(0.01f)] private float enemyHullHealthMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float enemyShieldHealthMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float enemyDamageMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float enemyFireRateMultiplier = 1f;
 
     [Header("Music")]
     [SerializeField] private EventReference music;
@@ -68,8 +80,18 @@ public sealed class LevelConfig : ScriptableObject
     public string DisplayName => displayName;
     public LevelConfig RequiredLevel => requiredLevel;
     public bool BonusLevel => bonusLevel;
-    public int MetalReward => metalReward;
+    public int GoldReward => goldReward;
     public int CoreReward => coreReward;
+    public MetalPickup MetalPickupPrefab => metalPickupPrefab;
+    public IReadOnlyList<WaveMetalDropSettings> WaveMetalDrops => waveMetalDrops;
+    public int MetalDropMinimum => GetMetalDropTotal(useMaximum: false);
+    public int MetalDropMaximum => GetMetalDropTotal(useMaximum: true);
+    public int TotalMetalMinimum => MetalDropMinimum;
+    public int TotalMetalMaximum => MetalDropMaximum;
+    public float EnemyHullHealthMultiplier => enemyHullHealthMultiplier;
+    public float EnemyShieldHealthMultiplier => enemyShieldHealthMultiplier;
+    public float EnemyDamageMultiplier => enemyDamageMultiplier;
+    public float EnemyFireRateMultiplier => enemyFireRateMultiplier;
     public bool IsStartLevel => requiredLevel == null;
     public EventReference Music => music;
     public bool AutoScaleParallaxSpeedByDepth => autoScaleParallaxSpeedByDepth;
@@ -79,9 +101,62 @@ public sealed class LevelConfig : ScriptableObject
         randomBackgroundObjects;
     public IReadOnlyList<GameObject> Waves => waves;
 
+    public WaveMetalDropSettings GetWaveMetalDropSettings(int waveIndex)
+    {
+        if (waveMetalDrops == null
+            || waveIndex < 0
+            || waveIndex >= waveMetalDrops.Count)
+        {
+            return default;
+        }
+
+        return waveMetalDrops[waveIndex];
+    }
+
+    public void EnsureWaveMetalDropSettings()
+    {
+        waveMetalDrops ??= new List<WaveMetalDropSettings>();
+
+        int waveCount = waves?.Length ?? 0;
+        while (waveMetalDrops.Count < waveCount)
+            waveMetalDrops.Add(default);
+
+        if (waveMetalDrops.Count > waveCount)
+            waveMetalDrops.RemoveRange(waveCount, waveMetalDrops.Count - waveCount);
+
+        for (int i = 0; i < waveMetalDrops.Count; i++)
+        {
+            WaveMetalDropSettings settings = waveMetalDrops[i];
+            settings.Validate();
+            waveMetalDrops[i] = settings;
+        }
+    }
+
+    private int GetMetalDropTotal(bool useMaximum)
+    {
+        if (waveMetalDrops == null)
+            return 0;
+
+        int total = 0;
+        for (int i = 0; i < waveMetalDrops.Count; i++)
+        {
+            total += useMaximum
+                ? waveMetalDrops[i].MaxMetal
+                : waveMetalDrops[i].MinMetal;
+        }
+
+        return total;
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        EnsureWaveMetalDropSettings();
+        enemyHullHealthMultiplier = Mathf.Max(0.01f, enemyHullHealthMultiplier);
+        enemyShieldHealthMultiplier = Mathf.Max(0.01f, enemyShieldHealthMultiplier);
+        enemyDamageMultiplier = Mathf.Max(0.01f, enemyDamageMultiplier);
+        enemyFireRateMultiplier = Mathf.Max(0.01f, enemyFireRateMultiplier);
+
         if (requiredLevel == this)
         {
             Debug.LogError(

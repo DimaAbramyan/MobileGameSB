@@ -46,12 +46,24 @@ public class WeaponDataSer
     public int ID;
     public Vector3 place;
     public int energyCost;
+    public string contentId;
+    public bool usesShipLocalPosition;
+    public string slotId;
 
-    public WeaponDataSer(int id, Vector3 position, int energyCost = 0)
+    public WeaponDataSer(
+        int id,
+        Vector3 position,
+        int energyCost = 0,
+        string contentId = null,
+        bool usesShipLocalPosition = false,
+        string slotId = null)
     {
         ID = id;
         place = position;
         this.energyCost = Mathf.Max(0, energyCost);
+        this.contentId = contentId;
+        this.usesShipLocalPosition = usesShipLocalPosition;
+        this.slotId = slotId;
     }
 
     public WeaponDataSer()
@@ -59,6 +71,9 @@ public class WeaponDataSer
         ID = 0;
         place = new Vector3(0, 0, 0);
         energyCost = 0;
+        contentId = null;
+        usesShipLocalPosition = false;
+        slotId = null;
     }
 
     public int GetID()

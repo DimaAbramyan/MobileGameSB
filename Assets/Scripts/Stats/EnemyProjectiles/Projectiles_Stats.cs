@@ -16,6 +16,14 @@ public abstract class EnemyProjectile: MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        ArkanoidBall arkanoidBall =
+            collision.collider.GetComponentInParent<ArkanoidBall>();
+        if (arkanoidBall != null
+            && arkanoidBall.TryDestroyEnemyProjectile(this))
+        {
+            return;
+        }
+
         ParentShip receiver =
             collision.collider.GetComponentInParent<ParentShip>();
 
@@ -28,4 +36,9 @@ public abstract class EnemyProjectile: MonoBehaviour
     }
     public void SetMultiplier(float multiplier)
     { this.SpeedMultiplier = multiplier; }
+
+    public void SetDamageMultiplier(float multiplier)
+    {
+        _damage *= Mathf.Max(0.01f, multiplier);
+    }
 }

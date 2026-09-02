@@ -1,0 +1,130 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a0f8ac4a84e4143930f87a2257dcb20, type: 3}
+  m_Name: MoveToPlayerCircle
+  m_EditorClassIdentifier: Assembly-CSharp::DirectedWaveAttackPreset
+  attackSettings:
+    isEnabled: 1
+    legacyAttackType: 1
+    useAttackStartDelay: 0
+    attackStartDelay: 0
+    fireMode: 0
+    movementMode: 1
+    serializedVersion: 6
+    attacksPerEnemyPerCycle: 1
+    attacksPerSecond: 1
+    waitForPreviousAttack: 0
+    delayAfterAttack: 1
+    burstSettingsSource: 1
+    waveBurstSettings:
+      repeatBurst: 0
+      useAttackStartDelay: 0
+      attackStartDelay: 1
+      useAreaAttack: 0
+      areaAttackProjectileCount: 3
+      areaAttackMinAngle: -45
+      areaAttackMaxAngle: 45
+      attackShotCount: 1
+      attackShotInterval: 1
+      attackCooldown: 0
+      burstShotCount: 1
+      burstShotInterval: 0.15
+      legacyShotsPerBurst: 1
+      legacyShotInterval: 0.15
+      serializedVersion: 1
+    legacyBurstShotCount: 5
+    legacyBurstShotInterval: 0.15
+    minDiveDepth: 0
+    maxDiveDepth: 0
+    minDiveSpeed: 2
+    maxDiveSpeed: 2
+    diveSpeedCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    flyThroughApproachSpeed: 2
+    flyThroughExitPadding: 0.5
+    useDivePreparation: 0
+    divePreparationDistance: 0.75
+    divePreparationDuration: 0.2
+    divePreparationSpeedCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    diveTargetMode: 1
+    playerStandoffRadius: 2.5
+    diveSchedulingMode: 1
+    returnSpeedMultiplier: 3
+    returnSpeedCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 1
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 1
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4

@@ -13,6 +13,7 @@ public class CircleShip : Enemy
     [Inject] private DiContainer container;
     [SerializeField] private EnemyBullet EnBullet;
     private float Timer;
+    private bool waveAttackControlled;
     
     private void Start()
     {
@@ -20,20 +21,26 @@ public class CircleShip : Enemy
     }
     private void Update() 
     {
-        if (EnBullet)
+        if (!waveAttackControlled && EnBullet)
         Shoot(); 
         MoveForvard();
     }
+
+    public void SetWaveAttackControl(bool isControlled)
+    {
+        waveAttackControlled = isControlled;
+    }
     protected void Shoot()
     {
-        Timer -= Time.deltaTime / Timer;
+        Timer -= Time.deltaTime * FireRateMultiplier / Timer;
         if (Timer <= 0)
         {
-            container.InstantiatePrefabForComponent<EnemyBullet>(
+            EnemyBullet projectile = container.InstantiatePrefabForComponent<EnemyBullet>(
                 EnBullet,
                 transform.position,
                 Quaternion.identity,
                 null);
+            projectile.SetDamageMultiplier(DamageMultiplier);
             Timer = Random.Range(_fireRate/10+1, _fireRate);
         }
     }

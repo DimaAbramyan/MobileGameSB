@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccba877679474e20810150910ee41ec0, type: 3}
+  m_Name: WaveBuffDropWeightProfile
+  m_EditorClassIdentifier: Assembly-CSharp::WaveBuffDropWeightProfile
+  weights:
+  - rewardPrefab: {fileID: 9134227816973463294, guid: b4cba67278381234ca9d070c51848fdb, type: 3}
+    baseWeight: 1
+    modifiers:
+    - stat: 0
+      comparison: 0
+      threshold: 0
+      weightMultiplier: 0
+      weightMultiplierCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 0.001
+          value: 4.0370483
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 0.31724513
+          value: 0.62583536
+          inSlope: -1.4132919
+          outSlope: -1.4132919
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 1
+        - serializedVersion: 3
+          time: 0.9976196
+          value: 0.006117156
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - rewardPrefab: {fileID: 4187146528888570064, guid: ab0c2b20b8f62f24ebdb65376eabf60c, type: 3}
+    baseWeight: 3
+    modifiers:
+    - stat: 1
+      comparison: 0
+      threshold: 0
+      weightMultiplier: 0
+      weightMultiplierCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 2
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 1
+          value: 2
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4

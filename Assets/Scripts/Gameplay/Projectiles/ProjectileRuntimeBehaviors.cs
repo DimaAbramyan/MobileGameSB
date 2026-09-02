@@ -9,6 +9,7 @@ public class ProjectileRuntimeConfig
 {
     public ProjectileFlightMode flightMode = ProjectileFlightMode.Straight;
     public ProjectileContactMode contactMode = ProjectileContactMode.DamageAndDestroy;
+    public EnemyDamageType damageType = EnemyDamageType.Kinetic;
 
     public float homingRotationSpeed = 360f;
     public bool growDuringFlight;
@@ -20,6 +21,10 @@ public class ProjectileRuntimeConfig
     public Explode explosionPrefab;
     public float explosionDamage = 30f;
     public float continuousDamageInterval = 0.25f;
+    public float ballLightningAreaDamage;
+    public float ballLightningAreaRadius;
+    public float ballLightningAreaTickInterval = 0.5f;
+    public LayerMask ballLightningAreaDamageLayers = ~0;
 }
 
 public enum ProjectileFlightMode
@@ -33,7 +38,8 @@ public enum ProjectileContactMode
     DamageAndDestroy,
     PierceOnce,
     PierceContinuous,
-    ExplodeAndSpawn
+    ExplodeAndSpawn,
+    BallLightning
 }
 
 public interface IProjectileMovementBehavior
@@ -45,6 +51,7 @@ public interface IProjectileContactBehavior
 {
     void OnEnter(iDamagable target, Projectile projectile);
     void OnStay(iDamagable target, Projectile projectile);
+    void OnExit(iDamagable target, Projectile projectile);
 }
 
 public interface IProjectileTickBehavior
@@ -76,21 +83,37 @@ public sealed class ProjectileRuntimeBehaviorSet
             _ => new StraightMovementBehavior()
         };
 
-        contactBehavior = config.contactMode switch
+        if (config.contactMode == ProjectileContactMode.BallLightning)
         {
-            ProjectileContactMode.PierceOnce =>
-                new PierceOnceContactBehavior(dealDamageManager),
-            ProjectileContactMode.PierceContinuous =>
-                new PierceContinuousContactBehavior(
-                    config.continuousDamageInterval,
-                    dealDamageManager),
-            ProjectileContactMode.ExplodeAndSpawn =>
-                new ExplodeAndSpawnContactBehavior(
-                    config.explosionPrefab,
-                    config.explosionDamage,
-                    dealDamageManager),
-            _ => new DamageAndDestroyContactBehavior(dealDamageManager)
-        };
+            BallLightningContactBehavior ballLightningContact =
+                new BallLightningContactBehavior(dealDamageManager);
+            contactBehavior = ballLightningContact;
+            tickBehaviors.Add(new BallLightningAreaTickBehavior(
+                config.ballLightningAreaDamage,
+                config.ballLightningAreaRadius,
+                config.ballLightningAreaTickInterval,
+                config.ballLightningAreaDamageLayers,
+                dealDamageManager,
+                ballLightningContact));
+        }
+        else
+        {
+            contactBehavior = config.contactMode switch
+            {
+                ProjectileContactMode.PierceOnce =>
+                    new PierceOnceContactBehavior(dealDamageManager),
+                ProjectileContactMode.PierceContinuous =>
+                    new PierceContinuousContactBehavior(
+                        config.continuousDamageInterval,
+                        dealDamageManager),
+                ProjectileContactMode.ExplodeAndSpawn =>
+                    new ExplodeAndSpawnContactBehavior(
+                        config.explosionPrefab,
+                        config.explosionDamage,
+                        dealDamageManager),
+                _ => new DamageAndDestroyContactBehavior(dealDamageManager)
+            };
+        }
 
         if (config.growDuringFlight)
             tickBehaviors.Add(
@@ -116,6 +139,11 @@ public sealed class ProjectileRuntimeBehaviorSet
     public void OnContactStay(iDamagable target, Projectile projectile)
     {
         contactBehavior?.OnStay(target, projectile);
+    }
+
+    public void OnContactExit(iDamagable target, Projectile projectile)
+    {
+        contactBehavior?.OnExit(target, projectile);
     }
 
     public void Reset()
@@ -194,6 +222,10 @@ public sealed class DamageAndDestroyContactBehavior : IProjectileContactBehavior
     public void OnStay(iDamagable target, Projectile projectile)
     {
     }
+
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+    }
 }
 
 public sealed class PierceOnceContactBehavior : IProjectileContactBehavior
@@ -215,6 +247,10 @@ public sealed class PierceOnceContactBehavior : IProjectileContactBehavior
     }
 
     public void OnStay(iDamagable target, Projectile projectile)
+    {
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
     {
     }
 }
@@ -244,6 +280,10 @@ public sealed class PierceContinuousContactBehavior
         TryDealDamage(target, projectile);
     }
 
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+    }
+
     private void TryDealDamage(
         iDamagable target,
         Projectile projectile)
@@ -259,6 +299,185 @@ public sealed class PierceContinuousContactBehavior
 
         dealDamageManager.DealDamage(target, projectile);
         nextDamageTimes[target] = Time.time + interval;
+    }
+}
+
+public sealed class BallLightningContactBehavior : IProjectileContactBehavior
+{
+    private readonly DealDamageManager dealDamageManager;
+    private readonly Dictionary<iDamagable, int> activeContactCounts = new();
+    private readonly Dictionary<iDamagable, float> lastDirectDamageTimes = new();
+
+    public BallLightningContactBehavior(DealDamageManager dealDamageManager)
+    {
+        this.dealDamageManager = dealDamageManager;
+    }
+
+    public bool IsReceivingDirectDamage(iDamagable target)
+    {
+        return target != null && activeContactCounts.ContainsKey(target);
+    }
+
+    public void OnEnter(iDamagable target, Projectile projectile)
+    {
+        RegisterContact(target);
+        TryDealDirectDamage(target, projectile);
+    }
+
+    public void OnStay(iDamagable target, Projectile projectile)
+    {
+        RegisterContactIfMissing(target);
+        TryDealDirectDamage(target, projectile);
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+        if (target == null
+            || !activeContactCounts.TryGetValue(target, out int contactCount))
+        {
+            return;
+        }
+
+        if (contactCount > 1)
+        {
+            activeContactCounts[target] = contactCount - 1;
+            return;
+        }
+
+        activeContactCounts.Remove(target);
+        lastDirectDamageTimes.Remove(target);
+    }
+
+    private void RegisterContact(iDamagable target)
+    {
+        if (target == null)
+            return;
+
+        if (activeContactCounts.TryGetValue(target, out int contactCount))
+        {
+            activeContactCounts[target] = contactCount + 1;
+            return;
+        }
+
+        activeContactCounts.Add(target, 1);
+    }
+
+    private void RegisterContactIfMissing(iDamagable target)
+    {
+        if (target == null || activeContactCounts.ContainsKey(target))
+            return;
+
+        activeContactCounts.Add(target, 1);
+    }
+
+    private void TryDealDirectDamage(
+        iDamagable target,
+        Projectile projectile)
+    {
+        if (target == null || projectile == null)
+            return;
+
+        float currentPhysicsTime = Time.fixedTime;
+        if (lastDirectDamageTimes.TryGetValue(
+                target,
+                out float lastDamageTime)
+            && Mathf.Approximately(lastDamageTime, currentPhysicsTime))
+        {
+            return;
+        }
+
+        dealDamageManager.DealDamage(target, projectile);
+        lastDirectDamageTimes[target] = currentPhysicsTime;
+    }
+}
+
+public sealed class BallLightningAreaTickBehavior : IProjectileTickBehavior
+{
+    private const int OverlapBufferCapacity = 32;
+
+    private readonly float areaDamage;
+    private readonly float areaRadius;
+    private readonly float tickInterval;
+    private readonly int damageLayers;
+    private readonly ContactFilter2D damageFilter;
+    private readonly DealDamageManager dealDamageManager;
+    private readonly BallLightningContactBehavior directContactBehavior;
+    private readonly List<Collider2D> overlapResults =
+        new(OverlapBufferCapacity);
+    private readonly HashSet<iDamagable> damagedTargets = new();
+
+    private float nextPulseTime = -1f;
+
+    public BallLightningAreaTickBehavior(
+        float areaDamage,
+        float areaRadius,
+        float tickInterval,
+        LayerMask damageLayers,
+        DealDamageManager dealDamageManager,
+        BallLightningContactBehavior directContactBehavior)
+    {
+        this.areaDamage = Mathf.Max(0f, areaDamage);
+        this.areaRadius = Mathf.Max(0f, areaRadius);
+        this.tickInterval = Mathf.Max(0.02f, tickInterval);
+        this.damageLayers = damageLayers.value;
+        damageFilter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            layerMask = damageLayers,
+            useTriggers = true
+        };
+        this.dealDamageManager = dealDamageManager;
+        this.directContactBehavior = directContactBehavior;
+    }
+
+    public void Tick(Projectile projectile)
+    {
+        if (nextPulseTime < 0f)
+        {
+            nextPulseTime = Time.fixedTime + tickInterval;
+            return;
+        }
+
+        if (Time.fixedTime < nextPulseTime)
+            return;
+
+        nextPulseTime = Time.fixedTime + tickInterval;
+
+        if (projectile == null
+            || areaDamage <= 0f
+            || areaRadius <= 0f
+            || damageLayers == 0)
+        {
+            return;
+        }
+
+        damagedTargets.Clear();
+        overlapResults.Clear();
+        int overlapCount = Physics2D.OverlapCircle(
+            projectile.transform.position,
+            areaRadius,
+            damageFilter,
+            overlapResults);
+
+        for (int index = 0; index < overlapCount; index++)
+        {
+            Collider2D collider = overlapResults[index];
+
+            if (collider == null
+                || !collider.TryGetComponent<iDamagable>(out var target)
+                || target == null
+                || directContactBehavior.IsReceivingDirectDamage(target)
+                || !damagedTargets.Add(target))
+            {
+                continue;
+            }
+
+            dealDamageManager.DealDamage(
+                target,
+                projectile.Owner,
+                areaDamage,
+                projectile.DamageType);
+        }
     }
 }
 
@@ -287,13 +506,17 @@ public sealed class ExplodeAndSpawnContactBehavior
         if (explosionPrefab != null)
         {
             Explode exp = UnityEngine.Object.Instantiate(explosionPrefab, projectile.transform.position, Quaternion.identity);
-            exp.SetDamage(explosionDamage);
+            exp.SetDamage(explosionDamage, projectile.DamageType);
         }
 
         projectile.ReturnToPool();
     }
 
     public void OnStay(iDamagable target, Projectile projectile)
+    {
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
     {
     }
 }

@@ -115,7 +115,8 @@ public class RamShip : Enemy
             MoveTo(Vector3.Lerp(chargeStartPosition, windUpPosition, progress));
         }
 
-        if (stateTimer < chargeDuration + restartDelay)
+        if (stateTimer < chargeDuration
+            + restartDelay / FireRateMultiplier)
             return;
 
         lungeDirection = normalizedTargetDirection;

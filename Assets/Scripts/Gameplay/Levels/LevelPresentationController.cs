@@ -16,17 +16,27 @@ public sealed class LevelPresentationController : MonoBehaviour
         public float RespawnPadding;
     }
 
+    private sealed class RuntimeParallaxLayer
+    {
+        public Transform Transform;
+        public Vector2 ConfiguredSize;
+    }
+
     [Inject] private LevelCatalog levelCatalog;
+    [Inject] private AudioVolumeService audioVolumeService;
     [SerializeField] private SpriteRenderer legacyBackground;
 
     private readonly List<Material> parallaxMaterials = new();
     private readonly List<Mesh> parallaxMeshes = new();
     private readonly List<Vector2> parallaxOffsets = new();
     private readonly List<Vector2> parallaxSpeeds = new();
+    private readonly List<RuntimeParallaxLayer> parallaxLayers = new();
     private readonly List<Material> backgroundObjectMaterials = new();
     private readonly List<RuntimeBackgroundObject> backgroundObjects = new();
     private EventInstance musicInstance;
     private bool hasMusicInstance;
+    private int viewportWidth;
+    private int viewportHeight;
 
     private void Awake()
     {
@@ -72,10 +82,18 @@ public sealed class LevelPresentationController : MonoBehaviour
                 new Vector3(layer.position.x, layer.position.y, 0f);
 
             Vector2 spriteSize = layer.sprite.bounds.size;
-            layerObject.transform.localScale = new Vector3(
+            Vector2 configuredSize = new Vector2(
                 spriteSize.x * layer.scale.x,
-                spriteSize.y * layer.scale.y,
+                spriteSize.y * layer.scale.y);
+            layerObject.transform.localScale = new Vector3(
+                configuredSize.x,
+                configuredSize.y,
                 1f);
+            parallaxLayers.Add(new RuntimeParallaxLayer
+            {
+                Transform = layerObject.transform,
+                ConfiguredSize = configuredSize
+            });
 
             Mesh mesh = CreateLayerMesh(layer.sprite, true);
             var meshFilter = layerObject.AddComponent<MeshFilter>();
@@ -98,6 +116,45 @@ public sealed class LevelPresentationController : MonoBehaviour
                 minSortingOrder,
                 maxSortingOrder));
         }
+    }
+
+    private static Vector2 GetMinimumViewportSize(
+        Transform layerTransform,
+        Camera gameplayCamera)
+    {
+        if (layerTransform == null || gameplayCamera == null)
+            return Vector2.zero;
+
+        Vector3 layerPosition = layerTransform.position;
+        float cameraDistance = Mathf.Abs(
+            layerPosition.z - gameplayCamera.transform.position.z);
+        Vector3 bottomLeft = gameplayCamera.ViewportToWorldPoint(
+            new Vector3(0f, 0f, cameraDistance));
+        Vector3 topRight = gameplayCamera.ViewportToWorldPoint(
+            new Vector3(1f, 1f, cameraDistance));
+
+        return new Vector2(
+            2f * Mathf.Max(
+                Mathf.Abs(layerPosition.x - bottomLeft.x),
+                Mathf.Abs(topRight.x - layerPosition.x)),
+            2f * Mathf.Max(
+                Mathf.Abs(layerPosition.y - bottomLeft.y),
+                Mathf.Abs(topRight.y - layerPosition.y)));
+    }
+
+    private static float GetAtLeastViewportSize(
+        float configuredSize,
+        float minimumViewportSize)
+    {
+        float sign = configuredSize < 0f ? -1f : 1f;
+        return sign * Mathf.Max(
+            Mathf.Abs(configuredSize),
+            minimumViewportSize);
+    }
+
+    private void Start()
+    {
+        ResizeParallaxLayersToViewport();
     }
 
     private void BuildRandomBackgroundObjects(LevelConfig config)
@@ -288,18 +345,49 @@ public sealed class LevelPresentationController : MonoBehaviour
 
     private void StartMusic(LevelConfig config)
     {
-        if (config.Music.IsNull || !RuntimeManager.IsInitialized)
-            return;
-
-        musicInstance = RuntimeManager.CreateInstance(config.Music);
-        musicInstance.start();
-        hasMusicInstance = true;
+        musicInstance = audioVolumeService.PlayMusic(config.Music);
+        hasMusicInstance = musicInstance.isValid();
     }
 
     private void Update()
     {
+        if (viewportWidth != Screen.width || viewportHeight != Screen.height)
+            ResizeParallaxLayersToViewport();
+
         UpdateRandomBackgroundObjects();
         UpdateParallaxLayers();
+    }
+
+    private void ResizeParallaxLayersToViewport()
+    {
+        Camera gameplayCamera = Camera.main;
+        if (gameplayCamera == null)
+            return;
+
+        viewportWidth = Screen.width;
+        viewportHeight = Screen.height;
+
+        for (int i = parallaxLayers.Count - 1; i >= 0; i--)
+        {
+            RuntimeParallaxLayer layer = parallaxLayers[i];
+            if (layer.Transform == null)
+            {
+                parallaxLayers.RemoveAt(i);
+                continue;
+            }
+
+            Vector2 minimumViewportSize = GetMinimumViewportSize(
+                layer.Transform,
+                gameplayCamera);
+            layer.Transform.localScale = new Vector3(
+                GetAtLeastViewportSize(
+                    layer.ConfiguredSize.x,
+                    minimumViewportSize.x),
+                GetAtLeastViewportSize(
+                    layer.ConfiguredSize.y,
+                    minimumViewportSize.y),
+                1f);
+        }
     }
 
     private void UpdateParallaxLayers()
@@ -403,10 +491,7 @@ public sealed class LevelPresentationController : MonoBehaviour
     private void OnDestroy()
     {
         if (hasMusicInstance)
-        {
-            musicInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-            musicInstance.release();
-        }
+            audioVolumeService.StopAndRelease(musicInstance);
 
         foreach (Material material in parallaxMaterials)
         {

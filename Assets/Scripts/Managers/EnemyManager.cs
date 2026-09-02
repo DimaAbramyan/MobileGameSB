@@ -18,24 +18,57 @@ public class EnemyManager
 
     public Enemy FindNearestEnemy(Vector3 fromPosition)
     {
+        return FindNearestEnemy(fromPosition, 0f, null);
+    }
+
+    public Enemy FindNearestEnemy(
+        Vector3 fromPosition,
+        float maxDistance,
+        IReadOnlyList<Enemy> excludedEnemies)
+    {
+        if (enemyList == null || enemyList.Count == 0)
+            return null;
+
         Enemy bestEnemy = null;
-        float bestDistance = float.MaxValue;
+        float bestDistanceSqr = maxDistance > 0f
+            ? maxDistance * maxDistance
+            : float.PositiveInfinity;
 
-        foreach (Enemy enemy in enemyList)
+        for (int enemyIndex = 0; enemyIndex < enemyList.Count; enemyIndex++)
         {
-            if (enemy == null)
-                continue;
+            Enemy enemy = enemyList[enemyIndex];
+            if (enemy == null
+                || enemy.isDead
+                || !enemy.isActiveAndEnabled
+                || IsExcluded(enemy, excludedEnemies))
+            continue;
 
-            float dist = Vector3.Distance(fromPosition, enemy.transform.position);
+            float distanceSqr = (enemy.transform.position - fromPosition).sqrMagnitude;
 
-            if (dist < bestDistance)
+            if (distanceSqr <= bestDistanceSqr)
             {
-                bestDistance = dist;
+                bestDistanceSqr = distanceSqr;
                 bestEnemy = enemy;
             }
         }
 
         return bestEnemy;
+    }
+
+    private static bool IsExcluded(
+        Enemy enemy,
+        IReadOnlyList<Enemy> excludedEnemies)
+    {
+        if (excludedEnemies == null)
+            return false;
+
+        for (int index = 0; index < excludedEnemies.Count; index++)
+        {
+            if (excludedEnemies[index] == enemy)
+                return true;
+        }
+
+        return false;
     }
     public void NotifyEnemyDestroyed(Enemy enemy)
     {

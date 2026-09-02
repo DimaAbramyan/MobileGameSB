@@ -16,8 +16,26 @@ MonoBehaviour:
   displayName: Level 1
   requiredLevel: {fileID: 0}
   bonusLevel: 0
-  metalReward: 300
-  coreReward: 1
+  goldReward: 1000
+  coreReward: 0
+  metalPickupPrefab: {fileID: 3886868107388774, guid: 5fa59a7895d3c6f4abe58c09fb53f0ce, type: 3}
+  waveMetalDrops:
+  - minMetal: 35
+    maxMetal: 45
+    carrierChance: 0.5
+  - minMetal: 25
+    maxMetal: 35
+    carrierChance: 0.5
+  - minMetal: 35
+    maxMetal: 45
+    carrierChance: 0.5
+  - minMetal: 40
+    maxMetal: 50
+    carrierChance: 0.5
+  enemyHullHealthMultiplier: 1
+  enemyShieldHealthMultiplier: 1
+  enemyDamageMultiplier: 1
+  enemyFireRateMultiplier: 1
   music:
     Guid:
       Data1: 0

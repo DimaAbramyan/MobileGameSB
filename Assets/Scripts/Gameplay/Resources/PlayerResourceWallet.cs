@@ -9,9 +9,11 @@ public sealed class PlayerResourceWallet
     private readonly string savePath;
     private bool loaded;
     private int metal;
+    private int gold;
     private int cores;
 
     public event Action<int, int> OnChanged;
+    public event Action<int, int, int> OnResourcesChanged;
 
     public int Metal
     {
@@ -31,6 +33,15 @@ public sealed class PlayerResourceWallet
         }
     }
 
+    public int Gold
+    {
+        get
+        {
+            EnsureLoaded();
+            return gold;
+        }
+    }
+
     public PlayerResourceWallet()
     {
         savePath = Path.Combine(Application.persistentDataPath, SaveFileName);
@@ -44,7 +55,17 @@ public sealed class PlayerResourceWallet
         cores += Mathf.Max(0, coreAmount);
 
         Save();
-        OnChanged?.Invoke(metal, cores);
+        NotifyChanged();
+    }
+
+    public void AddGold(int amount)
+    {
+        EnsureLoaded();
+
+        gold += Mathf.Max(0, amount);
+
+        Save();
+        NotifyChanged();
     }
 
     public bool TrySpend(int metalCost, int coreCost)
@@ -61,20 +82,21 @@ public sealed class PlayerResourceWallet
         cores -= coreCost;
 
         Save();
-        OnChanged?.Invoke(metal, cores);
+        NotifyChanged();
         return true;
     }
 
     public void Reset()
     {
         metal = 0;
+        gold = 0;
         cores = 0;
         loaded = true;
 
         if (File.Exists(savePath))
             File.Delete(savePath);
 
-        OnChanged?.Invoke(metal, cores);
+        NotifyChanged();
     }
 
     private void EnsureLoaded()
@@ -84,6 +106,7 @@ public sealed class PlayerResourceWallet
 
         loaded = true;
         metal = 0;
+        gold = 0;
         cores = 0;
 
         if (!File.Exists(savePath))
@@ -99,6 +122,7 @@ public sealed class PlayerResourceWallet
                 return;
 
             metal = Mathf.Max(0, data.metal);
+            gold = Mathf.Max(0, data.gold);
             cores = Mathf.Max(0, data.cores);
         }
         catch (Exception exception)
@@ -122,6 +146,7 @@ public sealed class PlayerResourceWallet
             ResourceSaveData data = new ResourceSaveData
             {
                 metal = metal,
+                gold = gold,
                 cores = cores
             };
 
@@ -134,10 +159,17 @@ public sealed class PlayerResourceWallet
         }
     }
 
+    private void NotifyChanged()
+    {
+        OnChanged?.Invoke(metal, cores);
+        OnResourcesChanged?.Invoke(metal, gold, cores);
+    }
+
     [Serializable]
     private sealed class ResourceSaveData
     {
         public int metal;
+        public int gold;
         public int cores;
     }
 }

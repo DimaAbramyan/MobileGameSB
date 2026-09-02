@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 452f999442004bfa9fba1c8d6949cfd0, type: 3}
+  m_Name: ThermalLaser
+  m_EditorClassIdentifier: Assembly-CSharp::ThermalLaserData
+  reloadTimeByLevel: []
+  angleByLevel: []
+  damageByLevel: []
+  rangeByLevel: []
+  speedByLevel: []
+  levelConfigs:
+  - reloadTime: 0.2
+    angle: 0
+    damage: 8
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.18
+    angle: 0
+    damage: 10
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.16
+    angle: 0
+    damage: 12
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.14
+    angle: 0
+    damage: 15
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.12
+    angle: 0
+    damage: 18
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  startLevel: 1
+  maxLevel: 10
+  energyCost: 2
+  damageType: 1
+  flightMode: 0
+  contactMode: 0
+  homingRotationSpeed: 360
+  growDuringFlight: 0
+  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  projectileLifetime: 10
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 30
+  continuousDamageInterval: 0.25
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  thermalLevels:
+  - heatPerHitPercent: 10
+  - heatPerHitPercent: 12.5
+  - heatPerHitPercent: 16
+  - heatPerHitPercent: 20
+  - heatPerHitPercent: 25
+  beamBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  overheatExplosionRadius: 2
+  overheatExplosionDamage: 40
+  transferredHeatPercent: 50
+  coolingDelay: 0.5
+  coolingPercentPerSecond: 25
+  overheatExplosionPrefab: {fileID: 5676898141782820409, guid: e5300a10c7f354047a8a476acb44ac55, type: 3}

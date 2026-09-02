@@ -3,6 +3,39 @@ using UnityEngine;
 
 public static class ShipBuildValidator
 {
+    public static bool TryValidateWeaponPlatformTier(
+        WeaponContentDefinition weapon,
+        string slotId,
+        int maxPlatformTier,
+        out string message)
+    {
+        if (weapon == null)
+        {
+            message = "Не выбрано оружие для проверки тира платформы.";
+            return false;
+        }
+
+        int requiredTier = weapon.RequiredPlatformTier;
+        int supportedTier = Mathf.Max(1, maxPlatformTier);
+        if (requiredTier > supportedTier)
+        {
+            string weaponName = string.IsNullOrWhiteSpace(weapon.DisplayName)
+                ? weapon.name
+                : weapon.DisplayName;
+            string platformName = string.IsNullOrWhiteSpace(slotId)
+                ? "выбранная платформа"
+                : $"платформа '{slotId}'";
+
+            message =
+                $"Оружие '{weaponName}' требует платформу {requiredTier} тира, "
+                + $"а {platformName} поддерживает только {supportedTier} тир.";
+            return false;
+        }
+
+        message = string.Empty;
+        return true;
+    }
+
     public static bool TryValidate(
         ShipData shipData,
         IReadOnlyList<WeaponDataSerializable> weapons,

@@ -3,137 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-public enum DirectedWaveSegmentMotion
-{
-    Linear,
-    Bezier,
-    CatmullRom
-}
-
-public enum DirectedWaveCoordinateSpace
-{
-    World,
-    LocalToSubWave,
-    LocalToSpawnPoint
-}
-
-public enum DirectedWaveFormationLayout
-{
-    HorizontalLine,
-    VerticalLine,
-    Grid,
-    VShape,
-    Arc,
-    Circle,
-    Triangle,
-    Square,
-    Diamond,
-    CustomPoints,
-    TransformPoints
-}
-
-public enum DirectedWaveWobblePhaseMode
-{
-    SpawnOrder,
-    Directional
-}
-
-public enum DirectedWavePostCommandType
-{
-    Patrol,
-    LocalMovement,
-    Wobble,
-    Attack,
-    CircularMovement,
-    FormationRotation,
-    FormationMorph,
-    Wait,
-    Parallel,
-    Loop
-}
-
-public enum DirectedWaveParallelExecutionMode
-{
-    Blocking,
-    Background
-}
-
-public enum DirectedWaveSpawnOrderMode
-{
-    Manual,
-    DirectionAngle,
-    CenterToOutside,
-    OutsideToCenter,
-    Clockwise,
-    CounterClockwise
-}
-
-[System.Serializable]
-public sealed class DirectedWavePathCheckpoint
-{
-    public Vector3 position;
-    [Min(0.01f)] public float durationToNext = 0.5f;
-    [Min(0.01f)] public float speedToNext = 1f;
-    public DirectedWaveSegmentMotion motionToNext =
-        DirectedWaveSegmentMotion.CatmullRom;
-    public AnimationCurve easeToNext =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-}
-
-[System.Serializable]
-public sealed class DirectedWavePatrolPoint
-{
-    public Vector3 offset;
-    [Min(0.01f)] public float durationToNext = 0.5f;
-    [Min(0.01f)] public float speedToNext = 1f;
-    public DirectedWaveSegmentMotion motionToNext =
-        DirectedWaveSegmentMotion.Linear;
-    public AnimationCurve easeToNext =
-        AnimationCurve.Linear(0f, 0f, 1f, 1f);
-}
-
-[System.Serializable]
-public sealed class DirectedWavePostCommand
-{
-    public DirectedWavePostCommandType type = DirectedWavePostCommandType.Wobble;
-    public bool enabled = true;
-    [Min(0.01f)] public float duration = 1f;
-    [Min(0f)] public float holdDuration;
-    public DirectedWaveParallelExecutionMode parallelExecutionMode =
-        DirectedWaveParallelExecutionMode.Blocking;
-    public bool infiniteParallel;
-    [Min(1)] public int loopCount = 1;
-    public bool infiniteLoop;
-    public Vector3 targetOffset;
-    public float rotationDegrees = 45f;
-    public bool continuousFormationRotation;
-    public AnimationCurve curve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    public DirectedWaveFormationMorphStep morphTarget =
-        new DirectedWaveFormationMorphStep();
-    public DirectedWavePostCommand[] parallelCommands;
-    public DirectedWavePostCommand[] loopCommands;
-}
-
-[System.Serializable]
-public sealed class DirectedWaveFormationMorphStep
-{
-    public DirectedWaveFormationLayout layout = DirectedWaveFormationLayout.Circle;
-    public Vector3 centerOffset;
-    [Min(1)] public int columns = 5;
-    [Min(1)] public int rows = 3;
-    [Min(0f)] public float arcRadius = 2f;
-    public float arcDegrees = 120f;
-    [Min(0f)] public float shapeRadius = 2f;
-    public Vector2 shapeFlattening = Vector2.one;
-    public Vector3[] customPoints = System.Array.Empty<Vector3>();
-    [Min(0.01f)] public float durationToShape = 1f;
-    [Min(0f)] public float holdDuration;
-    public AnimationCurve easeToShape =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-}
-
-public sealed class DirectedEnemySubWave : InfoAboutSubWave
+public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 {
     [Inject] private DiContainer container;
     [Inject] private EnemyManager enemyManager;
@@ -149,13 +19,39 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     [SerializeField] private float spawnOrderStartAngle = 90f;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private bool parentEnemiesToSubWave = true;
-    [SerializeField] private bool enableDebugLogs = true;
+    [SerializeField] private bool enableDebugLogs;
 
     [Header("Entrance path")]
+    [SerializeField] private DirectedWaveEntranceMode entranceMode =
+        DirectedWaveEntranceMode.Checkpoints;
     [SerializeField] private DirectedWaveCoordinateSpace pathCoordinateSpace =
         DirectedWaveCoordinateSpace.LocalToSubWave;
     [SerializeField] private DirectedWavePathCheckpoint[] pathCheckpoints =
         System.Array.Empty<DirectedWavePathCheckpoint>();
+    [SerializeField] private DirectedWaveIndividualEntrancePoint[]
+        individualEntrancePoints =
+            System.Array.Empty<DirectedWaveIndividualEntrancePoint>();
+    [SerializeField, Min(0f)] private float individualPointMovementStartDelay =
+        0.1f;
+    [SerializeField, Min(0f)] private float individualPointMovementDuration =
+        0.35f;
+    [SerializeField] private AnimationCurve individualPointMovementCurve =
+        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField, HideInInspector] private Vector3 individualEntranceShapeCenter =
+        new Vector3(0f, 5f, 0f);
+    [SerializeField, HideInInspector, Min(0f)] private float individualEntranceShapeRadius =
+        2f;
+    [SerializeField, HideInInspector] private Vector2 individualEntranceShapeFlattening =
+        Vector2.one;
+    [SerializeField, HideInInspector] private float individualEntranceShapeRotationDegrees;
+
+    [Header("Entrance completion")]
+    [SerializeField] private DirectedWaveEntranceCompletionMode
+        entranceCompletionMode =
+            DirectedWaveEntranceCompletionMode.MoveToFormation;
+    [SerializeField, Min(0)] private int entranceLoopStartCheckpointIndex;
+    [SerializeField] private bool entranceLoopTeleportToStart;
+    [SerializeField, Min(0f)] private float entranceLoopTeleportDelay;
 
     [Header("Formation")]
     [SerializeField] private bool formationFrozen;
@@ -175,6 +71,8 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     [SerializeField] private Vector2 shapeFlattening = Vector2.one;
     [SerializeField] private Vector3[] customFormationPoints;
     [SerializeField] private Enemy[] customFormationEnemyOverrides;
+    [SerializeField] private Enemy[] proceduralFormationEnemyOverrides =
+        System.Array.Empty<Enemy>();
     [SerializeField] private Transform formationPointsRoot;
     [SerializeField, Min(0f)] private float settleDuration = 0.35f;
     [SerializeField] private AnimationCurve settleCurve =
@@ -184,6 +82,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     [SerializeField] private DirectedWavePostCommand[] postCommands =
         System.Array.Empty<DirectedWavePostCommand>();
     [SerializeField, Min(0f)] private float postStartDelay = 0.25f;
+    [SerializeField, Min(1)] private int postCommandPipelineFixedCount = 1;
     [SerializeField] private bool postCommandPipelineLoop;
     [SerializeField] private Vector3 localMovementOffset = new Vector3(0.5f, 0f, 0f);
     [SerializeField, Min(0.01f)] private float localMovementDuration = 1f;
@@ -198,15 +97,9 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     [SerializeField] private float wobblePhaseOffset = 0.7f;
     [SerializeField] private float wobbleDirectionAngle;
     [SerializeField, Min(0.01f)] private float wobbleDirectionStep = 0.75f;
-    [SerializeField, Min(0f)] private float diveInterval = 1.2f;
-    [SerializeField, Min(0.01f)] private float diveDuration = 0.75f;
-    [SerializeField, Min(0f)] private float diveReturnDuration = 0.65f;
-    [SerializeField, Min(0f)] private float diveOvershootDistance = 1.5f;
-    [SerializeField] private AnimationCurve diveCurve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [SerializeField] private AnimationCurve diveReturnCurve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField] private bool patrolLoop = true;
+    [SerializeField] private DirectedWaveCoordinateSpace patrolCoordinateSpace =
+        DirectedWaveCoordinateSpace.World;
     [SerializeField] private DirectedWavePatrolPoint[] patrolPoints =
         System.Array.Empty<DirectedWavePatrolPoint>();
     [SerializeField] private Vector2 selfOrbitRadius = new Vector2(0.25f, 0.25f);
@@ -220,30 +113,30 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     [SerializeField] private DirectedWaveFormationMorphStep[] formationMorphSteps =
         System.Array.Empty<DirectedWaveFormationMorphStep>();
 
-    private readonly HashSet<Enemy> aliveEnemies = new();
+    private readonly DirectedWaveEnemyTracker aliveEnemies = new();
     private readonly Dictionary<Enemy, Vector3> formationPositions = new();
     private readonly Dictionary<Enemy, int> formationIndices = new();
+    private readonly Dictionary<Enemy, Rigidbody2D> enemyBodies = new();
     private readonly Dictionary<int, Vector3> formationPositionsByIndex = new();
     private readonly List<FormationMorphRuntimeSegment> formationMorphSegments = new();
+    private readonly List<IDirectedWavePostTimelineBehaviour> postTimelineBehaviours =
+        new(2);
+    private readonly List<MonoBehaviour> formationAttackComponents = new(2);
     private readonly List<Coroutine> movementRoutines = new();
-    private readonly List<ActiveBackgroundParallelCommand> activeBackgroundParallels =
-        new();
     private Coroutine spawnRoutine;
     private Coroutine postBehaviorRoutine;
-    private int lastBackgroundParallelFrame = -1;
+    private DirectedWaveEnemyFactory enemyFactory;
+    private DirectedWaveAttackBehaviour attackBehaviour;
     private int movingToFormationCount;
     private bool spawnFinished;
     private bool activated;
     private bool postBehaviorStarted;
-
-    private sealed class ActiveBackgroundParallelCommand
-    {
-        public DirectedWavePostCommand command;
-        public float elapsed;
-    }
+    private bool individualEntrancePointWarningLogged;
+    private bool entranceLoopConfigurationWarningLogged;
 
     protected override void Awake()
     {
+        attackBehaviour = GetComponent<DirectedWaveAttackBehaviour>();
     }
 
     protected override void OnDestroy()
@@ -264,11 +157,13 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         }
 
         movementRoutines.Clear();
+        formationAttackComponents.Clear();
         formationPositions.Clear();
         formationIndices.Clear();
+        enemyBodies.Clear();
         formationPositionsByIndex.Clear();
         formationMorphSegments.Clear();
-        activeBackgroundParallels.Clear();
+        ResetRuntimeTimelineState();
     }
 
     public override void ActivateSubWave()
@@ -284,20 +179,25 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         activated = true;
         spawnFinished = false;
         postBehaviorStarted = false;
+        individualEntrancePointWarningLogged = false;
+        entranceLoopConfigurationWarningLogged = false;
         movingToFormationCount = 0;
         aliveEnemies.Clear();
         formationPositions.Clear();
         formationIndices.Clear();
+        enemyBodies.Clear();
         formationPositionsByIndex.Clear();
         formationMorphSegments.Clear();
-        activeBackgroundParallels.Clear();
-        lastBackgroundParallelFrame = -1;
+        ResetRuntimeTimelineState();
+        attackBehaviour?.BeginEntranceAttacks();
 
         Log(
             $"Activated. EnemyPrefab={(enemyPrefab != null ? enemyPrefab.name : "NULL")}, " +
             $"PointOverrides={GetPointEnemyOverrideCount()}, " +
             $"Layout={formationLayout}, EffectiveEnemyCount={GetEffectiveEnemyCount()}, " +
             $"PostCommands={GetPostCommandSummary()}, " +
+            $"EntranceMode={entranceMode}, " +
+            $"EntranceCompletion={entranceCompletionMode}, " +
             $"Checkpoints={(pathCheckpoints != null ? pathCheckpoints.Length : 0)}, " +
             $"SpawnPoint={(spawnPoint != null ? spawnPoint.name : "NULL")}");
 
@@ -306,12 +206,6 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
         if (enemyManager == null)
             LogWarning("EnemyManager was not injected. Subwave can spawn enemies, but completion depends on null/dead cleanup only.");
-
-        if (playerController == null
-            && HasPostCommand(DirectedWavePostCommandType.Attack))
-        {
-            LogWarning("PlayerController was not injected. Attack post command will not know where the player is.");
-        }
 
         if (enemyManager != null)
             enemyManager.OnEnemyDestroyed += HandleEnemyDestroyed;
@@ -343,7 +237,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         Log($"Starting spawn routine. Count={effectiveEnemyCount}, Interval={spawnInterval:0.###}");
         for (int i = 0; i < effectiveEnemyCount; i++)
         {
-            SpawnEnemy(spawnOrder[i], i);
+            SpawnEnemy(spawnOrder[i], i, effectiveEnemyCount);
 
             if (spawnInterval > 0f && i < effectiveEnemyCount - 1)
                 yield return new WaitForSeconds(spawnInterval);
@@ -352,7 +246,10 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         FinishSpawning();
     }
 
-    private void SpawnEnemy(int formationIndex, int spawnStep)
+    private void SpawnEnemy(
+        int formationIndex,
+        int spawnStep,
+        int plannedEnemyCount)
     {
         Enemy prefabToSpawn = GetEnemyPrefabForIndex(formationIndex);
         if (prefabToSpawn == null)
@@ -363,11 +260,11 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             return;
         }
 
-        Vector3 spawnPosition = GetSpawnPosition();
+        Vector3 spawnPosition = GetSpawnPosition(formationIndex);
         Transform parent = parentEnemiesToSubWave ? transform : null;
 
         Log(
-            $"Spawning enemy {spawnStep + 1}/{GetEffectiveEnemyCount()} " +
+            $"Spawning enemy {spawnStep + 1}/{plannedEnemyCount} " +
             $"formationIndex={formationIndex} " +
             $"prefab={prefabToSpawn.name} at {spawnPosition}. " +
             $"Parent={(parent != null ? parent.name : "NULL")}");
@@ -385,130 +282,35 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             return;
         }
 
+        GetTransformPointEnemyOverrideComponent(formationIndex)?.ApplyTo(enemy);
+
+        SetFormationAttackReady(
+            enemy,
+            attackBehaviour != null
+            && attackBehaviour.AllowAutonomousAttackDuringEntrance);
         aliveEnemies.Add(enemy);
+        NotifyEnemySpawned(enemy, spawnStep, plannedEnemyCount);
+        enemyBodies[enemy] = enemy.GetComponent<Rigidbody2D>();
         Log($"Spawned enemy instance: {enemy.name}. AliveEnemies={aliveEnemies.Count}", enemy);
 
         movingToFormationCount++;
         Coroutine routine = StartCoroutine(
-            MoveEnemyToFormation(enemy, formationIndex));
+            MoveEnemyToFormation(enemy, formationIndex, spawnStep));
         movementRoutines.Add(routine);
     }
 
     private int[] BuildSpawnOrder(int count)
     {
         count = Mathf.Max(0, count);
-        int[] order = new int[count];
-        for (int i = 0; i < count; i++)
-            order[i] = i;
-
-        if (count <= 1 || spawnOrderMode == DirectedWaveSpawnOrderMode.Manual)
-            return order;
-
         Vector3[] positions = new Vector3[count];
-        Vector3 center = Vector3.zero;
         for (int i = 0; i < count; i++)
-        {
             positions[i] = GetFormationPosition(i);
-            center += positions[i];
-        }
 
-        center /= count;
-        System.Array.Sort(
-            order,
-            (left, right) => CompareSpawnOrderIndices(
-                left,
-                right,
-                positions,
-                center));
-
-        return order;
-    }
-
-    private int CompareSpawnOrderIndices(
-        int left,
-        int right,
-        Vector3[] positions,
-        Vector3 center)
-    {
-        int result = spawnOrderMode switch
-        {
-            DirectedWaveSpawnOrderMode.DirectionAngle =>
-                CompareByDirectionProjection(
-                    positions[left],
-                    positions[right]),
-            DirectedWaveSpawnOrderMode.CenterToOutside =>
-                CompareByDistanceFromCenter(
-                    positions[left],
-                    positions[right],
-                    center,
-                    false),
-            DirectedWaveSpawnOrderMode.OutsideToCenter =>
-                CompareByDistanceFromCenter(
-                    positions[left],
-                    positions[right],
-                    center,
-                    true),
-            DirectedWaveSpawnOrderMode.Clockwise =>
-                CompareByAngleAroundCenter(
-                    positions[left],
-                    positions[right],
-                    center,
-                    true),
-            DirectedWaveSpawnOrderMode.CounterClockwise =>
-                CompareByAngleAroundCenter(
-                    positions[left],
-                    positions[right],
-                    center,
-                    false),
-            _ => left.CompareTo(right)
-        };
-
-        return result != 0 ? result : left.CompareTo(right);
-    }
-
-    private int CompareByDirectionProjection(Vector3 left, Vector3 right)
-    {
-        Vector2 direction = GetSpawnOrderDirection(spawnOrderAngle);
-        float leftProjection = Vector2.Dot(left, direction);
-        float rightProjection = Vector2.Dot(right, direction);
-        return leftProjection.CompareTo(rightProjection);
-    }
-
-    private int CompareByDistanceFromCenter(
-        Vector3 left,
-        Vector3 right,
-        Vector3 center,
-        bool outsideFirst)
-    {
-        float leftDistance = ((Vector2)(left - center)).sqrMagnitude;
-        float rightDistance = ((Vector2)(right - center)).sqrMagnitude;
-        int result = leftDistance.CompareTo(rightDistance);
-        return outsideFirst ? -result : result;
-    }
-
-    private int CompareByAngleAroundCenter(
-        Vector3 left,
-        Vector3 right,
-        Vector3 center,
-        bool clockwise)
-    {
-        float leftAngle = GetNormalizedSpawnOrderAngle(left - center);
-        float rightAngle = GetNormalizedSpawnOrderAngle(right - center);
-        int result = leftAngle.CompareTo(rightAngle);
-        return clockwise ? result : -result;
-    }
-
-    private float GetNormalizedSpawnOrderAngle(Vector3 offset)
-    {
-        float angle = Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg;
-        float delta = Mathf.DeltaAngle(spawnOrderStartAngle, angle);
-        return Mathf.Repeat(-delta, 360f);
-    }
-
-    private static Vector2 GetSpawnOrderDirection(float angleDegrees)
-    {
-        float radians = angleDegrees * Mathf.Deg2Rad;
-        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+        return DirectedWaveSpawnOrderResolver.Build(
+            positions,
+            spawnOrderMode,
+            spawnOrderAngle,
+            spawnOrderStartAngle);
     }
 
     private Enemy InstantiateEnemyPrefab(
@@ -516,67 +318,118 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         Vector3 spawnPosition,
         Transform parent)
     {
-        GameObject instance = container != null
-            ? container.InstantiatePrefab(
-                prefabToSpawn.gameObject,
-                spawnPosition,
-                prefabToSpawn.transform.rotation,
-                parent)
-            : Instantiate(
-                prefabToSpawn.gameObject,
-                spawnPosition,
-                prefabToSpawn.transform.rotation,
-                parent);
-
-        if (instance == null)
-            return null;
-
-        return instance.GetComponent<Enemy>();
+        enemyFactory ??= new DirectedWaveEnemyFactory(container);
+        return enemyFactory.Create(prefabToSpawn, spawnPosition, parent);
     }
 
-    private IEnumerator MoveEnemyToFormation(Enemy enemy, int index)
+    private IEnumerator MoveEnemyToFormation(
+        Enemy enemy,
+        int index,
+        int spawnStep)
     {
         if (enemy == null)
             yield break;
 
         Transform enemyTransform = enemy.transform;
-        Rigidbody2D body = enemy.GetComponent<Rigidbody2D>();
-        DirectedWaveRuntimeCheckpoint[] checkpoints =
-            GetWorldPathCheckpoints();
+        Rigidbody2D body = GetCachedEnemyBody(enemy);
         Vector3 formationPosition = GetFormationPosition(index);
 
         Log(
             $"Moving enemy {enemy.name}. Index={index}, " +
-            $"PathCheckpoints={checkpoints.Length}, FormationPosition={formationPosition}",
+            $"EntranceMode={entranceMode}, FormationPosition={formationPosition}",
             enemy);
 
-        if (checkpoints.Length > 0)
+        if (UsesIndividualEntrancePoints())
         {
-            SetEnemyPosition(enemyTransform, body, checkpoints[0].position);
+            float movementStartDelay =
+                GetIndividualPointMovementStartDelay(spawnStep);
+            if (movementStartDelay > 0f)
+                yield return new WaitForSeconds(movementStartDelay);
 
-            if (checkpoints.Length > 1)
+            if (enemy != null && individualPointMovementDuration > 0f)
             {
-                yield return MoveAlongCheckpoints(
+                yield return MoveBetween(
+                    enemy,
+                    enemyTransform,
+                    body,
+                    enemyTransform.position,
+                    formationPosition,
+                    individualPointMovementDuration,
+                    individualPointMovementCurve);
+            }
+            else if (enemy != null)
+            {
+                SetEntranceRoutePosition(
+                    enemy,
+                    enemyTransform,
+                    body,
+                    formationPosition);
+            }
+        }
+        else
+        {
+            DirectedWaveRuntimeCheckpoint[] checkpoints =
+                GetWorldPathCheckpoints();
+
+            if (CanUseEntrancePathLoop(checkpoints))
+            {
+                yield return MoveEnemyAlongEntranceLoop(
+                    enemy,
+                    index,
                     enemyTransform,
                     body,
                     checkpoints);
+                yield break;
             }
-        }
 
-        if (enemy != null && settleDuration > 0f)
-        {
-            Vector3 from = enemyTransform.position;
-            yield return MoveBetween(
-                enemyTransform,
-                body,
-                from,
-                formationPosition,
-                settleDuration,
-                settleCurve);
-        }
-        else if (enemy != null)
-        {
-            SetEnemyPosition(enemyTransform, body, formationPosition);
+            LogInvalidEntranceLoopConfigurationIfNeeded();
+
+            if (checkpoints.Length > 0)
+            {
+                SetEntranceRoutePosition(
+                    enemy,
+                    enemyTransform,
+                    body,
+                    checkpoints[0].position);
+                attackBehaviour?.NotifyEntranceCheckpointReached(
+                    enemy,
+                    index,
+                    0,
+                    checkpoints);
+
+                if (checkpoints.Length > 1)
+                {
+                    yield return MoveAlongCheckpoints(
+                        enemy,
+                        index,
+                        enemyTransform,
+                        body,
+                        checkpoints);
+                }
+            }
+
+            if (enemy != null && settleDuration > 0f)
+            {
+                Vector3 from = GetEntranceRoutePosition(
+                    enemy,
+                    enemyTransform.position);
+                yield return MoveBetween(
+                    enemy,
+                    enemyTransform,
+                    body,
+                    from,
+                    formationPosition,
+                    settleDuration,
+                    settleCurve);
+            }
+            else if (enemy != null)
+            {
+                SetEntranceRoutePosition(
+                    enemy,
+                    enemyTransform,
+                    body,
+                    formationPosition);
+            }
         }
 
         if (enemy != null && !enemy.isDead)
@@ -584,43 +437,299 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             formationPositions[enemy] = formationPosition;
             formationIndices[enemy] = index;
             formationPositionsByIndex[index] = formationPosition;
+            SetFormationAttackReady(enemy, true);
+            attackBehaviour?.NotifyEnemyEntranceCompleted(enemy);
         }
 
         movingToFormationCount = Mathf.Max(0, movingToFormationCount - 1);
         TryStartPostBehavior();
     }
 
+    private IEnumerator MoveEnemyAlongEntranceLoop(
+        Enemy enemy,
+        int index,
+        Transform enemyTransform,
+        Rigidbody2D body,
+        DirectedWaveRuntimeCheckpoint[] checkpoints)
+    {
+        SetEntranceRoutePosition(
+            enemy,
+            enemyTransform,
+            body,
+            checkpoints[0].position);
+        attackBehaviour?.NotifyEntranceCheckpointReached(
+            enemy,
+            index,
+            0,
+            checkpoints);
+        yield return MoveAlongCheckpoints(
+            enemy,
+            index,
+            enemyTransform,
+            body,
+            checkpoints);
+
+        CompleteEntranceLoopFirstPass(enemy, index);
+        if (enemy == null || enemy.isDead)
+            yield break;
+
+        yield return RepeatEntrancePathLoop(
+            enemy,
+            index,
+            enemyTransform,
+            body,
+            checkpoints);
+    }
+
+    private void CompleteEntranceLoopFirstPass(Enemy enemy, int index)
+    {
+        if (enemy != null && !enemy.isDead)
+        {
+            Vector3 currentPosition = GetEntranceRoutePosition(
+                enemy,
+                enemy.transform.position);
+            formationPositions[enemy] = currentPosition;
+            formationIndices[enemy] = index;
+            formationPositionsByIndex[index] = currentPosition;
+            SetFormationAttackReady(enemy, true);
+        }
+
+        movingToFormationCount = Mathf.Max(0, movingToFormationCount - 1);
+        TryStartPostBehavior();
+    }
+
+    private IEnumerator RepeatEntrancePathLoop(
+        Enemy enemy,
+        int formationIndex,
+        Transform target,
+        Rigidbody2D body,
+        DirectedWaveRuntimeCheckpoint[] checkpoints)
+    {
+        int loopStartIndex =
+            DirectedWaveEntranceLoopEvaluator.GetLoopStartCheckpointIndex(
+                entranceLoopStartCheckpointIndex,
+                checkpoints.Length);
+        int lastIndex = checkpoints.Length - 1;
+
+        while (enemy != null && !enemy.isDead && target != null)
+        {
+            if (entranceLoopTeleportToStart)
+            {
+                float elapsedDelay = 0f;
+                while (elapsedDelay < entranceLoopTeleportDelay
+                    && enemy != null
+                    && !enemy.isDead
+                    && target != null)
+                {
+                    elapsedDelay += Time.deltaTime;
+                    yield return null;
+                }
+
+                if (enemy == null || enemy.isDead || target == null)
+                    yield break;
+
+                SetEntranceRoutePosition(
+                    enemy,
+                    target,
+                    body,
+                    checkpoints[loopStartIndex].position);
+                attackBehaviour?.NotifyEntranceCheckpointReached(
+                    enemy,
+                    formationIndex,
+                    loopStartIndex,
+                    checkpoints,
+                    true);
+            }
+            else
+            {
+                yield return MoveAlongLoopCheckpointSegment(
+                    enemy,
+                    formationIndex,
+                    target,
+                    body,
+                    checkpoints,
+                    Mathf.Max(0, lastIndex - 1),
+                    lastIndex,
+                    loopStartIndex,
+                    Mathf.Min(lastIndex, loopStartIndex + 1),
+                    true);
+            }
+
+            if (enemy == null || enemy.isDead || target == null)
+                yield break;
+
+            for (int currentIndex = loopStartIndex;
+                 currentIndex < lastIndex;
+                 currentIndex++)
+            {
+                int previousIndex = currentIndex == loopStartIndex
+                    ? (entranceLoopTeleportToStart ? currentIndex : lastIndex)
+                    : currentIndex - 1;
+                int followingIndex = currentIndex + 1 == lastIndex
+                    ? (entranceLoopTeleportToStart ? lastIndex : loopStartIndex)
+                    : currentIndex + 2;
+
+                yield return MoveAlongLoopCheckpointSegment(
+                    enemy,
+                    formationIndex,
+                    target,
+                    body,
+                    checkpoints,
+                    previousIndex,
+                    currentIndex,
+                    currentIndex + 1,
+                    followingIndex);
+
+                if (enemy == null || enemy.isDead || target == null)
+                    yield break;
+            }
+        }
+    }
+
+    private IEnumerator MoveAlongLoopCheckpointSegment(
+        Enemy enemy,
+        int formationIndex,
+        Transform target,
+        Rigidbody2D body,
+        DirectedWaveRuntimeCheckpoint[] checkpoints,
+        int previousIndex,
+        int currentIndex,
+        int nextIndex,
+        int followingIndex,
+        bool isLoopRestart = false)
+    {
+        float duration = DirectedWaveEntranceLoopEvaluator.GetSegmentDuration(
+            checkpoints,
+            currentIndex);
+        float elapsed = 0f;
+
+        while (elapsed < duration
+            && enemy != null
+            && !enemy.isDead
+            && target != null)
+        {
+            float stepDeltaTime = Mathf.Min(Time.deltaTime, duration - elapsed);
+            elapsed += stepDeltaTime;
+            float time = Mathf.Clamp01(elapsed / duration);
+            float curvedTime = EvaluateCurve(
+                checkpoints[currentIndex].easeToNext,
+                time);
+            float pathTime =
+                DirectedWavePathEvaluator.GetParameterAtNormalizedDistance(
+                    checkpoints[previousIndex].position,
+                    checkpoints[currentIndex].position,
+                    checkpoints[nextIndex].position,
+                    checkpoints[followingIndex].position,
+                    checkpoints[currentIndex].motionToNext,
+                    curvedTime);
+            Vector3 position =
+                DirectedWaveEntranceLoopEvaluator.EvaluateLoopSegment(
+                    checkpoints,
+                    previousIndex,
+                    currentIndex,
+                    nextIndex,
+                    followingIndex,
+                    pathTime);
+            SetEntranceRoutePosition(enemy, target, body, position);
+            attackBehaviour?.NotifyEntranceSegmentAdvanced(
+                enemy,
+                stepDeltaTime);
+            yield return null;
+        }
+
+        if (enemy != null && !enemy.isDead && target != null)
+        {
+            SetEntranceRoutePosition(
+                enemy,
+                target,
+                body,
+                checkpoints[nextIndex].position);
+            attackBehaviour?.NotifyEntranceCheckpointReached(
+                enemy,
+                formationIndex,
+                nextIndex,
+                checkpoints,
+                isLoopRestart);
+        }
+    }
+
+    private void SetFormationAttackReady(Enemy enemy, bool isReady)
+    {
+        if (enemy == null)
+            return;
+
+        formationAttackComponents.Clear();
+        enemy.GetComponents<MonoBehaviour>(formationAttackComponents);
+        for (int i = 0; i < formationAttackComponents.Count; i++)
+        {
+            if (formationAttackComponents[i] is IFormationAttackActivation activation)
+                activation.SetFormationAttackReady(isReady);
+        }
+
+        formationAttackComponents.Clear();
+    }
+
     private IEnumerator MoveAlongCheckpoints(
+        Enemy enemy,
+        int formationIndex,
         Transform target,
         Rigidbody2D body,
         DirectedWaveRuntimeCheckpoint[] checkpoints)
     {
         for (int i = 0; i < checkpoints.Length - 1; i++)
         {
-            float duration = Mathf.Max(0.01f, checkpoints[i].durationToNext);
+            float duration = DirectedWaveEntranceLoopEvaluator.GetSegmentDuration(
+                checkpoints,
+                i);
             float elapsed = 0f;
 
-            while (elapsed < duration && target != null)
+            while (elapsed < duration
+                && enemy != null
+                && !enemy.isDead
+                && target != null)
             {
-                elapsed += Time.deltaTime;
+                float stepDeltaTime = Mathf.Min(
+                    Time.deltaTime,
+                    duration - elapsed);
+                elapsed += stepDeltaTime;
                 float time = Mathf.Clamp01(elapsed / duration);
                 float curvedTime = EvaluateCurve(
                     checkpoints[i].easeToNext,
                     time);
-                Vector3 position = EvaluateCheckpointSegment(
+                float pathTime =
+                    DirectedWavePathEvaluator.GetParameterAtNormalizedDistance(
+                        checkpoints,
+                        i,
+                        curvedTime);
+                Vector3 position = DirectedWavePathEvaluator.EvaluateSegment(
                     checkpoints,
                     i,
-                    curvedTime);
-                SetEnemyPosition(target, body, position);
+                    pathTime);
+                SetEntranceRoutePosition(enemy, target, body, position);
+                attackBehaviour?.NotifyEntranceSegmentAdvanced(
+                    enemy,
+                    stepDeltaTime);
                 yield return null;
             }
 
-            if (target != null)
-                SetEnemyPosition(target, body, checkpoints[i + 1].position);
+            if (enemy != null && !enemy.isDead && target != null)
+            {
+                SetEntranceRoutePosition(
+                    enemy,
+                    target,
+                    body,
+                    checkpoints[i + 1].position);
+                attackBehaviour?.NotifyEntranceCheckpointReached(
+                    enemy,
+                    formationIndex,
+                    i + 1,
+                    checkpoints);
+            }
         }
     }
 
     private IEnumerator MoveBetween(
+        Enemy enemy,
         Transform target,
         Rigidbody2D body,
         Vector3 from,
@@ -635,20 +744,45 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             elapsed += Time.deltaTime;
             float time = Mathf.Clamp01(elapsed / duration);
             float curvedTime = EvaluateCurve(curve, time);
-            SetEnemyPosition(target, body, Vector3.LerpUnclamped(from, to, curvedTime));
+            SetEntranceRoutePosition(
+                enemy,
+                target,
+                body,
+                Vector3.LerpUnclamped(from, to, curvedTime));
             yield return null;
         }
 
         if (target != null)
-            SetEnemyPosition(target, body, to);
+            SetEntranceRoutePosition(enemy, target, body, to);
+    }
+
+    private Vector3 GetSpawnPosition(int formationIndex)
+    {
+        if (UsesIndividualEntrancePoints()
+            && TryGetIndividualEntrancePointPosition(
+                formationIndex,
+                out Vector3 position))
+        {
+            return position;
+        }
+
+        if (UsesIndividualEntrancePoints())
+            LogMissingIndividualEntrancePointWarning(formationIndex);
+
+        return GetSpawnPosition();
     }
 
     private Vector3 GetSpawnPosition()
     {
-        DirectedWaveRuntimeCheckpoint[] checkpoints =
-            GetWorldPathCheckpoints();
-        if (checkpoints.Length > 0)
-            return checkpoints[0].position;
+        if (!UsesIndividualEntrancePoints() && pathCheckpoints != null)
+        {
+            for (int i = 0; i < pathCheckpoints.Length; i++)
+            {
+                DirectedWavePathCheckpoint checkpoint = pathCheckpoints[i];
+                if (checkpoint != null)
+                    return ToWorld(checkpoint.position, pathCoordinateSpace);
+            }
+        }
 
         if (spawnPoint != null)
             return spawnPoint.position;
@@ -656,327 +790,162 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         return transform.position;
     }
 
+    private bool UsesIndividualEntrancePoints()
+    {
+        return entranceMode == DirectedWaveEntranceMode.IndividualPoints;
+    }
+
+    private bool IsEntrancePathLoopRequested()
+    {
+        return entranceCompletionMode
+            == DirectedWaveEntranceCompletionMode.LoopEntrancePath;
+    }
+
+    private bool HasValidEntranceLoopConfiguration()
+    {
+        if (!IsEntrancePathLoopRequested()
+            || UsesIndividualEntrancePoints()
+            || pathCheckpoints == null)
+        {
+            return false;
+        }
+
+        int validCheckpointCount = 0;
+        for (int i = 0; i < pathCheckpoints.Length; i++)
+        {
+            if (pathCheckpoints[i] != null)
+                validCheckpointCount++;
+        }
+
+        return validCheckpointCount >= 2;
+    }
+
+    private bool CanUseEntrancePathLoop(
+        DirectedWaveRuntimeCheckpoint[] checkpoints)
+    {
+        return IsEntrancePathLoopRequested()
+            && !UsesIndividualEntrancePoints()
+            && checkpoints != null
+            && checkpoints.Length >= 2;
+    }
+
+    private void LogInvalidEntranceLoopConfigurationIfNeeded()
+    {
+        if (!IsEntrancePathLoopRequested()
+            || HasValidEntranceLoopConfiguration()
+            || entranceLoopConfigurationWarningLogged)
+        {
+            return;
+        }
+
+        entranceLoopConfigurationWarningLogged = true;
+        Debug.LogWarning(
+            "Loop Entrance Path requires Checkpoints mode with at least two valid checkpoints. "
+            + "The wave will use Move To Formation until the path is configured.",
+            this);
+    }
+
+    private bool TryGetIndividualEntrancePointPosition(
+        int formationIndex,
+        out Vector3 position)
+    {
+        if (individualEntrancePoints != null
+            && formationIndex >= 0
+            && formationIndex < individualEntrancePoints.Length)
+        {
+            DirectedWaveIndividualEntrancePoint point =
+                individualEntrancePoints[formationIndex];
+            if (point != null)
+            {
+                position = ToWorld(point.position, pathCoordinateSpace);
+                return true;
+            }
+        }
+
+        position = default;
+        return false;
+    }
+
+    private float GetIndividualPointMovementStartDelay(int spawnStep)
+    {
+        return Mathf.Max(0, spawnStep)
+            * Mathf.Max(0f, individualPointMovementStartDelay);
+    }
+
+    private void LogMissingIndividualEntrancePointWarning(int formationIndex)
+    {
+        if (individualEntrancePointWarningLogged)
+            return;
+
+        individualEntrancePointWarningLogged = true;
+        LogWarning(
+            $"Individual entrance point is missing for formation index {formationIndex}. "
+            + "The ship will use Spawn Point instead. Match Individual Points to the formation in the Inspector.");
+    }
+
     private DirectedWaveRuntimeCheckpoint[] GetWorldPathCheckpoints()
     {
-        if (pathCheckpoints == null || pathCheckpoints.Length == 0)
+        if (UsesIndividualEntrancePoints()
+            || pathCheckpoints == null
+            || pathCheckpoints.Length == 0)
             return System.Array.Empty<DirectedWaveRuntimeCheckpoint>();
 
-        List<DirectedWaveRuntimeCheckpoint> result =
-            new List<DirectedWaveRuntimeCheckpoint>(pathCheckpoints.Length);
+        int validCount = 0;
+        for (int i = 0; i < pathCheckpoints.Length; i++)
+        {
+            if (pathCheckpoints[i] != null)
+                validCount++;
+        }
+
+        if (validCount == 0)
+            return System.Array.Empty<DirectedWaveRuntimeCheckpoint>();
+
+        DirectedWaveRuntimeCheckpoint[] result =
+            new DirectedWaveRuntimeCheckpoint[validCount];
+        int resultIndex = 0;
         for (int i = 0; i < pathCheckpoints.Length; i++)
         {
             DirectedWavePathCheckpoint checkpoint = pathCheckpoints[i];
             if (checkpoint == null)
                 continue;
 
-            result.Add(new DirectedWaveRuntimeCheckpoint
+            result[resultIndex++] = new DirectedWaveRuntimeCheckpoint
             {
                 position = ToWorld(checkpoint.position, pathCoordinateSpace),
                 durationToNext = checkpoint.durationToNext,
                 motionToNext = checkpoint.motionToNext,
                 easeToNext = checkpoint.easeToNext
-            });
+            };
         }
 
-        return result.ToArray();
-    }
-
-    private static Vector3 EvaluateCheckpointSegment(
-        DirectedWaveRuntimeCheckpoint[] checkpoints,
-        int segmentIndex,
-        float time)
-    {
-        DirectedWaveRuntimeCheckpoint current = checkpoints[segmentIndex];
-        DirectedWaveRuntimeCheckpoint next = checkpoints[segmentIndex + 1];
-
-        return current.motionToNext switch
-        {
-            DirectedWaveSegmentMotion.Bezier =>
-                EvaluateBezierSegment(checkpoints, segmentIndex, time),
-            DirectedWaveSegmentMotion.CatmullRom =>
-                EvaluateCatmullRomSegment(checkpoints, segmentIndex, time),
-            _ => Vector3.LerpUnclamped(current.position, next.position, time)
-        };
-    }
-
-    private static Vector3 EvaluateBezierSegment(
-        DirectedWaveRuntimeCheckpoint[] checkpoints,
-        int segmentIndex,
-        float time)
-    {
-        Vector3 p0 = checkpoints[segmentIndex].position;
-        Vector3 p3 = checkpoints[segmentIndex + 1].position;
-
-        Vector3 previous = segmentIndex > 0
-            ? checkpoints[segmentIndex - 1].position
-            : p0;
-        Vector3 following = segmentIndex + 2 < checkpoints.Length
-            ? checkpoints[segmentIndex + 2].position
-            : p3;
-
-        Vector3 p1 = p0 + (p3 - previous) / 6f;
-        Vector3 p2 = p3 - (following - p0) / 6f;
-        float t = Mathf.Clamp01(time);
-        float oneMinusT = 1f - t;
-
-        return oneMinusT * oneMinusT * oneMinusT * p0
-            + 3f * oneMinusT * oneMinusT * t * p1
-            + 3f * oneMinusT * t * t * p2
-            + t * t * t * p3;
-    }
-
-    private static Vector3 EvaluateCatmullRomSegment(
-        DirectedWaveRuntimeCheckpoint[] checkpoints,
-        int segmentIndex,
-        float time)
-    {
-        int p1 = segmentIndex;
-        int p0 = Mathf.Max(p1 - 1, 0);
-        int p2 = Mathf.Min(p1 + 1, checkpoints.Length - 1);
-        int p3 = Mathf.Min(p1 + 2, checkpoints.Length - 1);
-        float t = Mathf.Clamp01(time);
-
-        return 0.5f * (
-            2f * checkpoints[p1].position
-            + (-checkpoints[p0].position + checkpoints[p2].position) * t
-            + (2f * checkpoints[p0].position - 5f * checkpoints[p1].position
-                + 4f * checkpoints[p2].position - checkpoints[p3].position)
-            * t * t
-            + (-checkpoints[p0].position + 3f * checkpoints[p1].position
-                - 3f * checkpoints[p2].position + checkpoints[p3].position)
-            * t * t * t);
+        return result;
     }
 
     private Vector3 GetFormationPosition(int index)
     {
-        if (formationFrozen)
-            return GetTransformFormationPosition(index);
-
-        Vector3 localPosition = formationLayout switch
-        {
-            DirectedWaveFormationLayout.VerticalLine =>
-                GetVerticalLinePosition(index),
-            DirectedWaveFormationLayout.Grid =>
-                GetGridPosition(index),
-            DirectedWaveFormationLayout.VShape =>
-                GetVShapePosition(index),
-            DirectedWaveFormationLayout.Arc =>
-                GetArcPosition(index),
-            DirectedWaveFormationLayout.Circle =>
-                GetCirclePosition(index),
-            DirectedWaveFormationLayout.Triangle =>
-                GetPolygonPerimeterPosition(index, GetTriangleVertices()),
-            DirectedWaveFormationLayout.Square =>
-                GetPolygonPerimeterPosition(index, GetSquareVertices()),
-            DirectedWaveFormationLayout.Diamond =>
-                GetPolygonPerimeterPosition(index, GetDiamondVertices()),
-            DirectedWaveFormationLayout.CustomPoints =>
-                GetCustomFormationPosition(index),
-            DirectedWaveFormationLayout.TransformPoints =>
-                GetTransformFormationPosition(index),
-            _ => GetHorizontalLinePosition(index)
-        };
-
-        if (formationLayout == DirectedWaveFormationLayout.TransformPoints)
-            return localPosition;
-
-        return ToWorld(localPosition, formationCoordinateSpace);
+        DirectedWaveFormationSettings settings = new(
+            formationFrozen,
+            formationLayout,
+            formationCoordinateSpace,
+            formationCenter,
+            spacing,
+            columns,
+            rows,
+            arcRadius,
+            arcDegrees,
+            shapeRadius,
+            shapeFlattening,
+            customFormationPoints,
+            formationPointsRoot,
+            transform,
+            spawnPoint,
+            GetEffectiveEnemyCount());
+        return DirectedWaveFormationSolver.GetPosition(index, settings);
     }
 
-    private Vector3 GetHorizontalLinePosition(int index)
+    public override int GetRewardEligibleEnemyCount()
     {
-        int count = GetEffectiveEnemyCount();
-        float offset = (count - 1) * spacing.x * 0.5f;
-        return formationCenter + new Vector3(index * spacing.x - offset, 0f, 0f);
-    }
-
-    private Vector3 GetVerticalLinePosition(int index)
-    {
-        int count = GetEffectiveEnemyCount();
-        float offset = (count - 1) * spacing.y * 0.5f;
-        return formationCenter + new Vector3(0f, offset - index * spacing.y, 0f);
-    }
-
-    private Vector3 GetGridPosition(int index)
-    {
-        int safeColumns = Mathf.Max(1, columns);
-        int safeRows = Mathf.Max(1, rows);
-        int column = index % safeColumns;
-        int row = Mathf.Min(index / safeColumns, safeRows - 1);
-        int count = GetEffectiveEnemyCount();
-        int usedRows = Mathf.Min(safeRows, Mathf.CeilToInt(count / (float)safeColumns));
-
-        float xOffset = (safeColumns - 1) * spacing.x * 0.5f;
-        float yOffset = (usedRows - 1) * spacing.y * 0.5f;
-
-        return formationCenter
-            + new Vector3(
-                column * spacing.x - xOffset,
-                yOffset - row * spacing.y,
-                0f);
-    }
-
-    private Vector3 GetVShapePosition(int index)
-    {
-        if (index == 0)
-            return formationCenter;
-
-        int pairIndex = (index + 1) / 2;
-        float side = index % 2 == 0 ? 1f : -1f;
-
-        return formationCenter
-            + new Vector3(
-                side * pairIndex * spacing.x,
-                -pairIndex * spacing.y,
-                0f);
-    }
-
-    private Vector3 GetArcPosition(int index)
-    {
-        int count = GetEffectiveEnemyCount();
-        if (count <= 1)
-            return formationCenter + Vector3.up * arcRadius;
-
-        float halfArc = arcDegrees * 0.5f;
-        float angle = Mathf.Lerp(-halfArc, halfArc, index / (count - 1f));
-        float radians = (90f + angle) * Mathf.Deg2Rad;
-
-        return formationCenter
-            + new Vector3(
-                Mathf.Cos(radians) * arcRadius,
-                Mathf.Sin(radians) * arcRadius,
-                0f);
-    }
-
-    private Vector3 GetCirclePosition(int index)
-    {
-        int count = Mathf.Max(1, GetEffectiveEnemyCount());
-        if (count <= 1)
-            return formationCenter;
-
-        float angle = 90f - 360f * index / count;
-        float radians = angle * Mathf.Deg2Rad;
-        Vector2 flattening = GetSafeShapeFlattening();
-
-        return formationCenter
-            + new Vector3(
-                Mathf.Cos(radians) * shapeRadius * flattening.x,
-                Mathf.Sin(radians) * shapeRadius * flattening.y,
-                0f);
-    }
-
-    private Vector3 GetPolygonPerimeterPosition(
-        int index,
-        Vector3[] vertices)
-    {
-        int count = Mathf.Max(1, GetEffectiveEnemyCount());
-        if (count <= 1 || vertices == null || vertices.Length == 0)
-            return formationCenter;
-
-        float totalLength = 0f;
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            totalLength += Vector3.Distance(
-                vertices[i],
-                vertices[(i + 1) % vertices.Length]);
-        }
-
-        if (totalLength <= 0.0001f)
-            return vertices[0];
-
-        float remaining = totalLength * index / count;
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            Vector3 from = vertices[i];
-            Vector3 to = vertices[(i + 1) % vertices.Length];
-            float edgeLength = Vector3.Distance(from, to);
-
-            if (remaining <= edgeLength)
-            {
-                float time = edgeLength <= 0.0001f
-                    ? 0f
-                    : remaining / edgeLength;
-                return Vector3.LerpUnclamped(from, to, time);
-            }
-
-            remaining -= edgeLength;
-        }
-
-        return vertices[0];
-    }
-
-    private Vector3[] GetTriangleVertices()
-    {
-        Vector2 flattening = GetSafeShapeFlattening();
-        return new[]
-        {
-            GetShapePoint(90f, flattening),
-            GetShapePoint(210f, flattening),
-            GetShapePoint(330f, flattening)
-        };
-    }
-
-    private Vector3[] GetSquareVertices()
-    {
-        Vector2 flattening = GetSafeShapeFlattening();
-        float x = shapeRadius * flattening.x;
-        float y = shapeRadius * flattening.y;
-        return new[]
-        {
-            formationCenter + new Vector3(-x, y, 0f),
-            formationCenter + new Vector3(x, y, 0f),
-            formationCenter + new Vector3(x, -y, 0f),
-            formationCenter + new Vector3(-x, -y, 0f)
-        };
-    }
-
-    private Vector3[] GetDiamondVertices()
-    {
-        Vector2 flattening = GetSafeShapeFlattening();
-        return new[]
-        {
-            formationCenter + Vector3.up * shapeRadius * flattening.y,
-            formationCenter + Vector3.right * shapeRadius * flattening.x,
-            formationCenter + Vector3.down * shapeRadius * flattening.y,
-            formationCenter + Vector3.left * shapeRadius * flattening.x
-        };
-    }
-
-    private Vector3 GetShapePoint(float angleDegrees, Vector2 flattening)
-    {
-        float radians = angleDegrees * Mathf.Deg2Rad;
-        return formationCenter
-            + new Vector3(
-                Mathf.Cos(radians) * shapeRadius * flattening.x,
-                Mathf.Sin(radians) * shapeRadius * flattening.y,
-                0f);
-    }
-
-    private Vector2 GetSafeShapeFlattening()
-    {
-        return new Vector2(
-            Mathf.Max(0.01f, shapeFlattening.x),
-            Mathf.Max(0.01f, shapeFlattening.y));
-    }
-
-    private Vector3 GetCustomFormationPosition(int index)
-    {
-        if (customFormationPoints == null || customFormationPoints.Length == 0)
-            return GetHorizontalLinePosition(index);
-
-        if (index < customFormationPoints.Length)
-            return customFormationPoints[index];
-
-        return customFormationPoints[customFormationPoints.Length - 1];
-    }
-
-    private Vector3 GetTransformFormationPosition(int index)
-    {
-        if (formationPointsRoot == null || formationPointsRoot.childCount == 0)
-            return ToWorld(GetHorizontalLinePosition(index), formationCoordinateSpace);
-
-        int safeIndex = Mathf.Clamp(index, 0, formationPointsRoot.childCount - 1);
-        return formationPointsRoot.GetChild(safeIndex).position;
+        return GetEffectiveEnemyCount();
     }
 
     private int GetEffectiveEnemyCount()
@@ -1036,11 +1005,21 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
                 GetTransformPointEnemyOverride(index),
             DirectedWaveFormationLayout.CustomPoints =>
                 GetCustomFormationEnemyOverride(index),
-            _ => null
+            _ => GetProceduralFormationEnemyOverride(index)
         };
     }
 
     private Enemy GetTransformPointEnemyOverride(int index)
+    {
+        DirectedWaveEnemyOverride enemyOverride =
+            GetTransformPointEnemyOverrideComponent(index);
+        return enemyOverride != null
+            ? enemyOverride.EnemyPrefabOverride
+            : null;
+    }
+
+    private DirectedWaveEnemyOverride GetTransformPointEnemyOverrideComponent(
+        int index)
     {
         if (formationPointsRoot == null
             || index < 0
@@ -1049,14 +1028,9 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             return null;
         }
 
-        DirectedWaveEnemyOverride enemyOverride =
-            formationPointsRoot
-                .GetChild(index)
-                .GetComponent<DirectedWaveEnemyOverride>();
-
-        return enemyOverride != null
-            ? enemyOverride.EnemyPrefabOverride
-            : null;
+        return formationPointsRoot
+            .GetChild(index)
+            .GetComponent<DirectedWaveEnemyOverride>();
     }
 
     private Enemy GetCustomFormationEnemyOverride(int index)
@@ -1071,40 +1045,54 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         return customFormationEnemyOverrides[index];
     }
 
-    private bool HasPointEnemyOverridesConfigured()
+    private Enemy GetProceduralFormationEnemyOverride(int index)
     {
-        if (HasCustomFormationEnemyOverrides())
-            return true;
-
-        if (formationPointsRoot == null)
-            return false;
-
-        for (int i = 0; i < formationPointsRoot.childCount; i++)
+        if (proceduralFormationEnemyOverrides == null
+            || index < 0
+            || index >= proceduralFormationEnemyOverrides.Length)
         {
-            DirectedWaveEnemyOverride enemyOverride =
-                formationPointsRoot
-                    .GetChild(i)
-                    .GetComponent<DirectedWaveEnemyOverride>();
-
-            if (enemyOverride != null && enemyOverride.EnemyPrefabOverride != null)
-                return true;
+            return null;
         }
 
-        return false;
+        return proceduralFormationEnemyOverrides[index];
+    }
+
+    private bool HasPointEnemyOverridesConfigured()
+    {
+        if (formationFrozen
+            || formationLayout == DirectedWaveFormationLayout.TransformPoints)
+        {
+            return HasTransformPointEnemyOverrides();
+        }
+
+        if (formationLayout == DirectedWaveFormationLayout.CustomPoints)
+            return HasCustomFormationEnemyOverrides();
+
+        return HasProceduralFormationEnemyOverrides();
     }
 
     private int GetPointEnemyOverrideCount()
     {
-        int count = 0;
-
-        if (customFormationEnemyOverrides != null)
+        if (formationFrozen
+            || formationLayout == DirectedWaveFormationLayout.TransformPoints)
         {
-            for (int i = 0; i < customFormationEnemyOverrides.Length; i++)
-            {
-                if (customFormationEnemyOverrides[i] != null)
-                    count++;
-            }
+            return GetTransformPointEnemyOverrideCount();
         }
+
+        if (formationLayout == DirectedWaveFormationLayout.CustomPoints)
+            return GetCustomFormationEnemyOverrideCount();
+
+        return GetProceduralFormationEnemyOverrideCount();
+    }
+
+    private bool HasTransformPointEnemyOverrides()
+    {
+        return GetTransformPointEnemyOverrideCount() > 0;
+    }
+
+    private int GetTransformPointEnemyOverrideCount()
+    {
+        int count = 0;
 
         if (formationPointsRoot != null)
         {
@@ -1118,6 +1106,21 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
                 if (enemyOverride != null && enemyOverride.EnemyPrefabOverride != null)
                     count++;
             }
+        }
+
+        return count;
+    }
+
+    private int GetCustomFormationEnemyOverrideCount()
+    {
+        int count = 0;
+        if (customFormationEnemyOverrides == null)
+            return count;
+
+        for (int i = 0; i < customFormationEnemyOverrides.Length; i++)
+        {
+            if (customFormationEnemyOverrides[i] != null)
+                count++;
         }
 
         return count;
@@ -1194,6 +1197,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         };
     }
 
+
     private static float EvaluateCurve(AnimationCurve curve, float time)
     {
         return curve != null ? curve.Evaluate(time) : time;
@@ -1230,6 +1234,9 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         if (enemy == null || !aliveEnemies.Remove(enemy))
             return;
 
+        enemyBodies.Remove(enemy);
+        ClearEnemyMotionState(enemy);
+        NotifyPostTimelineEnemyDestroyed(enemy);
         Log($"Enemy destroyed: {enemy.name}. AliveEnemies={aliveEnemies.Count}", enemy);
         TryComplete();
     }
@@ -1243,7 +1250,10 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             return;
         }
 
-        if (!HasAnyPostCommand())
+        if (HasValidEntranceLoopConfiguration())
+            return;
+
+        if (!HasRuntimePostBehavior())
             return;
 
         aliveEnemies.RemoveWhere(enemy => enemy == null || enemy.isDead);
@@ -1257,353 +1267,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
     private IEnumerator PostBehaviorRoutine()
     {
-        if (postStartDelay > 0f)
-            yield return new WaitForSeconds(postStartDelay);
-
-        Dictionary<int, Vector3> currentPositions =
-            new Dictionary<int, Vector3>(formationPositionsByIndex);
-        DirectedWavePostCommand[] enabledCommands = GetEnabledPostCommands();
-        if (enabledCommands.Length == 0)
-            yield break;
-
-        do
-        {
-            for (int i = 0; i < enabledCommands.Length; i++)
-            {
-                DirectedWavePostCommand command = enabledCommands[i];
-                if (IsBackgroundParallel(command))
-                {
-                    StartBackgroundParallel(command);
-                    ApplyPipelinePositions(currentPositions);
-                }
-                else
-                {
-                    yield return ExecutePostPipelineCommand(
-                        command,
-                        currentPositions);
-                }
-
-                aliveEnemies.RemoveWhere(enemy => enemy == null || enemy.isDead);
-                if (aliveEnemies.Count <= 0)
-                    yield break;
-            }
-        }
-        while (postCommandPipelineLoop);
-
-        while (aliveEnemies.Count > 0)
-        {
-            aliveEnemies.RemoveWhere(enemy => enemy == null || enemy.isDead);
-            if (aliveEnemies.Count <= 0)
-                yield break;
-
-            ApplyPipelinePositions(currentPositions);
-            yield return null;
-        }
-    }
-
-    private DirectedWavePostCommand[] GetEnabledPostCommands()
-    {
-        return GetEnabledCommands(postCommands);
-    }
-
-    private DirectedWavePostCommand[] GetEnabledCommands(
-        DirectedWavePostCommand[] commands)
-    {
-        if (commands == null || commands.Length == 0)
-            return System.Array.Empty<DirectedWavePostCommand>();
-
-        List<DirectedWavePostCommand> result = new();
-        for (int i = 0; i < commands.Length; i++)
-        {
-            DirectedWavePostCommand command = commands[i];
-            if (command != null && command.enabled)
-                result.Add(command);
-        }
-
-        return result.ToArray();
-    }
-
-    private IEnumerator ExecutePostPipelineCommand(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        if (command == null)
-            yield break;
-
-        switch (command.type)
-        {
-            case DirectedWavePostCommandType.Patrol:
-                yield return ExecutePipelinePatrol(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.LocalMovement:
-                yield return ExecutePipelineMove(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.Wobble:
-                yield return ExecutePipelineOverlay(command, currentPositions, true, false);
-                break;
-            case DirectedWavePostCommandType.Attack:
-                yield return ExecutePipelineAttack(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.CircularMovement:
-                yield return ExecutePipelineOverlay(command, currentPositions, false, true);
-                break;
-            case DirectedWavePostCommandType.FormationRotation:
-                yield return ExecutePipelineFormationRotation(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.FormationMorph:
-                yield return ExecutePipelineFormationMorph(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.Wait:
-                yield return ExecutePipelineWait(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.Parallel:
-                yield return ExecutePipelineParallel(command, currentPositions);
-                break;
-            case DirectedWavePostCommandType.Loop:
-                yield return ExecutePipelineLoop(command, currentPositions);
-                break;
-        }
-    }
-
-    private IEnumerator ExecutePipelineLoop(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        if (command == null)
-            yield break;
-
-        DirectedWavePostCommand[] commands =
-            GetEnabledCommands(command.loopCommands);
-        if (commands.Length == 0)
-            yield break;
-
-        int iterations = Mathf.Max(1, command.loopCount);
-        int completedIterations = 0;
-        while (command.infiniteLoop || completedIterations < iterations)
-        {
-            for (int i = 0; i < commands.Length; i++)
-            {
-                DirectedWavePostCommand child = commands[i];
-                if (child.type == DirectedWavePostCommandType.Loop)
-                {
-                    LogWarning("Nested Loop command was skipped. Loop inside Loop is disabled.");
-                    continue;
-                }
-
-                if (IsBackgroundParallel(child))
-                {
-                    StartBackgroundParallel(child);
-                    ApplyPipelinePositions(currentPositions);
-                }
-                else
-                {
-                    yield return ExecutePostPipelineCommand(
-                        child,
-                        currentPositions);
-                }
-
-                aliveEnemies.RemoveWhere(enemy => enemy == null || enemy.isDead);
-                if (aliveEnemies.Count <= 0)
-                    yield break;
-            }
-
-            completedIterations++;
-        }
-
-        yield return HoldPipelinePositions(currentPositions, command.holdDuration);
-    }
-
-    private IEnumerator ExecutePipelineWait(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        yield return HoldPipelinePositions(
-            currentPositions,
-            Mathf.Max(0.01f, command.duration));
-        yield return HoldPipelinePositions(
-            currentPositions,
-            command.holdDuration);
-    }
-
-    private IEnumerator ExecutePipelineMove(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        Dictionary<int, Vector3> from = new(currentPositions);
-        Vector3 currentCenter = GetPositionsCenter(from);
-        Vector3 targetCenter = GetStableFormationCenter() + command.targetOffset;
-        Vector3 delta = targetCenter - currentCenter;
-        Dictionary<int, Vector3> to = OffsetPositions(from, delta);
-
-        yield return MovePipelinePositions(
-            from,
-            to,
-            Mathf.Max(0.01f, command.duration),
-            command.curve,
-            currentPositions);
-        yield return HoldPipelinePositions(
-            currentPositions,
-            command.holdDuration);
-    }
-
-    private IEnumerator ExecutePipelinePatrol(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        Dictionary<int, Vector3> start = new(currentPositions);
-        float duration = Mathf.Max(0.01f, command.duration);
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float time = Mathf.Min(elapsed, duration);
-            Dictionary<int, Vector3> frame = OffsetPositions(
-                start,
-                GetPatrolOffset(time));
-            ApplyPipelinePositions(frame);
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-
-        ReplacePositions(
-            currentPositions,
-            OffsetPositions(start, GetPatrolOffset(duration)));
-        yield return HoldPipelinePositions(currentPositions, command.holdDuration);
-    }
-
-    private IEnumerator ExecutePipelineFormationMorph(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        if (command != null && command.morphTarget != null)
-        {
-            Vector3 morphCenter = GetPositionsCenter(currentPositions);
-            Dictionary<int, Vector3> target = BuildMorphTarget(
-                currentPositions,
-                command.morphTarget,
-                morphCenter);
-            yield return MovePipelinePositions(
-                new Dictionary<int, Vector3>(currentPositions),
-                target,
-                Mathf.Max(0.01f, command.duration),
-                command.curve,
-                currentPositions);
-            yield return HoldPipelinePositions(
-                currentPositions,
-                command.holdDuration);
-            yield break;
-        }
-
-        if (formationMorphSteps == null || formationMorphSteps.Length == 0)
-            yield break;
-
-        Vector3 center = GetPositionsCenter(currentPositions);
-        for (int i = 0; i < formationMorphSteps.Length; i++)
-        {
-            DirectedWaveFormationMorphStep step = formationMorphSteps[i];
-            if (step == null)
-                continue;
-
-            Dictionary<int, Vector3> target = BuildMorphTarget(
-                currentPositions,
-                step,
-                center);
-            yield return MovePipelinePositions(
-                new Dictionary<int, Vector3>(currentPositions),
-                target,
-                Mathf.Max(0.01f, step.durationToShape),
-                step.easeToShape,
-                currentPositions);
-            yield return HoldPipelinePositions(
-                currentPositions,
-                step.holdDuration);
-            center = GetPositionsCenter(currentPositions);
-        }
-
-        if (formationMorphLoop)
-        {
-            Dictionary<int, Vector3> target = new(formationPositionsByIndex);
-            yield return MovePipelinePositions(
-                new Dictionary<int, Vector3>(currentPositions),
-                target,
-                Mathf.Max(0.01f, formationMorphReturnDuration),
-                formationMorphReturnCurve,
-                currentPositions);
-        }
-    }
-
-    private IEnumerator ExecutePipelineFormationRotation(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        Dictionary<int, Vector3> start = new(currentPositions);
-        Vector3 center = GetPositionsCenter(start);
-        float duration = Mathf.Max(0.01f, command.duration);
-        float totalAngle = Mathf.Abs(command.rotationDegrees) > 0.0001f
-            ? command.continuousFormationRotation
-                ? command.rotationDegrees * duration
-                : command.rotationDegrees
-            : duration * formationRotationDegreesPerSecond;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float normalized = Mathf.Clamp01(elapsed / duration);
-            float curved = command.continuousFormationRotation
-                ? normalized
-                : EvaluateCurve(command.curve, normalized);
-            Dictionary<int, Vector3> frame = RotatePositions(
-                start,
-                center,
-                totalAngle * curved);
-            ApplyPipelinePositions(frame);
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-
-        ReplacePositions(currentPositions, RotatePositions(start, center, totalAngle));
-        yield return HoldPipelinePositions(currentPositions, command.holdDuration);
-    }
-
-    private IEnumerator ExecutePipelineParallel(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        Dictionary<int, Vector3> start = new(currentPositions);
-        float duration = Mathf.Max(0.01f, command.duration);
-        float elapsed = 0f;
-
-        while (command.infiniteParallel || elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float time = command.infiniteParallel ? elapsed : Mathf.Min(elapsed, duration);
-            float frameDuration = command.infiniteParallel
-                ? Mathf.Max(0.01f, time)
-                : duration;
-            Dictionary<int, Vector3> frame = EvaluateParallelCommandFrame(
-                command,
-                start,
-                time,
-                frameDuration,
-                false);
-            ApplyPipelinePositions(frame);
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-
-        ReplacePositions(
-            currentPositions,
-            EvaluateParallelCommandFrame(command, start, duration, duration, true));
-        ApplyPipelinePositions(currentPositions);
-        yield return HoldPipelinePositions(currentPositions, command.holdDuration);
+        yield return RunUnifiedTimeline();
     }
 
     private bool IsBackgroundParallel(DirectedWavePostCommand command)
@@ -1614,33 +1278,16 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
                 == DirectedWaveParallelExecutionMode.Background;
     }
 
-    private void StartBackgroundParallel(DirectedWavePostCommand command)
-    {
-        if (command == null)
-            return;
-
-        for (int i = 0; i < activeBackgroundParallels.Count; i++)
-        {
-            if (activeBackgroundParallels[i].command == command)
-                return;
-        }
-
-        activeBackgroundParallels.Add(
-            new ActiveBackgroundParallelCommand
-            {
-                command = command,
-                elapsed = 0f
-            });
-    }
-
     private Dictionary<int, Vector3> EvaluateParallelCommandFrame(
         DirectedWavePostCommand parallelCommand,
         Dictionary<int, Vector3> start,
         float elapsed,
         float parallelDuration,
-        bool finalFrame)
+        bool finalFrame,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        Dictionary<int, Vector3> frame = new(start);
+        Dictionary<int, Vector3> frame =
+            CopySimulationPositions(start, runtimeContext);
         if (parallelCommand.parallelCommands == null)
             return frame;
 
@@ -1650,12 +1297,23 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             if (child == null || !child.enabled || child.type == DirectedWavePostCommandType.Parallel)
                 continue;
 
-            frame = EvaluatePostCommandFrame(
+            int marker = runtimeContext?.MarkPositionBuffers() ?? 0;
+            Dictionary<int, Vector3> evaluated = EvaluatePostCommandFrame(
                 child,
                 frame,
                 elapsed,
                 parallelDuration,
-                finalFrame);
+                finalFrame,
+                runtimeContext);
+            if (runtimeContext == null)
+            {
+                frame = evaluated;
+            }
+            else
+            {
+                ReplacePositions(frame, evaluated);
+                runtimeContext.RestorePositionBuffers(marker);
+            }
         }
 
         return frame;
@@ -1666,63 +1324,20 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         Dictionary<int, Vector3> input,
         float elapsed,
         float parallelDuration,
-        bool finalFrame)
+        bool finalFrame,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        float duration = Mathf.Max(0.01f, command.duration);
-        float time = command.continuousFormationRotation
-            || command.type == DirectedWavePostCommandType.Patrol
-            || command.type == DirectedWavePostCommandType.Wobble
-            || command.type == DirectedWavePostCommandType.CircularMovement
-                ? Mathf.Min(elapsed, Mathf.Max(0.01f, parallelDuration))
-                : Mathf.Min(elapsed, duration);
+        if (!TryGetPostCommandHandler(command.type, out var handler))
+            return CopySimulationPositions(input, runtimeContext);
 
-        switch (command.type)
-        {
-            case DirectedWavePostCommandType.LocalMovement:
-            {
-                Vector3 currentCenter = GetPositionsCenter(input);
-                Vector3 targetCenter = GetStableFormationCenter() + command.targetOffset;
-                Dictionary<int, Vector3> target =
-                    OffsetPositions(input, targetCenter - currentCenter);
-                float normalized = Mathf.Clamp01(time / duration);
-                return LerpPositions(
-                    input,
-                    target,
-                    EvaluateCurve(command.curve, normalized));
-            }
-            case DirectedWavePostCommandType.Patrol:
-                return OffsetPositions(input, GetPatrolOffset(time));
-            case DirectedWavePostCommandType.Wobble:
-                return finalFrame
-                    ? new Dictionary<int, Vector3>(input)
-                    : ApplyOverlayFrame(input, true, false, time);
-            case DirectedWavePostCommandType.CircularMovement:
-                return finalFrame
-                    ? new Dictionary<int, Vector3>(input)
-                    : ApplyOverlayFrame(input, false, true, time);
-            case DirectedWavePostCommandType.FormationRotation:
-            {
-                float totalAngle = GetFormationRotationAngle(command, time, duration);
-                return RotatePositions(input, GetPositionsCenter(input), totalAngle);
-            }
-            case DirectedWavePostCommandType.FormationMorph:
-            {
-                if (command.morphTarget == null)
-                    return new Dictionary<int, Vector3>(input);
-
-                Dictionary<int, Vector3> target = BuildMorphTarget(
-                    input,
-                    command.morphTarget,
-                    GetPositionsCenter(input));
-                float normalized = Mathf.Clamp01(time / duration);
-                return LerpPositions(
-                    input,
-                    target,
-                    EvaluateCurve(command.curve, normalized));
-            }
-            default:
-                return new Dictionary<int, Vector3>(input);
-        }
+        return handler.EvaluateFrame(
+            this,
+            command,
+            input,
+            elapsed,
+            parallelDuration,
+            finalFrame,
+            runtimeContext);
     }
 
     private float GetFormationRotationAngle(
@@ -1749,9 +1364,11 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         Dictionary<int, Vector3> input,
         bool includeWobble,
         bool includeCircularMovement,
-        float elapsed)
+        float elapsed,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        Dictionary<int, Vector3> frame = new(input);
+        Dictionary<int, Vector3> frame =
+            CopySimulationPositions(input, runtimeContext);
         float leadingProjection = includeWobble ? GetLeadingWobbleProjection(input) : 0f;
         foreach (int index in input.Keys)
         {
@@ -1767,217 +1384,53 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         return frame;
     }
 
-    private IEnumerator ExecutePipelineOverlay(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions,
-        bool includeWobble,
-        bool includeCircularMovement)
-    {
-        float duration = Mathf.Max(0.01f, command.duration);
-        float elapsed = 0f;
-        float leadingProjection = includeWobble ? GetLeadingWobbleProjection(currentPositions) : 0f;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            Dictionary<int, Vector3> frame = new(currentPositions);
-            foreach (int index in currentPositions.Keys)
-            {
-                Vector3 position = currentPositions[index];
-                if (includeWobble)
-                    position += GetWobbleOffset(
-                        index,
-                        currentPositions[index],
-                        leadingProjection,
-                        elapsed);
-                if (includeCircularMovement)
-                    position += GetSelfOrbitOffset(index, elapsed);
-
-                frame[index] = position;
-            }
-
-            ApplyPipelinePositions(frame);
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-
-        ApplyPipelinePositions(currentPositions);
-        yield return HoldPipelinePositions(currentPositions, command.holdDuration);
-    }
-
-    private IEnumerator ExecutePipelineAttack(
-        DirectedWavePostCommand command,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        float endTime = Time.time + Mathf.Max(0.01f, command.duration);
-        int cursor = 0;
-        float nextAttackTime = Time.time;
-
-        while (Time.time < endTime)
-        {
-            ApplyPipelinePositions(currentPositions);
-
-            if (Time.time >= nextAttackTime)
-            {
-                Enemy enemy = GetNextAliveEnemy(ref cursor);
-                if (enemy != null && playerController != null)
-                {
-                    yield return DiveEnemy(
-                        enemy,
-                        false,
-                        false,
-                        false,
-                        false,
-                        false,
-                        false,
-                        Time.time);
-                }
-
-                nextAttackTime = Time.time + Mathf.Max(0.1f, diveInterval);
-            }
-
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-
-        yield return HoldPipelinePositions(currentPositions, command.holdDuration);
-    }
-
-    private IEnumerator MovePipelinePositions(
-        Dictionary<int, Vector3> from,
-        Dictionary<int, Vector3> to,
-        float duration,
-        AnimationCurve curve,
-        Dictionary<int, Vector3> currentPositions)
-    {
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float normalized = Mathf.Clamp01(elapsed / duration);
-            float curved = EvaluateCurve(curve, normalized);
-            Dictionary<int, Vector3> frame = LerpPositions(from, to, curved);
-            ApplyPipelinePositions(frame);
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-
-        ReplacePositions(currentPositions, to);
-        ApplyPipelinePositions(currentPositions);
-    }
-
-    private IEnumerator HoldPipelinePositions(
-        Dictionary<int, Vector3> positions,
-        float duration)
-    {
-        float endTime = Time.time + Mathf.Max(0f, duration);
-        while (Time.time < endTime)
-        {
-            ApplyPipelinePositions(positions);
-            yield return null;
-
-            if (!HasAliveEnemies())
-                yield break;
-        }
-    }
-
     private void ApplyPipelinePositions(Dictionary<int, Vector3> positions)
     {
-        Dictionary<int, Vector3> visiblePositions =
-            GetPositionsWithBackgroundParallels(positions);
-
         foreach (Enemy enemy in aliveEnemies)
         {
             if (enemy == null || enemy.isDead)
                 continue;
 
+            if (timelineDetachedEnemies.Contains(enemy))
+                continue;
+
             if (!formationIndices.TryGetValue(enemy, out int index))
                 continue;
 
-            if (!visiblePositions.TryGetValue(index, out Vector3 position))
+            if (!positions.TryGetValue(index, out Vector3 position))
                 continue;
 
-            Rigidbody2D body = enemy.GetComponent<Rigidbody2D>();
+            Rigidbody2D body = GetCachedEnemyBody(enemy);
             SetEnemyPosition(enemy.transform, body, position);
         }
     }
 
-    private Dictionary<int, Vector3> GetPositionsWithBackgroundParallels(
-        Dictionary<int, Vector3> basePositions)
+    private Rigidbody2D GetCachedEnemyBody(Enemy enemy)
     {
-        if (activeBackgroundParallels.Count == 0)
-            return basePositions;
+        if (enemy == null)
+            return null;
 
-        UpdateBackgroundParallels();
+        if (enemyBodies.TryGetValue(enemy, out Rigidbody2D body))
+            return body;
 
-        Dictionary<int, Vector3> frame = new(basePositions);
-        for (int i = 0; i < activeBackgroundParallels.Count; i++)
-        {
-            ActiveBackgroundParallelCommand active = activeBackgroundParallels[i];
-            if (active.command == null)
-                continue;
-
-            float duration = Mathf.Max(0.01f, active.command.duration);
-            float time = active.command.infiniteParallel
-                ? active.elapsed
-                : Mathf.Min(active.elapsed, duration);
-            float frameDuration = active.command.infiniteParallel
-                ? Mathf.Max(0.01f, time)
-                : duration;
-
-            frame = EvaluateParallelCommandFrame(
-                active.command,
-                frame,
-                time,
-                frameDuration,
-                false);
-        }
-
-        return frame;
-    }
-
-    private void UpdateBackgroundParallels()
-    {
-        if (lastBackgroundParallelFrame == Time.frameCount)
-            return;
-
-        lastBackgroundParallelFrame = Time.frameCount;
-        float deltaTime = Time.deltaTime;
-        for (int i = activeBackgroundParallels.Count - 1; i >= 0; i--)
-        {
-            ActiveBackgroundParallelCommand active = activeBackgroundParallels[i];
-            if (active.command == null)
-            {
-                activeBackgroundParallels.RemoveAt(i);
-                continue;
-            }
-
-            active.elapsed += deltaTime;
-            if (!active.command.infiniteParallel
-                && active.elapsed >= Mathf.Max(0.01f, active.command.duration))
-            {
-                activeBackgroundParallels.RemoveAt(i);
-            }
-        }
+        body = enemy.GetComponent<Rigidbody2D>();
+        enemyBodies[enemy] = body;
+        return body;
     }
 
     private bool HasAliveEnemies()
     {
-        aliveEnemies.RemoveWhere(enemy => enemy == null || enemy.isDead);
-        return aliveEnemies.Count > 0;
+        return aliveEnemies.RemoveDeadAndHasAny();
     }
 
     private static Dictionary<int, Vector3> OffsetPositions(
         Dictionary<int, Vector3> source,
-        Vector3 offset)
+        Vector3 offset,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        Dictionary<int, Vector3> result = new(source.Count);
+        Dictionary<int, Vector3> result = runtimeContext != null
+            ? runtimeContext.RentPositions(source.Count)
+            : new Dictionary<int, Vector3>(source.Count);
         foreach (KeyValuePair<int, Vector3> pair in source)
             result[pair.Key] = pair.Value + offset;
 
@@ -1987,12 +1440,15 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     private static Dictionary<int, Vector3> RotatePositions(
         Dictionary<int, Vector3> source,
         Vector3 center,
-        float angleDegrees)
+        float angleDegrees,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
         float radians = angleDegrees * Mathf.Deg2Rad;
         float sin = Mathf.Sin(radians);
         float cos = Mathf.Cos(radians);
-        Dictionary<int, Vector3> result = new(source.Count);
+        Dictionary<int, Vector3> result = runtimeContext != null
+            ? runtimeContext.RentPositions(source.Count)
+            : new Dictionary<int, Vector3>(source.Count);
 
         foreach (KeyValuePair<int, Vector3> pair in source)
         {
@@ -2009,9 +1465,12 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     private static Dictionary<int, Vector3> LerpPositions(
         Dictionary<int, Vector3> from,
         Dictionary<int, Vector3> to,
-        float time)
+        float time,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        Dictionary<int, Vector3> result = new(from.Count);
+        Dictionary<int, Vector3> result = runtimeContext != null
+            ? runtimeContext.RentPositions(from.Count)
+            : new Dictionary<int, Vector3>(from.Count);
         foreach (KeyValuePair<int, Vector3> pair in from)
         {
             Vector3 target = to.TryGetValue(pair.Key, out Vector3 value)
@@ -2104,7 +1563,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             if (includeSelfOrbit)
                 position += GetSelfOrbitOffset(formationIndex, time);
 
-            Rigidbody2D body = enemy.GetComponent<Rigidbody2D>();
+            Rigidbody2D body = GetCachedEnemyBody(enemy);
             SetEnemyPosition(enemy.transform, body, position);
             fallbackIndex++;
         }
@@ -2200,14 +1659,25 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     private Dictionary<int, Vector3> BuildMorphTarget(
         Dictionary<int, Vector3> previous,
         DirectedWaveFormationMorphStep step,
-        Vector3 center)
+        Vector3 center,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        Vector3[] targetPositions = CreateMorphShapePositions(step, center);
-        List<int> freeTargetIndices = new(targetPositions.Length);
-        for (int i = 0; i < targetPositions.Length; i++)
+        int targetCount = previous.Count;
+        Vector3[] targetPositions = CreateMorphShapePositions(
+            step,
+            center,
+            targetCount,
+            runtimeContext);
+        List<int> freeTargetIndices = runtimeContext != null
+            ? runtimeContext.morphFreeTargetIndices
+            : new List<int>(targetCount);
+        freeTargetIndices.Clear();
+        for (int i = 0; i < targetCount; i++)
             freeTargetIndices.Add(i);
 
-        Dictionary<int, Vector3> result = new(previous.Count);
+        Dictionary<int, Vector3> result = runtimeContext != null
+            ? runtimeContext.RentPositions(previous.Count)
+            : new Dictionary<int, Vector3>(previous.Count);
         foreach (KeyValuePair<int, Vector3> pair in previous)
         {
             if (freeTargetIndices.Count == 0)
@@ -2240,10 +1710,14 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
     private Vector3[] CreateMorphShapePositions(
         DirectedWaveFormationMorphStep step,
-        Vector3 center)
+        Vector3 center,
+        int positionCount,
+        RuntimeTimelineEvaluationContext runtimeContext = null)
     {
-        int count = Mathf.Max(1, formationPositionsByIndex.Count);
-        Vector3[] result = new Vector3[count];
+        int count = Mathf.Max(1, positionCount);
+        Vector3[] result = runtimeContext != null
+            ? runtimeContext.RentMorphPositions(count)
+            : new Vector3[count];
         Vector3 morphCenter = center + step.centerOffset;
         Vector2 flattening = new Vector2(
             Mathf.Max(0.01f, step.shapeFlattening.x),
@@ -2286,36 +1760,42 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         };
     }
 
-    private static Vector3[] GetUnitTriangleVertices()
-    {
-        return new[]
+    private static readonly Vector3[] UnitTriangleVertices =
         {
             GetUnitShapePoint(90f),
             GetUnitShapePoint(210f),
             GetUnitShapePoint(330f)
         };
-    }
 
-    private static Vector3[] GetUnitSquareVertices()
-    {
-        return new[]
+    private static readonly Vector3[] UnitSquareVertices =
         {
             new Vector3(-1f, 1f, 0f),
             new Vector3(1f, 1f, 0f),
             new Vector3(1f, -1f, 0f),
             new Vector3(-1f, -1f, 0f)
         };
-    }
 
-    private static Vector3[] GetUnitDiamondVertices()
-    {
-        return new[]
+    private static readonly Vector3[] UnitDiamondVertices =
         {
             Vector3.up,
             Vector3.right,
             Vector3.down,
             Vector3.left
         };
+
+    private static Vector3[] GetUnitTriangleVertices()
+    {
+        return UnitTriangleVertices;
+    }
+
+    private static Vector3[] GetUnitSquareVertices()
+    {
+        return UnitSquareVertices;
+    }
+
+    private static Vector3[] GetUnitDiamondVertices()
+    {
+        return UnitDiamondVertices;
     }
 
     private static Vector3 GetUnitShapePoint(float angleDegrees)
@@ -2611,11 +2091,16 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
     private Vector3 GetPatrolOffset(float time)
     {
+        return GetPatrolCenterPosition(time) - GetStableFormationCenter();
+    }
+
+    private Vector3 GetPatrolCenterPosition(float time)
+    {
         if (patrolPoints == null || patrolPoints.Length == 0)
-            return Vector3.zero;
+            return GetStableFormationCenter();
 
         if (patrolPoints.Length == 1)
-            return patrolPoints[0] != null ? patrolPoints[0].offset : Vector3.zero;
+            return GetPatrolPointPosition(0);
 
         float remaining = Mathf.Max(0f, time);
         int lastSegmentIndex = patrolLoop
@@ -2623,19 +2108,27 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             : patrolPoints.Length - 2;
 
         if (lastSegmentIndex < 0)
-            return Vector3.zero;
+            return GetStableFormationCenter();
 
         float totalDuration = GetPatrolTotalDuration();
         if (patrolLoop && totalDuration > 0f)
             remaining = Mathf.Repeat(remaining, totalDuration);
         else if (!patrolLoop && remaining >= totalDuration)
-            return GetPatrolPointOffset(patrolPoints.Length - 1);
+            return GetPatrolPointPosition(patrolPoints.Length - 1);
 
-        for (int i = 0; i <= lastSegmentIndex; i++)
+        for (int i = 0; i < patrolPoints.Length; i++)
         {
             DirectedWavePatrolPoint point = patrolPoints[i];
             if (point == null)
                 continue;
+
+            float wait = Mathf.Max(0f, point.wait);
+            if (remaining <= wait)
+                return GetPatrolPointPosition(i);
+
+            remaining -= wait;
+            if (i > lastSegmentIndex)
+                break;
 
             float duration = Mathf.Max(0.01f, point.durationToNext);
             if (remaining <= duration)
@@ -2649,8 +2142,8 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         }
 
         return patrolLoop
-            ? GetPatrolPointOffset(0)
-            : GetPatrolPointOffset(patrolPoints.Length - 1);
+            ? GetPatrolPointPosition(0)
+            : GetPatrolPointPosition(patrolPoints.Length - 1);
     }
 
     private float GetPatrolTotalDuration()
@@ -2663,12 +2156,18 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             : patrolPoints.Length - 2;
         float totalDuration = 0f;
 
-        for (int i = 0; i <= lastSegmentIndex; i++)
+        for (int i = 0; i < patrolPoints.Length; i++)
         {
             if (patrolPoints[i] == null)
                 continue;
 
-            totalDuration += Mathf.Max(0.01f, patrolPoints[i].durationToNext);
+            totalDuration += Mathf.Max(0f, patrolPoints[i].wait);
+            if (i <= lastSegmentIndex)
+            {
+                totalDuration += Mathf.Max(
+                    0.01f,
+                    patrolPoints[i].durationToNext);
+            }
         }
 
         return totalDuration;
@@ -2683,8 +2182,8 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         if (nextIndex >= patrolPoints.Length)
             nextIndex = patrolLoop ? 0 : patrolPoints.Length - 1;
 
-        Vector3 current = GetPatrolPointOffset(segmentIndex);
-        Vector3 next = GetPatrolPointOffset(nextIndex);
+        Vector3 current = GetPatrolPointPosition(segmentIndex);
+        Vector3 next = GetPatrolPointPosition(nextIndex);
 
         return patrolPoints[segmentIndex].motionToNext switch
         {
@@ -2698,10 +2197,10 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
     private Vector3 EvaluatePatrolBezierSegment(int segmentIndex, float time)
     {
-        Vector3 p0 = GetPatrolPointOffset(segmentIndex);
-        Vector3 p3 = GetPatrolPointOffset(GetNextPatrolIndex(segmentIndex));
-        Vector3 previous = GetPatrolPointOffset(GetPreviousPatrolIndex(segmentIndex));
-        Vector3 following = GetPatrolPointOffset(GetNextPatrolIndex(GetNextPatrolIndex(segmentIndex)));
+        Vector3 p0 = GetPatrolPointPosition(segmentIndex);
+        Vector3 p3 = GetPatrolPointPosition(GetNextPatrolIndex(segmentIndex));
+        Vector3 previous = GetPatrolPointPosition(GetPreviousPatrolIndex(segmentIndex));
+        Vector3 following = GetPatrolPointPosition(GetNextPatrolIndex(GetNextPatrolIndex(segmentIndex)));
 
         Vector3 p1 = p0 + (p3 - previous) / 6f;
         Vector3 p2 = p3 - (following - p0) / 6f;
@@ -2723,13 +2222,13 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         float t = Mathf.Clamp01(time);
 
         return 0.5f * (
-            2f * GetPatrolPointOffset(p1)
-            + (-GetPatrolPointOffset(p0) + GetPatrolPointOffset(p2)) * t
-            + (2f * GetPatrolPointOffset(p0) - 5f * GetPatrolPointOffset(p1)
-                + 4f * GetPatrolPointOffset(p2) - GetPatrolPointOffset(p3))
+            2f * GetPatrolPointPosition(p1)
+            + (-GetPatrolPointPosition(p0) + GetPatrolPointPosition(p2)) * t
+            + (2f * GetPatrolPointPosition(p0) - 5f * GetPatrolPointPosition(p1)
+                + 4f * GetPatrolPointPosition(p2) - GetPatrolPointPosition(p3))
             * t * t
-            + (-GetPatrolPointOffset(p0) + 3f * GetPatrolPointOffset(p1)
-                - 3f * GetPatrolPointOffset(p2) + GetPatrolPointOffset(p3))
+            + (-GetPatrolPointPosition(p0) + 3f * GetPatrolPointPosition(p1)
+                - 3f * GetPatrolPointPosition(p2) + GetPatrolPointPosition(p3))
             * t * t * t);
     }
 
@@ -2755,15 +2254,16 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         return Mathf.Min(patrolPoints.Length - 1, index + 1);
     }
 
-    private Vector3 GetPatrolPointOffset(int index)
+    private Vector3 GetPatrolPointPosition(int index)
     {
         if (patrolPoints == null || patrolPoints.Length == 0)
             return Vector3.zero;
 
         int safeIndex = Mathf.Clamp(index, 0, patrolPoints.Length - 1);
-        return patrolPoints[safeIndex] != null
-            ? patrolPoints[safeIndex].offset
-            : Vector3.zero;
+        DirectedWavePatrolPoint point = patrolPoints[safeIndex];
+        return point != null
+            ? ToWorld(point.offset, patrolCoordinateSpace)
+            : GetStableFormationCenter();
     }
 
     private float GetWobblePhase(
@@ -2842,7 +2342,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
         for (int i = 0; i < postCommands.Length; i++)
         {
-            if (postCommands[i] != null && postCommands[i].enabled)
+            if (IsEnabledPostCommand(postCommands[i]))
                 return true;
         }
 
@@ -2864,7 +2364,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         for (int i = 0; i < commands.Length; i++)
         {
             DirectedWavePostCommand command = commands[i];
-            if (command == null || !command.enabled)
+            if (!IsEnabledPostCommand(command))
                 continue;
 
             if (command.type == type)
@@ -2889,155 +2389,124 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         for (int i = 0; i < postCommands.Length; i++)
         {
             DirectedWavePostCommand command = postCommands[i];
-            if (command != null && command.enabled)
+            if (IsEnabledPostCommand(command))
                 names.Add(command.type.ToString());
         }
 
         return names.Count > 0 ? string.Join(" -> ", names) : "None";
     }
 
-    private Enemy GetNextAliveEnemy(ref int cursor)
+    private bool HasRuntimePostBehavior()
     {
-        if (aliveEnemies.Count <= 0)
-            return null;
+        if (HasAnyPostCommand())
+            return true;
 
-        List<Enemy> orderedEnemies = new List<Enemy>(aliveEnemies);
-        orderedEnemies.RemoveAll(enemy => enemy == null || enemy.isDead);
-        if (orderedEnemies.Count <= 0)
-            return null;
-
-        if (cursor >= orderedEnemies.Count)
-            cursor = 0;
-
-        Enemy enemy = orderedEnemies[cursor];
-        cursor = (cursor + 1) % orderedEnemies.Count;
-        return enemy;
-    }
-
-    private IEnumerator DiveEnemy(
-        Enemy enemy,
-        bool includePatrol,
-        bool includeLocalMove,
-        bool wobbleOtherEnemies,
-        bool includeSelfOrbit,
-        bool includeFormationRotation,
-        bool includeFormationMorph,
-        float postBehaviorStartTime)
-    {
-        if (enemy == null || enemy.isDead)
-            yield break;
-
-        Transform enemyTransform = enemy.transform;
-        Rigidbody2D body = enemy.GetComponent<Rigidbody2D>();
-        Vector3 start = enemyTransform.position;
-        Vector3 target = GetPlayerTargetPosition();
-        Vector3 direction = target - start;
-        if (direction.sqrMagnitude < 0.0001f)
-            direction = Vector3.down;
-        else
-            direction.Normalize();
-
-        Vector3 end = target + direction * diveOvershootDistance;
-        Log($"Enemy dives at player: {enemy.name}, target={target}, end={end}", enemy);
-
-        yield return MovePostEnemy(
-            enemy,
-            body,
-            start,
-            end,
-            diveDuration,
-            diveCurve,
-            includePatrol,
-            includeLocalMove,
-            wobbleOtherEnemies,
-            includeSelfOrbit,
-            includeFormationRotation,
-            includeFormationMorph,
-            postBehaviorStartTime);
-
-        if (enemy == null || enemy.isDead)
-            yield break;
-
-        if (!formationPositions.TryGetValue(enemy, out Vector3 returnPosition))
-            returnPosition = GetFormationPosition(0);
-        else if (includeFormationMorph
-            && formationIndices.TryGetValue(enemy, out int formationIndex))
+        for (int i = 0; i < postTimelineBehaviours.Count; i++)
         {
-            returnPosition = GetFormationMorphPosition(
-                formationIndex,
-                returnPosition,
-                Time.time - postBehaviorStartTime);
+            IDirectedWavePostTimelineBehaviour behaviour = postTimelineBehaviours[i];
+            if (IsAlivePostTimelineBehaviour(behaviour)
+                && behaviour.RequiresPostTimeline)
+            {
+                return true;
+            }
         }
 
-        yield return MovePostEnemy(
-            enemy,
-            body,
-            enemyTransform.position,
-            returnPosition,
-            diveReturnDuration,
-            diveReturnCurve,
-            includePatrol,
-            includeLocalMove,
-            wobbleOtherEnemies,
-            includeSelfOrbit,
-            includeFormationRotation,
-            includeFormationMorph,
-            postBehaviorStartTime);
+        return false;
     }
 
-    private IEnumerator MovePostEnemy(
-        Enemy enemy,
-        Rigidbody2D body,
-        Vector3 from,
-        Vector3 to,
-        float duration,
-        AnimationCurve curve,
-        bool includePatrol,
-        bool includeLocalMove,
-        bool wobbleOtherEnemies,
-        bool includeSelfOrbit,
-        bool includeFormationRotation,
-        bool includeFormationMorph,
-        float postBehaviorStartTime)
+    private bool HasProceduralFormationEnemyOverrides()
     {
-        if (duration <= 0f)
-        {
-            if (enemy != null && !enemy.isDead)
-                SetEnemyPosition(enemy.transform, body, to);
-
-            yield break;
-        }
-
-        float elapsed = 0f;
-        while (elapsed < duration && enemy != null && !enemy.isDead)
-        {
-            elapsed += Time.deltaTime;
-            float time = Mathf.Clamp01(elapsed / duration);
-            float curvedTime = EvaluateCurve(curve, time);
-
-            ApplyContinuousPostCommands(
-                Time.time - postBehaviorStartTime,
-                enemy,
-                includePatrol,
-                includeLocalMove,
-                wobbleOtherEnemies,
-                includeSelfOrbit,
-                includeFormationRotation,
-                includeFormationMorph);
-
-            SetEnemyPosition(
-                enemy.transform,
-                body,
-                Vector3.LerpUnclamped(from, to, curvedTime));
-
-            yield return null;
-        }
-
-        if (enemy != null && !enemy.isDead)
-            SetEnemyPosition(enemy.transform, body, to);
+        return GetProceduralFormationEnemyOverrideCount() > 0;
     }
 
-    private Vector3 GetPlayerTargetPosition()
+    private int GetProceduralFormationEnemyOverrideCount()
+    {
+        int count = 0;
+        if (proceduralFormationEnemyOverrides == null)
+            return count;
+
+        for (int i = 0; i < proceduralFormationEnemyOverrides.Length; i++)
+        {
+            if (proceduralFormationEnemyOverrides[i] != null)
+                count++;
+        }
+
+        return count;
+    }
+
+    internal void RegisterPostTimelineBehaviour(
+        IDirectedWavePostTimelineBehaviour behaviour)
+    {
+        if (!IsAlivePostTimelineBehaviour(behaviour)
+            || postTimelineBehaviours.Contains(behaviour))
+        {
+            return;
+        }
+
+        postTimelineBehaviours.Add(behaviour);
+    }
+
+    internal void UnregisterPostTimelineBehaviour(
+        IDirectedWavePostTimelineBehaviour behaviour)
+    {
+        postTimelineBehaviours.Remove(behaviour);
+    }
+
+    private void BeginPostTimelineBehaviours()
+    {
+        for (int i = 0; i < postTimelineBehaviours.Count; i++)
+        {
+            IDirectedWavePostTimelineBehaviour behaviour = postTimelineBehaviours[i];
+            if (IsAlivePostTimelineBehaviour(behaviour))
+                behaviour.OnPostTimelineStarted(this);
+        }
+    }
+
+    private void TickPostTimelineBehaviours()
+    {
+        for (int i = 0; i < postTimelineBehaviours.Count; i++)
+        {
+            IDirectedWavePostTimelineBehaviour behaviour = postTimelineBehaviours[i];
+            if (IsAlivePostTimelineBehaviour(behaviour))
+                behaviour.TickPostTimeline();
+        }
+    }
+
+    private void StopPostTimelineBehaviours()
+    {
+        for (int i = postTimelineBehaviours.Count - 1; i >= 0; i--)
+        {
+            IDirectedWavePostTimelineBehaviour behaviour = postTimelineBehaviours[i];
+            if (IsAlivePostTimelineBehaviour(behaviour))
+                behaviour.OnPostTimelineStopped();
+        }
+    }
+
+    private void NotifyPostTimelineEnemyDestroyed(Enemy enemy)
+    {
+        for (int i = 0; i < postTimelineBehaviours.Count; i++)
+        {
+            IDirectedWavePostTimelineBehaviour behaviour = postTimelineBehaviours[i];
+            if (IsAlivePostTimelineBehaviour(behaviour))
+                behaviour.OnWaveEnemyDestroyed(enemy);
+        }
+    }
+
+    private static bool IsAlivePostTimelineBehaviour(
+        IDirectedWavePostTimelineBehaviour behaviour)
+    {
+        return behaviour != null
+            && (!(behaviour is Object unityObject) || unityObject != null);
+    }
+
+    private static bool IsEnabledPostCommand(DirectedWavePostCommand command)
+    {
+        return command != null
+            && command.enabled
+            && command.type != DirectedWavePostCommandType.LegacyAttack;
+    }
+
+    internal Vector3 GetPlayerTargetPosition()
     {
         if (playerController == null)
             return transform.position + Vector3.down;
@@ -3049,11 +2518,78 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         return playerController.transform.position;
     }
 
+    public bool TryGetFormationIndex(Enemy enemy, out int index)
+    {
+        if (enemy != null && formationIndices.TryGetValue(enemy, out index))
+            return true;
+
+        index = -1;
+        return false;
+    }
+
+    public int GetConfiguredEnemySlotCount()
+    {
+        return Mathf.Max(0, GetEffectiveEnemyCount());
+    }
+
+    public bool UsesCheckpointEntrancePath => !UsesIndividualEntrancePoints();
+
+    public int GetConfiguredEntranceCheckpointCount()
+    {
+        if (pathCheckpoints == null)
+            return 0;
+
+        int count = 0;
+        for (int i = 0; i < pathCheckpoints.Length; i++)
+        {
+            if (pathCheckpoints[i] != null)
+                count++;
+        }
+
+        return count;
+    }
+
+    public Vector3 GetConfiguredEntranceCheckpointPosition(int checkpointIndex)
+    {
+        if (checkpointIndex < 0 || pathCheckpoints == null)
+            return transform.position;
+
+        int validIndex = 0;
+        for (int i = 0; i < pathCheckpoints.Length; i++)
+        {
+            DirectedWavePathCheckpoint checkpoint = pathCheckpoints[i];
+            if (checkpoint == null)
+                continue;
+
+            if (validIndex == checkpointIndex)
+                return ToWorld(checkpoint.position, pathCoordinateSpace);
+
+            validIndex++;
+        }
+
+        return transform.position;
+    }
+
+    public Vector3 GetConfiguredFormationSlotPosition(int slotIndex)
+    {
+        int slotCount = GetConfiguredEnemySlotCount();
+        if (slotIndex < 0 || slotIndex >= slotCount)
+            return transform.position;
+
+        return GetFormationPosition(slotIndex);
+    }
+
+    public Enemy GetConfiguredEnemyPrefabForSlot(int slotIndex)
+    {
+        int slotCount = GetConfiguredEnemySlotCount();
+        return slotIndex >= 0 && slotIndex < slotCount
+            ? GetEnemyPrefabForIndex(slotIndex)
+            : null;
+    }
+
     private void TryComplete()
     {
-        aliveEnemies.RemoveWhere(enemy => enemy == null || enemy.isDead);
-
-        if (!spawnFinished || aliveEnemies.Count > 0)
+        if (!aliveEnemies.CanComplete(spawnFinished))
             return;
 
         if (enemyManager != null)
@@ -3093,11 +2629,36 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
     private void OnDrawGizmosSelected()
     {
         DrawPathGizmos();
-        DrawFormationGizmos();
+        if (!HasValidEntranceLoopConfiguration())
+            DrawFormationGizmos();
     }
 
     private void DrawPathGizmos()
     {
+        if (UsesIndividualEntrancePoints())
+        {
+            Gizmos.color = new Color(1f, 0.65f, 0.2f, 1f);
+            int count = Mathf.Min(
+                individualEntrancePoints != null
+                    ? individualEntrancePoints.Length
+                    : 0,
+                GetEffectiveEnemyCount());
+            for (int i = 0; i < count; i++)
+            {
+                if (!TryGetIndividualEntrancePointPosition(
+                        i,
+                        out Vector3 position))
+                {
+                    continue;
+                }
+
+                Gizmos.DrawSphere(position, 0.08f);
+                Gizmos.DrawLine(position, GetFormationPosition(i));
+            }
+
+            return;
+        }
+
         DirectedWaveRuntimeCheckpoint[] checkpoints =
             GetWorldPathCheckpoints();
         if (checkpoints.Length == 0)
@@ -3111,12 +2672,44 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
         {
             for (int sample = 1; sample <= samplesPerSegment; sample++)
             {
-                Vector3 current = EvaluateCheckpointSegment(
+                Vector3 current = DirectedWavePathEvaluator.EvaluateSegment(
                     checkpoints,
                     segment,
                     sample / (float)samplesPerSegment);
                 Gizmos.DrawLine(previousCheckpointSample, current);
                 previousCheckpointSample = current;
+            }
+        }
+
+        if (CanUseEntrancePathLoop(checkpoints) && !entranceLoopTeleportToStart)
+        {
+            int loopStartIndex =
+                DirectedWaveEntranceLoopEvaluator.GetLoopStartCheckpointIndex(
+                    entranceLoopStartCheckpointIndex,
+                    checkpoints.Length);
+            int lastIndex = checkpoints.Length - 1;
+            Vector3 previousLoopSample = checkpoints[lastIndex].position;
+            int previousIndex = Mathf.Max(0, lastIndex - 1);
+            int followingIndex = Mathf.Min(
+                lastIndex,
+                loopStartIndex + 1);
+
+            Gizmos.color = Color.magenta;
+            for (int sample = 1; sample <= samplesPerSegment; sample++)
+            {
+                float normalizedTime = sample / (float)samplesPerSegment;
+                Vector3 current =
+                    DirectedWaveEntranceLoopEvaluator.EvaluateLoopSegment(
+                        checkpoints,
+                        previousIndex,
+                        lastIndex,
+                        loopStartIndex,
+                        followingIndex,
+                        EvaluateCurve(
+                            checkpoints[lastIndex].easeToNext,
+                            normalizedTime));
+                Gizmos.DrawLine(previousLoopSample, current);
+                previousLoopSample = current;
             }
         }
 
@@ -3135,9 +2728,20 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
     private void OnValidate()
     {
+        runtimeTimelineEvaluationContext?.Reset();
+        runtimeTimelineFrame = null;
+        ClearFormationReorderCache();
+
         enemyCount = Mathf.Max(1, enemyCount);
         spawnInterval = Mathf.Max(0f, spawnInterval);
         settleDuration = Mathf.Max(0f, settleDuration);
+        individualPointMovementStartDelay = Mathf.Max(
+            0f,
+            individualPointMovementStartDelay);
+        individualPointMovementDuration = Mathf.Max(
+            0f,
+            individualPointMovementDuration);
+        entranceLoopTeleportDelay = Mathf.Max(0f, entranceLoopTeleportDelay);
         columns = Mathf.Max(1, columns);
         rows = Mathf.Max(1, rows);
         arcRadius = Mathf.Max(0f, arcRadius);
@@ -3147,18 +2751,16 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             Mathf.Max(0.01f, shapeFlattening.x),
             Mathf.Max(0.01f, shapeFlattening.y));
         postStartDelay = Mathf.Max(0f, postStartDelay);
+        postCommandPipelineFixedCount = Mathf.Max(
+            1,
+            postCommandPipelineFixedCount);
         localMovementDuration = Mathf.Max(0.01f, localMovementDuration);
         wobbleFrequency = Mathf.Max(0f, wobbleFrequency);
         wobbleDirectionStep = Mathf.Max(0.01f, wobbleDirectionStep);
-        diveInterval = Mathf.Max(0f, diveInterval);
-        diveDuration = Mathf.Max(0.01f, diveDuration);
-        diveReturnDuration = Mathf.Max(0f, diveReturnDuration);
-        diveOvershootDistance = Mathf.Max(0f, diveOvershootDistance);
         selfOrbitRadius = new Vector2(
             Mathf.Max(0f, selfOrbitRadius.x),
             Mathf.Max(0f, selfOrbitRadius.y));
         formationMorphReturnDuration = Mathf.Max(0.01f, formationMorphReturnDuration);
-
         if (postCommands != null)
             ValidatePostCommands(postCommands);
 
@@ -3183,6 +2785,7 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
 
                 patrolPoints[i].durationToNext =
                     Mathf.Max(0.01f, patrolPoints[i].durationToNext);
+                patrolPoints[i].wait = Mathf.Max(0f, patrolPoints[i].wait);
                 patrolPoints[i].speedToNext =
                     Mathf.Max(0.01f, patrolPoints[i].speedToNext);
             }
@@ -3203,18 +2806,54 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             }
         }
 
-        if (pathCheckpoints == null)
-            return;
+        if (!formationFrozen
+            && formationLayout != DirectedWaveFormationLayout.TransformPoints
+            && formationLayout != DirectedWaveFormationLayout.CustomPoints)
+        {
+            EnsureProceduralFormationOverrideCapacity(GetEffectiveEnemyCount());
+        }
 
+        if (pathCheckpoints == null)
+        {
+            entranceLoopStartCheckpointIndex = 0;
+            return;
+        }
+
+        int validPathCheckpointCount = 0;
         for (int i = 0; i < pathCheckpoints.Length; i++)
         {
             if (pathCheckpoints[i] == null)
                 continue;
 
+            validPathCheckpointCount++;
+
             pathCheckpoints[i].durationToNext =
                 Mathf.Max(0.01f, pathCheckpoints[i].durationToNext);
             pathCheckpoints[i].speedToNext =
                 Mathf.Max(0.01f, pathCheckpoints[i].speedToNext);
+        }
+
+        entranceLoopStartCheckpointIndex =
+            DirectedWaveEntranceLoopEvaluator.GetLoopStartCheckpointIndex(
+                entranceLoopStartCheckpointIndex,
+                validPathCheckpointCount);
+    }
+
+    private void EnsureProceduralFormationOverrideCapacity(int requiredCount)
+    {
+        requiredCount = Mathf.Max(0, requiredCount);
+
+        if (proceduralFormationEnemyOverrides == null)
+        {
+            proceduralFormationEnemyOverrides = new Enemy[requiredCount];
+            return;
+        }
+
+        if (proceduralFormationEnemyOverrides.Length < requiredCount)
+        {
+            System.Array.Resize(
+                ref proceduralFormationEnemyOverrides,
+                requiredCount);
         }
     }
 
@@ -3229,23 +2868,36 @@ public sealed class DirectedEnemySubWave : InfoAboutSubWave
             if (command == null)
                 continue;
 
+            if (command.type == DirectedWavePostCommandType.LegacyAttack)
+                command.enabled = false;
+
             command.duration = Mathf.Max(0.01f, command.duration);
             command.holdDuration = Mathf.Max(0f, command.holdDuration);
             command.loopCount = Mathf.Max(1, command.loopCount);
+            command.formationReorderSpeed = Mathf.Max(
+                0.01f,
+                command.formationReorderSpeed);
+            if (float.IsNaN(command.formationReorderTargetCenter.x)
+                || float.IsInfinity(command.formationReorderTargetCenter.x)
+                || float.IsNaN(command.formationReorderTargetCenter.y)
+                || float.IsInfinity(command.formationReorderTargetCenter.y)
+                || float.IsNaN(command.formationReorderTargetCenter.z)
+                || float.IsInfinity(command.formationReorderTargetCenter.z))
+            {
+                command.formationReorderTargetCenter = Vector3.zero;
+            }
+            command.formationReorderStartInterval = Mathf.Max(
+                0f,
+                command.formationReorderStartInterval);
+            command.formationReorderShipsPerBatch = Mathf.Max(
+                1,
+                command.formationReorderShipsPerBatch);
             if (command.morphTarget != null)
                 ValidateMorphStep(command.morphTarget);
 
             ValidatePostCommands(command.parallelCommands);
             ValidatePostCommands(command.loopCommands);
         }
-    }
-
-    private struct DirectedWaveRuntimeCheckpoint
-    {
-        public Vector3 position;
-        public float durationToNext;
-        public DirectedWaveSegmentMotion motionToNext;
-        public AnimationCurve easeToNext;
     }
 
     private struct FormationMorphRuntimeSegment

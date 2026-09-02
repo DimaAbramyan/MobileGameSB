@@ -50,11 +50,10 @@ public class EndGame : MonoBehaviour
         if (level == null)
             return;
 
-        int metal = alreadyCompleted
-            ? Mathf.FloorToInt(level.MetalReward * 0.2f)
-            : level.MetalReward;
+        int gold = level.GoldReward;
         int cores = alreadyCompleted ? 0 : level.CoreReward;
 
-        Resources.Add(metal, cores);
+        Resources.AddGold(gold);
+        Resources.Add(0, cores);
     }
 }

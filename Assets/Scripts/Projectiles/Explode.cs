@@ -15,6 +15,7 @@ public class Explode : MonoBehaviour
     [SerializeField] private float destroyDelay = 0.5f;
 
     private HashSet<GameObject> damagedObjects = new HashSet<GameObject>();
+    private EnemyDamageType damageType = EnemyDamageType.Explosion;
 
     private void Awake()
     {
@@ -53,7 +54,7 @@ public class Explode : MonoBehaviour
         if (receiver != null)
         {
             Debug.Log($"Взрыв наносит урон: {collision.gameObject.name}, урон: {damage}");
-            receiver.TakeDamage(damage);
+            DealDamage(receiver);
             damagedObjects.Add(collision.gameObject);
         }
     }
@@ -67,7 +68,7 @@ public class Explode : MonoBehaviour
         if (receiver != null)
         {
             Debug.Log($"Взрыв наносит урон (Stay): {collision.gameObject.name}");
-            receiver.TakeDamage(damage);
+            DealDamage(receiver);
             damagedObjects.Add(collision.gameObject);
         }
     }
@@ -75,6 +76,22 @@ public class Explode : MonoBehaviour
     public void SetDamage(float newDamage)
     {
         damage = newDamage;
+    }
+
+    public void SetDamage(
+        float newDamage,
+        EnemyDamageType newDamageType)
+    {
+        damage = newDamage;
+        damageType = newDamageType;
+    }
+
+    private void DealDamage(iDamagable target)
+    {
+        if (target is Enemy enemy)
+            enemy.TakeDamageWithType(damage, damageType);
+        else
+            target.TakeDamage(damage);
     }
 
     private void OnDrawGizmosSelected()

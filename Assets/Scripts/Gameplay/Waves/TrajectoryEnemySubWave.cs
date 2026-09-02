@@ -65,7 +65,7 @@ public sealed class TrajectoryEnemySubWave : InfoAboutSubWave
 
         for (int i = 0; i < enemyCount; i++)
         {
-            SpawnEnemy();
+            SpawnEnemy(i);
 
             if (spawnInterval > 0f && i < enemyCount - 1)
                 yield return new WaitForSeconds(spawnInterval);
@@ -74,7 +74,7 @@ public sealed class TrajectoryEnemySubWave : InfoAboutSubWave
         FinishSpawning();
     }
 
-    private void SpawnEnemy()
+    private void SpawnEnemy(int spawnIndex)
     {
         Transform parent = spawnParent != null ? spawnParent : transform;
         Enemy enemy = container != null
@@ -89,7 +89,18 @@ public sealed class TrajectoryEnemySubWave : InfoAboutSubWave
             return;
 
         aliveSpawnedEnemies.Add(enemy);
+        NotifyEnemySpawned(enemy, spawnIndex, enemyCount);
         ConfigureTrajectory(enemy.gameObject);
+    }
+
+    public override int GetRewardEligibleEnemyCount()
+    {
+        return Mathf.Max(0, enemyCount);
+    }
+
+    public Enemy GetConfiguredEnemyPrefab()
+    {
+        return enemyPrefab;
     }
 
     private void ConfigureTrajectory(GameObject enemyObject)

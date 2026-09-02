@@ -27,7 +27,7 @@ public class ShootingShip : Enemy
     }
     protected void Shoot()
     {
-        Timer -= Time.deltaTime / Timer;
+        Timer -= Time.deltaTime * FireRateMultiplier / Timer;
         if (Timer <= 0)
         {
             if (!animator.GetBool("Shooting"))
@@ -49,6 +49,7 @@ public class ShootingShip : Enemy
                 transform.position + new Vector3(0, -0.25f),
                 Quaternion.identity,
                 null);
+        bull.SetDamageMultiplier(DamageMultiplier);
         bull._position = direction;
 
         // Поворачиваем снаряд в сторону направления полёта

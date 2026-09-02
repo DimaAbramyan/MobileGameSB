@@ -14,6 +14,7 @@ public class Projectile : MonoBehaviour
     public float damage { get; private set; }
     public float baseDamage;
     public float maxLength { get; private set; }
+    public EnemyDamageType DamageType { get; private set; } = EnemyDamageType.Kinetic;
     public Vector3 direction{ get; private set; }
     public float fadeTime = 1f;
     private ParentShip owner;
@@ -60,6 +61,7 @@ public class Projectile : MonoBehaviour
         damage = 0f;
         baseDamage = 0f;
         maxLength = 0f;
+        DamageType = EnemyDamageType.Kinetic;
         direction = Vector3.zero;
         remainingLifetime = 0f;
         lifetimeFadeDuration = 0f;
@@ -116,6 +118,7 @@ public class Projectile : MonoBehaviour
         damage = param.damage;
         baseDamage = param.damage;
         maxLength = param.maxLength;
+        DamageType = runtimeConfig.damageType;
         remainingLifetime = Mathf.Max(0.02f, runtimeConfig.projectileLifetime);
         lifetimeFadeDuration = Mathf.Clamp(
             runtimeConfig.fadeDuration,
@@ -217,5 +220,11 @@ public class Projectile : MonoBehaviour
     {
         if (other.TryGetComponent<iDamagable>(out var target))
             runtimeBehaviors?.OnContactStay(target, this);
+    }
+
+    void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.TryGetComponent<iDamagable>(out var target))
+            runtimeBehaviors?.OnContactExit(target, this);
     }
 }

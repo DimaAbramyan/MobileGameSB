@@ -8,11 +8,6 @@ public class EnemyBullet : EnemyProjectile
     [SerializeField] protected float _speed;
     public Vector3 _position = new Vector3(0, -1, 0);
 
-    void Start()
-    {
-       
-    }
-
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -32,5 +27,12 @@ public class EnemyBullet : EnemyProjectile
 
         DestroyProjByRange();
     }
-    
+
+    public void Launch(Vector3 direction)
+    {
+        _position = direction.sqrMagnitude > 0.0001f
+            ? direction.normalized
+            : Vector3.down;
+        _start_pos = transform.position.y;
+    }
 }

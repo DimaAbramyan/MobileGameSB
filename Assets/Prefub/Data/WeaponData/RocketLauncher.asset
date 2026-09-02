@@ -42,9 +42,66 @@ MonoBehaviour:
   - 2
   - 2
   - 2
-  startLevel: 0
-  maxLevel: 4
+  levelConfigs:
+  - reloadTime: 2
+    angle: 0
+    damage: 0
+    range: 8
+    speed: 2
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0.15
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 1.8
+    angle: 0
+    damage: 0
+    range: 8
+    speed: 2
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0.15
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 1.7
+    angle: 0
+    damage: 0
+    range: 8
+    speed: 2
+    volleysPerActivation: 2
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0.15
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 1.6
+    angle: 0
+    damage: 0
+    range: 8
+    speed: 2
+    volleysPerActivation: 2
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0.15
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 1.5
+    angle: 0
+    damage: 0
+    range: 8
+    speed: 2
+    volleysPerActivation: 3
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0.15
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  startLevel: 1
+  maxLevel: 10
   energyCost: 4
+  damageType: 0
   flightMode: 0
   contactMode: 3
   homingRotationSpeed: 360

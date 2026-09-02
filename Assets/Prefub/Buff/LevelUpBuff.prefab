@@ -209,4 +209,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74b023b5387835544866500bdad09ec1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffLevel
-  speed: 0.05
+  speed: 1

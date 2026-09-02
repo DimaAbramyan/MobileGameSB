@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     Vector3 _currentSpeed;
     Vector3 _currentPosition;
     private int activeTouchId = -1;
+    private int movementTouchId = -1;
     private float controlsLockedUntil;
     private float shipSwitchLockedUntil;
     ShipSelect shipSelect;
@@ -49,6 +50,7 @@ public class PlayerController : MonoBehaviour
         if (ControlsLocked)
             return;
 
+        CaptureMovementTouch();
         ShipController();
     }
 
@@ -62,6 +64,7 @@ public class PlayerController : MonoBehaviour
             Time.time + duration);
 
         activeTouchId = -1;
+        movementTouchId = -1;
     }
 
     public void LockShipSwitching(float duration)
@@ -83,21 +86,66 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < Input.touchCount; i++)
         {
             Touch touch = Input.GetTouch(i);
+            if (touch.fingerId != movementTouchId)
+                continue;
 
-            if (IsPointerOverUIObject(touch))
+            if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+            {
+                movementTouchId = -1;
                 return;
+            }
 
-            Vector3 touchPosition = Camera.main.ScreenToWorldPoint(Input.touches[i].position);
-            touchPosition = new Vector2(touchPosition.x, touchPosition.y);
-
-            if ((touchPosition - _currentPosition).magnitude < 0.25f)
-                _currentSpeed = (touchPosition - _currentPosition) * speed;
-            else
-                _currentSpeed = (touchPosition - _currentPosition).normalized * speed;
-
-            playerRB.AddForce(_currentSpeed);
-            CurrentVelocity = playerRB.linearVelocity;
+            MoveTowardsTouch(touch);
+            return;
         }
+
+    }
+
+    private void CaptureMovementTouch()
+    {
+        if (movementTouchId != -1)
+        {
+            for (int i = 0; i < Input.touchCount; i++)
+            {
+                Touch touch = Input.GetTouch(i);
+                if (touch.fingerId != movementTouchId)
+                    continue;
+
+                if (touch.phase == TouchPhase.Ended
+                    || touch.phase == TouchPhase.Canceled)
+                {
+                    movementTouchId = -1;
+                }
+
+                return;
+            }
+
+            return;
+        }
+
+        for (int i = 0; i < Input.touchCount; i++)
+        {
+            Touch touch = Input.GetTouch(i);
+            if (touch.phase != TouchPhase.Began || IsPointerOverUIObject(touch))
+                continue;
+
+            movementTouchId = touch.fingerId;
+            return;
+        }
+    }
+
+    private void MoveTowardsTouch(Touch touch)
+    {
+        Vector3 touchPosition = Camera.main.ScreenToWorldPoint(touch.position);
+        touchPosition = new Vector2(touchPosition.x, touchPosition.y);
+
+        if ((touchPosition - _currentPosition).magnitude < 0.25f)
+            _currentSpeed = (touchPosition - _currentPosition) * speed;
+        else
+            _currentSpeed = (touchPosition - _currentPosition).normalized * speed;
+
+        playerRB.AddForce(_currentSpeed);
+        CurrentVelocity = playerRB.linearVelocity;
     }
 
     private void ShipController()
@@ -106,7 +154,7 @@ public class PlayerController : MonoBehaviour
         {
             Touch touch = Input.GetTouch(i);
             if (IsPointerOverUIObject(touch))
-                return;
+                continue;
 
             if (touch.phase == TouchPhase.Began)
                 activeTouchId = touch.fingerId;
@@ -122,13 +170,8 @@ public class PlayerController : MonoBehaviour
 
     private bool IsPointerOverUIObject(Touch touch)
     {
-        PointerEventData eventData = new PointerEventData(EventSystem.current)
-        {
-            position = touch.position
-        };
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-        return results.Count > 0;
+        return EventSystem.current != null
+            && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
     }
 
     /// <summary>
@@ -148,5 +191,15 @@ public class PlayerController : MonoBehaviour
     public void ChangeCurrentShip(ParentShip ship)
     {
         OnCurrentShipChanged?.Invoke(ship);
+    }
+
+    public int LevelUpAllShips()
+    {
+        return shipSelect != null ? shipSelect.LevelUpAllShips() : 0;
+    }
+
+    public bool HandleShipDeath(ParentShip ship)
+    {
+        return shipSelect != null && shipSelect.HandleShipDeath(ship);
     }
 }

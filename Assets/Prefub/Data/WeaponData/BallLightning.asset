@@ -1,0 +1,128 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85f5f2252a0448679b498dc046b1ea35, type: 3}
+  m_Name: BallLightning
+  m_EditorClassIdentifier: Assembly-CSharp::BallLightningData
+  reloadTimeByLevel: []
+  angleByLevel: []
+  damageByLevel: []
+  rangeByLevel: []
+  speedByLevel: []
+  levelConfigs:
+  - reloadTime: 0.8
+    angle: 0
+    damage: 0
+    range: 0
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.78
+    angle: 0
+    damage: 0
+    range: 0
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.76
+    angle: 0
+    damage: 0
+    range: 0
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.74
+    angle: 0
+    damage: 0
+    range: 0
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  - reloadTime: 0.72
+    angle: 0
+    damage: 0
+    range: 0
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 0
+  startLevel: 1
+  maxLevel: 10
+  energyCost: 3
+  damageType: 4
+  flightMode: 0
+  contactMode: 4
+  homingRotationSpeed: 360
+  growDuringFlight: 0
+  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  projectileLifetime: 4
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 30
+  continuousDamageInterval: 0.25
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  ballLightningLevels:
+  - directDamage: 0.45
+    areaDamage: 3
+    areaTickInterval: 0.5
+  - directDamage: 0.55
+    areaDamage: 3.5
+    areaTickInterval: 0.46
+  - directDamage: 0.65
+    areaDamage: 4
+    areaTickInterval: 0.42
+  - directDamage: 0.75
+    areaDamage: 4.5
+    areaTickInterval: 0.38
+  - directDamage: 0.85
+    areaDamage: 5
+    areaTickInterval: 0.34
+  projectileSpeed: 4
+  ballsPerShot: 1
+  ballSpreadAngle: 12
+  areaRadius: 2.2
+  areaDamageLayers:
+    serializedVersion: 2
+    m_Bits: 512

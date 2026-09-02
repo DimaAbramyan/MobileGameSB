@@ -155,6 +155,7 @@ MonoBehaviour:
   intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 1480243585401683899}
   ShipData: {fileID: 11400000, guid: 48ffb830f1b47f64993f79795521a1b1, type: 2}
+  buffMagnet: {fileID: 4096775222194903361}
   IsVisible: 0
 --- !u!114 &-7381795805903229388
 MonoBehaviour:
@@ -181,7 +182,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 504d95517b0aa2c4c884574d25d9b8ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  abilityMode: 0
   cooldown: 0
+  toggleMaximumTime: 3
+  toggleTimeCostPerSecond: 1
+  toggleRechargeStartTime: 0
+  toggleRechargeDuration: 3
+  toggleTimeRemaining: 3
+  maxCharges: 1
+  currentCharges: 1
   owner: {fileID: 3190795294016698373}
   tailPrefab: {fileID: 3387013190401639, guid: 87dedaf2c39668546a3e4ec8bc4c3538, type: 3}
   tailSpacing: 0.5
@@ -248,6 +257,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
   hitboxColliders: []
   autoCollectRootColliders: 1
+  autoCollectChildColliders: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0
@@ -299,6 +309,8 @@ MonoBehaviour:
   affectedLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  magnetRadius: 1
+  attractionRadius: 3
   forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:
@@ -334,8 +346,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 3
+  m_Offset: {x: 0, y: 0.3}
+  m_Radius: 1
 --- !u!50 &8533276931526591285
 Rigidbody2D:
   serializedVersion: 5

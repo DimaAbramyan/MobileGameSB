@@ -1,169 +1,183 @@
-using System.Collections;
-
+using System;
 using System.Collections.Generic;
-using UnityEngine;
-using System.Transactions;
-using JetBrains.Annotations;
 using System.Linq;
-using Zenject;
+using UnityEngine;
+
 public class ShipSelect : MonoBehaviour
 {
-    PlayerController playerRB;
-    ParentShip allShips;
-    public event System.Action<int> OnShipChanged;
-    class ShipVisual
+    private PlayerController playerController;
+    private readonly List<ShipVisual> shipVisuals = new List<ShipVisual>();
+    private readonly HashSet<ParentShip> defeatedShips = new HashSet<ParentShip>();
+
+    public event Action<int> OnShipChanged;
+
+    private sealed class ShipVisual
     {
-        int number;
-        int id;
-        SpriteRenderer sprite;
-        Collider2D collider;
-        List<Weapon> weapons;
-        public ShipVisual(int number,  int id, SpriteRenderer sprite, Collider2D collider, List<Weapon> weapons)
+        public ParentShip Ship { get; }
+        private readonly SpriteRenderer sprite;
+        private readonly Collider2D collider;
+        private readonly List<Weapon> weapons;
+
+        public ShipVisual(ParentShip ship)
         {
-            this.number = number;
-            this.id = id;
-            this.sprite = sprite;
-            this.collider = collider;
-            this.weapons = weapons;
+            Ship = ship;
+            sprite = ship.GetComponent<SpriteRenderer>();
+            collider = ship.GetComponent<Collider2D>();
+            weapons = ship.GetComponentsInChildren<Weapon>(true).ToList();
         }
-        public int GetId()
+
+        public void Hide()
         {
-            return id;
-        }
-        public void HideShip()
-        {
-            sprite.enabled = false;
-            collider.enabled = false;
-            foreach (var item in weapons)
+            if (sprite != null)
+                sprite.enabled = false;
+            if (collider != null)
+                collider.enabled = false;
+
+            foreach (Weapon weapon in weapons)
             {
-                item.gameObject.SetActive(false);
+                if (weapon != null)
+                    weapon.gameObject.SetActive(false);
             }
         }
-        public void ShowShip()
+
+        public void Show()
         {
-            sprite.enabled = true;
-            collider.enabled = true;
-            foreach (var item in weapons)
+            if (sprite != null)
+                sprite.enabled = true;
+            if (collider != null)
+                collider.enabled = true;
+
+            foreach (Weapon weapon in weapons)
             {
-                item.gameObject.SetActive(true);
+                if (weapon != null)
+                    weapon.gameObject.SetActive(true);
             }
-        }
-        public void PrintInfo()
-        {
-            Debug.Log(
-                $"ShipVisual info:\n" +
-                $"Number: {number}\n" +
-                $"Id: {id}\n" +
-                $"Sprite: {(sprite != null ? sprite.name : "NULL")}\n" +
-                $"Collider: {(collider != null ? collider.GetType().Name : "NULL")}\n" +
-                $"Weapons count: {(weapons != null ? weapons.Count : 0)}"
-            );
         }
     }
 
-
-    List<ShipVisual> shipsVisual = new List<ShipVisual>();
-
-    void Awake()
+    private void Awake()
     {
-        playerRB ??= GetComponent<PlayerController>();
+        playerController = GetComponent<PlayerController>();
     }
 
     public void InitializeShips()
     {
-        playerRB ??= GetComponent<PlayerController>();
-        shipsVisual.Clear();
-        CollectInfoAboutShips();
+        playerController ??= GetComponent<PlayerController>();
+        shipVisuals.Clear();
+        defeatedShips.Clear();
 
-        if (shipsVisual.Count == 0)
+        foreach (ParentShip ship in GetComponentsInChildren<ParentShip>(true))
+            shipVisuals.Add(new ShipVisual(ship));
+
+        List<ParentShip> availableShips = GetAvailableShips();
+        if (availableShips.Count == 0)
         {
             Debug.LogError("ShipSelect cannot initialize: no player ships were created.");
             return;
         }
 
-        InitFirstShip();
-    }
-    public void OnEnable()
-    {
-        
-    }
-    public void OnDisable()
-    {
-
-    }
-    void CollectInfoAboutShips()
-    {
-        int i = 0;
-        List<ParentShip> ships = GetComponentsInChildren<ParentShip>(true).ToList();
-        foreach (ParentShip ship in ships)
+        foreach (ParentShip ship in availableShips)
         {
-            shipsVisual.Add(new ShipVisual(i, ship.ShipData.shipId, ship.GetComponent<SpriteRenderer>(), ship.GetComponent<Collider2D>(), ship.GetComponentsInChildren<Weapon>().ToList()));
-            shipsVisual[i].PrintInfo();
-            i++;
-        }
-    }
-    public void InitFirstShip()
-    {
-        int i = 0;
-        foreach (Transform child in transform)
-        {
-            ParentShip ship = child.GetComponent<ParentShip>();
-            if (ship == null)
-                continue;
-
-            WeaponController weaponController = child.GetComponent<WeaponController>();
+            WeaponController weaponController = ship.GetComponent<WeaponController>();
             if (weaponController == null)
             {
-                Debug.LogError($"WeaponController is missing on ship {ship.name}.");
+                Debug.LogError($"WeaponController is missing on ship {ship.name}.", ship);
                 continue;
             }
 
             weaponController.Init(ship);
-            if (i == 0)
-            {
-                OnShipChanged?.Invoke(ship.GetLevel());
-                playerRB.ChangeShipData(ship);
-                shipsVisual[i].ShowShip();
-                ship.ShowShip();
-                weaponController.ShowWeapons();
-            }
-            else
-            {
-                shipsVisual[i].HideShip();
-                ship.HideShip();
-                weaponController.HideWeapons();
-            }
-            i++;
         }
+
+        ActivateShip(availableShips[0]);
     }
+
     public void SwitchShip()
     {
-        if (playerRB != null && playerRB.ShipSwitchLocked)
+        if (playerController == null || playerController.ShipSwitchLocked)
             return;
 
-        WeaponController controller = null;
-        int i = 0;
+        List<ParentShip> availableShips = GetAvailableShips();
+        if (availableShips.Count < 2)
+            return;
+
+        int currentIndex = availableShips.IndexOf(playerController.CurrentShip);
+        int nextIndex = currentIndex < 0
+            ? 0
+            : (currentIndex + 1) % availableShips.Count;
+        ActivateShip(availableShips[nextIndex]);
+    }
+
+    public int LevelUpAllShips()
+    {
+        int upgradedShips = 0;
+        foreach (ParentShip ship in GetAvailableShips())
+        {
+            int levelBefore = ship.GetLevel();
+            ship.LevelUp();
+            if (ship.GetLevel() > levelBefore)
+                upgradedShips++;
+        }
+
+        return upgradedShips;
+    }
+
+    public bool HandleShipDeath(ParentShip ship)
+    {
+        if (ship == null)
+            return false;
+
+        defeatedShips.Add(ship);
+        GetShipVisual(ship)?.Hide();
+        ship.HideShip();
+        ship.GetComponent<WeaponController>()?.HideWeapons();
+
+        if (playerController == null || playerController.CurrentShip != ship)
+            return playerController != null && playerController.CurrentShip != null;
+
+        List<ParentShip> availableShips = GetAvailableShips();
+        if (availableShips.Count == 0)
+            return false;
+
+        ActivateShip(availableShips[0]);
+        return true;
+    }
+
+    private List<ParentShip> GetAvailableShips()
+    {
+        List<ParentShip> availableShips = new List<ParentShip>();
         foreach (Transform child in transform)
         {
             ParentShip ship = child.GetComponent<ParentShip>();
-            if (ship == null)
+            if (ship == null || defeatedShips.Contains(ship))
                 continue;
-            if (!ship.IsVisible)
-            {
-                OnShipChanged?.Invoke(ship.GetLevel());
-                playerRB.ChangeShipData(ship);
-                shipsVisual[i].ShowShip();
-                ship.ShowShip();
-                controller = ship.GetComponent<WeaponController>();
-            }
-            else
-            { 
-                shipsVisual[i].HideShip();
-                ship.HideShip();
-                ship.GetComponent<WeaponController>().HideWeapons();
-            }
-            i++;
+
+            availableShips.Add(ship);
         }
-        controller?.ShowWeapons();
+
+        return availableShips;
+    }
+
+    private void ActivateShip(ParentShip ship)
+    {
+        foreach (ParentShip otherShip in GetAvailableShips())
+        {
+            if (otherShip == ship)
+                continue;
+
+            GetShipVisual(otherShip)?.Hide();
+            otherShip.HideShip();
+            otherShip.GetComponent<WeaponController>()?.HideWeapons();
+        }
+
+        GetShipVisual(ship)?.Show();
+        ship.ShowShip();
+        ship.GetComponent<WeaponController>()?.ShowWeapons();
+        playerController.ChangeShipData(ship);
+        OnShipChanged?.Invoke(ship.GetLevel());
+    }
+
+    private ShipVisual GetShipVisual(ParentShip ship)
+    {
+        return shipVisuals.FirstOrDefault(visual => visual.Ship == ship);
     }
 }

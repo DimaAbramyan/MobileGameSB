@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Laser
   m_EditorClassIdentifier: 
   reloadTimeByLevel:
-  - 2
-  - 2
-  - 2
-  - 2
-  - 2
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
   angleByLevel:
   - 0
   - 0
@@ -25,28 +25,151 @@ MonoBehaviour:
   - 0
   - 0
   damageByLevel:
-  - 75
-  - 75
-  - 75
-  - 75
-  - 75
+  - 13
+  - 13
+  - 13
+  - 13
+  - 13
   rangeByLevel:
-  - 0
-  - 0
-  - 0
-  - 0
-  - 0
+  - 20
+  - 20
+  - 20
+  - 20
+  - 20
   speedByLevel:
   - 0
   - 0
   - 0
   - 0
   - 0
-  startLevel: 0
-  maxLevel: 4
+  levelConfigs:
+  - reloadTime: 0.2
+    angle: 0
+    damage: 30
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 33
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 36
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 40
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 43
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 46
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 50
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 53
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 56
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 60
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.2
+    angle: 0
+    damage: 70
+    range: 20
+    speed: 0
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  startLevel: 1
+  maxLevel: 10
   energyCost: 2
+  damageType: 1
   flightMode: 0
-  contactMode: 1
+  contactMode: 0
   homingRotationSpeed: 360
   growDuringFlight: 0
   scaleGrowthPerSecond: {x: 0.5, y: 0.5}

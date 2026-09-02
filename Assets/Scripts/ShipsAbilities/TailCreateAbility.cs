@@ -30,11 +30,11 @@ public class TailCreateAbility : ActiveAbility
 
     public override bool Activate(ParentShip owner)
     {
-        if (owner == null || owner.GetLevel() < 4 || tailPrefab == null)
+        if (owner == null || !owner.IsWeaponLevelMax || tailPrefab == null)
             return false;
 
         parentShip ??= owner;
-        owner.SetLevel(0);
+        owner.SetLevel(ParentShip.MinWeaponLevel);
 
         Transform followTarget = createdTails.Count == 0
             ? owner.transform
