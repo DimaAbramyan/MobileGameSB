@@ -6,6 +6,17 @@ public class BlackHolePassive : PassiveAbility
 {
     List<EnemyProjectile> enemyProjectiles;
     float maxLenght = 3;
+    private float minimumProjectileSpeedMultiplier = 0.1f;
+
+    public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
+    {
+        if (!stats.TryGetContract(out BlackHoleShipMetaContract contract))
+            return;
+
+        maxLenght = contract.ProjectileSlowRadius;
+        minimumProjectileSpeedMultiplier =
+            contract.MinimumProjectileSpeedMultiplier;
+    }
     public void Awake()
     {
         enemyProjectiles = new List<EnemyProjectile>();
@@ -54,6 +65,6 @@ public class BlackHolePassive : PassiveAbility
 
         float normalized = Mathf.Clamp01(distance / maxLenght);
 
-        return Mathf.Max(0.1f, normalized);
+        return Mathf.Max(minimumProjectileSpeedMultiplier, normalized);
     }
 }

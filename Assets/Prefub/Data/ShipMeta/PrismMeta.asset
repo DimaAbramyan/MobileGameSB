@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b1941e8f9e38343906f546321083a9, type: 3}
+  m_Name: PrismMeta
+  m_EditorClassIdentifier: Assembly-CSharp::ShipMetaConfig
+  sourceShipData: {fileID: 11400000, guid: 3edd1cc81d6ff5e4daab851add89ec60, type: 2}
+  sourceHullPrefab: {fileID: 8325040916063848254, guid: 8e541a7bad5cd914e8947b236e3c6f91, type: 3}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      maximumHealthPoints: 50
+      maximumShieldPoints: 50
+      healthRegenRatePercent: 5
+      shieldRegenRatePercent: 5
+      speed: 300
+      maximumEnergy: 20
+    contracts:
+    - rid: 3397718835116900444
+    - rid: 3397718835116900445
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718835116900444
+      type: {class: AbilityRecoveryShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        abilityMode: 0
+        cooldown: 12
+        maxCharges: 1
+        toggleMaximumTime: 3
+        toggleTimeCostPerSecond: 1
+        toggleRechargeStartTime: 0
+        toggleRechargeDuration: 3
+    - rid: 3397718835116900445
+      type: {class: PrismShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        beamDamage: 150
+        beamDamageBonusPercent: 15
+        energyDamageBonusPercent: 10

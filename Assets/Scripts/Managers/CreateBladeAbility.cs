@@ -5,12 +5,13 @@ using System.Collections;
 public class CreateBladeAbility : ActiveAbility
 {
     [SerializeField] private GameObject blade;
-    [SerializeField, Min(0.05f)] private float recordingDuration = 1f;
-    [SerializeField] private float sampleInterval = 0.1f;
-    [SerializeField] private float bladeWidth = 0.45f;
-    [SerializeField] private float bladeSpeed = 12f;
-    [SerializeField] private float bladeDamage = 50f;
-    [SerializeField] private float bladeLifetime = 4f;
+    [SerializeField, HideInInspector, Min(0.05f)]
+    private float recordingDuration = 1f;
+    [SerializeField, HideInInspector] private float sampleInterval = 0.1f;
+    [SerializeField, HideInInspector] private float bladeWidth = 0.45f;
+    [SerializeField, HideInInspector] private float bladeSpeed = 12f;
+    [SerializeField, HideInInspector] private float bladeDamage = 50f;
+    [SerializeField, HideInInspector] private float bladeLifetime = 4f;
     [SerializeField] private int previewSortingOrder = 19;
 
     private readonly List<Vector2> savedPoints = new();
@@ -18,6 +19,20 @@ public class CreateBladeAbility : ActiveAbility
     private LineRenderer previewLine;
     private ParentShip intangibleOwner;
     private WeaponController suppressedWeaponController;
+
+    protected override void ApplySpecificShipMetaStats(
+        ShipMetaRuntimeStats stats)
+    {
+        if (!stats.TryGetContract(out BladeShipMetaContract contract))
+            return;
+
+        recordingDuration = contract.RecordingDuration;
+        sampleInterval = contract.SampleInterval;
+        bladeWidth = contract.Width;
+        bladeSpeed = contract.Speed;
+        bladeDamage = contract.Damage;
+        bladeLifetime = contract.Lifetime;
+    }
 
     public override bool Activate(ParentShip owner)
     {

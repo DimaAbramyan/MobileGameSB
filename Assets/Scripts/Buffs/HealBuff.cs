@@ -33,4 +33,10 @@ public class HealBuff : Buff
     {
         this.health = health;
     }
+
+    public override bool CanBeSelectedForDrop(ParentShip player)
+    {
+        return player != null
+            && player.CurrentHealthPoints < player.MaximumHealthPoints;
+    }
 }

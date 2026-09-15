@@ -26,7 +26,7 @@ MonoBehaviour:
     requiredPlayerLevel: 1
     requiredCompletedLevel: {fileID: 0}
     conditionId: 
-  isStarterUnlocked: 0
+  isStarterUnlocked: 1
   maxUpgradeLevel: 4
   upgradePrices: []
   data: {fileID: 11400000, guid: f5381448eb2f425bbad0b73e160f29fc, type: 2}

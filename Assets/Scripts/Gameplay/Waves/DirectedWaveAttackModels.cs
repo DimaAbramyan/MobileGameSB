@@ -13,7 +13,9 @@ public enum DirectedWaveAttackFireMode
 {
     Aimed,
     Forward,
-    None
+    None,
+    [InspectorName("Forward When Player Ahead")]
+    ForwardWhenPlayerAhead
 }
 
 public enum DirectedWaveAttackMovementMode
@@ -51,7 +53,7 @@ public enum DirectedWaveBurstSettingsSource
 [System.Serializable]
 public sealed class DirectedWaveAttackSettings
 {
-    private const int CurrentSerializedVersion = 10;
+    private const int CurrentSerializedVersion = 11;
 
     // Kept to preserve already serialized wave prefabs. The component's enabled
     // state now determines whether post-formation attacks run.
@@ -69,6 +71,9 @@ public sealed class DirectedWaveAttackSettings
     [Header("Attack")]
     [SerializeField] private DirectedWaveAttackFireMode fireMode =
         DirectedWaveAttackFireMode.Aimed;
+    [SerializeField, Range(0f, 180f), Tooltip(
+        "Half-angle of the forward sector. The enemy fires only when the player is within this many degrees of transform up.")]
+    private float forwardFireHalfAngle = 15f;
 
     [Header("Movement")]
     [SerializeField] private DirectedWaveAttackMovementMode movementMode =
@@ -165,7 +170,12 @@ public sealed class DirectedWaveAttackSettings
     public DirectedWaveAttackMovementMode MovementMode => movementMode;
     public bool RequiresPlayerTarget =>
         fireMode == DirectedWaveAttackFireMode.Aimed
+        || fireMode == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead
         || UsesDiveMovement;
+    public float ForwardFireHalfAngle => Mathf.Clamp(
+        forwardFireHalfAngle,
+        0f,
+        180f);
     public bool MovesToPlayer =>
         movementMode == DirectedWaveAttackMovementMode.MoveToPlayer;
     public bool UsesFlyThroughDive =>
@@ -214,6 +224,27 @@ public sealed class DirectedWaveAttackSettings
     public bool AllowsConcurrentMovements =>
         diveSchedulingMode == DirectedWaveDiveSchedulingMode.StartNextWhileReturning;
 
+    public bool IsPlayerInForwardFireSector(
+        Vector3 enemyPosition,
+        Vector2 forwardDirection,
+        Vector3 playerPosition)
+    {
+        Vector2 directionToPlayer = new(
+            playerPosition.x - enemyPosition.x,
+            playerPosition.y - enemyPosition.y);
+        if (directionToPlayer.sqrMagnitude < 0.0001f)
+            return true;
+
+        if (forwardDirection.sqrMagnitude < 0.0001f)
+            return false;
+
+        float minimumDot = Mathf.Cos(
+            ForwardFireHalfAngle * Mathf.Deg2Rad);
+        return Vector2.Dot(
+            forwardDirection.normalized,
+            directionToPlayer.normalized) >= minimumDot;
+    }
+
     public float GetRandomDiveDepth()
     {
         return Random.Range(
@@ -239,6 +270,7 @@ public sealed class DirectedWaveAttackSettings
         useAttackStartDelay = source.useAttackStartDelay;
         attackStartDelay = source.attackStartDelay;
         fireMode = source.fireMode;
+        forwardFireHalfAngle = source.forwardFireHalfAngle;
         movementMode = source.movementMode;
         attacksPerEnemyPerCycle = source.attacksPerEnemyPerCycle;
         attacksPerSecond = source.attacksPerSecond;
@@ -291,6 +323,7 @@ public sealed class DirectedWaveAttackSettings
         attacksPerEnemyPerCycle = Mathf.Max(1, attacksPerEnemyPerCycle);
         attacksPerSecond = Mathf.Max(0.01f, attacksPerSecond);
         attackStartDelay = Mathf.Max(0f, attackStartDelay);
+        forwardFireHalfAngle = Mathf.Clamp(forwardFireHalfAngle, 0f, 180f);
         delayAfterAttack = Mathf.Max(0f, delayAfterAttack);
         enemyAttackCooldown = Mathf.Max(0f, enemyAttackCooldown);
         waveBurstSettings ??= new EnemyBurstAttackSettings();
@@ -405,6 +438,8 @@ public sealed class DirectedWaveAttackSettings
                 overrideEnemyAttackCooldown = false;
                 enemyAttackCooldown = 1f;
             }
+            if (serializedVersion < 11)
+                forwardFireHalfAngle = 15f;
             serializedVersion = CurrentSerializedVersion;
         }
     }

@@ -5,7 +5,8 @@ using UnityEngine;
 public enum WaveBuffDropStat
 {
     PlayerHealthPercent,
-    WeaponLevel
+    WeaponLevel,
+    TeamAbilityRecoveryNeed
 }
 
 public enum WaveBuffDropComparison
@@ -23,7 +24,9 @@ public sealed class WaveBuffDropWeightModifier
     [SerializeField, HideInInspector, Min(0f)] private float threshold = 0.5f;
     [SerializeField, HideInInspector, Min(0f)] private float weightMultiplier = 1f;
     [SerializeField, Tooltip(
-        "X is player health from 0 to 1, or weapon level. Y multiplies this reward's base weight.")]
+        "X is player health from 0 to 1, weapon level, or the team's missing ability recovery resources. "
+        + "A regular cooldown is 1; 2 missing charges out of 4 are 0.5. "
+        + "Y multiplies this reward's base weight.")]
     private AnimationCurve weightMultiplierCurve;
 
     public float Apply(
@@ -31,9 +34,22 @@ public sealed class WaveBuffDropWeightModifier
         float playerHealthPercent,
         int weaponLevel)
     {
-        float value = stat == WaveBuffDropStat.PlayerHealthPercent
-            ? playerHealthPercent
-            : weaponLevel;
+        return Apply(weight, playerHealthPercent, weaponLevel, 0f);
+    }
+
+    public float Apply(
+        float weight,
+        float playerHealthPercent,
+        int weaponLevel,
+        float teamAbilityRecoveryNeed)
+    {
+        float value = stat switch
+        {
+            WaveBuffDropStat.PlayerHealthPercent => playerHealthPercent,
+            WaveBuffDropStat.TeamAbilityRecoveryNeed =>
+                Mathf.Max(0f, teamAbilityRecoveryNeed),
+            _ => weaponLevel
+        };
 
         return weight * EvaluateWeightMultiplier(value);
     }
@@ -170,6 +186,14 @@ public sealed class WaveBuffDropWeight
         float playerHealthPercent,
         int weaponLevel)
     {
+        return Evaluate(playerHealthPercent, weaponLevel, 0f);
+    }
+
+    public float Evaluate(
+        float playerHealthPercent,
+        int weaponLevel,
+        float teamAbilityRecoveryNeed)
+    {
         float weight = Mathf.Max(0f, baseWeight);
         if (modifiers == null)
             return weight;
@@ -182,7 +206,8 @@ public sealed class WaveBuffDropWeight
                 weight = modifier.Apply(
                     weight,
                     playerHealthPercent,
-                    weaponLevel);
+                    weaponLevel,
+                    teamAbilityRecoveryNeed);
             }
         }
 
@@ -200,7 +225,20 @@ public sealed class WaveBuffDropWeightProfile : ScriptableObject
 
     public WaveBuffDropRuntimeWeights CreateRuntimeWeights(ParentShip player)
     {
-        return new WaveBuffDropRuntimeWeights(weights, player);
+        float abilityRecoveryNeed = player != null
+            ? player.AbilityRecoveryNeed
+            : 0f;
+        return CreateRuntimeWeights(player, abilityRecoveryNeed);
+    }
+
+    public WaveBuffDropRuntimeWeights CreateRuntimeWeights(
+        ParentShip player,
+        float teamAbilityRecoveryNeed)
+    {
+        return new WaveBuffDropRuntimeWeights(
+            weights,
+            player,
+            teamAbilityRecoveryNeed);
     }
 
     private void OnValidate()
@@ -222,6 +260,17 @@ public sealed class WaveBuffDropRuntimeWeights
     public WaveBuffDropRuntimeWeights(
         IReadOnlyList<WaveBuffDropWeight> sourceWeights,
         ParentShip player)
+        : this(
+            sourceWeights,
+            player,
+            player != null ? player.AbilityRecoveryNeed : 0f)
+    {
+    }
+
+    public WaveBuffDropRuntimeWeights(
+        IReadOnlyList<WaveBuffDropWeight> sourceWeights,
+        ParentShip player,
+        float teamAbilityRecoveryNeed)
     {
         int sourceCount = sourceWeights != null ? sourceWeights.Count : 0;
         rewardPrefabs = new Buff[sourceCount];
@@ -233,12 +282,15 @@ public sealed class WaveBuffDropRuntimeWeights
         for (int i = 0; i < sourceCount; i++)
         {
             WaveBuffDropWeight sourceWeight = sourceWeights[i];
-            if (sourceWeight == null || sourceWeight.RewardPrefab == null)
-                continue;
+            if (sourceWeight == null
+                || sourceWeight.RewardPrefab == null
+                || !sourceWeight.RewardPrefab.CanBeSelectedForDrop(player))
+            continue;
 
             float weight = sourceWeight.Evaluate(
                 playerHealthPercent,
-                weaponLevel);
+                weaponLevel,
+                teamAbilityRecoveryNeed);
             if (weight <= 0f)
                 continue;
 

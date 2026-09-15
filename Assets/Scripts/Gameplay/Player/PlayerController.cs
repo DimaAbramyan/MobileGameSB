@@ -25,16 +25,20 @@ public class PlayerController : MonoBehaviour
     private int movementTouchId = -1;
     private float controlsLockedUntil;
     private float shipSwitchLockedUntil;
+    private float metalDropMultiplier = 1f;
+    private float metalDropMultiplierUntil;
+    [SerializeField] private PlayerEffectController effectController;
     ShipSelect shipSelect;
 
     public bool ControlsLocked => Time.time < controlsLockedUntil;
     public bool ShipSwitchLocked => Time.time < shipSwitchLockedUntil;
+    public PlayerEffectController Effects => EnsureEffectController();
 
     void Awake()
     {
         playerRB = GetComponent<Rigidbody2D>();
         shipSelect = GetComponent<ShipSelect>();
-        
+        EnsureEffectController();
     }
 
     private void FixedUpdate()
@@ -65,6 +69,20 @@ public class PlayerController : MonoBehaviour
 
         activeTouchId = -1;
         movementTouchId = -1;
+    }
+
+    public void ApplyControlLoss(ParentShip owner, float duration)
+    {
+        if (owner == null || duration <= 0f)
+            return;
+
+        Effects.ApplyOrRefresh(
+            PlayerEffectType.ControlLoss,
+            PlayerEffectPolarity.Negative,
+            PlayerEffectScope.SingleShip,
+            owner,
+            duration);
+        LockControls(duration);
     }
 
     public void LockShipSwitching(float duration)
@@ -184,7 +202,7 @@ public class PlayerController : MonoBehaviour
 
         playerRB.mass = currShip.ShipData.mass;
         playerRB.linearDamping = currShip.ShipData.drag;
-        speed = currShip.ShipData.speed;
+        speed = currShip.ShipData.MetaSpeed;
 
         OnCurrentShipChanged?.Invoke(currentShip);
     }
@@ -201,5 +219,128 @@ public class PlayerController : MonoBehaviour
     public bool HandleShipDeath(ParentShip ship)
     {
         return shipSelect != null && shipSelect.HandleShipDeath(ship);
+    }
+
+    public void MultiplyTeamMagnetRadiusForSeconds(
+        float multiplier,
+        float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+            return;
+
+        Effects.ApplyOrRefresh(
+            PlayerEffectType.TeamMagnetBoost,
+            PlayerEffectPolarity.Positive,
+            PlayerEffectScope.Team,
+            null,
+            duration);
+        shipSelect?.ForEachAvailableShip(ship =>
+            ship.MultiplyMagnetRadiusForSeconds(multiplier, duration));
+    }
+
+    public void SetTeamDamageInvulnerableForSeconds(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        Effects.ApplyOrRefresh(
+            PlayerEffectType.TeamInvulnerability,
+            PlayerEffectPolarity.Positive,
+            PlayerEffectScope.Team,
+            null,
+            duration);
+        shipSelect?.ForEachAvailableShip(ship =>
+            ship.SetDamageInvulnerableForSeconds(duration));
+    }
+
+    public void MultiplyTeamFireRateForSeconds(
+        float multiplier,
+        float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+            return;
+
+        Effects.ApplyOrRefresh(
+            PlayerEffectType.TeamFireRate,
+            PlayerEffectPolarity.Positive,
+            PlayerEffectScope.Team,
+            null,
+            duration);
+        shipSelect?.ForEachAvailableShip(ship =>
+        {
+            WeaponController weaponController =
+                ship.GetComponent<WeaponController>();
+            weaponController?.ActivateFireRateMultiplier(multiplier, duration);
+        });
+    }
+
+    public float GetTeamAbilityRecoveryNeed()
+    {
+        float recoveryNeed = 0f;
+        shipSelect?.ForEachAvailableShip(ship =>
+            recoveryNeed += ship.AbilityRecoveryNeed);
+        return recoveryNeed;
+    }
+
+    public bool RestoreTeamAbilityRecoveryResources()
+    {
+        bool restoredAnyResource = false;
+        shipSelect?.ForEachAvailableShip(ship =>
+        {
+            if (ship.RestoreAbilityRecoveryResources())
+                restoredAnyResource = true;
+        });
+
+        if (restoredAnyResource)
+        {
+            Effects.RecordInstant(
+                PlayerEffectType.AbilityCooldownReset,
+                PlayerEffectPolarity.Positive,
+                PlayerEffectScope.Team);
+        }
+
+        return restoredAnyResource;
+    }
+
+    public void MultiplyMetalDropsForSeconds(float multiplier, float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+            return;
+
+        Effects.ApplyOrRefresh(
+            PlayerEffectType.TeamMetalDropBoost,
+            PlayerEffectPolarity.Positive,
+            PlayerEffectScope.Team,
+            null,
+            duration);
+
+        bool hasActiveMultiplier = Time.time < metalDropMultiplierUntil;
+        metalDropMultiplier = hasActiveMultiplier
+            ? Mathf.Max(metalDropMultiplier, multiplier)
+            : multiplier;
+        metalDropMultiplierUntil = Mathf.Max(
+            metalDropMultiplierUntil,
+            Time.time + duration);
+    }
+
+    public int GetModifiedMetalDropAmount(int baseAmount)
+    {
+        if (baseAmount <= 0)
+            return 0;
+
+        float multiplier = Time.time < metalDropMultiplierUntil
+            ? metalDropMultiplier
+            : 1f;
+        return Mathf.Max(1, Mathf.CeilToInt(baseAmount * multiplier));
+    }
+
+    private PlayerEffectController EnsureEffectController()
+    {
+        if (effectController == null)
+            effectController = GetComponent<PlayerEffectController>();
+        if (effectController == null)
+            effectController = gameObject.AddComponent<PlayerEffectController>();
+
+        return effectController;
     }
 }

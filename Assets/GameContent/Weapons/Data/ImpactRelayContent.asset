@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e9d343bf1af68a4c8d8262a42aded13, type: 3}
+  m_Name: ImpactRelayContent
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponContentDefinition
+  id: impact-relay
+  displayName: Impact Relay
+  passiveAbilityDescription: 
+  activeAbilityDescription: 
+  icon: {fileID: 21300000, guid: 48a0279687ba6764f84b94784c732d37, type: 3}
+  prefab: {fileID: 3783366818579219487, guid: 34ec5eacb1c28f34386db3828cd7902b, type: 3}
+  rarity: 0
+  purchasePrice: 0
+  purchaseCoresPrice: 0
+  unlockRequirement:
+    type: 0
+    requiredPlayerLevel: 1
+    requiredCompletedLevel: {fileID: 0}
+    conditionId: 
+  isStarterUnlocked: 1
+  maxUpgradeLevel: 1
+  upgradePrices: []
+  data: {fileID: 11400000, guid: ea82368b7a456e741884a6aa41b482e7, type: 2}
+  requiredPlatformTier: 1

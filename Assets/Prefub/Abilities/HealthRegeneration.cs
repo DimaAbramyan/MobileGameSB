@@ -6,6 +6,7 @@ public class HealthRegeneration : MonoBehaviour
     private float healthRegenCooldown;
     float healthRegenRate;
     private float lastDamageTime;
+    private bool isRegenerating;
 
     private bool CanRegenerate => Time.time - lastDamageTime >= healthRegenCooldown;
 
@@ -18,8 +19,8 @@ public class HealthRegeneration : MonoBehaviour
             return;
         }
 
-        healthRegenCooldown = parentShip.ShipData.shieldRegenCooldown;
-        healthRegenRate = parentShip.ShipData.shieldRegenRate;
+        healthRegenCooldown = parentShip.ShipData.HealthRegenCooldown;
+        healthRegenRate = parentShip.ShipData.HealthRegenRatePercent;
 
         parentShip.OnDamagePipeline += OnDamageTaken;
     }
@@ -27,18 +28,51 @@ public class HealthRegeneration : MonoBehaviour
     private float OnDamageTaken(float damage)
     {
         lastDamageTime = Time.time;
+        isRegenerating = false;
         return damage;
     }
 
     private void Update()
     {
-        if (parentShip == null) return;
+        if (parentShip == null)
+            return;
 
-        if (!CanRegenerate) return;
+        if (!CanRegenerate)
+        {
+            isRegenerating = false;
+            return;
+        }
 
-        if (parentShip.IsVisible) return;
+        if (parentShip.IsVisible)
+        {
+            isRegenerating = false;
+            return;
+        }
 
-        parentShip.HealHealth(healthRegenRate * Time.deltaTime);
+        if (healthRegenRate <= 0f
+            || parentShip.CurrentHealthPoints >= parentShip.MaximumHealthPoints)
+        {
+            isRegenerating = false;
+            return;
+        }
+
+        if (!isRegenerating)
+        {
+            isRegenerating = true;
+            parentShip.NotifyHealthRegenerationStarted();
+        }
+
+        float restoredHealth = parentShip.MaximumHealthPoints
+            * healthRegenRate
+            / 100f
+            * Time.deltaTime;
+        parentShip.HealHealth(restoredHealth);
+
+        if (parentShip.CurrentHealthPoints < parentShip.MaximumHealthPoints)
+            return;
+
+        isRegenerating = false;
+        parentShip.NotifyHealthFullyRegenerated();
     }
 
     private void OnDestroy()

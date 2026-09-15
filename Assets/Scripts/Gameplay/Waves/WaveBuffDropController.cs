@@ -38,11 +38,10 @@ public sealed class WaveBuffDropController : MonoBehaviour
             int enemyCount = Mathf.Max(
                 0,
                 subWave.GetRewardEligibleEnemyCount());
+            subWaveController.PrepareForWave(enemyCount, this);
             int capacity = Mathf.Min(
                 enemyCount,
                 subWaveController.MaxBuffs);
-
-            subWaveController.PrepareForWave(enemyCount);
             for (int slot = 0; slot < capacity; slot++)
                 availableSlots.Add(subWaveController);
         }
@@ -77,37 +76,36 @@ public sealed class WaveBuffDropController : MonoBehaviour
         }
 
         int buffCount = Random.Range(requestedMin, requestedMax + 1);
-        ParentShip player = playerController != null
-            ? playerController.CurrentShip
-            : null;
-        WaveBuffDropRuntimeWeights runtimeWeights =
-            weightProfile.CreateRuntimeWeights(player);
-
         for (int i = 0; i < buffCount; i++)
         {
-            if (!runtimeWeights.TryPick(out Buff rewardPrefab))
-            {
-                Debug.LogWarning(
-                    $"{nameof(WaveBuffDropController)} on {name} could not "
-                    + "select a reward. Check the weight profile.",
-                    this);
-                break;
-            }
-
             int slotIndex = Random.Range(0, availableSlots.Count);
             SubWaveBuffDropController targetSubWave =
                 availableSlots[slotIndex];
             availableSlots[slotIndex] = availableSlots[availableSlots.Count - 1];
             availableSlots.RemoveAt(availableSlots.Count - 1);
-
-            if (!targetSubWave.TryAssignReward(rewardPrefab))
-            {
-                Debug.LogWarning(
-                    $"{nameof(SubWaveBuffDropController)} on "
-                    + $"{targetSubWave.name} rejected a planned reward.",
-                    targetSubWave);
-            }
+            targetSubWave.ReserveDropSlot();
         }
+    }
+
+    internal bool TrySelectReward(out Buff rewardPrefab)
+    {
+        rewardPrefab = null;
+        if (weightProfile == null)
+            return false;
+
+        ParentShip player = playerController != null
+            ? playerController.CurrentShip
+            : null;
+        WaveBuffDropRuntimeWeights runtimeWeights =
+            weightProfile.CreateRuntimeWeights(
+                player,
+                playerController != null
+                    ? playerController.GetTeamAbilityRecoveryNeed()
+                    : 0f);
+        if (!runtimeWeights.TryPick(out rewardPrefab))
+            return false;
+
+        return true;
     }
 
     private void OnValidate()

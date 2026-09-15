@@ -8,6 +8,7 @@ public class ParentShip : MonoBehaviour, iDamagable
 {
     public const int MinWeaponLevel = 1;
     public const int MaxWeaponLevel = 10;
+    private const float HitInvulnerabilityDuration = 0.5f;
 
     [Inject] SoundManager soundManager;
     [Inject] AudioDatabase audioDatabase;
@@ -29,16 +30,29 @@ public class ParentShip : MonoBehaviour, iDamagable
     private int currentLevel;
     private float currentShieldPoints;
     private float currentHealthPoints;
+    private float damageInvulnerableUntil;
 
     public float MaximumHealthPoints { get; private set; }
     public float MaximumShieldPoints { get; private set; }
     public ActiveAbility ActiveAbility => activeAbility;
+    public PassiveAbility PassiveAbility => passiveAbility;
+    public float AbilityRecoveryNeed => activeAbility != null
+        ? activeAbility.RecoveryNeed
+        : 0f;
     public bool IsIntangible =>
         intangibleState != null && intangibleState.IsActive;
+    public bool IsDamageInvulnerable =>
+        Time.time < damageInvulnerableUntil;
 
     #region Events
-    public event Action<float> OnShieldChanged;
     public event Action<float> OnHealthChanged;
+    public event Action<float> OnShieldChanged;
+    public event Action OnHealthRegenerationStarted;
+    public event Action OnShieldRegenerationStarted;
+    public event Action OnHealthFullyRegenerated;
+    public event Action OnShieldFullyRegenerated;
+    public event Action<float> OnDamageTaken;
+    public event Action OnDied;
 
     public event Action<int> OnLevelChanged;
     public event Func<float, float> OnHealOverflow;
@@ -81,11 +95,16 @@ public class ParentShip : MonoBehaviour, iDamagable
         EnsureIntangibleState();
         EnsureBuffMagnet();
 
-        MaximumHealthPoints = ShipData.maximumHealthPoints;
-        MaximumShieldPoints = ShipData.maximumShieldPoints;
+        ShipMetaRuntimeStats metaStats = ShipData != null
+            ? ShipData.GetMetaRuntimeStats(0)
+            : default;
+        MaximumHealthPoints = metaStats.MaximumHealthPoints;
+        MaximumShieldPoints = metaStats.MaximumShieldPoints;
 
         CurrentHealthPoints = MaximumHealthPoints;
         CurrentShieldPoints = MaximumShieldPoints;
+        activeAbility?.ApplyShipMetaStats(metaStats);
+        passiveAbility?.ApplyShipMetaStats(metaStats);
     }
     public virtual void Start()
     {
@@ -124,6 +143,26 @@ public class ParentShip : MonoBehaviour, iDamagable
             CurrentShieldPoints = MaximumShieldPoints;
     }
 
+    public void NotifyHealthRegenerationStarted()
+    {
+        OnHealthRegenerationStarted?.Invoke();
+    }
+
+    public void NotifyShieldRegenerationStarted()
+    {
+        OnShieldRegenerationStarted?.Invoke();
+    }
+
+    public void NotifyHealthFullyRegenerated()
+    {
+        OnHealthFullyRegenerated?.Invoke();
+    }
+
+    public void NotifyShieldFullyRegenerated()
+    {
+        OnShieldFullyRegenerated?.Invoke();
+    }
+
     public void AddMaxHealthPoints(float addedHealth)
     {
         MaximumHealthPoints += addedHealth;
@@ -142,14 +181,24 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Damage
     public virtual void TakeDamage(float damage)
     {
-        if (IsIntangible)
-            return;
+        TryTakeDamage(damage);
+    }
+
+    /// <summary>
+    /// Applies damage and opens the shared post-hit invulnerability window.
+    /// Callers can use the result to avoid impact side effects when damage
+    /// was rejected by the same window.
+    /// </summary>
+    public virtual bool TryTakeDamage(float damage)
+    {
+        if (IsIntangible || IsDamageInvulnerable)
+            return false;
 
         if (playerController == null)
             playerController = GetComponentInParent<PlayerController>();
 
         if (playerController != null && playerController.ControlsLocked)
-            return;
+            return false;
 
         if (OnDamagePipeline != null)
         {
@@ -157,18 +206,42 @@ public class ParentShip : MonoBehaviour, iDamagable
                 damage = handler.Invoke(damage);
         }
 
+        if (damage <= 0f)
+            return false;
+
         if (CurrentShieldPoints > 0)
         {
             CurrentShieldPoints -= damage;
-            return;
+            GrantDamageInvulnerability(HitInvulnerabilityDuration);
+            OnDamageTaken?.Invoke(damage);
+            return true;
         }
 
         CurrentHealthPoints -= damage;
+        GrantDamageInvulnerability(HitInvulnerabilityDuration);
+        OnDamageTaken?.Invoke(damage);
 
         OnDamageDealt?.Invoke(damage);
 
         if (CurrentHealthPoints <= 0)
             Dying();
+
+        return true;
+    }
+
+    private void GrantDamageInvulnerability(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        damageInvulnerableUntil = Mathf.Max(
+            damageInvulnerableUntil,
+            Time.time + duration);
+    }
+
+    public void SetDamageInvulnerableForSeconds(float duration)
+    {
+        GrantDamageInvulnerability(duration);
     }
 
     public void NotifyDamageDealt(float damage)
@@ -186,6 +259,12 @@ public class ParentShip : MonoBehaviour, iDamagable
     public void ReleaseAbility()
     {
         activeAbility?.TryRelease(this);
+    }
+
+    public bool RestoreAbilityRecoveryResources()
+    {
+        return activeAbility != null
+            && activeAbility.RestoreAllRecoveryResources();
     }
 
     public void LockShipSwitching(float duration)
@@ -237,6 +316,17 @@ public class ParentShip : MonoBehaviour, iDamagable
             buffMagnet = gameObject.AddComponent<Magnite>();
     }
 
+    public void MultiplyMagnetRadiusForSeconds(
+        float multiplier,
+        float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+            return;
+
+        EnsureBuffMagnet();
+        buffMagnet.ActivateRadiusMultiplier(multiplier, duration);
+    }
+
     public void ShowShip()
     {
         IsVisible = true;
@@ -283,6 +373,8 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Death
     public void Dying()
     {
+        OnDied?.Invoke();
+
         if (playerController == null)
             playerController = GetComponentInParent<PlayerController>();
 

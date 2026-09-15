@@ -1021,7 +1021,20 @@ internal sealed class DirectedWaveAttackController
         if (!settings.HasFireMode)
             return false;
 
-        if (settings.FireMode == DirectedWaveAttackFireMode.Forward)
+        if (settings.FireMode
+            == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead
+            && (!wave.HasAttackTarget
+                || !settings.IsPlayerInForwardFireSector(
+                    enemy.transform.position,
+                    enemy.transform.up,
+                    wave.GetPlayerTargetPosition())))
+        {
+            return false;
+        }
+
+        if (settings.FireMode == DirectedWaveAttackFireMode.Forward
+            || settings.FireMode
+                == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
         {
             return executor.TryFireInDirection(
                 enemy.transform.up,

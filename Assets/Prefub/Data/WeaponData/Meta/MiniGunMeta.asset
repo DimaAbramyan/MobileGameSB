@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
+  m_Name: MiniGunMeta
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  energyCost: 2
+  projectileSlots:
+  - id: 232df04a9376462789d389ff154d1ee8
+    projectile: {fileID: 11400000, guid: b66509a6ff831244bb193a6b95ebbe86, type: 2}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      reloadTime: 0.05
+      damage: 9
+      range: 10
+      projectileSpeed: 8
+      angle: 5
+    contracts: []
+  references:
+    version: 2
+    RefIds: []

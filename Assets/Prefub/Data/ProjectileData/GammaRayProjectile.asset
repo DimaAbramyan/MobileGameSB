@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4d9d5c0c0a0df241a2e560150420daa, type: 3}
+  m_Name: GammaRayProjectile
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
+  deliveryType: 0
+  damage: 0.35
+  damageType: 4
+  projectilePrefab: {fileID: 7717844111302252331, guid: cb34c1d1d9f1c6a4aac9f87927bab076, type: 3}
+  range: 11
+  speed: 1.5
+  contracts:
+  - rid: 3397718808922161239
+  - rid: 3397718808922161240
+  - rid: 3397718808922161241
+  - rid: 3397718808922161242
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718808922161239
+      type: {class: ProjectileFlightContract, ns: , asm: Assembly-CSharp}
+      data:
+        growDuringFlight: 1
+        scaleGrowthPerSecond: {x: 0.4, y: 0}
+    - rid: 3397718808922161240
+      type: {class: ProjectileContactContract, ns: , asm: Assembly-CSharp}
+      data:
+        contactMode: 2
+    - rid: 3397718808922161241
+      type: {class: ProjectileContinuousDamageContract, ns: , asm: Assembly-CSharp}
+      data:
+        damageTickInterval: 0.02
+    - rid: 3397718808922161242
+      type: {class: ProjectileLifetimeContract, ns: , asm: Assembly-CSharp}
+      data:
+        lifetime: 10
+        disableColliderAfterFirstPhysicsStep: 0
+        fadeBeforeDespawn: 0
+        fadeDuration: 0.5

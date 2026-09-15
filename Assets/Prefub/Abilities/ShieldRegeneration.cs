@@ -6,6 +6,7 @@ public class ShieldRegeneration : MonoBehaviour
     private float shieldRegenCooldown;
     private float shieldRegenRate;
     private float lastDamageTime;
+    private bool isRegenerating;
 
     private bool CanRegenerate => Time.time - lastDamageTime >= shieldRegenCooldown;
 
@@ -19,8 +20,8 @@ public class ShieldRegeneration : MonoBehaviour
             return;
         }
 
-        shieldRegenCooldown = parentShip.ShipData.shieldRegenCooldown;
-        shieldRegenRate = parentShip.ShipData.shieldRegenRate;
+        shieldRegenCooldown = parentShip.ShipData.ShieldRegenCooldown;
+        shieldRegenRate = parentShip.ShipData.ShieldRegenRatePercent;
 
         parentShip.OnDamagePipeline += OnDamageTaken;
     }
@@ -28,16 +29,45 @@ public class ShieldRegeneration : MonoBehaviour
     private float OnDamageTaken(float damage)
     {
         lastDamageTime = Time.time;
+        isRegenerating = false;
         return damage;
     }
 
     private void Update()
     {
-        if (parentShip == null) return;
+        if (parentShip == null)
+            return;
 
-        if (!CanRegenerate) return;
+        if (!CanRegenerate)
+        {
+            isRegenerating = false;
+            return;
+        }
 
-        parentShip.HealShield(shieldRegenRate*Time.deltaTime);
+        if (shieldRegenRate <= 0f
+            || parentShip.CurrentShieldPoints >= parentShip.MaximumShieldPoints)
+        {
+            isRegenerating = false;
+            return;
+        }
+
+        if (!isRegenerating)
+        {
+            isRegenerating = true;
+            parentShip.NotifyShieldRegenerationStarted();
+        }
+
+        float restoredShield = parentShip.MaximumShieldPoints
+            * shieldRegenRate
+            / 100f
+            * Time.deltaTime;
+        parentShip.HealShield(restoredShield);
+
+        if (parentShip.CurrentShieldPoints < parentShip.MaximumShieldPoints)
+            return;
+
+        isRegenerating = false;
+        parentShip.NotifyShieldFullyRegenerated();
     }
 
     private void OnDestroy()

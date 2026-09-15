@@ -5,12 +5,21 @@ using UnityEngine;
 public class ShieldCreateAbility : ActiveAbility
 {
     private float ShieldHealth;
+    private float shieldHealthMultiplier = 1f;
     [SerializeField]
     ShieldAbilityPrefab shieldPrefab;
+
+    protected override void ApplySpecificShipMetaStats(
+        ShipMetaRuntimeStats stats)
+    {
+        if (stats.TryGetContract(out HeavyShieldShipMetaContract contract))
+            shieldHealthMultiplier = contract.ShieldHealthMultiplier;
+    }
+
     public override bool Activate(ParentShip owner)
     {
         ShieldHealth = 0;
-        ShieldHealth = owner.CurrentShieldPoints;
+        ShieldHealth = owner.CurrentShieldPoints * shieldHealthMultiplier;
         if (ShieldHealth > 0)
         {
             ShieldAbilityPrefab shield = Instantiate(shieldPrefab);

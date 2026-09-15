@@ -46,7 +46,7 @@ public sealed class CraftEnergyIndicator : MonoBehaviour
             return;
         }
 
-        int maximumEnergy = Mathf.Max(0, shipData.maximumEnergy);
+        int maximumEnergy = Mathf.Max(0, shipData.MetaMaximumEnergy);
         int usedEnergy = GetUsedEnergy(body);
         int remainingEnergy = maximumEnergy - usedEnergy;
         bool overflow = remainingEnergy < 0;

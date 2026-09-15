@@ -20,6 +20,11 @@ public sealed class ThermalLaserWeapon : ContinuousBeamWeapon
         return true;
     }
 
+    protected override Transform GetBeamTransform()
+    {
+        return transform;
+    }
+
     protected override bool ApplyBeamEffect(Enemy enemy)
     {
         ThermalLaserData data = weaponData as ThermalLaserData;
@@ -30,18 +35,17 @@ public sealed class ThermalLaserWeapon : ContinuousBeamWeapon
             return false;
         }
 
-        enemyHeatSystem.ApplyHeat(
+        EnemyDamageResult result = dealDamageManager.DealDamage(
             enemy,
-            data.GetHeatPerHitPercent(Level),
-            data.CreateHeatProfile(Owner));
-
-        if (!enemy.isDead)
+            Owner,
+            CurrentStats.Damage,
+            weaponData.DamageType);
+        if (result.DidDamageHull && !enemy.isDead)
         {
-            dealDamageManager.DealDamage(
+            enemyHeatSystem.ApplyHeat(
                 enemy,
-                Owner,
-                CurrentStats.Damage,
-                weaponData.DamageType);
+                data.GetHeatPerHitPercent(Level),
+                data.CreateHeatProfile(Owner));
         }
 
         return true;

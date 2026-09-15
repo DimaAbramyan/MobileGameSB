@@ -16,12 +16,15 @@ MonoBehaviour:
   mass: 4.5
   drag: 12
   maximumHealthPoints: 60
-  healthRegenCooldown: 10
-  healthRegenRate: 1
+  overrideHealthRegeneration: 0
+  healthRegenCooldown: 30
+  healthRegenRate: 5
   maximumShieldPoints: 50
-  shieldRegenCooldown: 7
+  overrideShieldRegeneration: 0
+  shieldRegenCooldown: 15
   shieldRegenRate: 5
   maximumEnergy: 10
   maximumWeaponCount: 3
   currentLvl: 0
   shipId: 0
+  shipMetaConfig: {fileID: 11400000, guid: 2d69e91125dcfcc4b920de38a0b87a13, type: 2}

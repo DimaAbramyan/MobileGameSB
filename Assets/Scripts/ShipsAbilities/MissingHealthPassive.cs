@@ -4,9 +4,15 @@ using UnityEngine;
 
 public class MissingHealthPassive : PassiveAbility
 {
-    [SerializeField] float maxBonus = 0.5f;
+    [SerializeField, HideInInspector] float maxBonus = 0.5f;
 
     private WeaponController weaponController;
+
+    public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
+    {
+        if (stats.TryGetContract(out HuskarShipMetaContract contract))
+            maxBonus = contract.MissingHealthFireRateBonus;
+    }
 
     public override void Init(ParentShip ship)
     {

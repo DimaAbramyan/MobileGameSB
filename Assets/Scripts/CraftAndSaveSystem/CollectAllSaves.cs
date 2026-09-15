@@ -30,6 +30,7 @@ public class CollectAllSaves : MonoBehaviour
             var saveDataArray = savesToLoad.Select(save => new SaveData
             {
                 shipId = save.save.shipId,
+                hullContentId = save.save.hullContentId,
                 shipName = save.save.shipName,
                 WeaponData = save.save.weaponData
             }).ToArray();

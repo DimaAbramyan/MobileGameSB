@@ -132,12 +132,12 @@ public class ShipSwipe : MonoBehaviour
         SetShipDataText(
             healthValueText,
             "Health",
-            shipData != null ? shipData.maximumHealthPoints : null);
+            shipData != null ? shipData.MetaMaximumHealthPoints : null);
         SetIcon(healthIconImage, healthIcon, shipData != null);
         SetShipDataText(
             shieldValueText,
             "Shield",
-            shipData != null ? shipData.maximumShieldPoints : null);
+            shipData != null ? shipData.MetaMaximumShieldPoints : null);
         SetIcon(shieldIconImage, shieldIcon, shipData != null);
         SetShipDataText(
             weaponCountValueText,
@@ -147,7 +147,7 @@ public class ShipSwipe : MonoBehaviour
         SetShipDataText(
             energyValueText,
             "Energy",
-            shipData != null ? shipData.maximumEnergy : null);
+            shipData != null ? shipData.MetaMaximumEnergy : null);
         SetIcon(energyIconImage, energyIcon, shipData != null);
 
         if (statsChart != null)

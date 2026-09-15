@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class PhantomPhaseActiveAbility : ActiveAbility
 {
-    [SerializeField, Min(0.05f)] private float maximumPhaseDuration = 3f;
+    [SerializeField, HideInInspector, Min(0.05f)]
+    private float maximumPhaseDuration = 3f;
     [SerializeField] private bool hideVisuals = true;
     [SerializeField] private bool stopShooting = true;
     [SerializeField] private bool purgeProjectilesWhenReappearing = true;
@@ -18,6 +19,13 @@ public class PhantomPhaseActiveAbility : ActiveAbility
     private bool[] rendererStates;
     private Color[] rendererColors;
     private bool isPhased;
+
+    protected override void ApplySpecificShipMetaStats(
+        ShipMetaRuntimeStats stats)
+    {
+        if (stats.TryGetContract(out PhantomShipMetaContract contract))
+            maximumPhaseDuration = contract.PhaseDuration;
+    }
 
     protected override bool StartsCooldownOnActivation => false;
 

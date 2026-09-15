@@ -30,6 +30,9 @@ public class Projectile : MonoBehaviour
     private bool fadeDuringLifetime;
     private bool disableColliderAfterFirstPhysicsStep;
     private int completedPhysicsSteps;
+    private iDamagable ignoredDamageTarget;
+    private bool hasSecondaryProjectileRuntimeStats;
+    private ProjectileRuntimeStats secondaryProjectileRuntimeStats;
     public ParentShip Owner { get; set; }
     Vector3 startPosition;
     public float GetDamage() => damage;
@@ -69,6 +72,9 @@ public class Projectile : MonoBehaviour
         disableColliderAfterFirstPhysicsStep = false;
         completedPhysicsSteps = 0;
         Owner = null;
+        ignoredDamageTarget = null;
+        hasSecondaryProjectileRuntimeStats = false;
+        secondaryProjectileRuntimeStats = default;
         runtimeBehaviors?.Reset();
         runtimeBehaviors = null;
         transform.localScale = initialScale;
@@ -94,6 +100,16 @@ public class Projectile : MonoBehaviour
         speed = Mathf.Max(0f, newSpeed);
     }
 
+    public void SetDirection(Vector3 newDirection)
+    {
+        if (newDirection.sqrMagnitude <= Mathf.Epsilon)
+            return;
+
+        direction = newDirection.normalized;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0f, 0f, angle + 90f);
+    }
+
     public void Fade(float speed)
     {
         if (!isActive)
@@ -117,7 +133,11 @@ public class Projectile : MonoBehaviour
         speed = param.speed;
         damage = param.damage;
         baseDamage = param.damage;
-        maxLength = param.maxLength;
+        maxLength = runtimeConfig.secondaryProjectile != null
+                    && runtimeConfig.secondarySpawnTrigger
+                    == SecondaryProjectileSpawnTrigger.AfterTravelDistance
+            ? Mathf.Max(param.maxLength, runtimeConfig.secondaryTravelDistance)
+            : param.maxLength;
         DamageType = runtimeConfig.damageType;
         remainingLifetime = Mathf.Max(0.02f, runtimeConfig.projectileLifetime);
         lifetimeFadeDuration = Mathf.Clamp(
@@ -128,6 +148,13 @@ public class Projectile : MonoBehaviour
         disableColliderAfterFirstPhysicsStep =
             runtimeConfig.disableColliderAfterFirstPhysicsStep;
         completedPhysicsSteps = 0;
+        ignoredDamageTarget = null;
+        hasSecondaryProjectileRuntimeStats =
+            runtimeConfig.hasSecondaryProjectileRuntimeStats;
+        secondaryProjectileRuntimeStats = new ProjectileRuntimeStats(
+            runtimeConfig.secondaryProjectileDamage,
+            runtimeConfig.secondaryProjectileRange,
+            runtimeConfig.secondaryProjectileSpeed);
         RestoreColliderStates();
 
         if (spriteRenderer != null)
@@ -142,6 +169,61 @@ public class Projectile : MonoBehaviour
         runtimeBehaviors = new ProjectileRuntimeBehaviorSet(dealDamageManager, enemyManager);
         runtimeBehaviors.Build(runtimeConfig, this);
         Owner = owner;
+    }
+
+    public bool HasReachedTravelDistance(float travelDistance)
+    {
+        float clampedDistance = Mathf.Max(0f, travelDistance);
+        return (transform.position - startPosition).sqrMagnitude
+            >= clampedDistance * clampedDistance;
+    }
+
+    public bool TrySpawnSecondaryProjectile(
+        ProjectileData projectileData,
+        iDamagable ignoredTarget)
+    {
+        if (!isActive
+            || projectileData == null
+            || projectileData.DeliveryType != ProjectileDeliveryType.Projectile
+            || projectileData.ProjectilePrefab == null
+            || poolController == null)
+        {
+            return false;
+        }
+
+        ProjectileRuntimeStats stats = hasSecondaryProjectileRuntimeStats
+            ? secondaryProjectileRuntimeStats
+            : projectileData.GetRuntimeStats();
+        ProjectileRuntimeConfig runtimeConfig = projectileData.CreateRuntimeConfig();
+        if (hasSecondaryProjectileRuntimeStats)
+        {
+            float baseDamage = projectileData.Damage;
+            if (baseDamage > 0f)
+            {
+                runtimeConfig.explosionDamage *= stats.Damage / baseDamage;
+            }
+        }
+
+        Projectile spawnedProjectile = poolController.Spawn(
+            projectileData.ProjectilePrefab,
+            transform.position,
+            transform.rotation);
+        if (spawnedProjectile == null)
+            return false;
+
+        spawnedProjectile.Init(
+            new ProjectileParams
+            {
+                speed = stats.Speed,
+                damage = stats.Damage,
+                maxLength = stats.Range,
+                direction = direction,
+                maxAngle = 0f
+            },
+            runtimeConfig,
+            Owner);
+        spawnedProjectile.ignoredDamageTarget = ignoredTarget;
+        return true;
     }
 
     private void Update()
@@ -172,7 +254,13 @@ public class Projectile : MonoBehaviour
         runtimeBehaviors?.Move(this);
         runtimeBehaviors?.Tick(this);
         if ((transform.position - startPosition).sqrMagnitude > maxLength * maxLength)
-            ReturnToPool();
+        {
+            if (runtimeBehaviors == null
+                || !runtimeBehaviors.TryHandleMaximumRange(this))
+            {
+                ReturnToPool();
+            }
+        }
     }
 
     private void UpdateColliderLifetime()
@@ -214,17 +302,32 @@ public class Projectile : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.TryGetComponent<iDamagable>(out var target))
+        {
+            if (target == ignoredDamageTarget)
+                return;
+
             runtimeBehaviors?.OnContactEnter(target, this);
+        }
     }
     void OnTriggerStay2D(Collider2D other)
     {
         if (other.TryGetComponent<iDamagable>(out var target))
+        {
+            if (target == ignoredDamageTarget)
+                return;
+
             runtimeBehaviors?.OnContactStay(target, this);
+        }
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
         if (other.TryGetComponent<iDamagable>(out var target))
+        {
+            if (target == ignoredDamageTarget)
+                return;
+
             runtimeBehaviors?.OnContactExit(target, this);
+        }
     }
 }

@@ -18,7 +18,7 @@ public sealed class RocketLauncherWeapon : Weapon
 
         if (!FireRocket(notifyShot: true))
         {
-            currentReloadTime = reloadTime;
+            currentReloadTime = reloadTime / IdenticalWeaponFireRateMultiplier;
             return false;
         }
 
@@ -38,7 +38,9 @@ public sealed class RocketLauncherWeapon : Weapon
             return false;
 
         bool rocketFired = FireRocket(notifyShot: false);
-        currentReloadTime = reloadTime * Mathf.Max(0f, reloadMultiplier);
+        currentReloadTime = reloadTime
+            * Mathf.Max(0f, reloadMultiplier)
+            / IdenticalWeaponFireRateMultiplier;
         return rocketFired;
     }
 

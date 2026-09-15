@@ -16,6 +16,9 @@ public class Explode : MonoBehaviour
 
     private HashSet<GameObject> damagedObjects = new HashSet<GameObject>();
     private EnemyDamageType damageType = EnemyDamageType.Explosion;
+    private bool bypassesEnemyShield;
+    private ParentShip owner;
+    private DealDamageManager dealDamageManager;
 
     private void Awake()
     {
@@ -86,8 +89,47 @@ public class Explode : MonoBehaviour
         damageType = newDamageType;
     }
 
+    public void SetDamage(
+        float newDamage,
+        EnemyDamageType newDamageType,
+        bool bypassesEnemyShield,
+        ParentShip damageOwner,
+        DealDamageManager manager)
+    {
+        SetDamage(newDamage, newDamageType);
+        this.bypassesEnemyShield = bypassesEnemyShield;
+        owner = damageOwner;
+        dealDamageManager = manager;
+    }
+
+    public void SetRadius(float radius)
+    {
+        if (radius <= 0f || explosionCollider == null)
+            return;
+
+        if (explosionCollider is CircleCollider2D circle)
+        {
+            circle.radius = radius;
+            return;
+        }
+
+        if (explosionCollider is BoxCollider2D box)
+            box.size = Vector2.one * radius * 2f;
+    }
+
     private void DealDamage(iDamagable target)
     {
+        if (dealDamageManager != null)
+        {
+            dealDamageManager.DealDamage(
+                target,
+                owner,
+                damage,
+                damageType,
+                bypassesEnemyShield);
+            return;
+        }
+
         if (target is Enemy enemy)
             enemy.TakeDamageWithType(damage, damageType);
         else

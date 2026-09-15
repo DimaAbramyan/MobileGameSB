@@ -268,20 +268,20 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
         StopContinuousEntranceAttackForEnemy(enemy);
     }
 
-    private void RegisterWithWave()
+    internal void RegisterWithWave()
     {
-        if (isRegistered)
+        if (isRegistered || !isActiveAndEnabled)
             return;
 
         wave ??= GetComponent<DirectedEnemySubWave>();
-        if (wave == null)
+        if (wave == null || wave.AttackPatternBehaviour != this)
             return;
 
         wave.RegisterPostTimelineBehaviour(this);
         isRegistered = true;
     }
 
-    private void UnregisterFromWave()
+    internal void UnregisterFromWave()
     {
         if (!isRegistered || wave == null)
             return;

@@ -18,16 +18,20 @@ MonoBehaviour:
   activeAbilityDescription: 
   icon: {fileID: 21300000, guid: 0c0660ed4f76c474a87b7201740f05ad, type: 3}
   prefab: {fileID: 8510229954386328104, guid: 188c48c168790704c93a0123b804dc1f, type: 3}
+  rarity: 0
   purchasePrice: 0
+  purchaseCoresPrice: 0
   unlockRequirement:
     type: 0
     requiredPlayerLevel: 1
     requiredCompletedLevel: {fileID: 0}
     conditionId: 
-  isStarterUnlocked: 0
+  isStarterUnlocked: 1
   maxUpgradeLevel: 0
+  upgradePrices: []
   data: {fileID: 11400000, guid: 11afd57821af69f4d93f026d1794cdaa, type: 2}
   defaultColorPalette:
     primary: {r: 1, g: 1, b: 1, a: 1}
     secondary: {r: 0.35, g: 0.35, b: 0.35, a: 1}
     accent: {r: 0.25, g: 0.75, b: 1, a: 1}
+  gameplayPrefab: {fileID: 5377600966933766361, guid: 646a2bbf3781d6e469abe46681508f59, type: 3}

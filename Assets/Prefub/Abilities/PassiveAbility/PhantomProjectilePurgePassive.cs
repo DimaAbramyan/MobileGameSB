@@ -3,12 +3,18 @@ using UnityEngine;
 
 public sealed class PhantomProjectilePurgePassive : PassiveAbility
 {
-    [SerializeField, Min(0f)] private float purgeRadius = 2.5f;
+    [SerializeField, HideInInspector, Min(0f)] private float purgeRadius = 2.5f;
     [SerializeField] private LayerMask projectileLayers = ~0;
 
     private readonly Collider2D[] hits = new Collider2D[64];
     private readonly HashSet<EnemyProjectile> purgedProjectiles = new();
     private ContactFilter2D projectileFilter;
+
+    public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
+    {
+        if (stats.TryGetContract(out PhantomShipMetaContract contract))
+            purgeRadius = contract.PurgeRadius;
+    }
 
     public override void Init(ParentShip ship)
     {

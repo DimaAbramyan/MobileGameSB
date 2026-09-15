@@ -202,18 +202,449 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f85b5f8169a4f38b4b99fd16ad14222, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
-  enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
-  enemyCount: 10
-  spawnInterval: 0.05
-  spawnOrderMode: 0
-  spawnOrderAngle: 0
-  spawnOrderStartAngle: 90
-  spawnPoint: {fileID: 1878800833022778397}
-  parentEnemiesToSubWave: 0
   enableDebugLogs: 0
-  entranceMode: 0
-  pathCoordinateSpace: 0
-  pathCheckpoints:
+  formation:
+    enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
+    enemyCount: 10
+    spawnInterval: 0.05
+    spawnOrderMode: 0
+    spawnOrderAngle: 0
+    spawnOrderStartAngle: 90
+    parentEnemiesToSubWave: 0
+    formationFrozen: 0
+    formationLayout: 2
+    formationCoordinateSpace: 1
+    formationCenter: {x: 1.75, y: -7, z: 0}
+    spacing: {x: 0.4, y: 0.45}
+    columns: 5
+    rows: 2
+    gridMatrixCells: 
+    arcRadius: 2
+    arcDegrees: 120
+    shapePointCount: 16
+    shapeRadius: 1
+    shapeFlattening: {x: 1, y: 1}
+    customFormationPoints: []
+    customFormationEnemyOverrides: []
+    proceduralFormationEnemyOverrides:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    formationPointsRoot: {fileID: 8093272636863788390}
+  phaseEntry:
+    enabled: 1
+    spawnPoint: {fileID: 1878800833022778397}
+    entranceMode: 0
+    pathCoordinateSpace: 0
+    pathCheckpoints:
+    - position: {x: -4.5, y: 0, z: 0}
+      durationToNext: 0.5
+      speedToNext: 1.884434
+      motionToNext: 2
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    individualEntrancePoints: []
+    individualPointMovementStartDelay: 0.1
+    individualPointMovementDuration: 0.35
+    individualPointMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+    individualEntranceShapeRadius: 2
+    individualEntranceShapeFlattening: {x: 1, y: 1}
+    individualEntranceShapeRotationDegrees: 0
+    entranceCompletionMode: 0
+    entranceLoopStartCheckpointIndex: 0
+    entranceLoopTeleportToStart: 0
+    entranceLoopTeleportDelay: 0
+    settleDuration: 0.55
+    settleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  postBehaviour:
+    enabled: 1
+    postCommands:
+    - type: 9
+      enabled: 1
+      completionMode: 0
+      duration: 1
+      holdDuration: 0
+      parallelExecutionMode: 0
+      infiniteParallel: 0
+      loopCount: 1
+      infiniteLoop: 0
+      targetOffset: {x: 0, y: 0, z: 0}
+      targetOffsetCoordinateSpace: 0
+      rotationDegrees: 45
+      continuousFormationRotation: 0
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      formationReorderMode: 0
+      formationReorderUseTargetCenter: 0
+      formationReorderTargetCenter: {x: 0, y: 0, z: 0}
+      formationReorderSpeed: 5
+      formationReorderStartInterval: 0.1
+      formationReorderShipsPerBatch: 1
+      formationReorderRandomSeed: 12345
+      morphTarget:
+        layout: 5
+        centerOffset: {x: 0, y: 0, z: 0}
+        columns: 5
+        rows: 3
+        arcRadius: 2
+        arcDegrees: 120
+        shapeRadius: 2
+        shapeFlattening: {x: 1, y: 1}
+        customPoints: []
+        durationToShape: 1
+        holdDuration: 0
+        easeToShape:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+      parallelCommands: []
+      loopCommands:
+      - type: 0
+        enabled: 1
+        completionMode: 0
+        duration: 4
+        holdDuration: 0
+        parallelExecutionMode: 0
+        infiniteParallel: 0
+        loopCount: 1
+        infiniteLoop: 0
+        targetOffset: {x: 0, y: 0, z: 0}
+        targetOffsetCoordinateSpace: 0
+        rotationDegrees: 45
+        continuousFormationRotation: 0
+        curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        formationReorderMode: 0
+        formationReorderUseTargetCenter: 0
+        formationReorderTargetCenter: {x: 0, y: 0, z: 0}
+        formationReorderSpeed: 5
+        formationReorderStartInterval: 0.1
+        formationReorderShipsPerBatch: 1
+        formationReorderRandomSeed: 12345
+        morphTarget:
+          layout: 5
+          centerOffset: {x: 0, y: 0, z: 0}
+          columns: 5
+          rows: 3
+          arcRadius: 2
+          arcDegrees: 120
+          shapeRadius: 2
+          shapeFlattening: {x: 1, y: 1}
+          customPoints: []
+          durationToShape: 1
+          holdDuration: 0
+          easeToShape:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+        parallelCommands: []
+        loopCommands: []
+    postStartDelay: 0
+    postCommandPipelineFixedCount: 1
+    postCommandPipelineLoop: 1
+    localMovementOffset: {x: 0.5, y: 0, z: 0}
+    localMovementDuration: 1
+    localMovementLoop: 1
+    localMovementPingPong: 1
+    localMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    wobbleAmplitude: {x: 0, y: 0.1}
+    wobbleFrequency: 1.5
+    wobblePhaseMode: 1
+    wobblePhaseOffset: 0.7
+    wobbleDirectionAngle: 0
+    wobbleDirectionStep: 0.75
+    patrolLoop: 1
+    patrolCoordinateSpace: 0
+    patrolPoints:
+    - offset: {x: -1.25, y: -0.13, z: 0}
+      wait: 0
+      durationToNext: 2
+      speedToNext: 1.2500899
+      motionToNext: 0
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - offset: {x: 1.25, y: -0.13, z: 0}
+      wait: 0
+      durationToNext: 2
+      speedToNext: 1.2500899
+      motionToNext: 0
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    selfOrbitRadius: {x: 0.25, y: 0.25}
+    selfOrbitPhaseOffset: 0.35
+    selfRotationDegreesPerSecond: 90
+    formationRotationDegreesPerSecond: 45
+    formationMorphLoop: 1
+    formationMorphReturnDuration: 1
+    formationMorphReturnCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    formationMorphSteps: []
+  attackPattern:
+    behaviour: {fileID: 156950671406062128}
+  completion:
+    enabled: 0
+    completeWhenAllEnemiesAreDefeated: 1
+  structuredConfigurationVersion: 1
+  legacyEnemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
+  legacyEnemyCount: 10
+  legacySpawnInterval: 0.05
+  legacySpawnOrderMode: 0
+  legacySpawnOrderAngle: 0
+  legacySpawnOrderStartAngle: 90
+  legacySpawnPoint: {fileID: 1878800833022778397}
+  legacyParentEnemiesToSubWave: 0
+  legacyEntranceMode: 0
+  legacyPathCoordinateSpace: 0
+  legacyPathCheckpoints:
   - position: {x: -4.5, y: 0, z: 0}
     durationToNext: 0.5
     speedToNext: 1.884434
@@ -242,10 +673,10 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  individualEntrancePoints: []
-  individualPointMovementStartDelay: 0.1
-  individualPointMovementDuration: 0.35
-  individualPointMovementCurve:
+  legacyIndividualEntrancePoints: []
+  legacyIndividualPointMovementStartDelay: 0.1
+  legacyIndividualPointMovementDuration: 0.35
+  legacyIndividualPointMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -269,30 +700,30 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
-  individualEntranceShapeRadius: 2
-  individualEntranceShapeFlattening: {x: 1, y: 1}
-  individualEntranceShapeRotationDegrees: 0
-  entranceCompletionMode: 0
-  entranceLoopStartCheckpointIndex: 0
-  entranceLoopTeleportToStart: 0
-  entranceLoopTeleportDelay: 0
-  formationFrozen: 0
-  formationLayout: 2
-  formationCoordinateSpace: 1
-  formationCenter: {x: 1.75, y: -7, z: 0}
-  spacing: {x: 0.4, y: 0.45}
-  columns: 5
-  rows: 2
-  gridMatrixCells: 
-  arcRadius: 2
-  arcDegrees: 120
-  shapePointCount: 16
-  shapeRadius: 1
-  shapeFlattening: {x: 1, y: 1}
-  customFormationPoints: []
-  customFormationEnemyOverrides: []
-  proceduralFormationEnemyOverrides:
+  legacyIndividualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+  legacyIndividualEntranceShapeRadius: 2
+  legacyIndividualEntranceShapeFlattening: {x: 1, y: 1}
+  legacyIndividualEntranceShapeRotationDegrees: 0
+  legacyEntranceCompletionMode: 0
+  legacyEntranceLoopStartCheckpointIndex: 0
+  legacyEntranceLoopTeleportToStart: 0
+  legacyEntranceLoopTeleportDelay: 0
+  legacyFormationFrozen: 0
+  legacyFormationLayout: 2
+  legacyFormationCoordinateSpace: 1
+  legacyFormationCenter: {x: 1.75, y: -7, z: 0}
+  legacySpacing: {x: 0.4, y: 0.45}
+  legacyColumns: 5
+  legacyRows: 2
+  legacyGridMatrixCells: 
+  legacyArcRadius: 2
+  legacyArcDegrees: 120
+  legacyShapePointCount: 16
+  legacyShapeRadius: 1
+  legacyShapeFlattening: {x: 1, y: 1}
+  legacyCustomFormationPoints: []
+  legacyCustomFormationEnemyOverrides: []
+  legacyProceduralFormationEnemyOverrides:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -303,9 +734,9 @@ MonoBehaviour:
   - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
   - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
   - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
-  formationPointsRoot: {fileID: 8093272636863788390}
-  settleDuration: 0.55
-  settleCurve:
+  legacyFormationPointsRoot: {fileID: 8093272636863788390}
+  legacySettleDuration: 0.55
+  legacySettleCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -329,7 +760,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  postCommands:
+  legacyPostCommands:
   - type: 9
     enabled: 1
     completionMode: 0
@@ -494,14 +925,14 @@ MonoBehaviour:
           m_RotationOrder: 4
       parallelCommands: []
       loopCommands: []
-  postStartDelay: 0
-  postCommandPipelineFixedCount: 1
-  postCommandPipelineLoop: 1
-  localMovementOffset: {x: 0.5, y: 0, z: 0}
-  localMovementDuration: 1
-  localMovementLoop: 1
-  localMovementPingPong: 1
-  localMovementCurve:
+  legacyPostStartDelay: 0
+  legacyPostCommandPipelineFixedCount: 1
+  legacyPostCommandPipelineLoop: 1
+  legacyLocalMovementOffset: {x: 0.5, y: 0, z: 0}
+  legacyLocalMovementDuration: 1
+  legacyLocalMovementLoop: 1
+  legacyLocalMovementPingPong: 1
+  legacyLocalMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -525,16 +956,17 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  wobbleAmplitude: {x: 0, y: 0.1}
-  wobbleFrequency: 1.5
-  wobblePhaseMode: 1
-  wobblePhaseOffset: 0.7
-  wobbleDirectionAngle: 0
-  wobbleDirectionStep: 0.75
-  patrolLoop: 1
-  patrolCoordinateSpace: 0
-  patrolPoints:
+  legacyWobbleAmplitude: {x: 0, y: 0.1}
+  legacyWobbleFrequency: 1.5
+  legacyWobblePhaseMode: 1
+  legacyWobblePhaseOffset: 0.7
+  legacyWobbleDirectionAngle: 0
+  legacyWobbleDirectionStep: 0.75
+  legacyPatrolLoop: 1
+  legacyPatrolCoordinateSpace: 0
+  legacyPatrolPoints:
   - offset: {x: -1.25, y: -0.13, z: 0}
+    wait: 0
     durationToNext: 2
     speedToNext: 1.2500899
     motionToNext: 0
@@ -563,6 +995,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
   - offset: {x: 1.25, y: -0.13, z: 0}
+    wait: 0
     durationToNext: 2
     speedToNext: 1.2500899
     motionToNext: 0
@@ -590,13 +1023,13 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  selfOrbitRadius: {x: 0.25, y: 0.25}
-  selfOrbitPhaseOffset: 0.35
-  selfRotationDegreesPerSecond: 90
-  formationRotationDegreesPerSecond: 45
-  formationMorphLoop: 1
-  formationMorphReturnDuration: 1
-  formationMorphReturnCurve:
+  legacySelfOrbitRadius: {x: 0.25, y: 0.25}
+  legacySelfOrbitPhaseOffset: 0.35
+  legacySelfRotationDegreesPerSecond: 90
+  legacyFormationRotationDegreesPerSecond: 45
+  legacyFormationMorphLoop: 1
+  legacyFormationMorphReturnDuration: 1
+  legacyFormationMorphReturnCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -620,7 +1053,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  formationMorphSteps: []
+  legacyFormationMorphSteps: []
 --- !u!114 &156950671406062128
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -640,12 +1073,14 @@ MonoBehaviour:
     attackStartDelay: 0
     fireMode: 1
     movementMode: 0
-    serializedVersion: 9
+    serializedVersion: 10
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 0.2
     waitForPreviousAttack: 0
     delayAfterAttack: 1
     burstSettingsSource: 1
+    overrideEnemyAttackCooldown: 0
+    enemyAttackCooldown: 1
     waveBurstSettings:
       repeatBurst: 0
       useAttackStartDelay: 0
@@ -756,6 +1191,7 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
     atCheckpointRules: []
@@ -857,18 +1293,426 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f85b5f8169a4f38b4b99fd16ad14222, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
-  enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
-  enemyCount: 26
-  spawnInterval: 0.05
-  spawnOrderMode: 0
-  spawnOrderAngle: 0
-  spawnOrderStartAngle: 90
-  spawnPoint: {fileID: 5005625296983741546}
-  parentEnemiesToSubWave: 0
   enableDebugLogs: 0
-  entranceMode: 0
-  pathCoordinateSpace: 0
-  pathCheckpoints:
+  formation:
+    enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
+    enemyCount: 26
+    spawnInterval: 0.05
+    spawnOrderMode: 0
+    spawnOrderAngle: 0
+    spawnOrderStartAngle: 90
+    parentEnemiesToSubWave: 0
+    formationFrozen: 0
+    formationLayout: 5
+    formationCoordinateSpace: 1
+    formationCenter: {x: 3, y: -4, z: 0}
+    spacing: {x: 0.4, y: 0.45}
+    columns: 5
+    rows: 5
+    gridMatrixCells: 
+    arcRadius: 2
+    arcDegrees: 120
+    shapePointCount: 16
+    shapeRadius: 1
+    shapeFlattening: {x: 1, y: 1}
+    customFormationPoints: []
+    customFormationEnemyOverrides: []
+    proceduralFormationEnemyOverrides:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    formationPointsRoot: {fileID: 8093272636863788390}
+  phaseEntry:
+    enabled: 1
+    spawnPoint: {fileID: 5005625296983741546}
+    entranceMode: 0
+    pathCoordinateSpace: 0
+    pathCheckpoints:
+    - position: {x: 0, y: 6, z: 0}
+      durationToNext: 0.5
+      speedToNext: 7
+      motionToNext: 2
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - position: {x: 0, y: 2.5, z: 0}
+      durationToNext: 0.5
+      speedToNext: 1
+      motionToNext: 2
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    individualEntrancePoints: []
+    individualPointMovementStartDelay: 0.1
+    individualPointMovementDuration: 0.35
+    individualPointMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+    individualEntranceShapeRadius: 2
+    individualEntranceShapeFlattening: {x: 1, y: 1}
+    individualEntranceShapeRotationDegrees: 0
+    entranceCompletionMode: 0
+    entranceLoopStartCheckpointIndex: 0
+    entranceLoopTeleportToStart: 0
+    entranceLoopTeleportDelay: 0
+    settleDuration: 0.55
+    settleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  postBehaviour:
+    enabled: 1
+    postCommands:
+    - type: 8
+      enabled: 1
+      completionMode: 0
+      duration: 1
+      holdDuration: 0
+      parallelExecutionMode: 1
+      infiniteParallel: 1
+      loopCount: 1
+      infiniteLoop: 0
+      targetOffset: {x: 0, y: 0, z: 0}
+      targetOffsetCoordinateSpace: 1
+      rotationDegrees: 45
+      continuousFormationRotation: 0
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      formationReorderMode: 0
+      formationReorderUseTargetCenter: 0
+      formationReorderTargetCenter: {x: 0, y: 0, z: 0}
+      formationReorderSpeed: 5
+      formationReorderStartInterval: 0.1
+      formationReorderShipsPerBatch: 1
+      formationReorderRandomSeed: 12345
+      morphTarget:
+        layout: 5
+        centerOffset: {x: 0, y: 0, z: 0}
+        columns: 5
+        rows: 3
+        arcRadius: 2
+        arcDegrees: 120
+        shapeRadius: 2
+        shapeFlattening: {x: 1, y: 1}
+        customPoints: []
+        durationToShape: 1
+        holdDuration: 0
+        easeToShape:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+      parallelCommands:
+      - type: 5
+        enabled: 1
+        completionMode: 2
+        duration: 1
+        holdDuration: 0
+        parallelExecutionMode: 0
+        infiniteParallel: 0
+        loopCount: 1
+        infiniteLoop: 0
+        targetOffset: {x: 0, y: 0, z: 0}
+        targetOffsetCoordinateSpace: 1
+        rotationDegrees: 45
+        continuousFormationRotation: 1
+        curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        formationReorderMode: 0
+        formationReorderUseTargetCenter: 0
+        formationReorderTargetCenter: {x: 0, y: 0, z: 0}
+        formationReorderSpeed: 5
+        formationReorderStartInterval: 0.1
+        formationReorderShipsPerBatch: 1
+        formationReorderRandomSeed: 12345
+        morphTarget:
+          layout: 5
+          centerOffset: {x: 0, y: 0, z: 0}
+          columns: 5
+          rows: 3
+          arcRadius: 2
+          arcDegrees: 120
+          shapeRadius: 2
+          shapeFlattening: {x: 1, y: 1}
+          customPoints: []
+          durationToShape: 1
+          holdDuration: 0
+          easeToShape:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+        parallelCommands: []
+        loopCommands: []
+      loopCommands: []
+    postStartDelay: 0
+    postCommandPipelineFixedCount: 1
+    postCommandPipelineLoop: 0
+    localMovementOffset: {x: 0.5, y: 0, z: 0}
+    localMovementDuration: 1
+    localMovementLoop: 1
+    localMovementPingPong: 1
+    localMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    wobbleAmplitude: {x: 0, y: 0.1}
+    wobbleFrequency: 1.5
+    wobblePhaseMode: 1
+    wobblePhaseOffset: 0.7
+    wobbleDirectionAngle: 0
+    wobbleDirectionStep: 0.75
+    patrolLoop: 1
+    patrolCoordinateSpace: 0
+    patrolPoints: []
+    selfOrbitRadius: {x: 0.25, y: 0.25}
+    selfOrbitPhaseOffset: 0.35
+    selfRotationDegreesPerSecond: 90
+    formationRotationDegreesPerSecond: 45
+    formationMorphLoop: 1
+    formationMorphReturnDuration: 1
+    formationMorphReturnCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    formationMorphSteps: []
+  attackPattern:
+    behaviour: {fileID: 5621072670048582600}
+  completion:
+    enabled: 0
+    completeWhenAllEnemiesAreDefeated: 1
+  structuredConfigurationVersion: 1
+  legacyEnemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
+  legacyEnemyCount: 26
+  legacySpawnInterval: 0.05
+  legacySpawnOrderMode: 0
+  legacySpawnOrderAngle: 0
+  legacySpawnOrderStartAngle: 90
+  legacySpawnPoint: {fileID: 5005625296983741546}
+  legacyParentEnemiesToSubWave: 0
+  legacyEntranceMode: 0
+  legacyPathCoordinateSpace: 0
+  legacyPathCheckpoints:
   - position: {x: 0, y: 6, z: 0}
     durationToNext: 0.5
     speedToNext: 7
@@ -925,10 +1769,10 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  individualEntrancePoints: []
-  individualPointMovementStartDelay: 0.1
-  individualPointMovementDuration: 0.35
-  individualPointMovementCurve:
+  legacyIndividualEntrancePoints: []
+  legacyIndividualPointMovementStartDelay: 0.1
+  legacyIndividualPointMovementDuration: 0.35
+  legacyIndividualPointMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -952,30 +1796,30 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
-  individualEntranceShapeRadius: 2
-  individualEntranceShapeFlattening: {x: 1, y: 1}
-  individualEntranceShapeRotationDegrees: 0
-  entranceCompletionMode: 0
-  entranceLoopStartCheckpointIndex: 0
-  entranceLoopTeleportToStart: 0
-  entranceLoopTeleportDelay: 0
-  formationFrozen: 0
-  formationLayout: 5
-  formationCoordinateSpace: 1
-  formationCenter: {x: 3, y: -4, z: 0}
-  spacing: {x: 0.4, y: 0.45}
-  columns: 5
-  rows: 5
-  gridMatrixCells: 
-  arcRadius: 2
-  arcDegrees: 120
-  shapePointCount: 16
-  shapeRadius: 1
-  shapeFlattening: {x: 1, y: 1}
-  customFormationPoints: []
-  customFormationEnemyOverrides: []
-  proceduralFormationEnemyOverrides:
+  legacyIndividualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+  legacyIndividualEntranceShapeRadius: 2
+  legacyIndividualEntranceShapeFlattening: {x: 1, y: 1}
+  legacyIndividualEntranceShapeRotationDegrees: 0
+  legacyEntranceCompletionMode: 0
+  legacyEntranceLoopStartCheckpointIndex: 0
+  legacyEntranceLoopTeleportToStart: 0
+  legacyEntranceLoopTeleportDelay: 0
+  legacyFormationFrozen: 0
+  legacyFormationLayout: 5
+  legacyFormationCoordinateSpace: 1
+  legacyFormationCenter: {x: 3, y: -4, z: 0}
+  legacySpacing: {x: 0.4, y: 0.45}
+  legacyColumns: 5
+  legacyRows: 5
+  legacyGridMatrixCells: 
+  legacyArcRadius: 2
+  legacyArcDegrees: 120
+  legacyShapePointCount: 16
+  legacyShapeRadius: 1
+  legacyShapeFlattening: {x: 1, y: 1}
+  legacyCustomFormationPoints: []
+  legacyCustomFormationEnemyOverrides: []
+  legacyProceduralFormationEnemyOverrides:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -993,9 +1837,9 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  formationPointsRoot: {fileID: 8093272636863788390}
-  settleDuration: 0.55
-  settleCurve:
+  legacyFormationPointsRoot: {fileID: 8093272636863788390}
+  legacySettleDuration: 0.55
+  legacySettleCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1019,7 +1863,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  postCommands:
+  legacyPostCommands:
   - type: 8
     enabled: 1
     completionMode: 0
@@ -1184,14 +2028,14 @@ MonoBehaviour:
       parallelCommands: []
       loopCommands: []
     loopCommands: []
-  postStartDelay: 0
-  postCommandPipelineFixedCount: 1
-  postCommandPipelineLoop: 0
-  localMovementOffset: {x: 0.5, y: 0, z: 0}
-  localMovementDuration: 1
-  localMovementLoop: 1
-  localMovementPingPong: 1
-  localMovementCurve:
+  legacyPostStartDelay: 0
+  legacyPostCommandPipelineFixedCount: 1
+  legacyPostCommandPipelineLoop: 0
+  legacyLocalMovementOffset: {x: 0.5, y: 0, z: 0}
+  legacyLocalMovementDuration: 1
+  legacyLocalMovementLoop: 1
+  legacyLocalMovementPingPong: 1
+  legacyLocalMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1215,22 +2059,22 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  wobbleAmplitude: {x: 0, y: 0.1}
-  wobbleFrequency: 1.5
-  wobblePhaseMode: 1
-  wobblePhaseOffset: 0.7
-  wobbleDirectionAngle: 0
-  wobbleDirectionStep: 0.75
-  patrolLoop: 1
-  patrolCoordinateSpace: 0
-  patrolPoints: []
-  selfOrbitRadius: {x: 0.25, y: 0.25}
-  selfOrbitPhaseOffset: 0.35
-  selfRotationDegreesPerSecond: 90
-  formationRotationDegreesPerSecond: 45
-  formationMorphLoop: 1
-  formationMorphReturnDuration: 1
-  formationMorphReturnCurve:
+  legacyWobbleAmplitude: {x: 0, y: 0.1}
+  legacyWobbleFrequency: 1.5
+  legacyWobblePhaseMode: 1
+  legacyWobblePhaseOffset: 0.7
+  legacyWobbleDirectionAngle: 0
+  legacyWobbleDirectionStep: 0.75
+  legacyPatrolLoop: 1
+  legacyPatrolCoordinateSpace: 0
+  legacyPatrolPoints: []
+  legacySelfOrbitRadius: {x: 0.25, y: 0.25}
+  legacySelfOrbitPhaseOffset: 0.35
+  legacySelfRotationDegreesPerSecond: 90
+  legacyFormationRotationDegreesPerSecond: 45
+  legacyFormationMorphLoop: 1
+  legacyFormationMorphReturnDuration: 1
+  legacyFormationMorphReturnCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1254,7 +2098,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  formationMorphSteps: []
+  legacyFormationMorphSteps: []
 --- !u!114 &5621072670048582600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1274,12 +2118,14 @@ MonoBehaviour:
     attackStartDelay: 0
     fireMode: 0
     movementMode: 0
-    serializedVersion: 9
+    serializedVersion: 10
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 0.5
     waitForPreviousAttack: 0
     delayAfterAttack: 1
     burstSettingsSource: 0
+    overrideEnemyAttackCooldown: 0
+    enemyAttackCooldown: 1
     waveBurstSettings:
       repeatBurst: 0
       useAttackStartDelay: 0
@@ -1390,6 +2236,7 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
     atCheckpointRules: []
@@ -1523,18 +2370,246 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f85b5f8169a4f38b4b99fd16ad14222, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
-  enemyPrefab: {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
-  enemyCount: 1
-  spawnInterval: 0.2
-  spawnOrderMode: 0
-  spawnOrderAngle: 0
-  spawnOrderStartAngle: 90
-  spawnPoint: {fileID: 0}
-  parentEnemiesToSubWave: 1
   enableDebugLogs: 0
-  entranceMode: 0
-  pathCoordinateSpace: 1
-  pathCheckpoints:
+  formation:
+    enemyPrefab: {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
+    enemyCount: 1
+    spawnInterval: 0.2
+    spawnOrderMode: 0
+    spawnOrderAngle: 0
+    spawnOrderStartAngle: 90
+    parentEnemiesToSubWave: 1
+    formationFrozen: 0
+    formationLayout: 10
+    formationCoordinateSpace: 1
+    formationCenter: {x: 0, y: 0.99854004, z: 0}
+    spacing: {x: 0.75, y: 0.75}
+    columns: 6
+    rows: 2
+    gridMatrixCells: 
+    arcRadius: 2
+    arcDegrees: 120
+    shapePointCount: 8
+    shapeRadius: 2
+    shapeFlattening: {x: 1, y: 1}
+    customFormationPoints: []
+    customFormationEnemyOverrides: []
+    proceduralFormationEnemyOverrides:
+    - {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
+    formationPointsRoot: {fileID: 3546237398227162367}
+  phaseEntry:
+    enabled: 1
+    spawnPoint: {fileID: 0}
+    entranceMode: 0
+    pathCoordinateSpace: 1
+    pathCheckpoints:
+    - position: {x: 0, y: 3.7087111, z: 0}
+      durationToNext: 1
+      speedToNext: 2.7087107
+      motionToNext: 2
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - position: {x: 0, y: 1, z: 0}
+      durationToNext: 0.5
+      speedToNext: 1
+      motionToNext: 2
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    individualEntrancePoints: []
+    individualPointMovementStartDelay: 0.1
+    individualPointMovementDuration: 0.35
+    individualPointMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+    individualEntranceShapeRadius: 2
+    individualEntranceShapeFlattening: {x: 1, y: 1}
+    individualEntranceShapeRotationDegrees: 0
+    entranceCompletionMode: 0
+    entranceLoopStartCheckpointIndex: 0
+    entranceLoopTeleportToStart: 0
+    entranceLoopTeleportDelay: 0
+    settleDuration: 0.35
+    settleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  postBehaviour:
+    enabled: 1
+    postCommands: []
+    postStartDelay: 0.25
+    postCommandPipelineFixedCount: 1
+    postCommandPipelineLoop: 0
+    localMovementOffset: {x: 0.5, y: 0, z: 0}
+    localMovementDuration: 1
+    localMovementLoop: 1
+    localMovementPingPong: 1
+    localMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    wobbleAmplitude: {x: 0.25, y: 0.1}
+    wobbleFrequency: 1.5
+    wobblePhaseMode: 0
+    wobblePhaseOffset: 0.7
+    wobbleDirectionAngle: 0
+    wobbleDirectionStep: 0.75
+    patrolLoop: 1
+    patrolCoordinateSpace: 0
+    patrolPoints: []
+    selfOrbitRadius: {x: 0.25, y: 0.25}
+    selfOrbitPhaseOffset: 0.35
+    selfRotationDegreesPerSecond: 90
+    formationRotationDegreesPerSecond: 45
+    formationMorphLoop: 1
+    formationMorphReturnDuration: 1
+    formationMorphReturnCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    formationMorphSteps: []
+  attackPattern:
+    behaviour: {fileID: 5825203121583867691}
+  completion:
+    enabled: 0
+    completeWhenAllEnemiesAreDefeated: 1
+  structuredConfigurationVersion: 1
+  legacyEnemyPrefab: {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
+  legacyEnemyCount: 1
+  legacySpawnInterval: 0.2
+  legacySpawnOrderMode: 0
+  legacySpawnOrderAngle: 0
+  legacySpawnOrderStartAngle: 90
+  legacySpawnPoint: {fileID: 0}
+  legacyParentEnemiesToSubWave: 1
+  legacyEntranceMode: 0
+  legacyPathCoordinateSpace: 1
+  legacyPathCheckpoints:
   - position: {x: 0, y: 3.7087111, z: 0}
     durationToNext: 1
     speedToNext: 2.7087107
@@ -1591,10 +2666,10 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  individualEntrancePoints: []
-  individualPointMovementStartDelay: 0.1
-  individualPointMovementDuration: 0.35
-  individualPointMovementCurve:
+  legacyIndividualEntrancePoints: []
+  legacyIndividualPointMovementStartDelay: 0.1
+  legacyIndividualPointMovementDuration: 0.35
+  legacyIndividualPointMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1618,34 +2693,34 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
-  individualEntranceShapeRadius: 2
-  individualEntranceShapeFlattening: {x: 1, y: 1}
-  individualEntranceShapeRotationDegrees: 0
-  entranceCompletionMode: 0
-  entranceLoopStartCheckpointIndex: 0
-  entranceLoopTeleportToStart: 0
-  entranceLoopTeleportDelay: 0
-  formationFrozen: 0
-  formationLayout: 10
-  formationCoordinateSpace: 1
-  formationCenter: {x: 0, y: 0.99854004, z: 0}
-  spacing: {x: 0.75, y: 0.75}
-  columns: 6
-  rows: 2
-  gridMatrixCells: 
-  arcRadius: 2
-  arcDegrees: 120
-  shapePointCount: 8
-  shapeRadius: 2
-  shapeFlattening: {x: 1, y: 1}
-  customFormationPoints: []
-  customFormationEnemyOverrides: []
-  proceduralFormationEnemyOverrides:
+  legacyIndividualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+  legacyIndividualEntranceShapeRadius: 2
+  legacyIndividualEntranceShapeFlattening: {x: 1, y: 1}
+  legacyIndividualEntranceShapeRotationDegrees: 0
+  legacyEntranceCompletionMode: 0
+  legacyEntranceLoopStartCheckpointIndex: 0
+  legacyEntranceLoopTeleportToStart: 0
+  legacyEntranceLoopTeleportDelay: 0
+  legacyFormationFrozen: 0
+  legacyFormationLayout: 10
+  legacyFormationCoordinateSpace: 1
+  legacyFormationCenter: {x: 0, y: 0.99854004, z: 0}
+  legacySpacing: {x: 0.75, y: 0.75}
+  legacyColumns: 6
+  legacyRows: 2
+  legacyGridMatrixCells: 
+  legacyArcRadius: 2
+  legacyArcDegrees: 120
+  legacyShapePointCount: 8
+  legacyShapeRadius: 2
+  legacyShapeFlattening: {x: 1, y: 1}
+  legacyCustomFormationPoints: []
+  legacyCustomFormationEnemyOverrides: []
+  legacyProceduralFormationEnemyOverrides:
   - {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
-  formationPointsRoot: {fileID: 3546237398227162367}
-  settleDuration: 0.35
-  settleCurve:
+  legacyFormationPointsRoot: {fileID: 3546237398227162367}
+  legacySettleDuration: 0.35
+  legacySettleCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1669,15 +2744,15 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  postCommands: []
-  postStartDelay: 0.25
-  postCommandPipelineFixedCount: 1
-  postCommandPipelineLoop: 0
-  localMovementOffset: {x: 0.5, y: 0, z: 0}
-  localMovementDuration: 1
-  localMovementLoop: 1
-  localMovementPingPong: 1
-  localMovementCurve:
+  legacyPostCommands: []
+  legacyPostStartDelay: 0.25
+  legacyPostCommandPipelineFixedCount: 1
+  legacyPostCommandPipelineLoop: 0
+  legacyLocalMovementOffset: {x: 0.5, y: 0, z: 0}
+  legacyLocalMovementDuration: 1
+  legacyLocalMovementLoop: 1
+  legacyLocalMovementPingPong: 1
+  legacyLocalMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1701,22 +2776,22 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  wobbleAmplitude: {x: 0.25, y: 0.1}
-  wobbleFrequency: 1.5
-  wobblePhaseMode: 0
-  wobblePhaseOffset: 0.7
-  wobbleDirectionAngle: 0
-  wobbleDirectionStep: 0.75
-  patrolLoop: 1
-  patrolCoordinateSpace: 0
-  patrolPoints: []
-  selfOrbitRadius: {x: 0.25, y: 0.25}
-  selfOrbitPhaseOffset: 0.35
-  selfRotationDegreesPerSecond: 90
-  formationRotationDegreesPerSecond: 45
-  formationMorphLoop: 1
-  formationMorphReturnDuration: 1
-  formationMorphReturnCurve:
+  legacyWobbleAmplitude: {x: 0.25, y: 0.1}
+  legacyWobbleFrequency: 1.5
+  legacyWobblePhaseMode: 0
+  legacyWobblePhaseOffset: 0.7
+  legacyWobbleDirectionAngle: 0
+  legacyWobbleDirectionStep: 0.75
+  legacyPatrolLoop: 1
+  legacyPatrolCoordinateSpace: 0
+  legacyPatrolPoints: []
+  legacySelfOrbitRadius: {x: 0.25, y: 0.25}
+  legacySelfOrbitPhaseOffset: 0.35
+  legacySelfRotationDegreesPerSecond: 90
+  legacyFormationRotationDegreesPerSecond: 45
+  legacyFormationMorphLoop: 1
+  legacyFormationMorphReturnDuration: 1
+  legacyFormationMorphReturnCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1740,7 +2815,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  formationMorphSteps: []
+  legacyFormationMorphSteps: []
 --- !u!114 &5825203121583867691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1760,12 +2835,14 @@ MonoBehaviour:
     attackStartDelay: 0
     fireMode: 0
     movementMode: 0
-    serializedVersion: 9
+    serializedVersion: 10
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 1
     waitForPreviousAttack: 0
     delayAfterAttack: 1
     burstSettingsSource: 1
+    overrideEnemyAttackCooldown: 0
+    enemyAttackCooldown: 1
     waveBurstSettings:
       repeatBurst: 1
       useAttackStartDelay: 0
@@ -1876,6 +2953,7 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
     atCheckpointRules: []
@@ -2243,6 +3321,7 @@ MonoBehaviour:
   hullHealthMultiplier: 2
   shieldHealthMultiplier: 0.8
   damageMultiplier: 1.35
+  fireRateMultiplier: 1
 --- !u!1 &5171482976757446522
 GameObject:
   m_ObjectHideFlags: 0
@@ -2655,18 +3734,449 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f85b5f8169a4f38b4b99fd16ad14222, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
-  enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
-  enemyCount: 10
-  spawnInterval: 0.05
-  spawnOrderMode: 0
-  spawnOrderAngle: 0
-  spawnOrderStartAngle: 90
-  spawnPoint: {fileID: 6884006559776918049}
-  parentEnemiesToSubWave: 0
   enableDebugLogs: 0
-  entranceMode: 0
-  pathCoordinateSpace: 0
-  pathCheckpoints:
+  formation:
+    enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
+    enemyCount: 10
+    spawnInterval: 0.05
+    spawnOrderMode: 0
+    spawnOrderAngle: 0
+    spawnOrderStartAngle: 90
+    parentEnemiesToSubWave: 0
+    formationFrozen: 0
+    formationLayout: 2
+    formationCoordinateSpace: 1
+    formationCenter: {x: 4.25, y: -5.9, z: 0}
+    spacing: {x: 0.4, y: 0.45}
+    columns: 5
+    rows: 2
+    gridMatrixCells: 
+    arcRadius: 2
+    arcDegrees: 120
+    shapePointCount: 16
+    shapeRadius: 1
+    shapeFlattening: {x: 1, y: 1}
+    customFormationPoints: []
+    customFormationEnemyOverrides: []
+    proceduralFormationEnemyOverrides:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
+    formationPointsRoot: {fileID: 8093272636863788390}
+  phaseEntry:
+    enabled: 1
+    spawnPoint: {fileID: 6884006559776918049}
+    entranceMode: 0
+    pathCoordinateSpace: 0
+    pathCheckpoints:
+    - position: {x: 4.5, y: 1, z: 0}
+      durationToNext: 0.5
+      speedToNext: 3.0190265
+      motionToNext: 2
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    individualEntrancePoints: []
+    individualPointMovementStartDelay: 0.1
+    individualPointMovementDuration: 0.35
+    individualPointMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+    individualEntranceShapeRadius: 2
+    individualEntranceShapeFlattening: {x: 1, y: 1}
+    individualEntranceShapeRotationDegrees: 0
+    entranceCompletionMode: 0
+    entranceLoopStartCheckpointIndex: 0
+    entranceLoopTeleportToStart: 0
+    entranceLoopTeleportDelay: 0
+    settleDuration: 0.55
+    settleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  postBehaviour:
+    enabled: 1
+    postCommands:
+    - type: 9
+      enabled: 1
+      completionMode: 0
+      duration: 1
+      holdDuration: 0
+      parallelExecutionMode: 0
+      infiniteParallel: 0
+      loopCount: 1
+      infiniteLoop: 1
+      targetOffset: {x: 0, y: 0, z: 0}
+      targetOffsetCoordinateSpace: 0
+      rotationDegrees: 45
+      continuousFormationRotation: 0
+      curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      formationReorderMode: 0
+      formationReorderUseTargetCenter: 0
+      formationReorderTargetCenter: {x: 0, y: 0, z: 0}
+      formationReorderSpeed: 5
+      formationReorderStartInterval: 0.1
+      formationReorderShipsPerBatch: 1
+      formationReorderRandomSeed: 12345
+      morphTarget:
+        layout: 5
+        centerOffset: {x: 0, y: 0, z: 0}
+        columns: 5
+        rows: 3
+        arcRadius: 2
+        arcDegrees: 120
+        shapeRadius: 2
+        shapeFlattening: {x: 1, y: 1}
+        customPoints: []
+        durationToShape: 1
+        holdDuration: 0
+        easeToShape:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+      parallelCommands: []
+      loopCommands:
+      - type: 0
+        enabled: 1
+        completionMode: 0
+        duration: 4
+        holdDuration: 0
+        parallelExecutionMode: 0
+        infiniteParallel: 0
+        loopCount: 1
+        infiniteLoop: 0
+        targetOffset: {x: 0, y: 0, z: 0}
+        targetOffsetCoordinateSpace: 0
+        rotationDegrees: 45
+        continuousFormationRotation: 0
+        curve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        formationReorderMode: 0
+        formationReorderUseTargetCenter: 0
+        formationReorderTargetCenter: {x: 0, y: 0, z: 0}
+        formationReorderSpeed: 5
+        formationReorderStartInterval: 0.1
+        formationReorderShipsPerBatch: 1
+        formationReorderRandomSeed: 12345
+        morphTarget:
+          layout: 5
+          centerOffset: {x: 0, y: 0, z: 0}
+          columns: 5
+          rows: 3
+          arcRadius: 2
+          arcDegrees: 120
+          shapeRadius: 2
+          shapeFlattening: {x: 1, y: 1}
+          customPoints: []
+          durationToShape: 1
+          holdDuration: 0
+          easeToShape:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+        parallelCommands: []
+        loopCommands: []
+    postStartDelay: 0
+    postCommandPipelineFixedCount: 1
+    postCommandPipelineLoop: 1
+    localMovementOffset: {x: 0.5, y: 0, z: 0}
+    localMovementDuration: 1
+    localMovementLoop: 1
+    localMovementPingPong: 1
+    localMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    wobbleAmplitude: {x: 0, y: 0.1}
+    wobbleFrequency: 1.5
+    wobblePhaseMode: 1
+    wobblePhaseOffset: 0.7
+    wobbleDirectionAngle: 0
+    wobbleDirectionStep: 0.75
+    patrolLoop: 1
+    patrolCoordinateSpace: 0
+    patrolPoints:
+    - offset: {x: 1.25, y: 1, z: 0}
+      wait: 0
+      durationToNext: 2
+      speedToNext: 1.25
+      motionToNext: 0
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    - offset: {x: -1.25, y: 1, z: 0}
+      wait: 0
+      durationToNext: 2
+      speedToNext: 1.25
+      motionToNext: 0
+      easeToNext:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    selfOrbitRadius: {x: 0.25, y: 0.25}
+    selfOrbitPhaseOffset: 0.35
+    selfRotationDegreesPerSecond: 90
+    formationRotationDegreesPerSecond: 45
+    formationMorphLoop: 1
+    formationMorphReturnDuration: 1
+    formationMorphReturnCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    formationMorphSteps: []
+  attackPattern:
+    behaviour: {fileID: 1474828361991384484}
+  completion:
+    enabled: 0
+    completeWhenAllEnemiesAreDefeated: 1
+  structuredConfigurationVersion: 1
+  legacyEnemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
+  legacyEnemyCount: 10
+  legacySpawnInterval: 0.05
+  legacySpawnOrderMode: 0
+  legacySpawnOrderAngle: 0
+  legacySpawnOrderStartAngle: 90
+  legacySpawnPoint: {fileID: 6884006559776918049}
+  legacyParentEnemiesToSubWave: 0
+  legacyEntranceMode: 0
+  legacyPathCoordinateSpace: 0
+  legacyPathCheckpoints:
   - position: {x: 4.5, y: 1, z: 0}
     durationToNext: 0.5
     speedToNext: 3.0190265
@@ -2695,10 +4205,10 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  individualEntrancePoints: []
-  individualPointMovementStartDelay: 0.1
-  individualPointMovementDuration: 0.35
-  individualPointMovementCurve:
+  legacyIndividualEntrancePoints: []
+  legacyIndividualPointMovementStartDelay: 0.1
+  legacyIndividualPointMovementDuration: 0.35
+  legacyIndividualPointMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -2722,30 +4232,30 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
-  individualEntranceShapeRadius: 2
-  individualEntranceShapeFlattening: {x: 1, y: 1}
-  individualEntranceShapeRotationDegrees: 0
-  entranceCompletionMode: 0
-  entranceLoopStartCheckpointIndex: 0
-  entranceLoopTeleportToStart: 0
-  entranceLoopTeleportDelay: 0
-  formationFrozen: 0
-  formationLayout: 2
-  formationCoordinateSpace: 1
-  formationCenter: {x: 4.25, y: -5.9, z: 0}
-  spacing: {x: 0.4, y: 0.45}
-  columns: 5
-  rows: 2
-  gridMatrixCells: 
-  arcRadius: 2
-  arcDegrees: 120
-  shapePointCount: 16
-  shapeRadius: 1
-  shapeFlattening: {x: 1, y: 1}
-  customFormationPoints: []
-  customFormationEnemyOverrides: []
-  proceduralFormationEnemyOverrides:
+  legacyIndividualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+  legacyIndividualEntranceShapeRadius: 2
+  legacyIndividualEntranceShapeFlattening: {x: 1, y: 1}
+  legacyIndividualEntranceShapeRotationDegrees: 0
+  legacyEntranceCompletionMode: 0
+  legacyEntranceLoopStartCheckpointIndex: 0
+  legacyEntranceLoopTeleportToStart: 0
+  legacyEntranceLoopTeleportDelay: 0
+  legacyFormationFrozen: 0
+  legacyFormationLayout: 2
+  legacyFormationCoordinateSpace: 1
+  legacyFormationCenter: {x: 4.25, y: -5.9, z: 0}
+  legacySpacing: {x: 0.4, y: 0.45}
+  legacyColumns: 5
+  legacyRows: 2
+  legacyGridMatrixCells: 
+  legacyArcRadius: 2
+  legacyArcDegrees: 120
+  legacyShapePointCount: 16
+  legacyShapeRadius: 1
+  legacyShapeFlattening: {x: 1, y: 1}
+  legacyCustomFormationPoints: []
+  legacyCustomFormationEnemyOverrides: []
+  legacyProceduralFormationEnemyOverrides:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -2756,9 +4266,9 @@ MonoBehaviour:
   - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
   - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
   - {fileID: 4331250054456891265, guid: 1c41546b4d154c84c81c88f1eaa927b6, type: 3}
-  formationPointsRoot: {fileID: 8093272636863788390}
-  settleDuration: 0.55
-  settleCurve:
+  legacyFormationPointsRoot: {fileID: 8093272636863788390}
+  legacySettleDuration: 0.55
+  legacySettleCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -2782,7 +4292,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  postCommands:
+  legacyPostCommands:
   - type: 9
     enabled: 1
     completionMode: 0
@@ -2947,14 +4457,14 @@ MonoBehaviour:
           m_RotationOrder: 4
       parallelCommands: []
       loopCommands: []
-  postStartDelay: 0
-  postCommandPipelineFixedCount: 1
-  postCommandPipelineLoop: 1
-  localMovementOffset: {x: 0.5, y: 0, z: 0}
-  localMovementDuration: 1
-  localMovementLoop: 1
-  localMovementPingPong: 1
-  localMovementCurve:
+  legacyPostStartDelay: 0
+  legacyPostCommandPipelineFixedCount: 1
+  legacyPostCommandPipelineLoop: 1
+  legacyLocalMovementOffset: {x: 0.5, y: 0, z: 0}
+  legacyLocalMovementDuration: 1
+  legacyLocalMovementLoop: 1
+  legacyLocalMovementPingPong: 1
+  legacyLocalMovementCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -2978,16 +4488,17 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  wobbleAmplitude: {x: 0, y: 0.1}
-  wobbleFrequency: 1.5
-  wobblePhaseMode: 1
-  wobblePhaseOffset: 0.7
-  wobbleDirectionAngle: 0
-  wobbleDirectionStep: 0.75
-  patrolLoop: 1
-  patrolCoordinateSpace: 0
-  patrolPoints:
+  legacyWobbleAmplitude: {x: 0, y: 0.1}
+  legacyWobbleFrequency: 1.5
+  legacyWobblePhaseMode: 1
+  legacyWobblePhaseOffset: 0.7
+  legacyWobbleDirectionAngle: 0
+  legacyWobbleDirectionStep: 0.75
+  legacyPatrolLoop: 1
+  legacyPatrolCoordinateSpace: 0
+  legacyPatrolPoints:
   - offset: {x: 1.25, y: 1, z: 0}
+    wait: 0
     durationToNext: 2
     speedToNext: 1.25
     motionToNext: 0
@@ -3016,6 +4527,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
   - offset: {x: -1.25, y: 1, z: 0}
+    wait: 0
     durationToNext: 2
     speedToNext: 1.25
     motionToNext: 0
@@ -3043,13 +4555,13 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  selfOrbitRadius: {x: 0.25, y: 0.25}
-  selfOrbitPhaseOffset: 0.35
-  selfRotationDegreesPerSecond: 90
-  formationRotationDegreesPerSecond: 45
-  formationMorphLoop: 1
-  formationMorphReturnDuration: 1
-  formationMorphReturnCurve:
+  legacySelfOrbitRadius: {x: 0.25, y: 0.25}
+  legacySelfOrbitPhaseOffset: 0.35
+  legacySelfRotationDegreesPerSecond: 90
+  legacyFormationRotationDegreesPerSecond: 45
+  legacyFormationMorphLoop: 1
+  legacyFormationMorphReturnDuration: 1
+  legacyFormationMorphReturnCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -3073,7 +4585,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  formationMorphSteps: []
+  legacyFormationMorphSteps: []
 --- !u!114 &1474828361991384484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3093,12 +4605,14 @@ MonoBehaviour:
     attackStartDelay: 0
     fireMode: 1
     movementMode: 0
-    serializedVersion: 9
+    serializedVersion: 10
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 0.2
     waitForPreviousAttack: 0
     delayAfterAttack: 1
     burstSettingsSource: 1
+    overrideEnemyAttackCooldown: 0
+    enemyAttackCooldown: 1
     waveBurstSettings:
       repeatBurst: 0
       useAttackStartDelay: 0
@@ -3209,6 +4723,7 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
     atCheckpointRules: []

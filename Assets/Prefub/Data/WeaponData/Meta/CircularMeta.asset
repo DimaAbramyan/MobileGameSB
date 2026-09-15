@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
+  m_Name: CircularMeta
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  energyCost: 3
+  projectileSlots:
+  - id: 797f47d8d4e04985884762487f4e6a7b
+    projectile: {fileID: 11400000, guid: 56753496d89a8b246bcc8d2b99fa8931, type: 2}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      reloadTime: 2
+      damage: 4
+      range: 7
+      projectileSpeed: 2
+      angle: 0
+    contracts: []
+  references:
+    version: 2
+    RefIds: []

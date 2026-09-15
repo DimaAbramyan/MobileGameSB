@@ -132,6 +132,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0f3e7dcc7c7ad4ab5447c2efc6a16f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  battleWeaponMount: {fileID: 3384991692524799735}
   reloadMultiplier: 1
 --- !u!114 &5531666038293898980
 MonoBehaviour:

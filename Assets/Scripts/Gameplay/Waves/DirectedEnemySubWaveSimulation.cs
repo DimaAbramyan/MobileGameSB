@@ -1467,6 +1467,9 @@ public sealed partial class DirectedEnemySubWave
 
         float lastSpawnTime = (count - 1)
             * GetFiniteNonNegativeSimulationValue(spawnInterval);
+        if (!HasPhaseEntry)
+            return lastSpawnTime;
+
         if (!UsesIndividualEntrancePoints())
         {
             return lastSpawnTime
@@ -1588,6 +1591,13 @@ public sealed partial class DirectedEnemySubWave
         DirectedWaveRuntimeCheckpoint[] checkpoints,
         float pathDuration)
     {
+        if (!HasPhaseEntry)
+        {
+            return GetSimulationFormationPosition(
+                formationIndex,
+                previewParent);
+        }
+
         if (UsesIndividualEntrancePoints())
         {
             return EvaluateSimulationIndividualPointEntrancePosition(

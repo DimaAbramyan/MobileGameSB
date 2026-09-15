@@ -63,6 +63,7 @@ public sealed class BattleLaunchService
         return new SaveData
         {
             shipId = ship.shipId,
+            hullContentId = ship.hullContentId,
             shipName = ship.shipName,
             WeaponData = CopyWeapons(ship.weaponData)
         };

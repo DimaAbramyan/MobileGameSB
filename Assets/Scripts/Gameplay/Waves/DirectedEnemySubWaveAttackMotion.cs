@@ -12,7 +12,8 @@ public sealed partial class DirectedEnemySubWave
         Enemy enemy,
         Transform target,
         Rigidbody2D body,
-        Vector3 position)
+        Vector3 position,
+        bool rotateToMovement = true)
     {
         if (enemy == null)
         {
@@ -20,14 +21,54 @@ public sealed partial class DirectedEnemySubWave
             return;
         }
 
+        Vector3 previousRoutePosition = entranceRoutePositions.TryGetValue(
+            enemy,
+            out Vector3 storedRoutePosition)
+            ? storedRoutePosition
+            : target.position;
         entranceRoutePositions[enemy] = position;
         if (timelineDetachedEnemies.Contains(enemy)
             && attackMotionPositions.TryGetValue(enemy, out Vector3 attackPosition))
         {
             position = attackPosition;
+            SetEnemyPosition(target, body, position);
+            return;
+        }
+
+        if (rotateToMovement && rotateEnemiesAlongEntrancePath)
+        {
+            RotateEnemyAlongEntranceDirection(
+                target,
+                body,
+                previousRoutePosition,
+                position);
         }
 
         SetEnemyPosition(target, body, position);
+    }
+
+    private static void RotateEnemyAlongEntranceDirection(
+        Transform target,
+        Rigidbody2D body,
+        Vector3 from,
+        Vector3 to)
+    {
+        if (target == null)
+            return;
+
+        Vector2 direction = new(to.x - from.x, to.y - from.y);
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
+        float rotationDegrees = Mathf.Atan2(direction.y, direction.x)
+            * Mathf.Rad2Deg - 90f;
+        if (body != null && body.simulated)
+        {
+            body.MoveRotation(rotationDegrees);
+            return;
+        }
+
+        target.rotation = Quaternion.Euler(0f, 0f, rotationDegrees);
     }
 
     internal void SetAttackMotionPosition(Enemy enemy, Vector3 position)

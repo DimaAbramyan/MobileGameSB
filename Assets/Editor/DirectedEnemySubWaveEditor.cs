@@ -64,6 +64,14 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private SerializedProperty spawnPoint;
     private SerializedProperty parentEnemiesToSubWave;
     private SerializedProperty enableDebugLogs;
+    private SerializedProperty phaseEntryEnabled;
+    private SerializedProperty postBehaviourEnabled;
+    private SerializedProperty completion;
+
+    private SerializedObject formationBehaviourSerializedObject;
+    private SerializedObject phaseEntryBehaviourSerializedObject;
+    private SerializedObject postBehaviourSerializedObject;
+    private SerializedObject completionBehaviourSerializedObject;
 
     private SerializedProperty entranceMode;
     private SerializedProperty entranceCompletionMode;
@@ -71,6 +79,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private SerializedProperty entranceLoopTeleportToStart;
     private SerializedProperty entranceLoopTeleportDelay;
     private SerializedProperty pathCoordinateSpace;
+    private SerializedProperty rotateEnemiesAlongEntrancePath;
     private SerializedProperty pathCheckpoints;
     private SerializedProperty individualEntrancePoints;
     private SerializedProperty individualPointMovementStartDelay;
@@ -132,10 +141,12 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private bool spawnOrderFoldout = true;
     private bool pathFoldout = true;
     private bool formationFoldout = true;
+    private bool attackPatternFoldout = true;
     private bool gridMatrixFoldout = true;
     private bool customFinalPointsFoldout = true;
     private bool transformFinalPointsFoldout = true;
     private bool postBehaviorFoldout = true;
+    private bool completionFoldout = true;
     private bool previewFoldout = true;
     private bool previewPlaying;
     private double previewStartTime;
@@ -170,6 +181,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private int cachedWavePreviewVersion = -1;
     private float cachedWavePreviewElapsed = float.NaN;
     private Dictionary<int, Vector3> cachedWavePreviewPositions;
+    private Dictionary<int, Vector3> cachedWavePreviewPreviousPositions;
     private int[] cachedWavePreviewSpawnOrder;
     private GUIContent[] cachedWavePreviewLabels;
     private string cachedWavePreviewPhaseName = "Entrance / Formation";
@@ -190,6 +202,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private bool patrolInspectorChangeThisEvent;
     private bool patrolInspectorInteractionPending;
     private bool patrolInspectorHeavyInvalidationPending;
+    private bool isEmbeddedBehaviourInspector;
     private int pendingPatrolMetricPointIndex = -1;
     private readonly int[] patrolAffectedSegmentIndices = new int[4];
     private float previewDuration;
@@ -202,111 +215,132 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void OnEnable()
     {
-        enemyPrefab = serializedObject.FindProperty("enemyPrefab");
-        enemyCount = serializedObject.FindProperty("enemyCount");
-        spawnInterval = serializedObject.FindProperty("spawnInterval");
-        spawnOrderMode = serializedObject.FindProperty("spawnOrderMode");
-        spawnOrderAngle = serializedObject.FindProperty("spawnOrderAngle");
-        spawnOrderStartAngle =
-            serializedObject.FindProperty("spawnOrderStartAngle");
-        spawnPoint = serializedObject.FindProperty("spawnPoint");
-        parentEnemiesToSubWave =
-            serializedObject.FindProperty("parentEnemiesToSubWave");
-        enableDebugLogs = serializedObject.FindProperty("enableDebugLogs");
+        RebindBehaviourPropertySources();
 
-        entranceMode = serializedObject.FindProperty("entranceMode");
-        entranceCompletionMode = serializedObject.FindProperty(
+        enemyPrefab = FindBehaviourProperty("enemyPrefab");
+        enemyCount = FindBehaviourProperty("enemyCount");
+        spawnInterval = FindBehaviourProperty("spawnInterval");
+        spawnOrderMode = FindBehaviourProperty("spawnOrderMode");
+        spawnOrderAngle = FindBehaviourProperty("spawnOrderAngle");
+        spawnOrderStartAngle =
+            FindBehaviourProperty("spawnOrderStartAngle");
+        spawnPoint = FindBehaviourProperty("spawnPoint");
+        parentEnemiesToSubWave =
+            FindBehaviourProperty("parentEnemiesToSubWave");
+        enableDebugLogs = serializedObject.FindProperty("enableDebugLogs");
+        bool usesLegacyCompatibility =
+            IsUsingLegacyConfigurationCompatibility();
+        phaseEntryEnabled = usesLegacyCompatibility
+            ? null
+            : phaseEntryBehaviourSerializedObject != null
+                ? phaseEntryBehaviourSerializedObject.FindProperty("m_Enabled")
+                : serializedObject.FindProperty("phaseEntry.enabled");
+        postBehaviourEnabled = usesLegacyCompatibility
+            ? null
+            : postBehaviourSerializedObject != null
+                ? postBehaviourSerializedObject.FindProperty("m_Enabled")
+                : serializedObject.FindProperty("postBehaviour.enabled");
+        completion = usesLegacyCompatibility
+            ? null
+            : completionBehaviourSerializedObject != null
+                ? completionBehaviourSerializedObject.FindProperty("configuration")
+                : serializedObject.FindProperty("completion");
+
+        entranceMode = FindBehaviourProperty("entranceMode");
+        entranceCompletionMode = FindBehaviourProperty(
             "entranceCompletionMode");
-        entranceLoopStartCheckpointIndex = serializedObject.FindProperty(
+        entranceLoopStartCheckpointIndex = FindBehaviourProperty(
             "entranceLoopStartCheckpointIndex");
-        entranceLoopTeleportToStart = serializedObject.FindProperty(
+        entranceLoopTeleportToStart = FindBehaviourProperty(
             "entranceLoopTeleportToStart");
-        entranceLoopTeleportDelay = serializedObject.FindProperty(
+        entranceLoopTeleportDelay = FindBehaviourProperty(
             "entranceLoopTeleportDelay");
         pathCoordinateSpace =
-            serializedObject.FindProperty("pathCoordinateSpace");
-        pathCheckpoints = serializedObject.FindProperty("pathCheckpoints");
+            FindBehaviourProperty("pathCoordinateSpace");
+        rotateEnemiesAlongEntrancePath = FindBehaviourProperty(
+            "rotateEnemiesAlongEntrancePath");
+        pathCheckpoints = FindBehaviourProperty("pathCheckpoints");
         individualEntrancePoints =
-            serializedObject.FindProperty("individualEntrancePoints");
-        individualPointMovementStartDelay = serializedObject.FindProperty(
+            FindBehaviourProperty("individualEntrancePoints");
+        individualPointMovementStartDelay = FindBehaviourProperty(
             "individualPointMovementStartDelay");
-        individualPointMovementDuration = serializedObject.FindProperty(
+        individualPointMovementDuration = FindBehaviourProperty(
             "individualPointMovementDuration");
-        individualPointMovementCurve = serializedObject.FindProperty(
+        individualPointMovementCurve = FindBehaviourProperty(
             "individualPointMovementCurve");
-        individualEntranceShapeCenter = serializedObject.FindProperty(
+        individualEntranceShapeCenter = FindBehaviourProperty(
             "individualEntranceShapeCenter");
-        individualEntranceShapeRadius = serializedObject.FindProperty(
+        individualEntranceShapeRadius = FindBehaviourProperty(
             "individualEntranceShapeRadius");
-        individualEntranceShapeFlattening = serializedObject.FindProperty(
+        individualEntranceShapeFlattening = FindBehaviourProperty(
             "individualEntranceShapeFlattening");
-        individualEntranceShapeRotationDegrees = serializedObject.FindProperty(
+        individualEntranceShapeRotationDegrees = FindBehaviourProperty(
             "individualEntranceShapeRotationDegrees");
 
-        formationLayout = serializedObject.FindProperty("formationLayout");
-        formationFrozen = serializedObject.FindProperty("formationFrozen");
+        formationLayout = FindBehaviourProperty("formationLayout");
+        formationFrozen = FindBehaviourProperty("formationFrozen");
         formationCoordinateSpace =
-            serializedObject.FindProperty("formationCoordinateSpace");
-        formationCenter = serializedObject.FindProperty("formationCenter");
-        spacing = serializedObject.FindProperty("spacing");
-        columns = serializedObject.FindProperty("columns");
-        rows = serializedObject.FindProperty("rows");
-        gridMatrixCells = serializedObject.FindProperty("gridMatrixCells");
-        arcRadius = serializedObject.FindProperty("arcRadius");
-        arcDegrees = serializedObject.FindProperty("arcDegrees");
-        shapePointCount = serializedObject.FindProperty("shapePointCount");
-        shapeRadius = serializedObject.FindProperty("shapeRadius");
-        shapeFlattening = serializedObject.FindProperty("shapeFlattening");
+            FindBehaviourProperty("formationCoordinateSpace");
+        formationCenter = FindBehaviourProperty("formationCenter");
+        spacing = FindBehaviourProperty("spacing");
+        columns = FindBehaviourProperty("columns");
+        rows = FindBehaviourProperty("rows");
+        gridMatrixCells = FindBehaviourProperty("gridMatrixCells");
+        arcRadius = FindBehaviourProperty("arcRadius");
+        arcDegrees = FindBehaviourProperty("arcDegrees");
+        shapePointCount = FindBehaviourProperty("shapePointCount");
+        shapeRadius = FindBehaviourProperty("shapeRadius");
+        shapeFlattening = FindBehaviourProperty("shapeFlattening");
         customFormationPoints =
-            serializedObject.FindProperty("customFormationPoints");
+            FindBehaviourProperty("customFormationPoints");
         customFormationEnemyOverrides =
-            serializedObject.FindProperty("customFormationEnemyOverrides");
+            FindBehaviourProperty("customFormationEnemyOverrides");
         proceduralFormationEnemyOverrides =
-            serializedObject.FindProperty("proceduralFormationEnemyOverrides");
+            FindBehaviourProperty("proceduralFormationEnemyOverrides");
         formationPointsRoot =
-            serializedObject.FindProperty("formationPointsRoot");
-        settleDuration = serializedObject.FindProperty("settleDuration");
-        settleCurve = serializedObject.FindProperty("settleCurve");
+            FindBehaviourProperty("formationPointsRoot");
+        settleDuration = FindBehaviourProperty("settleDuration");
+        settleCurve = FindBehaviourProperty("settleCurve");
 
-        postCommands = serializedObject.FindProperty("postCommands");
-        postStartDelay = serializedObject.FindProperty("postStartDelay");
+        postCommands = FindBehaviourProperty("postCommands");
+        postStartDelay = FindBehaviourProperty("postStartDelay");
         postCommandPipelineFixedCount =
-            serializedObject.FindProperty("postCommandPipelineFixedCount");
+            FindBehaviourProperty("postCommandPipelineFixedCount");
         postCommandPipelineLoop =
-            serializedObject.FindProperty("postCommandPipelineLoop");
+            FindBehaviourProperty("postCommandPipelineLoop");
         localMovementOffset =
-            serializedObject.FindProperty("localMovementOffset");
+            FindBehaviourProperty("localMovementOffset");
         localMovementDuration =
-            serializedObject.FindProperty("localMovementDuration");
+            FindBehaviourProperty("localMovementDuration");
         localMovementLoop =
-            serializedObject.FindProperty("localMovementLoop");
+            FindBehaviourProperty("localMovementLoop");
         localMovementPingPong =
-            serializedObject.FindProperty("localMovementPingPong");
+            FindBehaviourProperty("localMovementPingPong");
         localMovementCurve =
-            serializedObject.FindProperty("localMovementCurve");
-        wobbleAmplitude = serializedObject.FindProperty("wobbleAmplitude");
-        wobbleFrequency = serializedObject.FindProperty("wobbleFrequency");
-        wobblePhaseMode = serializedObject.FindProperty("wobblePhaseMode");
-        wobblePhaseOffset = serializedObject.FindProperty("wobblePhaseOffset");
-        wobbleDirectionAngle = serializedObject.FindProperty("wobbleDirectionAngle");
-        wobbleDirectionStep = serializedObject.FindProperty("wobbleDirectionStep");
-        patrolLoop = serializedObject.FindProperty("patrolLoop");
+            FindBehaviourProperty("localMovementCurve");
+        wobbleAmplitude = FindBehaviourProperty("wobbleAmplitude");
+        wobbleFrequency = FindBehaviourProperty("wobbleFrequency");
+        wobblePhaseMode = FindBehaviourProperty("wobblePhaseMode");
+        wobblePhaseOffset = FindBehaviourProperty("wobblePhaseOffset");
+        wobbleDirectionAngle = FindBehaviourProperty("wobbleDirectionAngle");
+        wobbleDirectionStep = FindBehaviourProperty("wobbleDirectionStep");
+        patrolLoop = FindBehaviourProperty("patrolLoop");
         patrolCoordinateSpace =
-            serializedObject.FindProperty("patrolCoordinateSpace");
-        patrolPoints = serializedObject.FindProperty("patrolPoints");
-        selfOrbitRadius = serializedObject.FindProperty("selfOrbitRadius");
+            FindBehaviourProperty("patrolCoordinateSpace");
+        patrolPoints = FindBehaviourProperty("patrolPoints");
+        selfOrbitRadius = FindBehaviourProperty("selfOrbitRadius");
         selfOrbitPhaseOffset =
-            serializedObject.FindProperty("selfOrbitPhaseOffset");
+            FindBehaviourProperty("selfOrbitPhaseOffset");
         selfRotationDegreesPerSecond =
-            serializedObject.FindProperty("selfRotationDegreesPerSecond");
+            FindBehaviourProperty("selfRotationDegreesPerSecond");
         formationRotationDegreesPerSecond =
-            serializedObject.FindProperty("formationRotationDegreesPerSecond");
-        formationMorphLoop = serializedObject.FindProperty("formationMorphLoop");
+            FindBehaviourProperty("formationRotationDegreesPerSecond");
+        formationMorphLoop = FindBehaviourProperty("formationMorphLoop");
         formationMorphReturnDuration =
-            serializedObject.FindProperty("formationMorphReturnDuration");
+            FindBehaviourProperty("formationMorphReturnDuration");
         formationMorphReturnCurve =
-            serializedObject.FindProperty("formationMorphReturnCurve");
-        formationMorphSteps = serializedObject.FindProperty("formationMorphSteps");
+            FindBehaviourProperty("formationMorphReturnCurve");
+        formationMorphSteps = FindBehaviourProperty("formationMorphSteps");
 
         showMobileBounds = EditorPrefs.GetBool(ShowMobileBoundsKey, true);
         mobileBoundsOrthoSize = EditorPrefs.GetFloat(
@@ -331,11 +365,98 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         Undo.undoRedoPerformed -= InvalidatePreviewSession;
     }
 
+    private void RebindBehaviourPropertySources()
+    {
+        DirectedEnemySubWave wave = target as DirectedEnemySubWave;
+        formationBehaviourSerializedObject = CreateBehaviourSerializedObject(
+            wave != null ? wave.FormationBehaviour : null);
+        phaseEntryBehaviourSerializedObject = CreateBehaviourSerializedObject(
+            wave != null ? wave.PhaseEntryBehaviour : null);
+        postBehaviourSerializedObject = CreateBehaviourSerializedObject(
+            wave != null ? wave.PostBehaviourComponent : null);
+        completionBehaviourSerializedObject = CreateBehaviourSerializedObject(
+            wave != null ? wave.CompletionBehaviour : null);
+    }
+
+    private bool IsUsingLegacyConfigurationCompatibility()
+    {
+        return target is DirectedEnemySubWave wave
+            && wave.UsesLegacyConfigurationCompatibility;
+    }
+
+    private static string GetLegacyPropertyName(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+            return propertyName;
+
+        return "legacy" + char.ToUpperInvariant(propertyName[0])
+            + propertyName.Substring(1);
+    }
+
+    private static SerializedObject CreateBehaviourSerializedObject(
+        Object behaviour)
+    {
+        return behaviour != null ? new SerializedObject(behaviour) : null;
+    }
+
+    private void UpdatePropertySources()
+    {
+        serializedObject.Update();
+        formationBehaviourSerializedObject?.Update();
+        phaseEntryBehaviourSerializedObject?.Update();
+        postBehaviourSerializedObject?.Update();
+        completionBehaviourSerializedObject?.Update();
+    }
+
+    private bool ApplyAllModifiedProperties()
+    {
+        bool modified = serializedObject.ApplyModifiedProperties();
+        modified |= formationBehaviourSerializedObject != null
+            && formationBehaviourSerializedObject.ApplyModifiedProperties();
+        modified |= phaseEntryBehaviourSerializedObject != null
+            && phaseEntryBehaviourSerializedObject.ApplyModifiedProperties();
+        modified |= postBehaviourSerializedObject != null
+            && postBehaviourSerializedObject.ApplyModifiedProperties();
+        modified |= completionBehaviourSerializedObject != null
+            && completionBehaviourSerializedObject.ApplyModifiedProperties();
+        return modified;
+    }
+
+    private void ApplyAllModifiedPropertiesWithoutUndo()
+    {
+        serializedObject.ApplyModifiedPropertiesWithoutUndo();
+        formationBehaviourSerializedObject?.ApplyModifiedPropertiesWithoutUndo();
+        phaseEntryBehaviourSerializedObject?.ApplyModifiedPropertiesWithoutUndo();
+        postBehaviourSerializedObject?.ApplyModifiedPropertiesWithoutUndo();
+        completionBehaviourSerializedObject?.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private void MarkBehaviourPropertySourcesDirty()
+    {
+        MarkSerializedObjectDirty(formationBehaviourSerializedObject);
+        MarkSerializedObjectDirty(phaseEntryBehaviourSerializedObject);
+        MarkSerializedObjectDirty(postBehaviourSerializedObject);
+        MarkSerializedObjectDirty(completionBehaviourSerializedObject);
+    }
+
+    private static void MarkSerializedObjectDirty(SerializedObject source)
+    {
+        if (source?.targetObject == null)
+            return;
+
+        EditorUtility.SetDirty(source.targetObject);
+        if (PrefabUtility.IsPartOfPrefabInstance(source.targetObject))
+        {
+            PrefabUtility.RecordPrefabInstancePropertyModifications(
+                source.targetObject);
+        }
+    }
+
     private void ApplyModifiedPropertiesAndInvalidatePreview(
         bool patrolOnlyChange = false,
         bool deferPatrolInvalidation = false)
     {
-        bool modified = serializedObject.ApplyModifiedProperties();
+        bool modified = ApplyAllModifiedProperties();
         if (!modified)
         {
             if (patrolOnlyChange
@@ -429,6 +550,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         cachedWavePreviewVersion = -1;
         cachedWavePreviewElapsed = float.NaN;
         cachedWavePreviewPositions?.Clear();
+        cachedWavePreviewPreviousPositions?.Clear();
         cachedWavePreviewSpawnOrder = null;
         cachedWavePreviewLabels = null;
         cachedWavePreviewPhaseName = "Entrance / Formation";
@@ -456,13 +578,28 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     public override void OnInspectorGUI()
     {
         patrolInspectorChangeThisEvent = false;
-        serializedObject.Update();
+        UpdatePropertySources();
+
+        DirectedEnemySubWave wave = (DirectedEnemySubWave)target;
+        if (wave.UsesSeparateBehaviourComponents)
+        {
+            DrawComponentComposition(wave);
+            DrawPreviewHelp();
+            FinalizePendingPatrolInspectorMetrics();
+            ApplyModifiedPropertiesAndInvalidatePreview(
+                patrolInspectorChangeThisEvent,
+                patrolInspectorInteractionPending && GUIUtility.hotControl != 0);
+            return;
+        }
 
         DrawIntro();
+        DrawLegacyComponentSetupOffer(wave);
         DrawSpawn();
         DrawPath();
         DrawFormation();
+        DrawAttackPattern();
         DrawPostBehavior();
+        DrawCompletion();
         DrawPreviewHelp();
 
         FinalizePendingPatrolInspectorMetrics();
@@ -473,11 +610,269 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             deferPatrolInvalidation);
     }
 
+    public void DrawFormationBehaviourInspector()
+    {
+        BeginEmbeddedBehaviourInspector();
+        DrawSpawn();
+        DrawFormation();
+        EndEmbeddedBehaviourInspector();
+    }
+
+    public void DrawPhaseEntryBehaviourInspector()
+    {
+        BeginEmbeddedBehaviourInspector();
+        DrawPath();
+        EndEmbeddedBehaviourInspector();
+    }
+
+    public void DrawPostBehaviourInspector()
+    {
+        BeginEmbeddedBehaviourInspector();
+        DrawPostBehavior();
+        EndEmbeddedBehaviourInspector();
+    }
+
+    public void DrawCompletionBehaviourInspector()
+    {
+        BeginEmbeddedBehaviourInspector();
+        DrawCompletion();
+        EndEmbeddedBehaviourInspector();
+    }
+
+    public void DrawBehaviourSceneGUI()
+    {
+        OnSceneGUI();
+    }
+
+    private void BeginEmbeddedBehaviourInspector()
+    {
+        isEmbeddedBehaviourInspector = true;
+        patrolInspectorChangeThisEvent = false;
+        UpdatePropertySources();
+    }
+
+    private void EndEmbeddedBehaviourInspector()
+    {
+        FinalizePendingPatrolInspectorMetrics();
+        bool deferPatrolInvalidation = patrolInspectorInteractionPending
+            && GUIUtility.hotControl != 0;
+        ApplyModifiedPropertiesAndInvalidatePreview(
+            patrolInspectorChangeThisEvent,
+            deferPatrolInvalidation);
+        isEmbeddedBehaviourInspector = false;
+    }
+
+    private void DrawLegacyComponentSetupOffer(DirectedEnemySubWave wave)
+    {
+        EditorGUILayout.Space(4f);
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            EditorGUILayout.LabelField(
+                "Separate Behaviour Components",
+                EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "This SubWave still uses its legacy embedded configuration. "
+                + "Add components only for a new setup: existing values are intentionally not copied until the explicit migration step.",
+                MessageType.Info);
+
+            if (GUILayout.Button("Add Empty Formation Behaviour"))
+                AddFormationBehaviour(wave);
+        }
+    }
+
+    private void DrawComponentComposition(DirectedEnemySubWave wave)
+    {
+        EditorGUILayout.HelpBox(
+            "Directed Enemy Sub Wave is the coordinator. Configure each attached behaviour in its own component below. "
+            + "No legacy values are copied automatically.",
+            MessageType.Info);
+
+        DrawBehaviourComponentRow(
+            "Formation (required)",
+            wave.FormationBehaviour,
+            typeof(DirectedWaveFormationBehaviour),
+            true,
+            () => AddFormationBehaviour(wave),
+            null);
+        DrawBehaviourComponentRow(
+            "Phase Entry (optional)",
+            wave.PhaseEntryBehaviour,
+            typeof(DirectedWavePhaseEntryBehaviour),
+            false,
+            () => AddPhaseEntryBehaviour(wave),
+            () => RemovePhaseEntryBehaviour(wave));
+        DrawBehaviourComponentRow(
+            "Attack Pattern (optional)",
+            wave.AttackPatternBehaviour,
+            typeof(DirectedWaveAttackBehaviour),
+            false,
+            () => AddAttackPattern(wave),
+            () => RemoveAttackPattern(wave, wave.AttackPatternBehaviour));
+        DrawBehaviourComponentRow(
+            "Post Behaviour (optional)",
+            wave.PostBehaviourComponent,
+            typeof(DirectedWavePostBehaviour),
+            false,
+            () => AddPostBehaviour(wave),
+            () => RemovePostBehaviour(wave));
+        DrawBehaviourComponentRow(
+            "Completion (optional)",
+            wave.CompletionBehaviour,
+            typeof(DirectedWaveCompletionBehaviour),
+            false,
+            () => AddCompletionBehaviour(wave),
+            () => RemoveCompletionBehaviour(wave));
+
+        if (wave.FormationBehaviour == null)
+        {
+            EditorGUILayout.HelpBox(
+                "Formation is required for component-based SubWave setup. "
+                + "Until it is added, the legacy Formation data remains the compatibility fallback.",
+                MessageType.Warning);
+        }
+    }
+
+    private static void DrawBehaviourComponentRow(
+        string label,
+        Component behaviour,
+        System.Type type,
+        bool required,
+        System.Action add,
+        System.Action remove)
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.ObjectField(
+                    label,
+                    behaviour,
+                    type,
+                    true);
+            }
+
+            if (behaviour == null)
+            {
+                if (GUILayout.Button("Add", GUILayout.Width(58f)))
+                    add?.Invoke();
+                return;
+            }
+
+            if (GUILayout.Button("Select", GUILayout.Width(58f)))
+            {
+                Selection.activeObject = behaviour;
+                EditorGUIUtility.PingObject(behaviour);
+            }
+
+            if (required)
+            {
+                using (new EditorGUI.DisabledScope(true))
+                    GUILayout.Button("Required", GUILayout.Width(62f));
+                return;
+            }
+
+            if (GUILayout.Button("Remove", GUILayout.Width(62f)))
+                remove?.Invoke();
+        }
+    }
+
+    private void AddFormationBehaviour(DirectedEnemySubWave wave)
+    {
+        if (wave.FormationBehaviour != null)
+            return;
+
+        Undo.RecordObject(wave, "Add Directed Wave Formation Behaviour");
+        DirectedWaveFormationBehaviour behaviour = Undo.AddComponent<
+            DirectedWaveFormationBehaviour>(wave.gameObject);
+        wave.SetFormationBehaviour(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private void AddPhaseEntryBehaviour(DirectedEnemySubWave wave)
+    {
+        if (wave.PhaseEntryBehaviour != null)
+            return;
+
+        Undo.RecordObject(wave, "Add Directed Wave Phase Entry Behaviour");
+        DirectedWavePhaseEntryBehaviour behaviour = Undo.AddComponent<
+            DirectedWavePhaseEntryBehaviour>(wave.gameObject);
+        wave.SetPhaseEntryBehaviour(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private void AddPostBehaviour(DirectedEnemySubWave wave)
+    {
+        if (wave.PostBehaviourComponent != null)
+            return;
+
+        Undo.RecordObject(wave, "Add Directed Wave Post Behaviour");
+        DirectedWavePostBehaviour behaviour = Undo.AddComponent<
+            DirectedWavePostBehaviour>(wave.gameObject);
+        wave.SetPostBehaviourComponent(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private void AddCompletionBehaviour(DirectedEnemySubWave wave)
+    {
+        if (wave.CompletionBehaviour != null)
+            return;
+
+        Undo.RecordObject(wave, "Add Directed Wave Completion Behaviour");
+        DirectedWaveCompletionBehaviour behaviour = Undo.AddComponent<
+            DirectedWaveCompletionBehaviour>(wave.gameObject);
+        wave.SetCompletionBehaviour(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private void RemovePhaseEntryBehaviour(DirectedEnemySubWave wave)
+    {
+        DirectedWavePhaseEntryBehaviour behaviour = wave.PhaseEntryBehaviour;
+        if (behaviour == null)
+            return;
+
+        Undo.RecordObject(wave, "Remove Directed Wave Phase Entry Behaviour");
+        wave.ClearPhaseEntryBehaviour(behaviour);
+        Undo.DestroyObjectImmediate(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private void RemovePostBehaviour(DirectedEnemySubWave wave)
+    {
+        DirectedWavePostBehaviour behaviour = wave.PostBehaviourComponent;
+        if (behaviour == null)
+            return;
+
+        Undo.RecordObject(wave, "Remove Directed Wave Post Behaviour");
+        wave.ClearPostBehaviourComponent(behaviour);
+        Undo.DestroyObjectImmediate(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private void RemoveCompletionBehaviour(DirectedEnemySubWave wave)
+    {
+        DirectedWaveCompletionBehaviour behaviour = wave.CompletionBehaviour;
+        if (behaviour == null)
+            return;
+
+        Undo.RecordObject(wave, "Remove Directed Wave Completion Behaviour");
+        wave.ClearCompletionBehaviour(behaviour);
+        Undo.DestroyObjectImmediate(behaviour);
+        FinishBehaviourCompositionChange(wave);
+    }
+
+    private static void FinishBehaviourCompositionChange(
+        DirectedEnemySubWave wave)
+    {
+        MarkWaveConfigurationDirty(wave);
+        ActiveEditorTracker.sharedTracker.ForceRebuild();
+        GUIUtility.ExitGUI();
+    }
+
     private void DrawIntro()
     {
         EditorGUILayout.HelpBox(
-            "Directed Enemy Sub Wave creates enemies with interval, moves them "
-            + "through an entrance path, then places them into a formation.",
+            "Formation is required. Phase Entry, Attack Pattern, Post Behaviour "
+            + "and Completion are optional behaviour blocks.",
             MessageType.Info);
         EditorGUILayout.PropertyField(
             enableDebugLogs,
@@ -490,7 +885,9 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     {
         spawnFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
             spawnFoldout,
-            "1. Spawn");
+            isEmbeddedBehaviourInspector
+                ? "Formation — Spawn"
+                : "1. Formation — Spawn");
 
         if (spawnFoldout)
         {
@@ -498,7 +895,6 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             EditorGUILayout.PropertyField(enemyCount);
             EditorGUILayout.PropertyField(spawnInterval);
             DrawSpawnOrderSettings();
-            EditorGUILayout.PropertyField(spawnPoint);
             EditorGUILayout.PropertyField(parentEnemiesToSubWave);
 
             if (IsTransformPointsFormation())
@@ -623,7 +1019,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                 formationLayout.enumValueIndex =
                     (int)DirectedWaveFormationLayout.TransformPoints;
                 ApplyModifiedPropertiesAndInvalidatePreview();
-                serializedObject.Update();
+                UpdatePropertySources();
             }
 
             Transform root = formationPointsRoot.objectReferenceValue as Transform;
@@ -723,10 +1119,43 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     {
         pathFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
             pathFoldout,
-            "2. Entrance Path");
+            isEmbeddedBehaviourInspector
+                ? "Phase Entry (optional)"
+                : "2. Phase Entry (optional)");
 
         if (pathFoldout)
         {
+            bool usesLegacyCompatibility =
+                IsUsingLegacyConfigurationCompatibility();
+            bool isPhaseEntryEnabled = usesLegacyCompatibility
+                || phaseEntryEnabled != null && phaseEntryEnabled.boolValue;
+
+            if (!usesLegacyCompatibility)
+            {
+                EditorGUILayout.PropertyField(
+                    phaseEntryEnabled,
+                    new GUIContent(
+                        "Enabled",
+                        "When disabled, spawned enemies are placed directly into their Formation slots."));
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "Legacy Phase Entry is active. Its values are read without changing this prefab.",
+                    MessageType.None);
+            }
+
+            if (!isPhaseEntryEnabled)
+            {
+                EditorGUILayout.HelpBox(
+                    "No Phase Entry: each enemy spawns directly in its Formation slot. "
+                    + "Enable this block to configure a spawn point, entrance route and settling.",
+                    MessageType.Info);
+                EditorGUILayout.EndFoldoutHeaderGroup();
+                return;
+            }
+
+            EditorGUILayout.PropertyField(spawnPoint);
             EditorGUILayout.PropertyField(entranceMode);
             EditorGUILayout.PropertyField(
                 entranceCompletionMode,
@@ -734,6 +1163,13 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                     "After Entrance",
                     "Move To Formation places ships into final slots. Loop Entrance Path repeats a checkpoint path and never moves ships into formation."));
             EditorGUILayout.PropertyField(pathCoordinateSpace);
+            EditorGUILayout.PropertyField(
+                rotateEnemiesAlongEntrancePath,
+                new GUIContent(
+                    "Face Movement Direction",
+                    "Rotates each enemy so its transform up follows the direction of travel during Phase Entry."));
+            EditorGUILayout.PropertyField(settleDuration);
+            EditorGUILayout.PropertyField(settleCurve);
 
             if (UsesEntrancePathLoop())
                 DrawEntranceLoopSettings();
@@ -762,6 +1198,179 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         }
 
         EditorGUILayout.EndFoldoutHeaderGroup();
+    }
+
+    private void DrawAttackPattern()
+    {
+        attackPatternFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
+            attackPatternFoldout,
+            "4. Attack Pattern (optional)");
+
+        if (attackPatternFoldout)
+        {
+            DirectedEnemySubWave wave = (DirectedEnemySubWave)target;
+            DirectedWaveAttackBehaviour behaviour = wave.AttackPatternBehaviour;
+            DirectedWaveAttackBehaviour attachedBehaviour =
+                wave.GetComponent<DirectedWaveAttackBehaviour>();
+
+            if (behaviour == null && attachedBehaviour == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "No Attack Pattern is attached. Enemies keep their own Enemy Settings attack behaviour.",
+                    MessageType.Info);
+
+                if (GUILayout.Button("Add Attack Pattern"))
+                    AddAttackPattern(wave);
+            }
+            else if (behaviour == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "An Attack Pattern component exists, but this subwave does not reference it yet.",
+                    MessageType.Warning);
+
+                if (GUILayout.Button("Use Existing Attack Pattern"))
+                    AssignAttackPattern(wave, attachedBehaviour);
+            }
+            else
+            {
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.ObjectField(
+                        "Behaviour",
+                        behaviour,
+                        typeof(DirectedWaveAttackBehaviour),
+                        true);
+                }
+
+                EditorGUILayout.HelpBox(
+                    "Configure this behaviour in its Directed Wave Attack Behaviour component below. "
+                    + "It keeps the complete existing attack settings, including selected enemy slots and entrance attacks.",
+                    MessageType.None);
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Select Settings"))
+                    {
+                        Selection.activeObject = behaviour;
+                        EditorGUIUtility.PingObject(behaviour);
+                    }
+
+                    if (GUILayout.Button("Remove Attack Pattern"))
+                        RemoveAttackPattern(wave, behaviour);
+                }
+            }
+        }
+
+        EditorGUILayout.EndFoldoutHeaderGroup();
+    }
+
+    private void AddAttackPattern(DirectedEnemySubWave wave)
+    {
+        ApplyAllModifiedProperties();
+
+        DirectedWaveAttackBehaviour existing =
+            wave.GetComponent<DirectedWaveAttackBehaviour>();
+        if (existing != null)
+        {
+            AssignAttackPattern(wave, existing);
+            return;
+        }
+
+        Undo.RecordObject(wave, "Add Directed Wave Attack Pattern");
+        DirectedWaveAttackBehaviour behaviour = Undo.AddComponent<
+            DirectedWaveAttackBehaviour>(wave.gameObject);
+        wave.SetAttackPatternBehaviour(behaviour);
+        MarkWaveConfigurationDirty(wave);
+        UpdatePropertySources();
+    }
+
+    private void AssignAttackPattern(
+        DirectedEnemySubWave wave,
+        DirectedWaveAttackBehaviour behaviour)
+    {
+        if (behaviour == null)
+            return;
+
+        ApplyAllModifiedProperties();
+        Undo.RecordObject(wave, "Assign Directed Wave Attack Pattern");
+        wave.SetAttackPatternBehaviour(behaviour);
+        MarkWaveConfigurationDirty(wave);
+        UpdatePropertySources();
+    }
+
+    private void RemoveAttackPattern(
+        DirectedEnemySubWave wave,
+        DirectedWaveAttackBehaviour behaviour)
+    {
+        ApplyAllModifiedProperties();
+        Undo.RecordObject(wave, "Remove Directed Wave Attack Pattern");
+        wave.SetAttackPatternBehaviour(null);
+        MarkWaveConfigurationDirty(wave);
+
+        if (behaviour != null)
+            Undo.DestroyObjectImmediate(behaviour);
+
+        UpdatePropertySources();
+    }
+
+    private void DrawCompletion()
+    {
+        completionFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
+            completionFoldout,
+            isEmbeddedBehaviourInspector
+                ? "Completion (optional)"
+                : "6. Completion (optional)");
+
+        if (completionFoldout)
+        {
+            SerializedProperty completionEnabled = completion != null
+                ? completion.FindPropertyRelative("enabled")
+                : null;
+
+            bool hasCompletionComponent =
+                completionBehaviourSerializedObject != null;
+            if (!hasCompletionComponent
+                && (completionEnabled == null || !completionEnabled.boolValue))
+            {
+                EditorGUILayout.HelpBox(
+                    "No explicit Completion block. The directed-wave standard rule is used: "
+                    + "the subwave completes after all spawned enemies are defeated.",
+                    MessageType.Info);
+            }
+            else
+            {
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    SerializedProperty allEnemiesDefeated =
+                        completion.FindPropertyRelative(
+                            "completeWhenAllEnemiesAreDefeated");
+                    if (allEnemiesDefeated != null)
+                    {
+                        EditorGUILayout.PropertyField(
+                            allEnemiesDefeated,
+                            new GUIContent("All Spawned Enemies Are Defeated"));
+                    }
+                }
+
+                EditorGUILayout.HelpBox(
+                    "The current Completion contract is preserved exactly: "
+                    + "the subwave completes after all spawned enemies are defeated. "
+                    + "Additional completion rules can be added here later without changing existing waves.",
+                    MessageType.Info);
+            }
+        }
+
+        EditorGUILayout.EndFoldoutHeaderGroup();
+    }
+
+    private static void MarkWaveConfigurationDirty(DirectedEnemySubWave wave)
+    {
+        if (wave == null)
+            return;
+
+        EditorUtility.SetDirty(wave);
+        if (PrefabUtility.IsPartOfPrefabInstance(wave))
+            PrefabUtility.RecordPrefabInstancePropertyModifications(wave);
     }
 
     private bool UsesIndividualEntrancePoints()
@@ -1644,7 +2253,9 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     {
         formationFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
             formationFoldout,
-            "3. Formation");
+            isEmbeddedBehaviourInspector
+                ? "Formation — Layout"
+                : "3. Formation — Layout");
 
         if (formationFoldout)
         {
@@ -1703,9 +2314,6 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                 DrawFrozenFormationSummary();
 
             DrawEnemySlotSelectionControls();
-
-            EditorGUILayout.PropertyField(settleDuration);
-            EditorGUILayout.PropertyField(settleCurve);
 
             EditorGUILayout.Space(4f);
             using (new EditorGUI.DisabledScope(frozen))
@@ -2022,7 +2630,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void FreezeFormation()
     {
-        serializedObject.Update();
+        UpdatePropertySources();
 
         ConvertCurrentFormationToTransformPoints();
         formationLayout.enumValueIndex =
@@ -2035,7 +2643,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void UnfreezeFormation()
     {
-        serializedObject.Update();
+        UpdatePropertySources();
 
         formationFrozen.boolValue = false;
         if ((DirectedWaveFormationLayout)formationLayout.enumValueIndex
@@ -3127,6 +3735,105 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         InvalidatePreviewSession();
     }
 
+    private SerializedProperty FindBehaviourProperty(string propertyName)
+    {
+        if (IsUsingLegacyConfigurationCompatibility())
+        {
+            return serializedObject.FindProperty(
+                GetLegacyPropertyName(propertyName));
+        }
+
+        if (IsFormationProperty(propertyName))
+        {
+            return formationBehaviourSerializedObject != null
+                ? formationBehaviourSerializedObject.FindProperty(
+                    $"configuration.{propertyName}")
+                : serializedObject.FindProperty($"formation.{propertyName}");
+        }
+
+        if (IsPhaseEntryProperty(propertyName))
+        {
+            return phaseEntryBehaviourSerializedObject != null
+                ? phaseEntryBehaviourSerializedObject.FindProperty(
+                    $"configuration.{propertyName}")
+                : serializedObject.FindProperty($"phaseEntry.{propertyName}");
+        }
+
+        if (IsPostBehaviourProperty(propertyName))
+        {
+            return postBehaviourSerializedObject != null
+                ? postBehaviourSerializedObject.FindProperty(
+                    $"configuration.{propertyName}")
+                : serializedObject.FindProperty(
+                    $"postBehaviour.{propertyName}");
+        }
+
+        return serializedObject.FindProperty(propertyName);
+    }
+
+    private static bool IsFormationProperty(string propertyName)
+    {
+        return propertyName switch
+        {
+            "enemyPrefab" or "enemyCount" or "spawnInterval"
+                or "spawnOrderMode" or "spawnOrderAngle"
+                or "spawnOrderStartAngle" or "parentEnemiesToSubWave"
+                or "formationLayout" or "formationFrozen"
+                or "formationCoordinateSpace" or "formationCenter" or "spacing"
+                or "columns" or "rows" or "gridMatrixCells" or "arcRadius"
+                or "arcDegrees" or "shapePointCount" or "shapeRadius"
+                or "shapeFlattening" or "customFormationPoints"
+                or "customFormationEnemyOverrides"
+                or "proceduralFormationEnemyOverrides"
+                or "formationPointsRoot" => true,
+            _ => false
+        };
+    }
+
+    private static bool IsPhaseEntryProperty(string propertyName)
+    {
+        return propertyName switch
+        {
+            "spawnPoint" or "entranceMode" or "entranceCompletionMode"
+                or "entranceLoopStartCheckpointIndex"
+                or "entranceLoopTeleportToStart" or "entranceLoopTeleportDelay"
+                or "pathCoordinateSpace" or "rotateEnemiesAlongEntrancePath"
+                or "pathCheckpoints"
+                or "individualEntrancePoints"
+                or "individualPointMovementStartDelay"
+                or "individualPointMovementDuration"
+                or "individualPointMovementCurve"
+                or "individualEntranceShapeCenter"
+                or "individualEntranceShapeRadius"
+                or "individualEntranceShapeFlattening"
+                or "individualEntranceShapeRotationDegrees"
+                or "settleDuration" or "settleCurve" => true,
+            _ => false
+        };
+    }
+
+    private static bool IsPostBehaviourProperty(string propertyName)
+    {
+        return propertyName switch
+        {
+            "postCommands" or "postStartDelay"
+                or "postCommandPipelineFixedCount"
+                or "postCommandPipelineLoop" or "localMovementOffset"
+                or "localMovementDuration" or "localMovementLoop"
+                or "localMovementPingPong" or "localMovementCurve"
+                or "wobbleAmplitude" or "wobbleFrequency"
+                or "wobblePhaseMode" or "wobblePhaseOffset"
+                or "wobbleDirectionAngle" or "wobbleDirectionStep"
+                or "patrolLoop" or "patrolCoordinateSpace" or "patrolPoints"
+                or "selfOrbitRadius" or "selfOrbitPhaseOffset"
+                or "selfRotationDegreesPerSecond"
+                or "formationRotationDegreesPerSecond"
+                or "formationMorphLoop" or "formationMorphReturnDuration"
+                or "formationMorphReturnCurve" or "formationMorphSteps" => true,
+            _ => false
+        };
+    }
+
     private bool HasTransformPointsWithoutEnemyOverride(Transform root)
     {
         for (int i = 0; i < root.childCount; i++)
@@ -3566,10 +4273,42 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     {
         postBehaviorFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
             postBehaviorFoldout,
-            "4. Post Behavior");
+            isEmbeddedBehaviourInspector
+                ? "Post Behaviour (optional)"
+                : "5. Post Behaviour (optional)");
 
         if (postBehaviorFoldout)
         {
+            bool usesLegacyCompatibility =
+                IsUsingLegacyConfigurationCompatibility();
+            bool isPostBehaviourEnabled = usesLegacyCompatibility
+                || postBehaviourEnabled != null && postBehaviourEnabled.boolValue;
+
+            if (!usesLegacyCompatibility)
+            {
+                EditorGUILayout.PropertyField(
+                    postBehaviourEnabled,
+                    new GUIContent(
+                        "Enabled",
+                        "When disabled, enemies remain in Formation after Phase Entry instead of running Post Behaviour commands."));
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "Legacy Post Behaviour is active. Its values are read without changing this prefab.",
+                    MessageType.None);
+            }
+
+            if (!isPostBehaviourEnabled)
+            {
+                EditorGUILayout.HelpBox(
+                    "No Post Behaviour: enemies remain in Formation. "
+                    + "Enable this block to configure a behaviour pipeline.",
+                    MessageType.Info);
+                EditorGUILayout.EndFoldoutHeaderGroup();
+                return;
+            }
+
             EditorGUILayout.HelpBox(
                 "Post Behavior starts after all enemies have reached their final formation positions.",
                 MessageType.Info);
@@ -5462,6 +6201,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         cachedWavePreviewVersion = -1;
         cachedWavePreviewElapsed = float.NaN;
         cachedWavePreviewPositions?.Clear();
+        cachedWavePreviewPreviousPositions?.Clear();
         EditorApplication.update -= UpdatePreview;
         RepaintPreviewSceneView();
         Repaint();
@@ -5598,7 +6338,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private void OnSceneGUI()
     {
         patrolSceneCommitThisEvent = false;
-        serializedObject.Update();
+        UpdatePropertySources();
 
         DirectedEnemySubWave wave = (DirectedEnemySubWave)target;
 
@@ -5609,21 +6349,25 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         }
         else
         {
-            DrawPathSceneHandles(wave);
+            if (wave.HasPhaseEntry)
+                DrawPathSceneHandles(wave);
             DrawFormationSceneHandles(wave);
-            DrawPatrolSceneHandles(wave);
+            if (wave.HasPostBehaviour)
+                DrawPatrolSceneHandles(wave);
         }
 
         CompleteOrCancelPatrolPointDrag(wave);
-        DrawActivePostCommandPreview(wave);
+        if (wave.HasPostBehaviour)
+            DrawActivePostCommandPreview(wave);
         DrawWavePreview(wave);
 
         if (patrolSceneCommitThisEvent)
         {
-            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+            ApplyAllModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(target);
             if (PrefabUtility.IsPartOfPrefabInstance(target))
                 PrefabUtility.RecordPrefabInstancePropertyModifications(target);
+            MarkBehaviourPropertySourcesDirty();
             Undo.FlushUndoRecordObjects();
             InvalidatePatrolDataPreview();
         }
@@ -5775,6 +6519,11 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         Handles.zTest = UnityEngine.Rendering.CompareFunction.Always;
         Handles.color = new Color(0.35f, 1f, 0.45f, 0.9f);
 
+        bool showEntranceRotation = rotateEnemiesAlongEntrancePath != null
+            && rotateEnemiesAlongEntrancePath.boolValue
+            && (cachedWavePreviewPhaseName == "Entrance Loop"
+                || elapsed < wave.GetSimulationPreviewPostStartTime());
+
         int visibleCount = 0;
         int[] previewSpawnOrder = cachedWavePreviewSpawnOrder;
         int orderedCount = previewSpawnOrder != null
@@ -5812,6 +6561,23 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             Handles.Label(
                 position + Vector3.up * 0.22f,
                 cachedWavePreviewLabels[i]);
+            if (showEntranceRotation
+                && cachedWavePreviewPreviousPositions != null
+                && cachedWavePreviewPreviousPositions.TryGetValue(
+                    formationIndex,
+                    out Vector3 previousPosition))
+            {
+                Vector3 direction = position - previousPosition;
+                if (direction.sqrMagnitude > 0.0001f)
+                {
+                    direction.Normalize();
+                    Handles.color = new Color(1f, 0.85f, 0.15f, 0.95f);
+                    Handles.DrawAAPolyLine(
+                        3f,
+                        position,
+                        position + direction * radius * 4f);
+                }
+            }
             Handles.color = new Color(0.35f, 1f, 0.45f, 0.9f);
         }
 
@@ -5850,12 +6616,20 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
         cachedWavePreviewPositions ??= new Dictionary<int, Vector3>(
             Mathf.Max(1, wave.GetSimulationEnemyCount()));
+        cachedWavePreviewPreviousPositions ??= new Dictionary<int, Vector3>(
+            Mathf.Max(1, wave.GetSimulationEnemyCount()));
         wave.EvaluateSimulationPreviewNonAlloc(
             elapsed,
             null,
             cachedWavePreviewSpawnOrder,
             cachedWavePreviewPositions,
             out cachedWavePreviewPhaseName);
+        wave.EvaluateSimulationPreviewNonAlloc(
+            Mathf.Max(0f, elapsed - 0.03f),
+            null,
+            cachedWavePreviewSpawnOrder,
+            cachedWavePreviewPreviousPositions,
+            out _);
 
         cachedWavePreviewVersion = previewConfigurationVersion;
         cachedWavePreviewElapsed = elapsed;
@@ -7827,9 +8601,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private static Transform GetSpawnPoint(DirectedEnemySubWave wave)
     {
-        SerializedObject serializedWave = new SerializedObject(wave);
-        SerializedProperty property = serializedWave.FindProperty("spawnPoint");
-        return property.objectReferenceValue as Transform;
+        return wave != null ? wave.PhaseEntrySpawnPoint : null;
     }
 
     private struct EditorPathCheckpoint

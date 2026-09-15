@@ -5,12 +5,14 @@ using UnityEngine;
 public class BlackHolePrefab : MonoBehaviour
 {
     float liveTime;
-    [SerializeField]
+    [SerializeField, HideInInspector]
     float damage = 50;
+    private float runtimeDamage = -1f;
 
-    public void Init(float lifeTime)
+    public void Init(float lifeTime, float metaDamage = -1f)
     {
         liveTime = lifeTime;
+        runtimeDamage = metaDamage;
         Destroy(gameObject, liveTime);
     }
     private void OnTriggerStay2D(Collider2D collision)
@@ -24,7 +26,7 @@ public class BlackHolePrefab : MonoBehaviour
         }
         if (enemy != null)
         {
-            enemy.TakeDamage(50);
+            enemy.TakeDamage(runtimeDamage >= 0f ? runtimeDamage : damage);
         }
     }
 }

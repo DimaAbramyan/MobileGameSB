@@ -21,6 +21,17 @@ public abstract class ContinuousBeamWeapon : Weapon
         new RaycastHit2D[InitialRaycastBufferSize];
     private Enemy beamTarget;
     private int projectileCollisionLayerIndex = -1;
+    private float visualAlpha = 1f;
+
+    /// <summary>
+    /// Changes only the beam's visual opacity. Beam targeting and damage keep
+    /// running independently of this value.
+    /// </summary>
+    public void SetBeamVisualAlpha(float alpha)
+    {
+        visualAlpha = Mathf.Clamp01(alpha);
+        ApplyBeamColor();
+    }
 
     protected override void Awake()
     {
@@ -208,10 +219,9 @@ public abstract class ContinuousBeamWeapon : Weapon
         beamRenderer.positionCount = 2;
         beamRenderer.startWidth = beamWidth;
         beamRenderer.endWidth = beamWidth;
-        beamRenderer.startColor = beamColor;
-        beamRenderer.endColor = beamColor;
         beamRenderer.numCapVertices = 2;
         beamRenderer.sortingOrder = beamSortingOrder;
+        ApplyBeamColor();
 
         if (beamMaterial != null)
         {
@@ -223,6 +233,17 @@ public abstract class ContinuousBeamWeapon : Weapon
         }
 
         beamRenderer.enabled = false;
+    }
+
+    private void ApplyBeamColor()
+    {
+        if (beamRenderer == null)
+            return;
+
+        Color color = beamColor;
+        color.a *= visualAlpha;
+        beamRenderer.startColor = color;
+        beamRenderer.endColor = color;
     }
 
     private void UpdateBeamVisual(Vector3 origin, Vector3 end)

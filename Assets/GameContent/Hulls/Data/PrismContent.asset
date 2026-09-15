@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09b61922df560be44889a4ee360dce56, type: 3}
+  m_Name: PrismContent
+  m_EditorClassIdentifier: Assembly-CSharp::HullContentDefinition
+  id: 10
+  displayName: Prism
+  passiveAbilityDescription: While Prism is active, its beam damage is increased
+    by 15% and its energy damage by 10%.
+  activeAbilityDescription: Charges for 1 second, then fires a piercing beam through
+    every enemy in its path.
+  icon: {fileID: -9095717837082945937, guid: 207ee8102dd4143d288186ef0be518ee, type: 3}
+  prefab: {fileID: 3387013190401639, guid: 8e541a7bad5cd914e8947b236e3c6f91, type: 3}
+  rarity: 0
+  purchasePrice: 0
+  purchaseCoresPrice: 0
+  unlockRequirement:
+    type: 0
+    requiredPlayerLevel: 1
+    requiredCompletedLevel: {fileID: 0}
+    conditionId: 
+  isStarterUnlocked: 1
+  maxUpgradeLevel: 0
+  upgradePrices: []
+  data: {fileID: 11400000, guid: 3edd1cc81d6ff5e4daab851add89ec60, type: 2}
+  defaultColorPalette:
+    primary: {r: 1, g: 1, b: 1, a: 1}
+    secondary: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+    accent: {r: 0.25, g: 0.75, b: 1, a: 1}
+  gameplayPrefab: {fileID: 3387013190401639, guid: 8e541a7bad5cd914e8947b236e3c6f91, type: 3}

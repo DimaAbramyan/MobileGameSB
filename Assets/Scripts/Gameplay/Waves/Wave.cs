@@ -27,6 +27,7 @@ public class Wave : MonoBehaviour, IWaveEncounter
 {
     [Inject] DiContainer container;
     [Inject] MetalPickupController metalPickupController;
+    [Inject] PlayerController playerController;
     [SerializeField] private List<WaveSubWaveCue> scheduledSubWaves = new();
     [SerializeField] public List<GameObject> SubWavesToCreate;
     [SerializeField] private bool enableDebugLogs = true;
@@ -229,6 +230,7 @@ public class Wave : MonoBehaviour, IWaveEncounter
             metalPickupPrefab,
             container,
             metalPickupController,
+            playerController,
             this);
         metalDropPlan.Prepare(subWavesInfo);
     }

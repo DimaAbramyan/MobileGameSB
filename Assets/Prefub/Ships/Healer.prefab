@@ -158,7 +158,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 295c0e4c2d269a8468daf16f84da5200, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  abilityMode: 0
   cooldown: 0
+  toggleMaximumTime: 3
+  toggleTimeCostPerSecond: 1
+  toggleRechargeStartTime: 0
+  toggleRechargeDuration: 3
+  toggleTimeRemaining: 3
+  maxCharges: 1
+  currentCharges: 1
   owner: {fileID: 0}
   healBuff: {fileID: 9134227816973463294, guid: b4cba67278381234ca9d070c51848fdb, type: 3}
 --- !u!114 &2461732464396383616
@@ -211,6 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0f3e7dcc7c7ad4ab5447c2efc6a16f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponController
+  battleWeaponMount: {fileID: 3803585345440432862}
   reloadMultiplier: 1
 --- !u!114 &7666066709233752712
 MonoBehaviour:
@@ -229,6 +238,7 @@ MonoBehaviour:
   intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 2665527242222670206}
   ShipData: {fileID: 11400000, guid: 0d9d8840c3fe6de4cb4056d7d1b54472, type: 2}
+  buffMagnet: {fileID: 0}
   IsVisible: 0
 --- !u!114 &-1398125898839763678
 MonoBehaviour:
@@ -244,6 +254,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
   hitboxColliders: []
   autoCollectRootColliders: 1
+  autoCollectChildColliders: 1
 --- !u!1 &6583357205300149050
 GameObject:
   m_ObjectHideFlags: 0

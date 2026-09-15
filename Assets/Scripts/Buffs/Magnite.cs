@@ -20,6 +20,9 @@ public class Magnite : MonoBehaviour
     private CircleCollider2D magnetZone;
     private ParentShip ownerShip;
     private ContactFilter2D contactFilter;
+    private float temporaryRadiusMultiplier = 1f;
+    private float temporaryRadiusMultiplierUntil;
+    private bool wasTemporaryRadiusMultiplierActive;
 
     private void Awake()
     {
@@ -49,6 +52,21 @@ public class Magnite : MonoBehaviour
             TryPullBuff(hits[i]);
 
         PullAttractedBuffs();
+    }
+
+    private void Update()
+    {
+        bool isTemporaryRadiusMultiplierActive =
+            HasTemporaryRadiusMultiplier;
+        if (isTemporaryRadiusMultiplierActive
+            == wasTemporaryRadiusMultiplierActive)
+        {
+            return;
+        }
+
+        wasTemporaryRadiusMultiplierActive =
+            isTemporaryRadiusMultiplierActive;
+        SyncMagnetZoneRadius();
     }
 
     private void ConfigureContactFilter()
@@ -144,8 +162,32 @@ public class Magnite : MonoBehaviour
         return transform.TransformPoint(targetOffset);
     }
 
-    public float MagnetRadius => Mathf.Max(0f, magnetRadius);
-    public float AttractionRadius => Mathf.Max(MagnetRadius, attractionRadius);
+    public float MagnetRadius => Mathf.Max(0f, magnetRadius)
+        * CurrentRadiusMultiplier;
+    public float AttractionRadius => Mathf.Max(MagnetRadius,
+        Mathf.Max(0f, attractionRadius) * CurrentRadiusMultiplier);
+
+    private bool HasTemporaryRadiusMultiplier =>
+        Time.time < temporaryRadiusMultiplierUntil;
+
+    private float CurrentRadiusMultiplier => HasTemporaryRadiusMultiplier
+        ? temporaryRadiusMultiplier
+        : 1f;
+
+    public void ActivateRadiusMultiplier(float multiplier, float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+            return;
+
+        temporaryRadiusMultiplier = HasTemporaryRadiusMultiplier
+            ? Mathf.Max(temporaryRadiusMultiplier, multiplier)
+            : multiplier;
+        temporaryRadiusMultiplierUntil = Mathf.Max(
+            temporaryRadiusMultiplierUntil,
+            Time.time + duration);
+        wasTemporaryRadiusMultiplierActive = true;
+        SyncMagnetZoneRadius();
+    }
 
     private float GetMagnetRadius()
     {

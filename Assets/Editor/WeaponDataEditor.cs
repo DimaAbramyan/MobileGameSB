@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -11,10 +12,15 @@ public sealed class WeaponDataEditor : Editor
     private SerializedProperty rangeByLevel;
     private SerializedProperty speedByLevel;
     private SerializedProperty levelConfigs;
+    private SerializedProperty baseStatsConfig;
+    private SerializedProperty manualBaseStats;
+    private SerializedProperty levelBonuses;
+    private SerializedProperty weaponMetaConfig;
 
     private SerializedProperty startLevel;
     private SerializedProperty maxLevel;
     private SerializedProperty energyCost;
+    private SerializedProperty battleOffset;
     private SerializedProperty damageType;
 
     private SerializedProperty flightMode;
@@ -34,6 +40,8 @@ public sealed class WeaponDataEditor : Editor
     private SerializedProperty audioClipProjectileShot;
 
     private SerializedProperty thermalLevels;
+    private SerializedProperty manualBaseThermalStats;
+    private SerializedProperty thermalLevelBonuses;
     private SerializedProperty beamBlockingLayers;
     private SerializedProperty thermalExplosionRadius;
     private SerializedProperty thermalExplosionDamage;
@@ -43,10 +51,14 @@ public sealed class WeaponDataEditor : Editor
     private SerializedProperty thermalExplosionPrefab;
 
     private SerializedProperty qBeamLevels;
+    private SerializedProperty manualBaseQBeamStats;
+    private SerializedProperty qBeamLevelBonuses;
     private SerializedProperty qBeamChargeDecayDelay;
     private SerializedProperty qBeamChargeDecayPerSecond;
 
     private SerializedProperty ballLightningLevels;
+    private SerializedProperty manualBaseBallLightningStats;
+    private SerializedProperty ballLightningLevelBonuses;
     private SerializedProperty ballLightningProjectileSpeed;
     private SerializedProperty ballLightningBallsPerShot;
     private SerializedProperty ballLightningSpreadAngle;
@@ -63,10 +75,15 @@ public sealed class WeaponDataEditor : Editor
         rangeByLevel = serializedObject.FindProperty("rangeByLevel");
         speedByLevel = serializedObject.FindProperty("speedByLevel");
         levelConfigs = serializedObject.FindProperty("levelConfigs");
+        baseStatsConfig = serializedObject.FindProperty("baseStatsConfig");
+        manualBaseStats = serializedObject.FindProperty("manualBaseStats");
+        levelBonuses = serializedObject.FindProperty("levelBonuses");
+        weaponMetaConfig = serializedObject.FindProperty("weaponMetaConfig");
 
         startLevel = serializedObject.FindProperty("startLevel");
         maxLevel = serializedObject.FindProperty("maxLevel");
         energyCost = serializedObject.FindProperty("energyCost");
+        battleOffset = serializedObject.FindProperty("battleOffset");
         damageType = serializedObject.FindProperty("damageType");
 
         flightMode = serializedObject.FindProperty("flightMode");
@@ -89,6 +106,10 @@ public sealed class WeaponDataEditor : Editor
         audioClipProjectileShot = serializedObject.FindProperty("audioClipProjectileShot");
 
         thermalLevels = serializedObject.FindProperty("thermalLevels");
+        manualBaseThermalStats =
+            serializedObject.FindProperty("manualBaseThermalStats");
+        thermalLevelBonuses =
+            serializedObject.FindProperty("thermalLevelBonuses");
         beamBlockingLayers = serializedObject.FindProperty("beamBlockingLayers");
         thermalExplosionRadius =
             serializedObject.FindProperty("overheatExplosionRadius");
@@ -103,6 +124,10 @@ public sealed class WeaponDataEditor : Editor
             serializedObject.FindProperty("overheatExplosionPrefab");
 
         qBeamLevels = serializedObject.FindProperty("qBeamLevels");
+        manualBaseQBeamStats =
+            serializedObject.FindProperty("manualBaseQBeamStats");
+        qBeamLevelBonuses =
+            serializedObject.FindProperty("qBeamLevelBonuses");
         qBeamChargeDecayDelay =
             serializedObject.FindProperty("chargeDecayDelay");
         qBeamChargeDecayPerSecond =
@@ -110,6 +135,10 @@ public sealed class WeaponDataEditor : Editor
 
         ballLightningLevels =
             serializedObject.FindProperty("ballLightningLevels");
+        manualBaseBallLightningStats =
+            serializedObject.FindProperty("manualBaseBallLightningStats");
+        ballLightningLevelBonuses =
+            serializedObject.FindProperty("ballLightningLevelBonuses");
         ballLightningProjectileSpeed =
             serializedObject.FindProperty("projectileSpeed");
         ballLightningBallsPerShot =
@@ -126,8 +155,10 @@ public sealed class WeaponDataEditor : Editor
     {
         serializedObject.Update();
 
+        DrawMetaProgression();
         DrawLevelConfigs();
-        if (target is not BallLightningData)
+        if (!((WeaponData)target).UsesPercentageLevelProgression
+            && target is not BallLightningData)
             DrawLegacyStats();
         DrawLevels();
         DrawBuild();
@@ -145,10 +176,17 @@ public sealed class WeaponDataEditor : Editor
             DrawBallLightningSettings();
             DrawLifetime();
         }
-        else
+        else if (!((WeaponData)target).UsesProjectileData)
         {
             DrawBehaviors();
             DrawLifetime();
+        }
+        else
+        {
+            EditorGUILayout.HelpBox(
+                "Damage type, projectile behaviour and lifetime are configured in Projectile Data."
+                + " This WeaponData only contains in-battle bonuses and placement.",
+                MessageType.Info);
         }
 
         DrawAudio();
@@ -158,38 +196,55 @@ public sealed class WeaponDataEditor : Editor
 
     private void DrawLevelConfigs()
     {
-        bool isBallLightning = target is BallLightningData;
-        EditorGUILayout.LabelField("Level Configurations", EditorStyles.boldLabel);
-
-        if (levelConfigs.arraySize == 0)
+        WeaponData weaponData = (WeaponData)target;
+        EditorGUILayout.LabelField(
+            "In-Battle Level Bonuses",
+            EditorStyles.boldLabel);
+        if (weaponMetaConfig.objectReferenceValue == null)
         {
             EditorGUILayout.HelpBox(
-                "This weapon still uses the legacy per-stat lists below. "
-                + "Create configurations to edit complete level sections.",
-                MessageType.Info);
-
-            if (targets.Length == 1
-                && ((WeaponData)target).HasLegacyLevelStats
-                && GUILayout.Button("Create Configurations From Legacy Stats"))
-            {
-                CreateConfigurationsFromLegacy();
-                GUIUtility.ExitGUI();
-            }
+                "Assign a Weapon Meta Config to use its Meta Level 0 as this "
+                + "weapon's base stats. Until then, hidden legacy values are "
+                + "used only to keep existing weapons working.",
+                MessageType.Warning);
         }
         else
         {
-            bool usesContinuousContact = UsesContinuousContact();
-            for (int levelIndex = 0;
-                 levelIndex < levelConfigs.arraySize;
-                 levelIndex++)
+            EditorGUILayout.HelpBox(
+                weaponData.UsesProjectileData
+                    ? "Reload time and angle are read from Weapon Meta Config. "
+                        + "Each Projectile Data supplies its own damage, range and speed."
+                    : "Base stats are read from Meta Level 0 of Weapon Meta Config. "
+                        + "Add Projectile slots there to use the new projectile configuration.",
+                MessageType.Info);
+        }
+
+        if (!weaponData.UsesPercentageLevelProgression)
+        {
+            EditorGUILayout.HelpBox(
+                "This asset still uses absolute level values. Migrate it once "
+                + "to preserve its current values as base + percentage bonuses.",
+                MessageType.Warning);
+
+            if (targets.Length == 1
+                && GUILayout.Button("Migrate Existing Levels To Percent Bonuses"))
             {
-                DrawLevelConfig(
-                    levelIndex,
-                    levelConfigs.GetArrayElementAtIndex(levelIndex),
-                    isBallLightning,
-                    usesContinuousContact,
-                    continuousDamageInterval.floatValue);
+                MigrateExistingLevels();
+                GUIUtility.ExitGUI();
             }
+
+            EditorGUILayout.Space();
+            return;
+        }
+
+        for (int levelIndex = 0;
+             levelIndex < levelBonuses.arraySize;
+             levelIndex++)
+        {
+            DrawLevelBonus(
+                weaponData,
+                levelIndex,
+                levelBonuses.GetArrayElementAtIndex(levelIndex));
         }
 
         if (target is ThermalLaserData)
@@ -202,14 +257,13 @@ public sealed class WeaponDataEditor : Editor
         if (targets.Length > 1)
         {
             EditorGUILayout.HelpBox(
-                "Creating and copying level configurations is available for one "
-                + "WeaponData asset at a time.",
+                "Adding a level is available for one WeaponData asset at a time.",
                 MessageType.Info);
         }
         else if (GUILayout.Button(new GUIContent(
-                     "Add Level (Copy Previous)",
-                     "Adds a level section by copying the previous one. "
-                     + "For legacy data, existing levels are migrated first.")))
+                     "Add Level (Copy Previous Bonuses)",
+                     "Copies the previous level's percentage bonuses, so they "
+                     + "continue to accumulate from the base values.")))
         {
             AddLevelConfiguration();
             GUIUtility.ExitGUI();
@@ -218,100 +272,431 @@ public sealed class WeaponDataEditor : Editor
         EditorGUILayout.Space();
     }
 
-    private static void DrawLevelConfig(
+    private void DrawLevelBonus(
+        WeaponData weaponData,
         int levelIndex,
-        SerializedProperty levelConfig,
-        bool isBallLightning,
-        bool usesContinuousContact,
-        float continuousDamageInterval)
+        SerializedProperty levelBonus)
     {
-        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-        levelConfig.isExpanded = EditorGUILayout.Foldout(
-            levelConfig.isExpanded,
-            $"Level {levelIndex}",
-            true);
-
-        if (levelConfig.isExpanded)
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
         {
-            EditorGUI.indentLevel++;
-            EditorGUILayout.LabelField("Base Stats", EditorStyles.miniBoldLabel);
-            DrawLevelField(levelConfig, "reloadTime", "Reload Time");
-
-            if (!isBallLightning)
+            using (new EditorGUILayout.HorizontalScope())
             {
-                DrawLevelField(levelConfig, "damage", "Damage");
-                DrawDpsHint(
-                    levelConfig,
-                    usesContinuousContact,
-                    continuousDamageInterval);
-                DrawLevelField(levelConfig, "range", "Range");
-                DrawLevelField(levelConfig, "speed", "Speed");
-                DrawLevelField(levelConfig, "angle", "Angle");
+                levelBonus.isExpanded = EditorGUILayout.Foldout(
+                    levelBonus.isExpanded,
+                    $"Level {levelIndex + 1}",
+                    true);
 
-                EditorGUILayout.Space(2f);
-                EditorGUILayout.LabelField("Fire", EditorStyles.miniBoldLabel);
-                DrawLevelField(levelConfig, "volleysPerActivation", "Volleys Per Activation");
-                DrawLevelField(levelConfig, "projectilesPerVolley", "Projectiles Per Volley");
-                DrawLevelField(levelConfig, "delayBetweenVolleys", "Delay Between Volleys");
-                DrawLevelField(levelConfig, "spreadAngle", "Spread Angle");
-
-                EditorGUILayout.Space(2f);
-                EditorGUILayout.LabelField("Targeting", EditorStyles.miniBoldLabel);
-                DrawLevelField(levelConfig, "maxTargets", "Maximum Targets");
-                DrawLevelField(levelConfig, "targetSearchRadius", "Target Search Radius (0 = Unlimited)");
+                using (new EditorGUI.DisabledScope(
+                           targets.Length != 1 || levelBonuses.arraySize <= 1))
+                {
+                    if (GUILayout.Button("Delete", GUILayout.Width(60f)))
+                    {
+                        RemoveLevelConfiguration(levelIndex);
+                        GUIUtility.ExitGUI();
+                    }
+                }
             }
 
+            if (!levelBonus.isExpanded)
+                return;
+
+            EditorGUI.indentLevel++;
+            EditorGUILayout.LabelField(
+                "Bonus added by this level (%)",
+                EditorStyles.miniBoldLabel);
+            DrawBonusField(levelBonus, "fireRatePercent", "Fire Rate");
+            DrawBonusField(levelBonus, "anglePercent", "Angle");
+
+            if (weaponData.UsesProjectileData)
+            {
+                DrawProjectileBonusFields(weaponData, levelBonus);
+            }
+            else
+            {
+                DrawBonusField(levelBonus, "damagePercent", "Damage");
+                DrawBonusField(levelBonus, "rangePercent", "Range");
+                DrawBonusField(levelBonus, "speedPercent", "Speed");
+            }
+
+            bool usesFireBonuses = HasMetaContract<BurstFireWeaponMetaContract>(
+                weaponData);
+            bool usesTargetingBonuses = HasMetaContract<
+                TargetingWeaponMetaContract>(weaponData);
+            if (usesFireBonuses)
+            {
+                EditorGUILayout.Space(2f);
+                EditorGUILayout.LabelField(
+                    "Fire Bonuses",
+                    EditorStyles.miniBoldLabel);
+                DrawBonusField(
+                    levelBonus,
+                    "volleysPerActivationPercent",
+                    "Volleys Per Activation");
+                DrawBonusField(
+                    levelBonus,
+                    "projectilesPerVolleyPercent",
+                    "Projectiles Per Volley");
+                DrawBonusField(
+                    levelBonus,
+                    "delayBetweenVolleysRatePercent",
+                    "Delay Between Volleys Rate");
+                DrawBonusField(
+                    levelBonus,
+                    "spreadAnglePercent",
+                    "Spread Angle");
+            }
+
+            if (usesTargetingBonuses)
+            {
+                EditorGUILayout.Space(2f);
+                EditorGUILayout.LabelField(
+                    "Targeting",
+                    EditorStyles.miniBoldLabel);
+                DrawBonusField(levelBonus, "maxTargetsPercent", "Maximum Targets");
+                DrawBonusField(
+                    levelBonus,
+                    "targetSearchRadiusPercent",
+                    "Target Search Radius");
+            }
+
+            if (weaponData.UsesProjectileData)
+            {
+                DrawProjectileCumulativeBonusSummary(
+                    weaponData,
+                    levelIndex,
+                    usesFireBonuses);
+            }
+            else
+            {
+                DrawCumulativeBonusSummary(
+                    levelIndex,
+                    usesFireBonuses,
+                    usesTargetingBonuses);
+            }
+            DrawDpsHint(weaponData, levelIndex);
             EditorGUI.indentLevel--;
         }
-
-        EditorGUILayout.EndVertical();
     }
 
-    private static void DrawDpsHint(
-        SerializedProperty levelConfig,
-        bool usesContinuousContact,
-        float continuousDamageInterval)
+    private void DrawDpsHint(WeaponData weaponData, int levelIndex)
     {
-        SerializedProperty damage = levelConfig.FindPropertyRelative("damage");
-        SerializedProperty reloadTime =
-            levelConfig.FindPropertyRelative("reloadTime");
-        if (damage == null || reloadTime == null)
-            return;
+        WeaponRuntimeStats stats = weaponData.GetRuntimeStats(levelIndex);
+        float damage = stats.Damage;
+        bool usesContinuousDamage = UsesContinuousContact();
+        float continuousInterval = continuousDamageInterval.floatValue;
+        if (weaponData.TryGetPrimaryProjectileRuntimeStats(
+                levelIndex,
+                out ProjectileData projectileData,
+                out ProjectileRuntimeStats projectileStats))
+        {
+            damage = projectileStats.Damage;
+            if (projectileData.TryGetContract(
+                    out ProjectileContinuousDamageContract continuousDamage))
+            {
+                usesContinuousDamage = true;
+                continuousInterval = continuousDamage.DamageTickInterval;
+            }
+            else if (projectileData.TryGetContract(
+                         out ProjectileCircularChainContract circularChain))
+            {
+                damage = circularChain.DamagePerHit;
+                usesContinuousDamage = true;
+                continuousInterval = circularChain.HitInterval;
+            }
+            else if (projectileData.TryGetContract(
+                         out ProjectileBeamContract beam))
+            {
+                usesContinuousDamage = true;
+                continuousInterval = beam.DamageTickInterval;
+            }
+        }
 
-        float dpsInterval = usesContinuousContact
-            ? continuousDamageInterval
-            : reloadTime.floatValue;
-        string dpsFormula = usesContinuousContact
+        float damagePerActivation = damage
+            * stats.VolleysPerActivation
+            * stats.ProjectilesPerVolley;
+        float dpsInterval = usesContinuousDamage
+            ? continuousInterval
+            : stats.ReloadTime;
+        string formula = usesContinuousDamage
             ? "Damage / Continuous Damage Interval"
-            : "Damage / Reload Time";
-        if (dpsInterval <= 0f)
-        {
-            EditorGUILayout.HelpBox(
-                $"DPS: — ({dpsFormula} must be greater than zero)",
-                MessageType.Info);
-        }
-        else
-        {
-            float dps = damage.floatValue / dpsInterval;
-            EditorGUILayout.HelpBox(
-                $"DPS: {dps:0.##} ({dpsFormula})",
-                MessageType.Info);
-        }
+            : "Damage per activation / Reload Time";
+        string dps = dpsInterval <= 0f
+            ? "—"
+            : (damagePerActivation / dpsInterval).ToString("0.##");
+        string shotsPerSecond = stats.ReloadTime <= 0f
+            ? "—"
+            : (1f / stats.ReloadTime).ToString("0.##");
 
-        string shotsPerSecond = reloadTime.floatValue <= 0f
-            ? "— (Reload Time must be greater than zero)"
-            : (1f / reloadTime.floatValue).ToString("0.##");
+        EditorGUILayout.HelpBox(
+            $"Effective DPS: {dps} ({formula})",
+            MessageType.Info);
         EditorGUILayout.LabelField("Shots Per Second", shotsPerSecond);
     }
 
-    private static void DrawLevelField(
-        SerializedProperty levelConfig,
+    private static void DrawProjectileBonusFields(
+        WeaponData weaponData,
+        SerializedProperty levelBonus)
+    {
+        WeaponMetaConfig metaConfig = weaponData.WeaponMetaConfig;
+        if (metaConfig == null || !metaConfig.HasProjectileSlots)
+        {
+            EditorGUILayout.HelpBox(
+                "Add at least one Projectile Data slot to Weapon Meta Config.",
+                MessageType.Warning);
+            return;
+        }
+
+        SerializedProperty projectileBonuses =
+            levelBonus.FindPropertyRelative("projectileBonuses");
+        if (projectileBonuses == null)
+            return;
+
+        EditorGUILayout.Space(2f);
+        EditorGUILayout.LabelField(
+            "Projectile Bonuses",
+            EditorStyles.miniBoldLabel);
+
+        for (int slotIndex = 0;
+             slotIndex < metaConfig.ProjectileSlots.Count;
+             slotIndex++)
+        {
+            WeaponProjectileSlot slot = metaConfig.ProjectileSlots[slotIndex];
+            if (slot == null || string.IsNullOrWhiteSpace(slot.Id))
+                continue;
+
+            SerializedProperty projectileBonus = FindOrCreateProjectileBonus(
+                projectileBonuses,
+                slot.Id);
+            if (projectileBonus == null)
+                continue;
+
+            string title = slot.Projectile != null
+                ? slot.Projectile.name
+                : $"Projectile {slotIndex + 1} (missing)";
+            EditorGUILayout.LabelField(title, EditorStyles.miniBoldLabel);
+            DrawBonusField(projectileBonus, "damagePercent", "Damage");
+
+            if (slot.Projectile == null
+                || slot.Projectile.DeliveryType == ProjectileDeliveryType.Projectile)
+            {
+                DrawBonusField(projectileBonus, "rangePercent", "Range");
+                DrawBonusField(projectileBonus, "speedPercent", "Speed");
+            }
+        }
+    }
+
+    private static SerializedProperty FindOrCreateProjectileBonus(
+        SerializedProperty projectileBonuses,
+        string projectileSlotId)
+    {
+        for (int index = 0; index < projectileBonuses.arraySize; index++)
+        {
+            SerializedProperty candidate =
+                projectileBonuses.GetArrayElementAtIndex(index);
+            SerializedProperty id = candidate.FindPropertyRelative(
+                "projectileSlotId");
+            if (id != null && id.stringValue == projectileSlotId)
+                return candidate;
+        }
+
+        int newIndex = projectileBonuses.arraySize;
+        projectileBonuses.arraySize++;
+        SerializedProperty created = projectileBonuses.GetArrayElementAtIndex(
+            newIndex);
+        SerializedProperty createdId = created.FindPropertyRelative(
+            "projectileSlotId");
+        if (createdId == null)
+            return null;
+
+        createdId.stringValue = projectileSlotId;
+        return created;
+    }
+
+    private static void DrawBonusField(
+        SerializedProperty levelBonus,
         string propertyName,
         string label)
     {
         SerializedProperty property =
-            levelConfig.FindPropertyRelative(propertyName);
-        EditorGUILayout.PropertyField(property, new GUIContent(label));
+            levelBonus.FindPropertyRelative(propertyName);
+        EditorGUILayout.PropertyField(
+            property,
+            new GUIContent($"{label} + (%)"));
+    }
+
+    private void DrawCumulativeBonusSummary(
+        int levelIndex,
+        bool usesFireBonuses,
+        bool usesTargetingBonuses)
+    {
+        float fireRate = GetCumulativeBonus("fireRatePercent", levelIndex);
+        float damage = GetCumulativeBonus("damagePercent", levelIndex);
+        float range = GetCumulativeBonus("rangePercent", levelIndex);
+        float speed = GetCumulativeBonus("speedPercent", levelIndex);
+        float angle = GetCumulativeBonus("anglePercent", levelIndex);
+        float volleys = GetCumulativeBonus(
+            "volleysPerActivationPercent",
+            levelIndex);
+        float projectiles = GetCumulativeBonus(
+            "projectilesPerVolleyPercent",
+            levelIndex);
+        float delayRate = GetCumulativeBonus(
+            "delayBetweenVolleysRatePercent",
+            levelIndex);
+        float spread = GetCumulativeBonus("spreadAnglePercent", levelIndex);
+        float targets = GetCumulativeBonus("maxTargetsPercent", levelIndex);
+        float searchRadius = GetCumulativeBonus(
+            "targetSearchRadiusPercent",
+            levelIndex);
+        string summary =
+            $"Cumulative from base: Fire Rate {fireRate:+0.##;-0.##;0}% | "
+            + $"Damage {damage:+0.##;-0.##;0}% | "
+            + $"Range {range:+0.##;-0.##;0}% | "
+            + $"Speed {speed:+0.##;-0.##;0}% | "
+            + $"Angle {angle:+0.##;-0.##;0}%";
+
+        if (usesFireBonuses)
+        {
+            summary += $"\nVolleys {volleys:+0.##;-0.##;0}% | "
+                + $"Projectiles {projectiles:+0.##;-0.##;0}% | "
+                + $"Volley Rate {delayRate:+0.##;-0.##;0}% | "
+                + $"Spread {spread:+0.##;-0.##;0}%";
+        }
+
+        if (usesTargetingBonuses)
+        {
+            summary += $"\nTargets {targets:+0.##;-0.##;0}% | "
+                + $"Search Radius {searchRadius:+0.##;-0.##;0}%";
+        }
+
+        EditorGUILayout.HelpBox(summary, MessageType.None);
+    }
+
+    private void DrawProjectileCumulativeBonusSummary(
+        WeaponData weaponData,
+        int levelIndex,
+        bool usesFireBonuses)
+    {
+        float fireRate = GetCumulativeBonus("fireRatePercent", levelIndex);
+        float angle = GetCumulativeBonus("anglePercent", levelIndex);
+        string summary = $"Cumulative from base: Fire Rate "
+            + $"{fireRate:+0.##;-0.##;0}% | "
+            + $"Angle {angle:+0.##;-0.##;0}%";
+
+        WeaponMetaConfig metaConfig = weaponData.WeaponMetaConfig;
+        if (metaConfig != null)
+        {
+            for (int index = 0; index < metaConfig.ProjectileSlots.Count; index++)
+            {
+                WeaponProjectileSlot slot = metaConfig.ProjectileSlots[index];
+                if (slot == null || string.IsNullOrWhiteSpace(slot.Id))
+                    continue;
+
+                string name = slot.Projectile != null
+                    ? slot.Projectile.name
+                    : $"Projectile {index + 1}";
+                float damage = GetCumulativeProjectileBonus(
+                    slot.Id,
+                    "damagePercent",
+                    levelIndex);
+                float range = GetCumulativeProjectileBonus(
+                    slot.Id,
+                    "rangePercent",
+                    levelIndex);
+                float speed = GetCumulativeProjectileBonus(
+                    slot.Id,
+                    "speedPercent",
+                    levelIndex);
+                summary += $"\n{name}: Damage {damage:+0.##;-0.##;0}%";
+                if (slot.Projectile == null
+                    || slot.Projectile.DeliveryType
+                        == ProjectileDeliveryType.Projectile)
+                {
+                    summary += $" | Range {range:+0.##;-0.##;0}%"
+                        + $" | Speed {speed:+0.##;-0.##;0}%";
+                }
+            }
+        }
+
+        if (usesFireBonuses)
+        {
+            float volleys = GetCumulativeBonus(
+                "volleysPerActivationPercent",
+                levelIndex);
+            float projectiles = GetCumulativeBonus(
+                "projectilesPerVolleyPercent",
+                levelIndex);
+            float delayRate = GetCumulativeBonus(
+                "delayBetweenVolleysRatePercent",
+                levelIndex);
+            float spread = GetCumulativeBonus(
+                "spreadAnglePercent",
+                levelIndex);
+            summary += $"\nVolleys {volleys:+0.##;-0.##;0}% | "
+                + $"Projectiles {projectiles:+0.##;-0.##;0}% | "
+                + $"Volley Rate {delayRate:+0.##;-0.##;0}% | "
+                + $"Spread {spread:+0.##;-0.##;0}%";
+        }
+
+        EditorGUILayout.HelpBox(summary, MessageType.None);
+    }
+
+    private float GetCumulativeProjectileBonus(
+        string projectileSlotId,
+        string propertyName,
+        int levelIndex)
+    {
+        float total = 0f;
+        int lastIndex = Mathf.Min(levelIndex, levelBonuses.arraySize - 1);
+        for (int index = 0; index <= lastIndex; index++)
+        {
+            SerializedProperty projectileBonuses = levelBonuses
+                .GetArrayElementAtIndex(index)
+                .FindPropertyRelative("projectileBonuses");
+            if (projectileBonuses == null)
+                continue;
+
+            for (int projectileIndex = 0;
+                 projectileIndex < projectileBonuses.arraySize;
+                 projectileIndex++)
+            {
+                SerializedProperty projectileBonus = projectileBonuses
+                    .GetArrayElementAtIndex(projectileIndex);
+                SerializedProperty id = projectileBonus.FindPropertyRelative(
+                    "projectileSlotId");
+                if (id == null || id.stringValue != projectileSlotId)
+                    continue;
+
+                total += projectileBonus.FindPropertyRelative(propertyName)
+                    ?.floatValue ?? 0f;
+                break;
+            }
+        }
+
+        return total;
+    }
+
+    private static bool HasMetaContract<TContract>(WeaponData weaponData)
+        where TContract : WeaponMetaContract
+    {
+        return weaponData != null
+            && weaponData.WeaponMetaConfig != null
+            && weaponData.WeaponMetaConfig.HasContract<TContract>();
+    }
+
+    private float GetCumulativeBonus(string propertyName, int levelIndex)
+    {
+        float total = 0f;
+        int lastIndex = Mathf.Min(levelIndex, levelBonuses.arraySize - 1);
+        for (int index = 0; index <= lastIndex; index++)
+        {
+            SerializedProperty property = levelBonuses
+                .GetArrayElementAtIndex(index)
+                .FindPropertyRelative(propertyName);
+            total += property?.floatValue ?? 0f;
+        }
+
+        return total;
     }
 
     private void CreateConfigurationsFromLegacy()
@@ -336,6 +721,22 @@ public sealed class WeaponDataEditor : Editor
         serializedObject.Update();
     }
 
+    private void MigrateExistingLevels()
+    {
+        serializedObject.ApplyModifiedProperties();
+
+        WeaponData weaponData = target as WeaponData;
+        if (weaponData == null)
+            return;
+
+        Undo.RecordObject(weaponData, "Migrate weapon levels to percent bonuses");
+        if (!weaponData.TryMigrateLegacyLevelsToPercentage())
+            return;
+
+        EditorUtility.SetDirty(weaponData);
+        serializedObject.Update();
+    }
+
     private void AddLevelConfiguration()
     {
         serializedObject.ApplyModifiedProperties();
@@ -352,6 +753,23 @@ public sealed class WeaponDataEditor : Editor
             qBeamData.SynchronizeQBeamLevels();
         if (weaponData is BallLightningData ballLightningData)
             ballLightningData.SynchronizeBallLightningLevels();
+        EditorUtility.SetDirty(weaponData);
+        serializedObject.Update();
+    }
+
+    private void RemoveLevelConfiguration(int levelIndex)
+    {
+        serializedObject.ApplyModifiedProperties();
+
+        WeaponData weaponData = target as WeaponData;
+        if (weaponData == null)
+            return;
+
+        Undo.RecordObject(weaponData, "Delete weapon level configuration");
+        if (!weaponData.TryRemoveLevelConfig(levelIndex))
+            return;
+
+        SynchronizeSpecialLevels(weaponData);
         EditorUtility.SetDirty(weaponData);
         serializedObject.Update();
     }
@@ -432,19 +850,77 @@ public sealed class WeaponDataEditor : Editor
     {
         EditorGUILayout.LabelField("Levels", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(startLevel);
+        EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField(maxLevel);
+        if (EditorGUI.EndChangeCheck()
+            && targets.Length == 1
+            && target is WeaponData weaponData
+            && weaponData.UsesPercentageLevelProgression)
+        {
+            Undo.RecordObject(weaponData, "Resize weapon levels");
+            serializedObject.ApplyModifiedProperties();
+            weaponData.SetMaxLevel(maxLevel.intValue);
+            SynchronizeSpecialLevels(weaponData);
+            EditorUtility.SetDirty(weaponData);
+            serializedObject.Update();
+            GUIUtility.ExitGUI();
+        }
+
+        EditorGUILayout.Space();
+    }
+
+    private static void SynchronizeSpecialLevels(WeaponData weaponData)
+    {
+        if (weaponData is ThermalLaserData thermalLaserData)
+            thermalLaserData.SynchronizeThermalLevels();
+        else if (weaponData is QBeamData qBeamData)
+            qBeamData.SynchronizeQBeamLevels();
+        else if (weaponData is BallLightningData ballLightningData)
+            ballLightningData.SynchronizeBallLightningLevels();
+    }
+
+    private void DrawMetaProgression()
+    {
+        EditorGUILayout.LabelField("Meta Progression", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(
+            weaponMetaConfig,
+            new GUIContent(
+                "Weapon Meta Config",
+                "Persistent source for weapon build cost and projectile slots. "
+                + "Meta Level 0 supplies reload time and angle."));
         EditorGUILayout.Space();
     }
 
     private void DrawBuild()
     {
         EditorGUILayout.LabelField("Build", EditorStyles.boldLabel);
+        bool usesProjectileData = ((WeaponData)target).UsesProjectileData;
+        if (usesProjectileData)
+        {
+            EditorGUILayout.LabelField(
+                "Energy Cost",
+                ((WeaponData)target).EnergyCost.ToString());
+            EditorGUILayout.HelpBox(
+                "Energy Cost is configured in Weapon Meta Config.",
+                MessageType.None);
+        }
+        else
+        {
+            EditorGUILayout.PropertyField(
+                energyCost,
+                new GUIContent("Energy Cost"));
+        }
         EditorGUILayout.PropertyField(
-            energyCost,
-            new GUIContent("Energy Cost"));
-        EditorGUILayout.PropertyField(
-            damageType,
-            new GUIContent("Damage Type"));
+            battleOffset,
+            new GUIContent(
+                "Battle Offset",
+                "Local offset from the shared ship weapon mount during battle."));
+        if (!usesProjectileData)
+        {
+            EditorGUILayout.PropertyField(
+                damageType,
+                new GUIContent("Damage Type"));
+        }
         EditorGUILayout.Space();
     }
 
@@ -539,50 +1015,45 @@ public sealed class WeaponDataEditor : Editor
 
     private void DrawThermalLaserLevels()
     {
-        if (thermalLevels == null)
+        if (thermalLevelBonuses == null)
             return;
 
         EditorGUILayout.LabelField(
-            "Thermal Laser Levels",
+            "Thermal Laser Base and Bonuses",
             EditorStyles.boldLabel);
 
-        int expectedCount = levelConfigs != null && levelConfigs.arraySize > 0
-            ? levelConfigs.arraySize
-            : Mathf.Max(1, ((ThermalLaserData)target).LevelCount);
-        if (thermalLevels.arraySize != expectedCount)
-        {
-            EditorGUILayout.HelpBox(
-                "Thermal level settings must match the weapon level count.",
-                MessageType.Warning);
+        if (baseStatsConfig.objectReferenceValue is not ThermalLaserData)
+            EditorGUILayout.PropertyField(
+                manualBaseThermalStats,
+                new GUIContent("Manual Thermal Base Stats"),
+                true);
 
-            if (targets.Length == 1
-                && GUILayout.Button("Synchronize Thermal Levels"))
-            {
-                ThermalLaserData data = (ThermalLaserData)target;
-                Undo.RecordObject(data, "Synchronize thermal laser levels");
-                data.SynchronizeThermalLevels();
-                EditorUtility.SetDirty(data);
-                serializedObject.Update();
-                GUIUtility.ExitGUI();
-            }
-        }
+        if (thermalLevelBonuses.arraySize != levelBonuses.arraySize)
+            DrawSynchronizeButton("Synchronize Thermal Bonuses", () =>
+                ((ThermalLaserData)target).SynchronizeThermalLevels());
 
         for (int levelIndex = 0;
-             levelIndex < thermalLevels.arraySize;
+             levelIndex < thermalLevelBonuses.arraySize;
              levelIndex++)
         {
-            SerializedProperty level = thermalLevels.GetArrayElementAtIndex(levelIndex);
+            SerializedProperty level =
+                thermalLevelBonuses.GetArrayElementAtIndex(levelIndex);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 level.isExpanded = EditorGUILayout.Foldout(
                     level.isExpanded,
-                    $"Level {levelIndex}",
+                    $"Level {levelIndex + 1} Thermal Bonus",
                     true);
                 if (level.isExpanded)
                 {
                     EditorGUILayout.PropertyField(
-                        level.FindPropertyRelative("heatPerHitPercent"),
-                        new GUIContent("Heat Per Hit (%)"));
+                        level.FindPropertyRelative("heatPerHitPercentBonus"),
+                        new GUIContent("Heat Per Hit + (%)"));
+                    DrawSpecialCumulativeSummary(
+                        thermalLevelBonuses,
+                        "heatPerHitPercentBonus",
+                        levelIndex,
+                        "Heat Per Hit");
                 }
             }
         }
@@ -626,58 +1097,62 @@ public sealed class WeaponDataEditor : Editor
 
     private void DrawBallLightningLevels()
     {
-        if (ballLightningLevels == null)
+        if (ballLightningLevelBonuses == null)
             return;
 
         EditorGUILayout.LabelField(
-            "Ball Lightning Levels",
+            "Ball Lightning Base and Bonuses",
             EditorStyles.boldLabel);
 
-        int expectedCount = levelConfigs != null && levelConfigs.arraySize > 0
-            ? levelConfigs.arraySize
-            : Mathf.Max(1, ((BallLightningData)target).LevelCount);
-        if (ballLightningLevels.arraySize != expectedCount)
-        {
-            EditorGUILayout.HelpBox(
-                "Ball lightning settings must match the weapon level count.",
-                MessageType.Warning);
+        if (baseStatsConfig.objectReferenceValue is not BallLightningData)
+            EditorGUILayout.PropertyField(
+                manualBaseBallLightningStats,
+                new GUIContent("Manual Ball Lightning Base Stats"),
+                true);
 
-            if (targets.Length == 1
-                && GUILayout.Button("Synchronize Ball Lightning Levels"))
-            {
-                BallLightningData data = (BallLightningData)target;
-                Undo.RecordObject(data, "Synchronize ball lightning levels");
-                data.SynchronizeBallLightningLevels();
-                EditorUtility.SetDirty(data);
-                serializedObject.Update();
-                GUIUtility.ExitGUI();
-            }
-        }
+        if (ballLightningLevelBonuses.arraySize != levelBonuses.arraySize)
+            DrawSynchronizeButton("Synchronize Ball Lightning Bonuses", () =>
+                ((BallLightningData)target).SynchronizeBallLightningLevels());
 
         for (int levelIndex = 0;
-             levelIndex < ballLightningLevels.arraySize;
+             levelIndex < ballLightningLevelBonuses.arraySize;
              levelIndex++)
         {
             SerializedProperty level =
-                ballLightningLevels.GetArrayElementAtIndex(levelIndex);
+                ballLightningLevelBonuses.GetArrayElementAtIndex(levelIndex);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 level.isExpanded = EditorGUILayout.Foldout(
                     level.isExpanded,
-                    $"Level {levelIndex}",
+                    $"Level {levelIndex + 1} Ball Lightning Bonus",
                     true);
                 if (!level.isExpanded)
                     continue;
 
                 EditorGUILayout.PropertyField(
-                    level.FindPropertyRelative("directDamage"),
-                    new GUIContent("Direct Damage Per Physics Step"));
+                    level.FindPropertyRelative("directDamagePercent"),
+                    new GUIContent("Direct Damage + (%)"));
                 EditorGUILayout.PropertyField(
-                    level.FindPropertyRelative("areaDamage"),
-                    new GUIContent("Area Damage Per Pulse"));
+                    level.FindPropertyRelative("areaDamagePercent"),
+                    new GUIContent("Area Damage + (%)"));
                 EditorGUILayout.PropertyField(
-                    level.FindPropertyRelative("areaTickInterval"),
-                    new GUIContent("Final Area Tick Interval"));
+                    level.FindPropertyRelative("areaTickRatePercent"),
+                    new GUIContent("Area Tick Rate + (%)"));
+                DrawSpecialCumulativeSummary(
+                    ballLightningLevelBonuses,
+                    "directDamagePercent",
+                    levelIndex,
+                    "Direct Damage");
+                DrawSpecialCumulativeSummary(
+                    ballLightningLevelBonuses,
+                    "areaDamagePercent",
+                    levelIndex,
+                    "Area Damage");
+                DrawSpecialCumulativeSummary(
+                    ballLightningLevelBonuses,
+                    "areaTickRatePercent",
+                    levelIndex,
+                    "Area Tick Rate");
             }
         }
 
@@ -713,48 +1188,45 @@ public sealed class WeaponDataEditor : Editor
 
     private void DrawQBeamLevels()
     {
-        if (qBeamLevels == null)
+        if (qBeamLevelBonuses == null)
             return;
 
-        EditorGUILayout.LabelField("Q-Beam Levels", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(
+            "Q-Beam Base and Bonuses",
+            EditorStyles.boldLabel);
 
-        int expectedCount = levelConfigs != null && levelConfigs.arraySize > 0
-            ? levelConfigs.arraySize
-            : Mathf.Max(1, ((QBeamData)target).LevelCount);
-        if (qBeamLevels.arraySize != expectedCount)
-        {
-            EditorGUILayout.HelpBox(
-                "Q-Beam level settings must match the weapon level count.",
-                MessageType.Warning);
+        if (baseStatsConfig.objectReferenceValue is not QBeamData)
+            EditorGUILayout.PropertyField(
+                manualBaseQBeamStats,
+                new GUIContent("Manual Q-Beam Base Stats"),
+                true);
 
-            if (targets.Length == 1
-                && GUILayout.Button("Synchronize Q-Beam Levels"))
-            {
-                QBeamData data = (QBeamData)target;
-                Undo.RecordObject(data, "Synchronize Q-Beam levels");
-                data.SynchronizeQBeamLevels();
-                EditorUtility.SetDirty(data);
-                serializedObject.Update();
-                GUIUtility.ExitGUI();
-            }
-        }
+        if (qBeamLevelBonuses.arraySize != levelBonuses.arraySize)
+            DrawSynchronizeButton("Synchronize Q-Beam Bonuses", () =>
+                ((QBeamData)target).SynchronizeQBeamLevels());
 
         for (int levelIndex = 0;
-             levelIndex < qBeamLevels.arraySize;
+             levelIndex < qBeamLevelBonuses.arraySize;
              levelIndex++)
         {
-            SerializedProperty level = qBeamLevels.GetArrayElementAtIndex(levelIndex);
+            SerializedProperty level =
+                qBeamLevelBonuses.GetArrayElementAtIndex(levelIndex);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 level.isExpanded = EditorGUILayout.Foldout(
                     level.isExpanded,
-                    $"Level {levelIndex}",
+                    $"Level {levelIndex + 1} Q-Beam Bonus",
                     true);
                 if (level.isExpanded)
                 {
                     EditorGUILayout.PropertyField(
-                        level.FindPropertyRelative("chargePerHit"),
-                        new GUIContent("Charge Per Hit"));
+                        level.FindPropertyRelative("chargePerHitPercentBonus"),
+                        new GUIContent("Charge Per Hit + (%)"));
+                    DrawSpecialCumulativeSummary(
+                        qBeamLevelBonuses,
+                        "chargePerHitPercentBonus",
+                        levelIndex,
+                        "Charge Per Hit");
                 }
             }
         }
@@ -778,6 +1250,45 @@ public sealed class WeaponDataEditor : Editor
             qBeamChargeDecayPerSecond,
             new GUIContent("Charge Decay Per Second"));
         EditorGUILayout.Space();
+    }
+
+    private void DrawSynchronizeButton(
+        string buttonText,
+        System.Action synchronize)
+    {
+        EditorGUILayout.HelpBox(
+            "Special weapon bonuses must match the common level count.",
+            MessageType.Warning);
+
+        if (targets.Length != 1 || !GUILayout.Button(buttonText))
+            return;
+
+        Undo.RecordObject(target, buttonText);
+        synchronize();
+        EditorUtility.SetDirty(target);
+        serializedObject.Update();
+        GUIUtility.ExitGUI();
+    }
+
+    private static void DrawSpecialCumulativeSummary(
+        SerializedProperty bonuses,
+        string propertyName,
+        int levelIndex,
+        string label)
+    {
+        float total = 0f;
+        int lastIndex = Mathf.Min(levelIndex, bonuses.arraySize - 1);
+        for (int index = 0; index <= lastIndex; index++)
+        {
+            SerializedProperty property = bonuses
+                .GetArrayElementAtIndex(index)
+                .FindPropertyRelative(propertyName);
+            total += property?.floatValue ?? 0f;
+        }
+
+        EditorGUILayout.LabelField(
+            $"Cumulative {label}",
+            $"{total:+0.##;-0.##;0}%");
     }
 
     private static bool IsSelected<TEnum>(SerializedProperty property, TEnum value)

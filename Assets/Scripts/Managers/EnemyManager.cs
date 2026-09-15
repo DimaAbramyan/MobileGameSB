@@ -55,6 +55,56 @@ public class EnemyManager
         return bestEnemy;
     }
 
+    public Enemy FindNearestEnemyInCone(
+        Vector3 fromPosition,
+        Vector3 forwardDirection,
+        float maxDistance,
+        float coneAngle,
+        IReadOnlyList<Enemy> excludedEnemies)
+    {
+        if (enemyList == null || enemyList.Count == 0)
+            return null;
+
+        Vector2 forward = forwardDirection;
+        if (forward.sqrMagnitude <= Mathf.Epsilon)
+            return FindNearestEnemy(fromPosition, maxDistance, excludedEnemies);
+
+        forward.Normalize();
+        float clampedConeAngle = Mathf.Clamp(coneAngle, 0f, 360f);
+        float halfConeAngle = clampedConeAngle * 0.5f;
+        float maxDistanceSqr = maxDistance > 0f
+            ? maxDistance * maxDistance
+            : float.PositiveInfinity;
+        Enemy bestEnemy = null;
+
+        for (int enemyIndex = 0; enemyIndex < enemyList.Count; enemyIndex++)
+        {
+            Enemy enemy = enemyList[enemyIndex];
+            if (enemy == null
+                || enemy.isDead
+                || !enemy.isActiveAndEnabled
+                || IsExcluded(enemy, excludedEnemies))
+            {
+                continue;
+            }
+
+            Vector2 offset = enemy.transform.position - fromPosition;
+            float distanceSqr = offset.sqrMagnitude;
+            if (distanceSqr <= Mathf.Epsilon
+                || distanceSqr > maxDistanceSqr
+                || (clampedConeAngle < 360f
+                    && Vector2.Angle(forward, offset) > halfConeAngle))
+            {
+                continue;
+            }
+
+            maxDistanceSqr = distanceSqr;
+            bestEnemy = enemy;
+        }
+
+        return bestEnemy;
+    }
+
     private static bool IsExcluded(
         Enemy enemy,
         IReadOnlyList<Enemy> excludedEnemies)

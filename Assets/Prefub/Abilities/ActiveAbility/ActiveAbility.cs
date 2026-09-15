@@ -49,6 +49,8 @@ public abstract class ActiveAbility : MonoBehaviour
     private bool toggleIsActive;
     private float toggleRechargeElapsed;
 
+    public event System.Action<ActiveAbility> OnAbilityDeactivated;
+
     public UltimateAbilityMode AbilityMode => abilityMode;
     public float CooldownDuration => Mathf.Max(0f, cooldown);
     public float CooldownRemaining => Mathf.Max(0f, cooldownTimer);
@@ -85,6 +87,99 @@ public abstract class ActiveAbility : MonoBehaviour
 
             return Mathf.Clamp01(restoredCharges / MaxCharges);
         }
+    }
+
+    /// <summary>
+    /// Amount of the ability's recovery resource that is currently missing.
+    /// A regular cooldown contributes 1, while charge and toggle abilities
+    /// contribute the missing fraction of their charge resource.
+    /// </summary>
+    public float RecoveryNeed
+    {
+        get
+        {
+            switch (abilityMode)
+            {
+                case UltimateAbilityMode.Charges:
+                    return Mathf.Clamp01(
+                        (float)(MaxCharges - CurrentCharges) / MaxCharges);
+
+                case UltimateAbilityMode.Toggle:
+                    return Mathf.Max(
+                        IsCoolingDown ? 1f : 0f,
+                        1f - ToggleTimeRemaining01);
+
+                default:
+                    return IsCoolingDown ? 1f : 0f;
+            }
+        }
+    }
+
+    public AbilityMetaRecoverySettings ExportMetaRecoverySettings()
+    {
+        return new AbilityMetaRecoverySettings
+        {
+            Mode = abilityMode,
+            Cooldown = cooldown,
+            MaxCharges = maxCharges,
+            ToggleMaximumTime = toggleMaximumTime,
+            ToggleTimeCostPerSecond = toggleTimeCostPerSecond,
+            ToggleRechargeStartTime = toggleRechargeStartTime,
+            ToggleRechargeDuration = toggleRechargeDuration
+        };
+    }
+
+    public void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
+    {
+        if (stats.TryGetContract(
+                out AbilityRecoveryShipMetaContract recovery)
+            && recovery.AbilityMode == abilityMode)
+        {
+            ApplyMetaRecoverySettings(recovery.Settings);
+        }
+
+        ApplySpecificShipMetaStats(stats);
+        ValidateRuntimeValues();
+    }
+
+    protected virtual void ApplySpecificShipMetaStats(
+        ShipMetaRuntimeStats stats)
+    {
+    }
+
+    protected void NotifyAbilityDeactivated()
+    {
+        OnAbilityDeactivated?.Invoke(this);
+    }
+
+    private void ApplyMetaRecoverySettings(
+        AbilityMetaRecoverySettings settings)
+    {
+        cooldown = Mathf.Max(0f, settings.Cooldown);
+
+        if (abilityMode == UltimateAbilityMode.Charges)
+        {
+            maxCharges = Mathf.Max(1, settings.MaxCharges);
+            currentCharges = Mathf.Clamp(currentCharges, 0, maxCharges);
+            return;
+        }
+
+        if (abilityMode != UltimateAbilityMode.Toggle)
+            return;
+
+        toggleMaximumTime = Mathf.Max(0.01f, settings.ToggleMaximumTime);
+        toggleTimeCostPerSecond = Mathf.Max(
+            0.01f,
+            settings.ToggleTimeCostPerSecond);
+        toggleRechargeStartTime = Mathf.Clamp(
+            settings.ToggleRechargeStartTime,
+            0f,
+            toggleMaximumTime);
+        toggleRechargeDuration = Mathf.Max(0.01f, settings.ToggleRechargeDuration);
+        toggleTimeRemaining = Mathf.Clamp(
+            toggleTimeRemaining,
+            0f,
+            toggleMaximumTime);
     }
 
     protected virtual void Awake()
@@ -126,6 +221,32 @@ public abstract class ActiveAbility : MonoBehaviour
         }
 
         StopToggle(owner, true);
+    }
+
+    /// <summary>
+    /// Instantly restores this ability's reusable resource. Charge abilities
+    /// receive every charge, and toggle abilities receive their full reserve.
+    /// </summary>
+    public bool RestoreAllRecoveryResources()
+    {
+        if (RecoveryNeed <= 0f)
+            return false;
+
+        cooldownTimer = 0f;
+
+        switch (abilityMode)
+        {
+            case UltimateAbilityMode.Charges:
+                currentCharges = MaxCharges;
+                break;
+
+            case UltimateAbilityMode.Toggle:
+                toggleTimeRemaining = ToggleMaximumTime;
+                toggleRechargeElapsed = 0f;
+                break;
+        }
+
+        return true;
     }
 
     protected void StartCooldown()
@@ -232,6 +353,7 @@ public abstract class ActiveAbility : MonoBehaviour
         toggleIsActive = false;
         activeToggleOwner = null;
         Release(releaseOwner);
+        NotifyAbilityDeactivated();
 
         if (startCooldown)
             StartCooldown();

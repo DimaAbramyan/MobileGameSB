@@ -19,10 +19,17 @@ public sealed class QBeamWeapon : ContinuousBeamWeapon
         return true;
     }
 
+    protected override Transform GetBeamTransform()
+    {
+        return transform;
+    }
+
     protected override bool ApplyBeamEffect(Enemy enemy)
     {
         QBeamData data = weaponData as QBeamData;
-        if (data == null || enemyDisintegrationSystem == null)
+        if (data == null
+            || enemyDisintegrationSystem == null
+            || enemy.HasActiveShield)
             return false;
 
         enemyDisintegrationSystem.ApplyCharge(

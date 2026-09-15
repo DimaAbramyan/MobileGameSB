@@ -142,6 +142,16 @@ public class ShipSelect : MonoBehaviour
         return true;
     }
 
+    public void ForEachAvailableShip(Action<ParentShip> action)
+    {
+        if (action == null)
+            return;
+
+        List<ParentShip> availableShips = GetAvailableShips();
+        for (int i = 0; i < availableShips.Count; i++)
+            action.Invoke(availableShips[i]);
+    }
+
     private List<ParentShip> GetAvailableShips()
     {
         List<ParentShip> availableShips = new List<ParentShip>();

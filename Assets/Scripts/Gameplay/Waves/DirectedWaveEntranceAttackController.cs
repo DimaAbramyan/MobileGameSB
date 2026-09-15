@@ -548,14 +548,17 @@ internal sealed class DirectedWaveEntranceAttackController
         if (sharedAttackSettings == null)
             return false;
 
-        if (sharedAttackSettings.FireMode == DirectedWaveAttackFireMode.Aimed
-            && !wave.HasAttackTarget)
+        bool requiresPlayerTarget = sharedAttackSettings.FireMode
+                == DirectedWaveAttackFireMode.Aimed
+            || sharedAttackSettings.FireMode
+                == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead;
+        if (requiresPlayerTarget && !wave.HasAttackTarget)
         {
             if (!missingTargetWarningLogged)
             {
                 missingTargetWarningLogged = true;
                 Debug.LogWarning(
-                    "PlayerController was not injected. Entrance attacks cannot aim at the player.",
+                    "PlayerController was not injected. Entrance attacks requiring a player target cannot fire.",
                     wave);
             }
 
@@ -566,7 +569,19 @@ internal sealed class DirectedWaveEntranceAttackController
             return false;
 
         EnemyBurstAttackSettings burstSettings = GetBurstSettings(executor);
-        if (sharedAttackSettings.FireMode == DirectedWaveAttackFireMode.Forward)
+        if (sharedAttackSettings.FireMode
+            == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead
+            && !sharedAttackSettings.IsPlayerInForwardFireSector(
+                enemy.transform.position,
+                enemy.transform.up,
+                wave.GetPlayerTargetPosition()))
+        {
+            return false;
+        }
+
+        if (sharedAttackSettings.FireMode == DirectedWaveAttackFireMode.Forward
+            || sharedAttackSettings.FireMode
+                == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
         {
             return executor.TryFireInDirection(
                 enemy.transform.up,

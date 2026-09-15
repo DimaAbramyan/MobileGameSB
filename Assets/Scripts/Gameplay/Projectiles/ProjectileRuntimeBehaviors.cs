@@ -20,11 +20,31 @@ public class ProjectileRuntimeConfig
     public float fadeDuration = 0.5f;
     public Explode explosionPrefab;
     public float explosionDamage = 30f;
+    public EnemyDamageType explosionDamageType = EnemyDamageType.Explosion;
+    public bool explosionBypassesEnemyShield;
+    public float explosionRadius;
+    public bool explodeAtMaximumRange;
+    public ProjectileData secondaryProjectile;
+    public bool hasSecondaryProjectileRuntimeStats;
+    public float secondaryProjectileDamage;
+    public float secondaryProjectileRange;
+    public float secondaryProjectileSpeed;
+    public SecondaryProjectileSpawnTrigger secondarySpawnTrigger =
+        SecondaryProjectileSpawnTrigger.OnEnemyContact;
+    public float secondaryTravelDistance;
+    public bool ignoreSecondaryProjectileTriggeringEnemy = true;
     public float continuousDamageInterval = 0.25f;
     public float ballLightningAreaDamage;
     public float ballLightningAreaRadius;
     public float ballLightningAreaTickInterval = 0.5f;
     public LayerMask ballLightningAreaDamageLayers = ~0;
+    public int circularChainHitsPerTarget = 3;
+    public float circularChainDamagePerHit = 1f;
+    public float circularChainHitInterval = 0.02f;
+    public int circularChainMaximumTargets = 3;
+    public float circularChainSearchConeAngle = 15f;
+    public float circularChainSearchRange = 1.25f;
+    public float circularChainRandomEscapeAngle = 15f;
 }
 
 public enum ProjectileFlightMode
@@ -39,7 +59,9 @@ public enum ProjectileContactMode
     PierceOnce,
     PierceContinuous,
     ExplodeAndSpawn,
-    BallLightning
+    BallLightning,
+    CircularChain,
+    ExplodeOnContact
 }
 
 public interface IProjectileMovementBehavior
@@ -59,10 +81,16 @@ public interface IProjectileTickBehavior
     void Tick(Projectile projectile);
 }
 
+public interface IProjectileMaximumRangeBehavior
+{
+    bool TryHandleMaximumRange(Projectile projectile);
+}
+
 public sealed class ProjectileRuntimeBehaviorSet
 {
     private IProjectileMovementBehavior movementBehavior;
     private IProjectileContactBehavior contactBehavior;
+    private IProjectileMaximumRangeBehavior maximumRangeBehavior;
     private readonly List<IProjectileTickBehavior> tickBehaviors = new();
     private readonly DealDamageManager dealDamageManager;
     private readonly EnemyManager enemyManager;
@@ -83,7 +111,23 @@ public sealed class ProjectileRuntimeBehaviorSet
             _ => new StraightMovementBehavior()
         };
 
-        if (config.contactMode == ProjectileContactMode.BallLightning)
+        if (config.contactMode == ProjectileContactMode.CircularChain)
+        {
+            CircularChainContactBehavior circularChain =
+                new CircularChainContactBehavior(
+                    config.circularChainHitsPerTarget,
+                    config.circularChainDamagePerHit,
+                    config.circularChainHitInterval,
+                    config.circularChainMaximumTargets,
+                    config.circularChainSearchConeAngle,
+                    config.circularChainSearchRange,
+                    config.circularChainRandomEscapeAngle,
+                    dealDamageManager,
+                    enemyManager);
+            contactBehavior = circularChain;
+            tickBehaviors.Add(circularChain);
+        }
+        else if (config.contactMode == ProjectileContactMode.BallLightning)
         {
             BallLightningContactBehavior ballLightningContact =
                 new BallLightningContactBehavior(dealDamageManager);
@@ -110,14 +154,59 @@ public sealed class ProjectileRuntimeBehaviorSet
                     new ExplodeAndSpawnContactBehavior(
                         config.explosionPrefab,
                         config.explosionDamage,
+                        config.explosionDamageType,
+                        config.explosionBypassesEnemyShield,
+                        config.explosionRadius,
+                        dealDamageManager),
+                ProjectileContactMode.ExplodeOnContact =>
+                    new ExplodeOnContactBehavior(
+                        config.explosionPrefab,
+                        config.explosionDamage,
+                        config.explosionDamageType,
+                        config.explosionBypassesEnemyShield,
+                        config.explosionRadius,
                         dealDamageManager),
                 _ => new DamageAndDestroyContactBehavior(dealDamageManager)
             };
         }
 
         if (config.growDuringFlight)
+        {
             tickBehaviors.Add(
                 new ScaleGrowthTickBehavior(config.scaleGrowthPerSecond));
+        }
+
+        if (config.secondaryProjectile != null)
+        {
+            SecondaryProjectileSpawnBehavior secondarySpawn = new(
+                config.secondarySpawnTrigger,
+                config.secondaryTravelDistance,
+                config.secondaryProjectile,
+                config.ignoreSecondaryProjectileTriggeringEnemy);
+
+            if (config.secondarySpawnTrigger
+                == SecondaryProjectileSpawnTrigger.OnEnemyContact)
+            {
+                contactBehavior = new SecondaryProjectileContactDecorator(
+                    contactBehavior,
+                    secondarySpawn);
+            }
+            else
+            {
+                tickBehaviors.Add(secondarySpawn);
+            }
+        }
+
+        if (config.explodeAtMaximumRange)
+        {
+            maximumRangeBehavior = new ExplodeAtMaximumRangeBehavior(
+                config.explosionPrefab,
+                config.explosionDamage,
+                config.explosionDamageType,
+                config.explosionBypassesEnemyShield,
+                config.explosionRadius,
+                dealDamageManager);
+        }
     }
 
     public void Move(Projectile projectile)
@@ -146,11 +235,99 @@ public sealed class ProjectileRuntimeBehaviorSet
         contactBehavior?.OnExit(target, projectile);
     }
 
+    public bool TryHandleMaximumRange(Projectile projectile)
+    {
+        return maximumRangeBehavior?.TryHandleMaximumRange(projectile) ?? false;
+    }
+
     public void Reset()
     {
         movementBehavior = null;
         contactBehavior = null;
+        maximumRangeBehavior = null;
         tickBehaviors.Clear();
+    }
+}
+
+public sealed class SecondaryProjectileContactDecorator : IProjectileContactBehavior
+{
+    private readonly IProjectileContactBehavior decoratedBehavior;
+    private readonly SecondaryProjectileSpawnBehavior secondarySpawn;
+
+    public SecondaryProjectileContactDecorator(
+        IProjectileContactBehavior decoratedBehavior,
+        SecondaryProjectileSpawnBehavior secondarySpawn)
+    {
+        this.decoratedBehavior = decoratedBehavior;
+        this.secondarySpawn = secondarySpawn;
+    }
+
+    public void OnEnter(iDamagable target, Projectile projectile)
+    {
+        secondarySpawn.TrySpawnFromContact(target, projectile);
+        decoratedBehavior?.OnEnter(target, projectile);
+    }
+
+    public void OnStay(iDamagable target, Projectile projectile)
+    {
+        decoratedBehavior?.OnStay(target, projectile);
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+        decoratedBehavior?.OnExit(target, projectile);
+    }
+}
+
+public sealed class SecondaryProjectileSpawnBehavior : IProjectileTickBehavior
+{
+    private readonly SecondaryProjectileSpawnTrigger spawnTrigger;
+    private readonly float travelDistance;
+    private readonly ProjectileData secondaryProjectile;
+    private readonly bool ignoreTriggeringEnemy;
+    private bool hasSpawned;
+
+    public SecondaryProjectileSpawnBehavior(
+        SecondaryProjectileSpawnTrigger spawnTrigger,
+        float travelDistance,
+        ProjectileData secondaryProjectile,
+        bool ignoreTriggeringEnemy)
+    {
+        this.spawnTrigger = spawnTrigger;
+        this.travelDistance = Mathf.Max(0f, travelDistance);
+        this.secondaryProjectile = secondaryProjectile;
+        this.ignoreTriggeringEnemy = ignoreTriggeringEnemy;
+    }
+
+    public void TrySpawnFromContact(iDamagable target, Projectile projectile)
+    {
+        if (spawnTrigger != SecondaryProjectileSpawnTrigger.OnEnemyContact
+            || hasSpawned
+            || target is not Enemy)
+        {
+            return;
+        }
+
+        Spawn(projectile, ignoreTriggeringEnemy ? target : null);
+    }
+
+    public void Tick(Projectile projectile)
+    {
+        if (spawnTrigger != SecondaryProjectileSpawnTrigger.AfterTravelDistance
+            || hasSpawned
+            || !projectile.HasReachedTravelDistance(travelDistance))
+        {
+            return;
+        }
+
+        Spawn(projectile, null);
+        projectile.ReturnToPool();
+    }
+
+    private void Spawn(Projectile projectile, iDamagable ignoredTarget)
+    {
+        hasSpawned = true;
+        projectile.TrySpawnSecondaryProjectile(secondaryProjectile, ignoredTarget);
     }
 }
 
@@ -481,20 +658,202 @@ public sealed class BallLightningAreaTickBehavior : IProjectileTickBehavior
     }
 }
 
+public sealed class CircularChainContactBehavior
+    : IProjectileContactBehavior, IProjectileTickBehavior
+{
+    private readonly int hitsPerTarget;
+    private readonly float damagePerHit;
+    private readonly float hitInterval;
+    private readonly int maximumTargets;
+    private readonly float searchConeAngle;
+    private readonly float searchRange;
+    private readonly float randomEscapeAngle;
+    private readonly DealDamageManager dealDamageManager;
+    private readonly EnemyManager enemyManager;
+    private readonly List<Enemy> visitedTargets;
+
+    private Enemy currentTarget;
+    private float nextHitTime;
+    private float travelSpeed;
+    private int hitsAppliedToCurrentTarget;
+
+    public CircularChainContactBehavior(
+        int hitsPerTarget,
+        float damagePerHit,
+        float hitInterval,
+        int maximumTargets,
+        float searchConeAngle,
+        float searchRange,
+        float randomEscapeAngle,
+        DealDamageManager dealDamageManager,
+        EnemyManager enemyManager)
+    {
+        this.hitsPerTarget = Mathf.Max(1, hitsPerTarget);
+        this.damagePerHit = Mathf.Max(0f, damagePerHit);
+        this.hitInterval = Mathf.Max(0.02f, hitInterval);
+        this.maximumTargets = Mathf.Max(1, maximumTargets);
+        this.searchConeAngle = Mathf.Clamp(searchConeAngle, 0f, 360f);
+        this.searchRange = Mathf.Max(0.01f, searchRange);
+        this.randomEscapeAngle = Mathf.Clamp(randomEscapeAngle, 0f, 360f);
+        this.dealDamageManager = dealDamageManager;
+        this.enemyManager = enemyManager;
+        visitedTargets = new List<Enemy>(this.maximumTargets);
+    }
+
+    public void OnEnter(iDamagable target, Projectile projectile)
+    {
+        TryLatchToTarget(target as Enemy, projectile);
+    }
+
+    public void OnStay(iDamagable target, Projectile projectile)
+    {
+        TryLatchToTarget(target as Enemy, projectile);
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+    }
+
+    public void Tick(Projectile projectile)
+    {
+        if (projectile == null || currentTarget == null)
+            return;
+
+        if (currentTarget.isDead || !currentTarget.isActiveAndEnabled)
+        {
+            ContinueChain(projectile);
+            return;
+        }
+
+        projectile.transform.position = currentTarget.transform.position;
+        if (Time.fixedTime < nextHitTime)
+            return;
+
+        nextHitTime = Time.fixedTime + hitInterval;
+        if (damagePerHit > 0f && dealDamageManager != null)
+        {
+            dealDamageManager.DealDamage(
+                currentTarget,
+                projectile.Owner,
+                damagePerHit,
+                projectile.DamageType);
+        }
+
+        hitsAppliedToCurrentTarget++;
+        if (hitsAppliedToCurrentTarget >= hitsPerTarget)
+            ContinueChain(projectile);
+    }
+
+    private void TryLatchToTarget(Enemy target, Projectile projectile)
+    {
+        if (projectile == null
+            || currentTarget != null
+            || target == null
+            || target.isDead
+            || !target.isActiveAndEnabled
+            || IsVisited(target))
+        {
+            return;
+        }
+
+        if (travelSpeed <= 0f)
+            travelSpeed = projectile.speed;
+
+        currentTarget = target;
+        visitedTargets.Add(target);
+        hitsAppliedToCurrentTarget = 0;
+        nextHitTime = Time.fixedTime;
+        projectile.SetSpeed(0f);
+        projectile.transform.position = target.transform.position;
+    }
+
+    private void ContinueChain(Projectile projectile)
+    {
+        currentTarget = null;
+        hitsAppliedToCurrentTarget = 0;
+
+        if (visitedTargets.Count >= maximumTargets)
+        {
+            projectile.ReturnToPool();
+            return;
+        }
+
+        Enemy nextTarget = enemyManager?.FindNearestEnemyInCone(
+            projectile.transform.position,
+            projectile.direction,
+            searchRange,
+            searchConeAngle,
+            visitedTargets);
+        if (nextTarget != null)
+        {
+            LaunchTowards(projectile, nextTarget.transform.position);
+            return;
+        }
+
+        LaunchInRandomDirection(projectile);
+    }
+
+    private void LaunchTowards(Projectile projectile, Vector3 targetPosition)
+    {
+        Vector3 direction = targetPosition - projectile.transform.position;
+        if (direction.sqrMagnitude <= Mathf.Epsilon)
+        {
+            LaunchInRandomDirection(projectile);
+            return;
+        }
+
+        projectile.SetDirection(direction);
+        projectile.SetSpeed(travelSpeed);
+    }
+
+    private void LaunchInRandomDirection(Projectile projectile)
+    {
+        Vector3 baseDirection = projectile.direction;
+        if (baseDirection.sqrMagnitude <= Mathf.Epsilon)
+            baseDirection = Vector3.up;
+
+        float halfAngle = randomEscapeAngle * 0.5f;
+        float angle = UnityEngine.Random.Range(-halfAngle, halfAngle);
+        projectile.SetDirection(
+            Quaternion.Euler(0f, 0f, angle) * baseDirection);
+        projectile.SetSpeed(travelSpeed);
+    }
+
+    private bool IsVisited(Enemy target)
+    {
+        for (int index = 0; index < visitedTargets.Count; index++)
+        {
+            if (visitedTargets[index] == target)
+                return true;
+        }
+
+        return false;
+    }
+}
+
 public sealed class ExplodeAndSpawnContactBehavior
     : IProjectileContactBehavior
 {
     private readonly Explode explosionPrefab;
     private readonly float explosionDamage;
+    private readonly EnemyDamageType explosionDamageType;
+    private readonly bool explosionBypassesEnemyShield;
+    private readonly float explosionRadius;
     private readonly DealDamageManager dealDamageManager;
 
     public ExplodeAndSpawnContactBehavior(
         Explode explosionPrefab,
         float explosionDamage,
+        EnemyDamageType explosionDamageType,
+        bool explosionBypassesEnemyShield,
+        float explosionRadius,
         DealDamageManager dealDamageManager)
     {
         this.explosionPrefab = explosionPrefab;
         this.explosionDamage = explosionDamage;
+        this.explosionDamageType = explosionDamageType;
+        this.explosionBypassesEnemyShield = explosionBypassesEnemyShield;
+        this.explosionRadius = explosionRadius;
         this.dealDamageManager = dealDamageManager;
     }
 
@@ -503,11 +862,15 @@ public sealed class ExplodeAndSpawnContactBehavior
         if (target != null)
             dealDamageManager.DealDamage(target, projectile);
 
-        if (explosionPrefab != null)
-        {
-            Explode exp = UnityEngine.Object.Instantiate(explosionPrefab, projectile.transform.position, Quaternion.identity);
-            exp.SetDamage(explosionDamage, projectile.DamageType);
-        }
+        ProjectileExplosionSpawner.Spawn(
+            explosionPrefab,
+            explosionDamage,
+            explosionDamageType,
+            explosionBypassesEnemyShield,
+            explosionRadius,
+            projectile.transform.position,
+            projectile.Owner,
+            dealDamageManager);
 
         projectile.ReturnToPool();
     }
@@ -518,6 +881,128 @@ public sealed class ExplodeAndSpawnContactBehavior
 
     public void OnExit(iDamagable target, Projectile projectile)
     {
+    }
+}
+
+public sealed class ExplodeOnContactBehavior : IProjectileContactBehavior
+{
+    private readonly Explode explosionPrefab;
+    private readonly float explosionDamage;
+    private readonly EnemyDamageType explosionDamageType;
+    private readonly bool explosionBypassesEnemyShield;
+    private readonly float explosionRadius;
+    private readonly DealDamageManager dealDamageManager;
+
+    public ExplodeOnContactBehavior(
+        Explode explosionPrefab,
+        float explosionDamage,
+        EnemyDamageType explosionDamageType,
+        bool explosionBypassesEnemyShield,
+        float explosionRadius,
+        DealDamageManager dealDamageManager)
+    {
+        this.explosionPrefab = explosionPrefab;
+        this.explosionDamage = explosionDamage;
+        this.explosionDamageType = explosionDamageType;
+        this.explosionBypassesEnemyShield = explosionBypassesEnemyShield;
+        this.explosionRadius = explosionRadius;
+        this.dealDamageManager = dealDamageManager;
+    }
+
+    public void OnEnter(iDamagable target, Projectile projectile)
+    {
+        ProjectileExplosionSpawner.Spawn(
+            explosionPrefab,
+            explosionDamage,
+            explosionDamageType,
+            explosionBypassesEnemyShield,
+            explosionRadius,
+            projectile.transform.position,
+            projectile.Owner,
+            dealDamageManager);
+        projectile.ReturnToPool();
+    }
+
+    public void OnStay(iDamagable target, Projectile projectile)
+    {
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+    }
+}
+
+public sealed class ExplodeAtMaximumRangeBehavior
+    : IProjectileMaximumRangeBehavior
+{
+    private readonly Explode explosionPrefab;
+    private readonly float explosionDamage;
+    private readonly EnemyDamageType explosionDamageType;
+    private readonly bool explosionBypassesEnemyShield;
+    private readonly float explosionRadius;
+    private readonly DealDamageManager dealDamageManager;
+
+    public ExplodeAtMaximumRangeBehavior(
+        Explode explosionPrefab,
+        float explosionDamage,
+        EnemyDamageType explosionDamageType,
+        bool explosionBypassesEnemyShield,
+        float explosionRadius,
+        DealDamageManager dealDamageManager)
+    {
+        this.explosionPrefab = explosionPrefab;
+        this.explosionDamage = explosionDamage;
+        this.explosionDamageType = explosionDamageType;
+        this.explosionBypassesEnemyShield = explosionBypassesEnemyShield;
+        this.explosionRadius = explosionRadius;
+        this.dealDamageManager = dealDamageManager;
+    }
+
+    public bool TryHandleMaximumRange(Projectile projectile)
+    {
+        if (explosionPrefab == null)
+            return false;
+
+        ProjectileExplosionSpawner.Spawn(
+            explosionPrefab,
+            explosionDamage,
+            explosionDamageType,
+            explosionBypassesEnemyShield,
+            explosionRadius,
+            projectile.transform.position,
+            projectile.Owner,
+            dealDamageManager);
+        projectile.ReturnToPool();
+        return true;
+    }
+}
+
+public static class ProjectileExplosionSpawner
+{
+    public static void Spawn(
+        Explode explosionPrefab,
+        float damage,
+        EnemyDamageType damageType,
+        bool bypassesEnemyShield,
+        float radius,
+        Vector3 position,
+        ParentShip owner,
+        DealDamageManager dealDamageManager)
+    {
+        if (explosionPrefab == null)
+            return;
+
+        Explode explosion = UnityEngine.Object.Instantiate(
+            explosionPrefab,
+            position,
+            Quaternion.identity);
+        explosion.SetDamage(
+            damage,
+            damageType,
+            bypassesEnemyShield,
+            owner,
+            dealDamageManager);
+        explosion.SetRadius(radius);
     }
 }
 

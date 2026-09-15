@@ -1,0 +1,251 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: GammaRay
+  m_EditorClassIdentifier: 
+  reloadTimeByLevel:
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  - 0.3
+  angleByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  damageByLevel:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  rangeByLevel:
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  speedByLevel:
+  - 1.5
+  - 1.5
+  - 1.5
+  - 1.5
+  - 1.5
+  levelConfigs: []
+  baseStatsConfig: {fileID: 0}
+  manualBaseStats:
+    reloadTime: 0.3
+    angle: 0
+    damage: 5
+    range: 10
+    speed: 1.5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  levelBonuses:
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 10
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 60f6777c31d440d4ad5a0d93a85cc096
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  weaponMetaConfig: {fileID: 11400000, guid: 92bcd06ecb32a4a42bd626db28e6e73b, type: 2}
+  startLevel: 1
+  maxLevel: 10
+  energyCost: 6
+  battleOffset: {x: 0, y: 0, z: 0}
+  damageType: 4
+  flightMode: 0
+  contactMode: 2
+  homingRotationSpeed: 360
+  growDuringFlight: 1
+  scaleGrowthPerSecond: {x: 0.4, y: 0}
+  projectileLifetime: 10
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 30
+  continuousDamageInterval: 0.02
+  audioClipDefault:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 
+  audioClipProjectileShot:
+    Guid:
+      Data1: 1824267394
+      Data2: 1205303200
+      Data3: 1484861844
+      Data4: 402998246
+    Path: "event:/Soni\u0441Beam"

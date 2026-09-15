@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b1941e8f9e38343906f546321083a9, type: 3}
+  m_Name: DictatorMeta
+  m_EditorClassIdentifier: Assembly-CSharp::ShipMetaConfig
+  sourceShipData: {fileID: 11400000, guid: e544c27b313870044ac94c0bf983cdfa, type: 2}
+  sourceHullPrefab: {fileID: 8325040916063848254, guid: 45fae16e34911224396e07cc66bacd0a, type: 3}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      maximumHealthPoints: 50
+      maximumShieldPoints: 50
+      healthRegenRatePercent: 5
+      shieldRegenRatePercent: 5
+      speed: 300
+      maximumEnergy: 20
+    contracts:
+    - rid: 3397718835116900439
+    - rid: 3397718835116900440
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718835116900439
+      type: {class: AbilityRecoveryShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        abilityMode: 0
+        cooldown: 12
+        maxCharges: 1
+        toggleMaximumTime: 3
+        toggleTimeCostPerSecond: 1
+        toggleRechargeStartTime: 0
+        toggleRechargeDuration: 3
+    - rid: 3397718835116900440
+      type: {class: DictatorShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        turretLifetime: 8
+        turretProjectilePrefab: {fileID: 7717844111302252331, guid: 706e464bd5135fc41a46c7b729c11279, type: 3}
+        turretDamageType: 0
+        turretProjectileDamage: 10
+        turretReloadTime: 0.5
+        turretProjectileSpeed: 8
+        turretTargetingRange: 10
+        turretSpawnGroups:
+        - localPosition: {x: -0.75, y: 0}
+          count: 1
+          horizontalSpacing: 0.45
+        - localPosition: {x: 0.75, y: 0}
+          count: 1
+          horizontalSpacing: 0.45
+        kineticDamageBonusPercent: 15
+        explosionDamageBonusPercent: 10

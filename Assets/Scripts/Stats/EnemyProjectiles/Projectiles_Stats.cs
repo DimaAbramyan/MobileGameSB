@@ -29,7 +29,7 @@ public abstract class EnemyProjectile: MonoBehaviour
 
         if (receiver != null && !gameSettings.IsGodModeOn)
         {
-            receiver.TakeDamage(_damage);
+            receiver.TryTakeDamage(_damage);
         }
 
         Destroy(gameObject);

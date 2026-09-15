@@ -6,12 +6,16 @@ using UnityEngine;
 public class SaveData
 {
     public int shipId;
+    public string hullContentId;
     public string shipName;
     public WeaponDataSer[] WeaponData;
 
     public SaveShip ConvertToSaveShip ()
     {
-        return new SaveShip (shipId, WeaponData, shipName, "");
+        return new SaveShip (shipId, WeaponData, shipName, "")
+        {
+            hullContentId = hullContentId
+        };
     }
 }
 

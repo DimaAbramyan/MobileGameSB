@@ -115,7 +115,7 @@ SpriteRenderer:
   m_SortingOrder: 2
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 119f8770de080f54c9076675310da4a0, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
   weaponData: {fileID: 11400000, guid: 0d952a161559bbb4883e93aa8dff88c4, type: 2}
   beamRenderer: {fileID: 0}
   beamMaterial: {fileID: 0}
-  beamColor: {r: 1, g: 0.25, b: 0.05, a: 0.9}
+  beamColor: {r: 1, g: 0.25, b: 0.05, a: 1}
   beamWidth: 0.16
   beamSortingOrder: 4
   projectileCollisionLayer:

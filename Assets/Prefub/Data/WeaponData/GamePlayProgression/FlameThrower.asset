@@ -1,0 +1,388 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67577d2b4a149a40a41ffd5631cc716, type: 3}
+  m_Name: FlameThrower
+  m_EditorClassIdentifier: 
+  reloadTimeByLevel:
+  - 0.1
+  - 0.095
+  - 0.0875
+  - 0.1
+  - 0.1
+  angleByLevel:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  damageByLevel:
+  - 10
+  - 10
+  - 10
+  - 10
+  - 10
+  rangeByLevel:
+  - 3
+  - 3.5
+  - 4
+  - 4.5
+  - 5
+  speedByLevel:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  levelConfigs:
+  - reloadTime: 0.05
+    angle: 0
+    damage: 3.75
+    range: 3
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 4.3
+    range: 3.5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 4.5
+    range: 4
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 5
+    range: 4.5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 5.5
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 5.6
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 6
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 6
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 6.5
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 7
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  - reloadTime: 0.05
+    angle: 0
+    damage: 8
+    range: 5
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  baseStatsConfig: {fileID: 0}
+  manualBaseStats:
+    reloadTime: 0.05
+    angle: 0
+    damage: 3.75
+    range: 3
+    speed: 5
+    volleysPerActivation: 1
+    projectilesPerVolley: 1
+    delayBetweenVolleys: 0
+    spreadAngle: 0
+    maxTargets: 1
+    targetSearchRadius: 10
+  levelBonuses:
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 14.666672
+      rangePercent: 16.666666
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 5.3333282
+      rangePercent: 16.666666
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 13.333332
+      rangePercent: 16.666668
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 13.333336
+      rangePercent: 16.666664
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 2.6666641
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 10.666668
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 13.333336
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 13.333328
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
+      damagePercent: 26.666672
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  weaponMetaConfig: {fileID: 11400000, guid: cfe9e7ce85fc54e40841c5ffa4942f6f, type: 2}
+  startLevel: 1
+  maxLevel: 11
+  energyCost: 3
+  battleOffset: {x: 0, y: 0, z: 0}
+  damageType: 2
+  flightMode: 0
+  contactMode: 1
+  homingRotationSpeed: 360
+  growDuringFlight: 1
+  scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+  projectileLifetime: 10
+  disableColliderAfterFirstPhysicsStep: 0
+  fadeDuringLifetime: 0
+  fadeDuration: 0.5
+  explosionPrefab: {fileID: 0}
+  explosionDamage: 30
+  continuousDamageInterval: 0.25
+  audioClipDefault:
+    Guid:
+      Data1: 1970168122
+      Data2: 1253470343
+      Data3: -488035455
+      Data4: -1262188869
+    Path: event:/FlameThrower
+  audioClipProjectileShot:
+    Guid:
+      Data1: 0
+      Data2: 0
+      Data3: 0
+      Data4: 0
+    Path: 

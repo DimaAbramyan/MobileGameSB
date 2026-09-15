@@ -63,7 +63,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   - rewardPrefab: {fileID: 4187146528888570064, guid: ab0c2b20b8f62f24ebdb65376eabf60c, type: 3}
-    baseWeight: 3
+    baseWeight: 2.25
     modifiers:
     - stat: 1
       comparison: 0
@@ -89,6 +89,77 @@ MonoBehaviour:
           tangentMode: 34
           weightedMode: 0
           inWeight: 0.33333334
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - rewardPrefab: {fileID: 7128793775223522146, guid: 2767820cc4ff3f246b8e596618bfc9dc, type: 3}
+    baseWeight: 1
+    modifiers: []
+  - rewardPrefab: {fileID: 3830173792658640608, guid: 923e33721fec8694c85db28bd02bfd79, type: 3}
+    baseWeight: 1
+    modifiers:
+    - stat: 0
+      comparison: 0
+      threshold: 0
+      weightMultiplier: 0
+      weightMultiplierCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: -1
+          outSlope: -1
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0.33333334
+        - serializedVersion: 3
+          time: 1
+          value: 0
+          inSlope: -1
+          outSlope: -1
+          tangentMode: 34
+          weightedMode: 0
+          inWeight: 0.33333334
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  - rewardPrefab: {fileID: 1638258780288798567, guid: 7fb1b5b3379f8ef498b7e75202872012, type: 3}
+    baseWeight: 1
+    modifiers: []
+  - rewardPrefab: {fileID: 3615532701744673329, guid: 8af3e8542f50b5e4bbdacc4d4a212379, type: 3}
+    baseWeight: 1
+    modifiers: []
+  - rewardPrefab: {fileID: 544696051244816835, guid: 6f6d22e94decc4d4884c1a4ed547d0b1, type: 3}
+    baseWeight: 1
+    modifiers:
+    - stat: 2
+      comparison: 1
+      threshold: 0
+      weightMultiplier: 1
+      weightMultiplierCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 10
+          value: 10
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
           outWeight: 0
         m_PreInfinity: 2
         m_PostInfinity: 2

@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b1941e8f9e38343906f546321083a9, type: 3}
+  m_Name: BlackHoleMeta
+  m_EditorClassIdentifier: Assembly-CSharp::ShipMetaConfig
+  sourceShipData: {fileID: 11400000, guid: 4f8412e53075b104ebf23726690ca4ff, type: 2}
+  sourceHullPrefab: {fileID: 8325040916063848254, guid: 094a6f4c0f5813041a5858293dd43f16, type: 3}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      maximumHealthPoints: 20
+      maximumShieldPoints: 20
+      healthRegenRatePercent: 5
+      shieldRegenRatePercent: 5
+      speed: 300
+      maximumEnergy: 10
+    contracts:
+    - rid: 3397718787192520806
+    - rid: 3397718787192520807
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718787192520806
+      type: {class: AbilityRecoveryShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        abilityMode: 0
+        cooldown: 5
+        maxCharges: 1
+        toggleMaximumTime: 3
+        toggleTimeCostPerSecond: 1
+        toggleRechargeStartTime: 0
+        toggleRechargeDuration: 3
+    - rid: 3397718787192520807
+      type: {class: BlackHoleShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        duration: 5.2
+        damage: 50
+        projectileSlowRadius: 3
+        minimumProjectileSpeedMultiplier: 0.1

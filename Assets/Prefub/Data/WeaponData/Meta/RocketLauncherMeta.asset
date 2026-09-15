@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
+  m_Name: RocketLauncherMeta
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  energyCost: 4
+  projectileSlots:
+  - id: e28d1b77ff384a7ba21ccc62c7bbba9c
+    projectile: {fileID: 11400000, guid: 05f4d13aa8afeb645a99dc7733027f61, type: 2}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      reloadTime: 2
+      damage: 0
+      range: 8
+      projectileSpeed: 2
+      angle: 0
+    contracts:
+    - rid: 3397718812562292832
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718812562292832
+      type: {class: BurstFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        volleysPerActivation: 1
+        projectilesPerVolley: 1
+        delayBetweenVolleys: 0.15
+        spreadAngle: 0

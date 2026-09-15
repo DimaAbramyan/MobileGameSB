@@ -158,6 +158,9 @@ public class Enemy : MonoBehaviour, iDamagable
 
     public float ShieldPoints => Mathf.Max(0f, shieldPoints);
 
+    public bool HasActiveShield => shieldModifier != null
+        && shieldModifier.IsShieldActive;
+
     public void MultiplyDamage(float multiplier)
     {
         float safeMultiplier = Mathf.Max(0.01f, multiplier);
@@ -175,7 +178,7 @@ public class Enemy : MonoBehaviour, iDamagable
         shieldPoints *= Mathf.Max(0.01f, multiplier);
     }
 
-    public void TakeDamageWithType(
+    public EnemyDamageResult TakeDamageWithType(
         float damage,
         EnemyDamageType damageType,
         bool bypassesShield = false)
@@ -186,6 +189,7 @@ public class Enemy : MonoBehaviour, iDamagable
         bypassShieldForNextDamage = bypassesShield;
         hasDamageTypeForNextDamage = true;
         damageTypeForNextDamage = damageType;
+        float healthBeforeDamage = _currentHealth;
         try
         {
             TakeDamage(damage);
@@ -196,6 +200,9 @@ public class Enemy : MonoBehaviour, iDamagable
             hasDamageTypeForNextDamage = previousHasDamageType;
             damageTypeForNextDamage = previousDamageType;
         }
+
+        return new EnemyDamageResult(
+            healthBeforeDamage - _currentHealth);
     }
 
     private float CalculateHullDamage(

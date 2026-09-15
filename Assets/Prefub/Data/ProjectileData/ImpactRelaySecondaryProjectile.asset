@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4d9d5c0c0a0df241a2e560150420daa, type: 3}
+  m_Name: ImpactRelaySecondaryProjectile
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
+  deliveryType: 0
+  damage: 30
+  damageType: 5
+  projectilePrefab: {fileID: 5419238205650719777, guid: ed6005005bd613f49843c3a83ab50c04, type: 3}
+  range: 1.5
+  speed: 5
+  contracts:
+  - rid: 3397718861446381659
+  - rid: 3397718861446381660
+  - rid: 3397718861446381661
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718861446381659
+      type: {class: ProjectileContactContract, ns: , asm: Assembly-CSharp}
+      data:
+        contactMode: 6
+    - rid: 3397718861446381660
+      type: {class: ProjectileExplosionContract, ns: , asm: Assembly-CSharp}
+      data:
+        explosionPrefab: {fileID: 5676898141782820409, guid: e5300a10c7f354047a8a476acb44ac55, type: 3}
+        explosionRadius: 1.25
+        explodeAtMaximumRange: 1
+    - rid: 3397718861446381661
+      type: {class: ProjectileDamageSourcesContract, ns: , asm: Assembly-CSharp}
+      data:
+        sources:
+        - id: area-explosion
+          trigger: 1
+          damage: 30
+          damageType: 5
+          bypassesShield: 0

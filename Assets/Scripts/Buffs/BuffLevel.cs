@@ -32,4 +32,9 @@ public class BuffLevel : Buff
         PointsCollector.Bonuses += 1;
         Destroy(gameObject);
     }
+
+    public override bool CanBeSelectedForDrop(ParentShip player)
+    {
+        return player != null && !player.IsWeaponLevelMax;
+    }
 }

@@ -47,7 +47,7 @@ public sealed class CraftMenuEnergyCostController : MonoBehaviour
         }
 
         int usedEnergy = GetUsedEnergy(craftCreationFlow.SelectedWeapons);
-        int maximumEnergy = Mathf.Max(0, hull.Data.maximumEnergy);
+        int maximumEnergy = Mathf.Max(0, hull.Data.MetaMaximumEnergy);
         energyCostText.text = $"{usedEnergy}/{maximumEnergy}";
         energyCostText.color = usedEnergy > maximumEnergy
             ? overflowColor

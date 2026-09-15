@@ -118,18 +118,18 @@ public sealed class ShipSelectionVisualConfigEditor : Editor
                 "Ship Data preview",
                 EditorStyles.miniBoldLabel);
             EditorGUILayout.LabelField("ID", shipData.shipId.ToString());
-            EditorGUILayout.LabelField("Speed", shipData.speed.ToString("0.##"));
+            EditorGUILayout.LabelField("Speed", shipData.MetaSpeed.ToString("0.##"));
             EditorGUILayout.LabelField(
                 "Health",
-                shipData.maximumHealthPoints.ToString("0.##"));
+                shipData.MetaMaximumHealthPoints.ToString("0.##"));
             EditorGUILayout.LabelField(
                 "Shield",
-                shipData.maximumShieldPoints.ToString("0.##"));
+                shipData.MetaMaximumShieldPoints.ToString("0.##"));
             EditorGUILayout.LabelField("Mass", shipData.mass.ToString("0.##"));
             EditorGUILayout.LabelField("Drag", shipData.drag.ToString("0.##"));
             EditorGUILayout.LabelField(
                 "Energy",
-                shipData.maximumEnergy.ToString());
+                shipData.MetaMaximumEnergy.ToString());
             EditorGUILayout.LabelField(
                 "Weapon Count",
                 shipData.maximumWeaponCount.ToString());
@@ -164,13 +164,13 @@ public sealed class ShipSelectionVisualConfigEditor : Editor
         string key = NormalizeParameterName(parameterName);
 
         if (ContainsAny(key, "speed", "скорост"))
-            return shipData.speed;
+            return shipData.MetaSpeed;
 
         if (ContainsAny(key, "health", "hp", "жизн", "здоров"))
-            return shipData.maximumHealthPoints;
+            return shipData.MetaMaximumHealthPoints;
 
         if (ContainsAny(key, "shield", "щит"))
-            return shipData.maximumShieldPoints;
+            return shipData.MetaMaximumShieldPoints;
 
         if (ContainsAny(key, "mass", "мас"))
             return shipData.mass;
@@ -179,10 +179,12 @@ public sealed class ShipSelectionVisualConfigEditor : Editor
             return shipData.drag;
 
         if (ContainsAny(key, "regen", "реген"))
-            return Mathf.Max(shipData.healthRegenRate, shipData.shieldRegenRate);
+            return Mathf.Max(
+                shipData.HealthRegenRatePercent,
+                shipData.ShieldRegenRatePercent);
 
         if (ContainsAny(key, "energy", "энерг"))
-            return shipData.maximumEnergy;
+            return shipData.MetaMaximumEnergy;
 
         if (ContainsAny(key, "weapon", "оруж"))
             return shipData.maximumWeaponCount;

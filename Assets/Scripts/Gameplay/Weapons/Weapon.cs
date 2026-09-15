@@ -20,9 +20,13 @@ public class Weapon : MonoBehaviour
     protected float maxAngle;
     protected Enemy target;
     private WeaponRuntimeStats currentStats;
+    private int identicalWeaponCount = 1;
+    private float identicalWeaponFireRateMultiplier = 1f;
+    private float identicalWeaponDamageMultiplier = 1f;
 
     private bool ableToShoot;
     private bool subscribedToOwnerLevel;
+    private bool reportedUnsupportedConfiguredProjectile;
 
     public event Action<int> OnLevelChanged;
     public event Action<Weapon> OnShot;
@@ -31,7 +35,11 @@ public class Weapon : MonoBehaviour
     public Enemy Target => target;
     protected ParentShip Owner => owner;
     protected WeaponRuntimeStats CurrentStats => currentStats;
+    protected float Damage => currentStats.Damage * identicalWeaponDamageMultiplier;
     protected bool IsAbleToShoot => ableToShoot;
+    public int IdenticalWeaponCount => identicalWeaponCount;
+    public float IdenticalWeaponFireRateMultiplier =>
+        Mathf.Max(1f, identicalWeaponFireRateMultiplier);
 
     public virtual void HideWeapon()
     {
@@ -111,7 +119,9 @@ public class Weapon : MonoBehaviour
             return false;
 
         bool shotFired = Fire();
-        currentReloadTime = reloadTime * Mathf.Max(0f, reloadMultiplier);
+        currentReloadTime = reloadTime
+            * Mathf.Max(0f, reloadMultiplier)
+            / IdenticalWeaponFireRateMultiplier;
 
         // A forced shot deliberately does not raise OnShot, preventing trigger loops.
         return shotFired;
@@ -119,7 +129,13 @@ public class Weapon : MonoBehaviour
 
     protected virtual bool Fire()
     {
-        if (weaponData == null || projectilePrefab == null || projectileSpawn == null)
+        if (weaponData == null || projectileSpawn == null)
+            return false;
+
+        if (weaponData.UsesProjectileData)
+            return FireConfiguredProjectiles();
+
+        if (projectilePrefab == null)
             return false;
 
         return TrySpawnProjectile(
@@ -127,13 +143,110 @@ public class Weapon : MonoBehaviour
             CreateProjectileRuntimeConfig());
     }
 
+    private bool FireConfiguredProjectiles()
+    {
+        if (weaponData.WeaponMetaConfig == null)
+            return false;
+
+        bool firedAnyProjectile = false;
+        for (int index = 0;
+             index < weaponData.WeaponMetaConfig.ProjectileSlots.Count;
+             index++)
+        {
+            WeaponProjectileSlot projectileSlot =
+                weaponData.WeaponMetaConfig.ProjectileSlots[index];
+            if (projectileSlot?.Projectile == null
+                || projectileSlot.SpawnedByAnotherProjectile)
+                continue;
+
+            ProjectileData projectileData = projectileSlot.Projectile;
+            if (projectileData.DeliveryType != ProjectileDeliveryType.Projectile)
+            {
+                ReportUnsupportedConfiguredProjectile(
+                    "Beam ProjectileData requires a beam weapon component.");
+                continue;
+            }
+
+            if (projectileData.ProjectilePrefab == null)
+            {
+                ReportUnsupportedConfiguredProjectile(
+                    "ProjectileData has no physical projectile prefab.");
+                continue;
+            }
+
+            if (!weaponData.TryGetProjectileRuntimeStats(
+                    projectileSlot.Id,
+                    level,
+                    out _,
+                    out ProjectileRuntimeStats projectileStats))
+            {
+                continue;
+            }
+
+            ProjectileRuntimeConfig runtimeConfig =
+                projectileData.CreateRuntimeConfig();
+            runtimeConfig.explosionDamage *= identicalWeaponDamageMultiplier;
+            ConfigureSecondaryProjectileRuntimeStats(runtimeConfig);
+            firedAnyProjectile |= TrySpawnProjectile(
+                projectileData.ProjectilePrefab,
+                CreateProjectileParams(projectileStats),
+                runtimeConfig);
+        }
+
+        return firedAnyProjectile;
+    }
+
+    private void ConfigureSecondaryProjectileRuntimeStats(
+        ProjectileRuntimeConfig runtimeConfig)
+    {
+        if (runtimeConfig.secondaryProjectile == null
+            || !weaponData.TryGetProjectileRuntimeStats(
+                runtimeConfig.secondaryProjectile,
+                level,
+                out _,
+                out ProjectileRuntimeStats secondaryStats))
+        {
+            return;
+        }
+
+        runtimeConfig.hasSecondaryProjectileRuntimeStats = true;
+        runtimeConfig.secondaryProjectileDamage = secondaryStats.Damage
+            * identicalWeaponDamageMultiplier;
+        runtimeConfig.secondaryProjectileRange = secondaryStats.Range;
+        runtimeConfig.secondaryProjectileSpeed = secondaryStats.Speed;
+    }
+
+    private void ReportUnsupportedConfiguredProjectile(string reason)
+    {
+        if (reportedUnsupportedConfiguredProjectile)
+            return;
+
+        reportedUnsupportedConfiguredProjectile = true;
+        Debug.LogError(
+            $"Weapon '{name}' cannot fire its configured ProjectileData: {reason}",
+            this);
+    }
+
     protected virtual ProjectileParams CreateProjectileParams()
     {
         return new ProjectileParams
         {
             speed = currentStats.Speed,
-            damage = currentStats.Damage,
+            damage = Damage,
             maxLength = currentStats.Range,
+            direction = transform.up,
+            maxAngle = currentStats.Angle,
+        };
+    }
+
+    protected virtual ProjectileParams CreateProjectileParams(
+        ProjectileRuntimeStats projectileStats)
+    {
+        return new ProjectileParams
+        {
+            speed = projectileStats.Speed,
+            damage = projectileStats.Damage * identicalWeaponDamageMultiplier,
+            maxLength = projectileStats.Range,
             direction = transform.up,
             maxAngle = currentStats.Angle,
         };
@@ -164,7 +277,15 @@ public class Weapon : MonoBehaviour
         ProjectileParams parameters,
         ProjectileRuntimeConfig runtimeConfig)
     {
-        if (projectilePrefab == null
+        return TrySpawnProjectile(projectilePrefab, parameters, runtimeConfig);
+    }
+
+    protected bool TrySpawnProjectile(
+        Projectile projectileToSpawn,
+        ProjectileParams parameters,
+        ProjectileRuntimeConfig runtimeConfig)
+    {
+        if (projectileToSpawn == null
             || projectileSpawn == null
             || projectilePoolController == null)
         {
@@ -172,7 +293,7 @@ public class Weapon : MonoBehaviour
         }
 
         Projectile proj = projectilePoolController.Spawn(
-            projectilePrefab,
+            projectileToSpawn,
             projectileSpawn.position,
             Quaternion.identity);
 
@@ -185,6 +306,28 @@ public class Weapon : MonoBehaviour
     public virtual void Reload(float multiplier)
     {
         currentReloadTime = reloadTime * multiplier;
+    }
+
+    public virtual void SetIdenticalWeaponCount(int count)
+    {
+        int weaponCount = Mathf.Max(1, count);
+        bool isSpray = weaponData != null
+            && weaponData.DamageType == EnemyDamageType.Spray;
+
+        SetIdenticalWeaponMultipliers(
+            weaponCount,
+            isSpray ? 1f : weaponCount,
+            isSpray ? weaponCount : 1f);
+    }
+
+    protected void SetIdenticalWeaponMultipliers(
+        int count,
+        float fireRateMultiplier,
+        float damageMultiplier)
+    {
+        identicalWeaponCount = Mathf.Max(1, count);
+        identicalWeaponFireRateMultiplier = Mathf.Max(1f, fireRateMultiplier);
+        identicalWeaponDamageMultiplier = Mathf.Max(1f, damageMultiplier);
     }
 
     public void SetLevel(int newLevel)
@@ -203,7 +346,7 @@ public class Weapon : MonoBehaviour
         level = weaponData.ClampLevel(configLevel);
         currentStats = weaponData.GetRuntimeStats(level);
         reloadTime = currentStats.ReloadTime;
-        currentReloadTime = reloadTime;
+        currentReloadTime = reloadTime / IdenticalWeaponFireRateMultiplier;
         OnLevelApplied();
 
         if (notify)

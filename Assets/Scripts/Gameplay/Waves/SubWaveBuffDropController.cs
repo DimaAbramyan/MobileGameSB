@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
@@ -9,9 +8,11 @@ public sealed class SubWaveBuffDropController : MonoBehaviour
 
     [SerializeField, Min(0)] private int maxBuffs = 1;
 
-    private readonly Dictionary<int, Buff> rewardsBySpawnIndex = new();
-    private readonly List<int> availableSpawnIndices = new();
     private InfoAboutSubWave subWave;
+    private WaveBuffDropController waveDropController;
+    private int remainingEligibleEnemyDeaths;
+    private int issuedBuffCount;
+    private int reservedBuffCount;
 
     public int MaxBuffs => Mathf.Max(0, maxBuffs);
 
@@ -39,26 +40,43 @@ public sealed class SubWaveBuffDropController : MonoBehaviour
             subWave.OnEnemySpawned -= HandleEnemySpawned;
     }
 
-    internal void PrepareForWave(int plannedEnemyCount)
+    internal void PrepareForWave(
+        int plannedEnemyCount,
+        WaveBuffDropController controller)
     {
-        rewardsBySpawnIndex.Clear();
-        availableSpawnIndices.Clear();
-
-        for (int i = 0; i < plannedEnemyCount; i++)
-            availableSpawnIndices.Add(i);
+        waveDropController = controller;
+        remainingEligibleEnemyDeaths = Mathf.Max(0, plannedEnemyCount);
+        issuedBuffCount = 0;
+        reservedBuffCount = 0;
     }
 
-    internal bool TryAssignReward(Buff rewardPrefab)
+    internal bool TrySelectReward(out Buff rewardPrefab)
     {
-        if (rewardPrefab == null || availableSpawnIndices.Count == 0)
+        rewardPrefab = null;
+        if (remainingEligibleEnemyDeaths <= 0)
             return false;
 
-        int availableIndex = Random.Range(0, availableSpawnIndices.Count);
-        int spawnIndex = availableSpawnIndices[availableIndex];
-        availableSpawnIndices[availableIndex] =
-            availableSpawnIndices[availableSpawnIndices.Count - 1];
-        availableSpawnIndices.RemoveAt(availableSpawnIndices.Count - 1);
-        rewardsBySpawnIndex[spawnIndex] = rewardPrefab;
+        bool shouldDrop = reservedBuffCount > 0
+            && Random.value <= (float)reservedBuffCount
+            / remainingEligibleEnemyDeaths;
+        remainingEligibleEnemyDeaths--;
+        if (!shouldDrop || waveDropController == null)
+            return false;
+
+        if (!waveDropController.TrySelectReward(out rewardPrefab))
+            return false;
+
+        reservedBuffCount--;
+        issuedBuffCount++;
+        return true;
+    }
+
+    internal bool ReserveDropSlot()
+    {
+        if (issuedBuffCount + reservedBuffCount >= MaxBuffs)
+            return false;
+
+        reservedBuffCount++;
         return true;
     }
 
@@ -67,19 +85,14 @@ public sealed class SubWaveBuffDropController : MonoBehaviour
         int spawnIndex,
         int plannedEnemyCount)
     {
-        if (enemy == null
-            || !rewardsBySpawnIndex.TryGetValue(spawnIndex, out Buff rewardPrefab))
-        {
+        if (enemy == null || !enemy.CanContainBuff())
             return;
-        }
-
-        rewardsBySpawnIndex.Remove(spawnIndex);
 
         EnemyBuffDrop enemyDrop = enemy.GetComponent<EnemyBuffDrop>();
         if (enemyDrop == null)
             enemyDrop = enemy.gameObject.AddComponent<EnemyBuffDrop>();
 
-        enemyDrop.Configure(rewardPrefab, container);
+        enemyDrop.Configure(this, container);
     }
 
     private void OnValidate()

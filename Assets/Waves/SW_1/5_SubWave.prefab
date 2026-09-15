@@ -93,6 +93,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b121eaff293d07a4eb8359f6e4359f08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovementSequencePlayer
+  commands: []
   movements:
   - {fileID: 11400000, guid: e0899bc1818bbd64ca6bbb0e0431c15d, type: 2}
   - {fileID: 11400000, guid: 746db94487713ea419632d3ce2427b85, type: 2}

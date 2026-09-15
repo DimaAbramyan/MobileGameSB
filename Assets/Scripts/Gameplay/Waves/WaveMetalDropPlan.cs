@@ -8,6 +8,7 @@ public sealed class WaveMetalDropPlan
     private readonly MetalPickup pickupPrefab;
     private readonly DiContainer container;
     private readonly MetalPickupController pickupController;
+    private readonly PlayerController playerController;
     private readonly Object context;
     private readonly List<InfoAboutSubWave> subscribedSubWaves = new();
     private readonly List<Enemy> candidates = new();
@@ -22,12 +23,14 @@ public sealed class WaveMetalDropPlan
         MetalPickup pickupPrefab,
         DiContainer container,
         MetalPickupController pickupController,
+        PlayerController playerController,
         Object context)
     {
         this.settings = settings;
         this.pickupPrefab = pickupPrefab;
         this.container = container;
         this.pickupController = pickupController;
+        this.playerController = playerController;
         this.context = context;
     }
 
@@ -141,7 +144,11 @@ public sealed class WaveMetalDropPlan
             if (metalDrop == null)
                 metalDrop = carrier.gameObject.AddComponent<EnemyMetalDrop>();
 
-            metalDrop.Configure(pickupPrefab, metalAmount, pickupController);
+            metalDrop.Configure(
+                pickupPrefab,
+                metalAmount,
+                pickupController,
+                playerController);
         }
     }
 

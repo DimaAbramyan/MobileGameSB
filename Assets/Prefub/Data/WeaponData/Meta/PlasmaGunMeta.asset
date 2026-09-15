@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
+  m_Name: PlasmaGunMeta
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  energyCost: 3
+  projectileSlots:
+  - id: c4780c78552d4b7b943c65b323eab422
+    projectile: {fileID: 11400000, guid: 3cc856854cec25b45b2a3ebb95128186, type: 2}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      reloadTime: 0.2
+      damage: 9
+      range: 10
+      projectileSpeed: 8
+      angle: 5
+    contracts:
+    - rid: 3397718806744006732
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718806744006732
+      type: {class: BurstFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        volleysPerActivation: 2
+        projectilesPerVolley: 5
+        delayBetweenVolleys: 0.02
+        spreadAngle: 15

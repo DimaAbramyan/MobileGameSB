@@ -7,6 +7,7 @@ public abstract class PassiveAbility : MonoBehaviour
     protected bool isActive; 
 
     public virtual void Init(ParentShip ship) { }
+    public virtual void ApplyShipMetaStats(ShipMetaRuntimeStats stats) { }
     public virtual void Off()
     {
         isActive = false;

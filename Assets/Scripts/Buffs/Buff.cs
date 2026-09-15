@@ -30,6 +30,15 @@ public class Buff : MonoBehaviour
         transform.position += (Vector3)displacement;
     }
 
+    /// <summary>
+    /// Called at the moment an enemy dies, before this pickup is selected.
+    /// Derived pickups can opt out when they cannot help the active ship.
+    /// </summary>
+    public virtual bool CanBeSelectedForDrop(ParentShip player)
+    {
+        return true;
+    }
+
     private void OnValidate()
     {
         fallSpeed = Mathf.Max(0f, fallSpeed);

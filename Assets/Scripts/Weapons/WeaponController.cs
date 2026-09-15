@@ -1,35 +1,138 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Zenject;
 
 public class WeaponController : MonoBehaviour
 {
     [Inject] SoundManager soundManager;
+
+    [Header("Battle Weapon Placement")]
+    [Tooltip("The common mount used by every equipped weapon during battle.")]
+    [SerializeField] private Transform battleWeaponMount;
+
     public ParentShip parentShip { get; private set; }
     public List<Weapon> weapons { get; private set; } = new List<Weapon>();
     public float reloadMultiplier = 1f;
     private int shootingSuppressionRequests;
+    private float temporaryFireRateMultiplier = 1f;
+    private float temporaryFireRateMultiplierUntil;
+    private bool battleWeaponsConfigured;
+    private readonly List<Weapon> battleWeapons = new List<Weapon>();
     private readonly List<Weapon> externalWeapons = new List<Weapon>();
+    private BeamVisualBlendController beamVisualBlendController;
+
+    public Transform BattleWeaponMount => battleWeaponMount;
+
     public void Init(ParentShip ship)
     {
         parentShip = ship;
+        ConfigureBattleWeapons();
         UpdateWeapons();
+        EnsureBeamVisualBlendController();
     }
+
     public void UpdateWeapons()
     {
         externalWeapons.RemoveAll(weapon => weapon == null);
 
-        weapons = parentShip
-            .GetComponentsInChildren<Weapon>(true)
-            .Where(weapon => weapon != null)
-            .Concat(externalWeapons)
-            .Where(weapon => weapon != null)
-            .Distinct()
-            .ToList();
+        var updatedWeapons = new List<Weapon>(
+            battleWeapons.Count + externalWeapons.Count);
+        AddValidWeapons(updatedWeapons, battleWeapons);
+        AddValidWeapons(updatedWeapons, externalWeapons);
+        weapons = updatedWeapons;
 
         RefreshWeaponOwners();
+        beamVisualBlendController?.SetWeapons(weapons);
+    }
+
+    private void ConfigureBattleWeapons()
+    {
+        if (battleWeaponsConfigured || parentShip == null)
+            return;
+
+        battleWeaponsConfigured = true;
+
+        Weapon[] equippedWeapons =
+            parentShip.GetComponentsInChildren<Weapon>(true);
+        var primaryWeapons = new Dictionary<WeaponData, Weapon>();
+        var weaponCounts = new Dictionary<WeaponData, int>();
+
+        for (int index = 0; index < equippedWeapons.Length; index++)
+        {
+            Weapon weapon = equippedWeapons[index];
+            if (weapon == null)
+                continue;
+
+            WeaponData data = weapon.weaponData;
+            if (data == null)
+            {
+                Debug.LogError(
+                    $"Equipped weapon '{weapon.name}' has no WeaponData assigned.",
+                    weapon);
+                battleWeapons.Add(weapon);
+                PlaceBattleWeapon(weapon, Vector3.zero);
+                continue;
+            }
+
+            if (!primaryWeapons.TryGetValue(data, out Weapon primaryWeapon))
+            {
+                primaryWeapons.Add(data, weapon);
+                weaponCounts.Add(data, 1);
+                battleWeapons.Add(weapon);
+                continue;
+            }
+
+            weaponCounts[data]++;
+            Destroy(weapon.gameObject);
+        }
+
+        foreach (KeyValuePair<WeaponData, Weapon> entry in primaryWeapons)
+        {
+            Weapon weapon = entry.Value;
+            if (weapon == null)
+                continue;
+
+            weapon.SetIdenticalWeaponCount(weaponCounts[entry.Key]);
+            PlaceBattleWeapon(weapon, entry.Key.BattleOffset);
+        }
+    }
+
+    private void PlaceBattleWeapon(Weapon weapon, Vector3 offset)
+    {
+        if (weapon == null || parentShip == null)
+            return;
+
+        Transform mount = battleWeaponMount != null
+            ? battleWeaponMount
+            : parentShip.transform;
+
+        weapon.transform.SetParent(mount, false);
+        weapon.transform.localPosition = offset;
+        weapon.transform.localRotation = Quaternion.identity;
+    }
+
+    private void EnsureBeamVisualBlendController()
+    {
+        if (beamVisualBlendController == null)
+            TryGetComponent(out beamVisualBlendController);
+        if (beamVisualBlendController == null)
+            beamVisualBlendController = gameObject.AddComponent<
+                BeamVisualBlendController>();
+
+        beamVisualBlendController.SetWeapons(weapons);
+    }
+
+    private static void AddValidWeapons(
+        List<Weapon> destination,
+        List<Weapon> source)
+    {
+        for (int index = 0; index < source.Count; index++)
+        {
+            Weapon weapon = source[index];
+            if (weapon != null && !destination.Contains(weapon))
+                destination.Add(weapon);
+        }
     }
 
     public void RefreshWeaponOwners()
@@ -50,7 +153,10 @@ public class WeaponController : MonoBehaviour
             if (weapon == null) continue;
             if (weapon.TryToShoot())
             {
-                weapon.Reload(reloadMultiplier);
+                weapon.Reload(
+                    reloadMultiplier /
+                    (weapon.IdenticalWeaponFireRateMultiplier
+                        * CurrentFireRateMultiplier));
                 //soundManager.PlaySound(weapon.weaponData.AudioClipProjectileShot, transform.position);
             }
         }
@@ -58,6 +164,28 @@ public class WeaponController : MonoBehaviour
     public void SetReloadMultiplier(float newReloadMultiplier)
     {
         reloadMultiplier = newReloadMultiplier;
+    }
+
+    private float CurrentFireRateMultiplier =>
+        Time.time < temporaryFireRateMultiplierUntil
+            ? temporaryFireRateMultiplier
+            : 1f;
+
+    public float BeamVisualTransitionRate =>
+        CurrentFireRateMultiplier / Mathf.Max(0.01f, reloadMultiplier);
+
+    public void ActivateFireRateMultiplier(float multiplier, float duration)
+    {
+        if (multiplier <= 0f || duration <= 0f)
+            return;
+
+        temporaryFireRateMultiplier =
+            Time.time < temporaryFireRateMultiplierUntil
+                ? Mathf.Max(temporaryFireRateMultiplier, multiplier)
+                : multiplier;
+        temporaryFireRateMultiplierUntil = Mathf.Max(
+            temporaryFireRateMultiplierUntil,
+            Time.time + duration);
     }
     public void HideWeapons()
     {
@@ -97,6 +225,7 @@ public class WeaponController : MonoBehaviour
             weapons.Add(weapon);
 
         weapon.SetOwner(parentShip);
+        beamVisualBlendController?.SetWeapons(weapons);
     }
 
     public void UnregisterExternalWeapon(Weapon weapon)
@@ -106,6 +235,7 @@ public class WeaponController : MonoBehaviour
 
         externalWeapons.Remove(weapon);
         weapons.Remove(weapon);
+        beamVisualBlendController?.SetWeapons(weapons);
     }
     public void StopShootingForSeconds(float seconds)
     {

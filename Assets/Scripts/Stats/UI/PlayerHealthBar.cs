@@ -41,7 +41,7 @@ public class PlayerHealthBar : MonoBehaviour
             currentShip.OnHealthChanged -= SetHealth;
 
         currentShip = ship;
-        maxHealth = ship.ShipData.maximumHealthPoints;
+        maxHealth = ship.MaximumHealthPoints;
 
         currentShip.OnHealthChanged += SetHealth;
 

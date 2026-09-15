@@ -197,6 +197,7 @@ public sealed class SelectedTeamPreviewView : MonoBehaviour
         return new SaveData
         {
             shipId = save.shipId,
+            hullContentId = save.hullContentId,
             shipName = save.shipName,
             WeaponData = save.weaponData
         };

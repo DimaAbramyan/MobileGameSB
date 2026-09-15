@@ -40,15 +40,27 @@ public class StatBar : MonoBehaviour
 
     public void SetValue(float value)
     {
-        if (maxValue <= 0)
+        currentValue = value;
+
+        if (maxValue <= 0 || slider == null)
             return;
         float normalized = Mathf.Clamp01(value / maxValue)*100;
         //Debug.Log("Максимальное здоровье: " + maxValue.ToString());
         slider.value = normalized;
 
-        if (gradient != null)
+        if (gradient != null && fill != null)
             fill.color = gradient.Evaluate(normalized);
     }
+
+    public void Clear()
+    {
+        currentUnsubscribe?.Invoke(SetValue);
+        currentSubscribe = null;
+        currentUnsubscribe = null;
+        maxValue = 1f;
+        SetValue(0f);
+    }
+
     public void UpdateMax(float newMax)
     {
         maxValue = newMax;

@@ -2,33 +2,38 @@ using UnityEngine;
 
 public class DealDamageManager
 {
-    public void DealDamage(iDamagable target, Projectile projectile)
+    public EnemyDamageResult DealDamage(
+        iDamagable target,
+        Projectile projectile)
     {
         if (projectile == null)
-            return;
+            return EnemyDamageResult.None;
 
-        DealDamage(
+        return DealDamage(
             target,
             projectile.Owner,
             projectile.GetDamage(),
             projectile.DamageType);
     }
 
-    public void DealDamage(iDamagable target, ParentShip owner, float damage)
+    public EnemyDamageResult DealDamage(
+        iDamagable target,
+        ParentShip owner,
+        float damage)
     {
-        DealDamage(target, owner, damage, EnemyDamageType.Radiation);
+        return DealDamage(target, owner, damage, EnemyDamageType.Radiation);
     }
 
-    public void DealDamage(
+    public EnemyDamageResult DealDamage(
         iDamagable target,
         ParentShip owner,
         float damage,
         EnemyDamageType damageType)
     {
-        DealDamage(target, owner, damage, damageType, false);
+        return DealDamage(target, owner, damage, damageType, false);
     }
 
-    public void DealDamage(
+    public EnemyDamageResult DealDamage(
         iDamagable target,
         ParentShip owner,
         float damage,
@@ -36,24 +41,40 @@ public class DealDamageManager
         bool bypassesEnemyShield)
     {
         if (target == null)
-            return;
+            return EnemyDamageResult.None;
 
+        if (owner?.PassiveAbility is IOutgoingDamageModifier modifier)
+            damage = modifier.ModifyOutgoingDamage(damageType, damage);
+
+        if (damage <= 0f)
+            return EnemyDamageResult.None;
+
+        if (target is Enemy enemy)
+        {
+            EnemyDamageResult result = enemy.TakeDamageWithType(
+                damage,
+                damageType,
+                bypassesEnemyShield);
+            if (owner != null && result.DidDamageHull)
+                owner.NotifyDamageDealt(result.HullDamage);
+
+            return result;
+        }
+
+        target.TakeDamage(damage);
         if (owner != null)
             owner.NotifyDamageDealt(damage);
 
-        if (target is Enemy enemy)
-            enemy.TakeDamageWithType(damage, damageType, bypassesEnemyShield);
-        else
-            target.TakeDamage(damage);
+        return EnemyDamageResult.None;
     }
 
-    public void DealDamage(
+    public EnemyDamageResult DealDamage(
         iDamagable target,
         ParentShip owner,
         float damage,
         bool bypassesEnemyShield)
     {
-        DealDamage(
+        return DealDamage(
             target,
             owner,
             damage,

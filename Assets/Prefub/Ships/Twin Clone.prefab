@@ -123,6 +123,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0f3e7dcc7c7ad4ab5447c2efc6a16f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  battleWeaponMount: {fileID: 3384991692524799735}
   reloadMultiplier: 1
 --- !u!114 &7972410597107964045
 MonoBehaviour:
@@ -136,7 +137,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b1823864e6248969041634401180a4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TwinCloneFleetActiveAbility
+  abilityMode: 0
   cooldown: 0
+  toggleMaximumTime: 3
+  toggleTimeCostPerSecond: 1
+  toggleRechargeStartTime: 0
+  toggleRechargeDuration: 3
+  toggleTimeRemaining: 3
+  maxCharges: 1
+  currentCharges: 1
   owner: {fileID: 0}
   clonePrefabOverride: {fileID: 0}
   cloneCount: 5
@@ -161,6 +170,7 @@ MonoBehaviour:
   intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 0}
   ShipData: {fileID: 0}
+  buffMagnet: {fileID: 0}
   IsVisible: 0
 --- !u!114 &4256486222032127253
 MonoBehaviour:
@@ -174,12 +184,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1a3b9e1df6b4b1db35d7f66e574a113, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TwinCloneController
-  invulnerableToDamage: 1
   destroyOnEnemyProjectile: 0
   suppressShootingInsideEnemy: 1
   moveForward: 0
   moveSpeed: 7
   lifetime: 6
+  createVisualFromOwner: 1
+  createTriggerColliderFromVisual: 1
 --- !u!61 &7130167820753412502
 BoxCollider2D:
   m_ObjectHideFlags: 0

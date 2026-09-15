@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4d9d5c0c0a0df241a2e560150420daa, type: 3}
+  m_Name: BallLightningProjectileData
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
+  deliveryType: 0
+  damage: 0.45
+  damageType: 4
+  projectilePrefab: {fileID: 116200000000001006, guid: 3e5f829bb4894fa4bd0aaefda5b440ac, type: 3}
+  range: 16
+  speed: 4
+  contracts:
+  - rid: 3397718812562292839
+  - rid: 3397718812562292840
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718812562292839
+      type: {class: ProjectileContactContract, ns: , asm: Assembly-CSharp}
+      data:
+        contactMode: 4
+    - rid: 3397718812562292840
+      type: {class: ProjectileLifetimeContract, ns: , asm: Assembly-CSharp}
+      data:
+        lifetime: 4
+        disableColliderAfterFirstPhysicsStep: 0
+        fadeBeforeDespawn: 0
+        fadeDuration: 0.5

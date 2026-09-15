@@ -127,6 +127,15 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         EditorGUILayout.PropertyField(
             fireMode,
             new GUIContent("Fire Mode"));
+        if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex
+            == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
+        {
+            EditorGUILayout.PropertyField(
+                settings.FindPropertyRelative("forwardFireHalfAngle"),
+                new GUIContent(
+                    "Forward Fire Angle Offset",
+                    "The player must be within this angle on either side of the enemy's forward direction. Default: 15 degrees."));
+        }
         EditorGUILayout.PropertyField(
             movementMode,
             new GUIContent("Movement Mode"));

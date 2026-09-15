@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b1941e8f9e38343906f546321083a9, type: 3}
+  m_Name: BladeMeta
+  m_EditorClassIdentifier: Assembly-CSharp::ShipMetaConfig
+  sourceShipData: {fileID: 11400000, guid: 60dc0b5f9e0240f419b80d75e876dcd1, type: 2}
+  sourceHullPrefab: {fileID: 5713520068090865019, guid: fe720e056c95da449b4a7d1513d3f154, type: 3}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      maximumHealthPoints: 60
+      maximumShieldPoints: 50
+      healthRegenRatePercent: 5
+      shieldRegenRatePercent: 5
+      speed: 500
+      maximumEnergy: 10
+    contracts:
+    - rid: 3397718787192520798
+    - rid: 3397718787192520799
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397718787192520798
+      type: {class: AbilityRecoveryShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        abilityMode: 2
+        cooldown: 10
+        maxCharges: 3
+        toggleMaximumTime: 3
+        toggleTimeCostPerSecond: 1
+        toggleRechargeStartTime: 0
+        toggleRechargeDuration: 3
+    - rid: 3397718787192520799
+      type: {class: BladeShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        recordingDuration: 1
+        sampleInterval: 0.1
+        width: 0.45
+        speed: 12
+        damage: 50
+        lifetime: 4
+        passiveSpeedDivisor: 40
+        passiveSpeedMultiplier: 1.2
+        maximumReloadMultiplier: 2
+        minimumReloadMultiplier: 0.25

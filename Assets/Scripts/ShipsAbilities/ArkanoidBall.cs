@@ -76,6 +76,19 @@ public sealed class ArkanoidBall : MonoBehaviour
         spawnOffset = ballSpawnOffset;
     }
 
+    public void ApplyShipMetaStats(ArkanoidShipMetaContract contract)
+    {
+        if (contract == null)
+            return;
+
+        speed = contract.BallSpeed;
+        contactDamage = contract.BallDamage;
+        stasisDuration = contract.StasisDuration;
+        stasisRadiusMultiplier = contract.StasisRadiusMultiplier;
+        stasisDamagePerSecond = contract.StasisDamagePerSecond;
+        stasisTickInterval = contract.StasisTickInterval;
+    }
+
     public void ResetAndLaunch(
         Vector3 startPosition,
         Vector2 launchDirection)
@@ -314,7 +327,7 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void TryBounceFromPaddleOverlap()
     {
-        if (paddle == null)
+        if (paddle == null || !paddle.IsActiveForBounce)
             return;
 
         Collider2D paddleCollider = paddle.GetComponent<Collider2D>();

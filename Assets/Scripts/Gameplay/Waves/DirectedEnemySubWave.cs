@@ -9,109 +9,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
     [Inject] private EnemyManager enemyManager;
     [Inject] private PlayerController playerController;
 
-    [Header("Spawn")]
-    [SerializeField] private Enemy enemyPrefab;
-    [SerializeField, Min(1)] private int enemyCount = 1;
-    [SerializeField, Min(0f)] private float spawnInterval = 0.2f;
-    [SerializeField] private DirectedWaveSpawnOrderMode spawnOrderMode =
-        DirectedWaveSpawnOrderMode.Manual;
-    [SerializeField] private float spawnOrderAngle;
-    [SerializeField] private float spawnOrderStartAngle = 90f;
-    [SerializeField] private Transform spawnPoint;
-    [SerializeField] private bool parentEnemiesToSubWave = true;
+    [Header("Diagnostics")]
     [SerializeField] private bool enableDebugLogs;
-
-    [Header("Entrance path")]
-    [SerializeField] private DirectedWaveEntranceMode entranceMode =
-        DirectedWaveEntranceMode.Checkpoints;
-    [SerializeField] private DirectedWaveCoordinateSpace pathCoordinateSpace =
-        DirectedWaveCoordinateSpace.LocalToSubWave;
-    [SerializeField] private DirectedWavePathCheckpoint[] pathCheckpoints =
-        System.Array.Empty<DirectedWavePathCheckpoint>();
-    [SerializeField] private DirectedWaveIndividualEntrancePoint[]
-        individualEntrancePoints =
-            System.Array.Empty<DirectedWaveIndividualEntrancePoint>();
-    [SerializeField, Min(0f)] private float individualPointMovementStartDelay =
-        0.1f;
-    [SerializeField, Min(0f)] private float individualPointMovementDuration =
-        0.35f;
-    [SerializeField] private AnimationCurve individualPointMovementCurve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [SerializeField, HideInInspector] private Vector3 individualEntranceShapeCenter =
-        new Vector3(0f, 5f, 0f);
-    [SerializeField, HideInInspector, Min(0f)] private float individualEntranceShapeRadius =
-        2f;
-    [SerializeField, HideInInspector] private Vector2 individualEntranceShapeFlattening =
-        Vector2.one;
-    [SerializeField, HideInInspector] private float individualEntranceShapeRotationDegrees;
-
-    [Header("Entrance completion")]
-    [SerializeField] private DirectedWaveEntranceCompletionMode
-        entranceCompletionMode =
-            DirectedWaveEntranceCompletionMode.MoveToFormation;
-    [SerializeField, Min(0)] private int entranceLoopStartCheckpointIndex;
-    [SerializeField] private bool entranceLoopTeleportToStart;
-    [SerializeField, Min(0f)] private float entranceLoopTeleportDelay;
-
-    [Header("Formation")]
-    [SerializeField] private bool formationFrozen;
-    [SerializeField] private DirectedWaveFormationLayout formationLayout =
-        DirectedWaveFormationLayout.HorizontalLine;
-    [SerializeField] private DirectedWaveCoordinateSpace formationCoordinateSpace =
-        DirectedWaveCoordinateSpace.LocalToSubWave;
-    [SerializeField] private Vector3 formationCenter = new Vector3(0f, 2.5f, 0f);
-    [SerializeField] private Vector2 spacing = new Vector2(0.75f, 0.75f);
-    [SerializeField, Min(1)] private int columns = 6;
-    [SerializeField, Min(1)] private int rows = 2;
-    [SerializeField, HideInInspector] private bool[] gridMatrixCells;
-    [SerializeField, Min(0f)] private float arcRadius = 2f;
-    [SerializeField] private float arcDegrees = 120f;
-    [SerializeField, Min(1)] private int shapePointCount = 8;
-    [SerializeField, Min(0f)] private float shapeRadius = 2f;
-    [SerializeField] private Vector2 shapeFlattening = Vector2.one;
-    [SerializeField] private Vector3[] customFormationPoints;
-    [SerializeField] private Enemy[] customFormationEnemyOverrides;
-    [SerializeField] private Enemy[] proceduralFormationEnemyOverrides =
-        System.Array.Empty<Enemy>();
-    [SerializeField] private Transform formationPointsRoot;
-    [SerializeField, Min(0f)] private float settleDuration = 0.35f;
-    [SerializeField] private AnimationCurve settleCurve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-
-    [Header("Post behavior")]
-    [SerializeField] private DirectedWavePostCommand[] postCommands =
-        System.Array.Empty<DirectedWavePostCommand>();
-    [SerializeField, Min(0f)] private float postStartDelay = 0.25f;
-    [SerializeField, Min(1)] private int postCommandPipelineFixedCount = 1;
-    [SerializeField] private bool postCommandPipelineLoop;
-    [SerializeField] private Vector3 localMovementOffset = new Vector3(0.5f, 0f, 0f);
-    [SerializeField, Min(0.01f)] private float localMovementDuration = 1f;
-    [SerializeField] private bool localMovementLoop = true;
-    [SerializeField] private bool localMovementPingPong = true;
-    [SerializeField] private AnimationCurve localMovementCurve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [SerializeField] private Vector2 wobbleAmplitude = new Vector2(0.25f, 0.1f);
-    [SerializeField, Min(0f)] private float wobbleFrequency = 1.5f;
-    [SerializeField] private DirectedWaveWobblePhaseMode wobblePhaseMode =
-        DirectedWaveWobblePhaseMode.SpawnOrder;
-    [SerializeField] private float wobblePhaseOffset = 0.7f;
-    [SerializeField] private float wobbleDirectionAngle;
-    [SerializeField, Min(0.01f)] private float wobbleDirectionStep = 0.75f;
-    [SerializeField] private bool patrolLoop = true;
-    [SerializeField] private DirectedWaveCoordinateSpace patrolCoordinateSpace =
-        DirectedWaveCoordinateSpace.World;
-    [SerializeField] private DirectedWavePatrolPoint[] patrolPoints =
-        System.Array.Empty<DirectedWavePatrolPoint>();
-    [SerializeField] private Vector2 selfOrbitRadius = new Vector2(0.25f, 0.25f);
-    [SerializeField] private float selfOrbitPhaseOffset = 0.35f;
-    [SerializeField] private float selfRotationDegreesPerSecond = 90f;
-    [SerializeField] private float formationRotationDegreesPerSecond = 45f;
-    [SerializeField] private bool formationMorphLoop = true;
-    [SerializeField, Min(0.01f)] private float formationMorphReturnDuration = 1f;
-    [SerializeField] private AnimationCurve formationMorphReturnCurve =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-    [SerializeField] private DirectedWaveFormationMorphStep[] formationMorphSteps =
-        System.Array.Empty<DirectedWaveFormationMorphStep>();
 
     private readonly DirectedWaveEnemyTracker aliveEnemies = new();
     private readonly Dictionary<Enemy, Vector3> formationPositions = new();
@@ -136,7 +35,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     protected override void Awake()
     {
-        attackBehaviour = GetComponent<DirectedWaveAttackBehaviour>();
+        ResolveBehaviourComponents();
+        attackBehaviour = AttackPatternBehaviour;
+        attackBehaviour?.RegisterWithWave();
     }
 
     protected override void OnDestroy()
@@ -339,7 +240,15 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             $"EntranceMode={entranceMode}, FormationPosition={formationPosition}",
             enemy);
 
-        if (UsesIndividualEntrancePoints())
+        if (!HasPhaseEntry)
+        {
+            SetEntranceRoutePosition(
+                enemy,
+                enemyTransform,
+                body,
+                formationPosition);
+        }
+        else if (UsesIndividualEntrancePoints())
         {
             float movementStartDelay =
                 GetIndividualPointMovementStartDelay(spawnStep);
@@ -390,7 +299,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
                     enemy,
                     enemyTransform,
                     body,
-                    checkpoints[0].position);
+                    checkpoints[0].position,
+                    rotateToMovement: false);
                 attackBehaviour?.NotifyEntranceCheckpointReached(
                     enemy,
                     index,
@@ -456,7 +366,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             enemy,
             enemyTransform,
             body,
-            checkpoints[0].position);
+            checkpoints[0].position,
+            rotateToMovement: false);
         attackBehaviour?.NotifyEntranceCheckpointReached(
             enemy,
             index,
@@ -532,7 +443,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
                     enemy,
                     target,
                     body,
-                    checkpoints[loopStartIndex].position);
+                    checkpoints[loopStartIndex].position,
+                    rotateToMovement: false);
                 attackBehaviour?.NotifyEntranceCheckpointReached(
                     enemy,
                     formationIndex,
@@ -758,6 +670,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private Vector3 GetSpawnPosition(int formationIndex)
     {
+        if (!HasPhaseEntry)
+            return GetFormationPosition(formationIndex);
+
         if (UsesIndividualEntrancePoints()
             && TryGetIndividualEntrancePointPosition(
                 formationIndex,
@@ -774,6 +689,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private Vector3 GetSpawnPosition()
     {
+        if (!HasPhaseEntry)
+            return GetFormationPosition(0);
+
         if (!UsesIndividualEntrancePoints() && pathCheckpoints != null)
         {
             for (int i = 0; i < pathCheckpoints.Length; i++)
@@ -792,12 +710,14 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private bool UsesIndividualEntrancePoints()
     {
-        return entranceMode == DirectedWaveEntranceMode.IndividualPoints;
+        return HasPhaseEntry
+            && entranceMode == DirectedWaveEntranceMode.IndividualPoints;
     }
 
     private bool IsEntrancePathLoopRequested()
     {
-        return entranceCompletionMode
+        return HasPhaseEntry
+            && entranceCompletionMode
             == DirectedWaveEntranceCompletionMode.LoopEntrancePath;
     }
 
@@ -885,7 +805,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private DirectedWaveRuntimeCheckpoint[] GetWorldPathCheckpoints()
     {
-        if (UsesIndividualEntrancePoints()
+        if (!HasPhaseEntry
+            || UsesIndividualEntrancePoints()
             || pathCheckpoints == null
             || pathCheckpoints.Length == 0)
             return System.Array.Empty<DirectedWaveRuntimeCheckpoint>();
@@ -2337,7 +2258,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private bool HasAnyPostCommand()
     {
-        if (postCommands == null)
+        if (!HasPostBehaviour || postCommands == null)
             return false;
 
         for (int i = 0; i < postCommands.Length; i++)
@@ -2351,7 +2272,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private bool HasPostCommand(DirectedWavePostCommandType type)
     {
-        return HasPostCommandInArray(postCommands, type);
+        return HasPostBehaviour && HasPostCommandInArray(postCommands, type);
     }
 
     private bool HasPostCommandInArray(
@@ -2728,6 +2649,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private void OnValidate()
     {
+        InvalidateBehaviourComponentCache();
+        InvalidateLegacyCompatibilityConfiguration();
         runtimeTimelineEvaluationContext?.Reset();
         runtimeTimelineFrame = null;
         ClearFormationReorderCache();
@@ -2800,9 +2723,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             }
             else if (customFormationEnemyOverrides.Length != pointCount)
             {
-                System.Array.Resize(
-                    ref customFormationEnemyOverrides,
-                    pointCount);
+                Enemy[] overrides = customFormationEnemyOverrides;
+                System.Array.Resize(ref overrides, pointCount);
+                customFormationEnemyOverrides = overrides;
             }
         }
 
@@ -2851,9 +2774,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
         if (proceduralFormationEnemyOverrides.Length < requiredCount)
         {
-            System.Array.Resize(
-                ref proceduralFormationEnemyOverrides,
-                requiredCount);
+            Enemy[] overrides = proceduralFormationEnemyOverrides;
+            System.Array.Resize(ref overrides, requiredCount);
+            proceduralFormationEnemyOverrides = overrides;
         }
     }
 

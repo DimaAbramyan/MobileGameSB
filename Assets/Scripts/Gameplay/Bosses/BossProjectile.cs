@@ -179,7 +179,7 @@ public sealed class BossProjectile : MonoBehaviour
 
         ParentShip receiver = other.GetComponentInParent<ParentShip>();
         if (receiver != null && !gameSettings.IsGodModeOn)
-            receiver.TakeDamage(damage);
+            receiver.TryTakeDamage(damage);
 
         ReturnToPool();
     }

@@ -18,6 +18,7 @@ MonoBehaviour:
   activeAbilityDescription: 
   icon: {fileID: 21300000, guid: 86a04b94dcac4f946a2721dc796ff8d9, type: 3}
   prefab: {fileID: 4920108328250008159, guid: 7afba5160c4213843a565bcc28e0d2c9, type: 3}
+  rarity: 0
   purchasePrice: 0
   purchaseCoresPrice: 0
   unlockRequirement:
@@ -33,3 +34,4 @@ MonoBehaviour:
     primary: {r: 1, g: 1, b: 1, a: 1}
     secondary: {r: 0.35, g: 0.35, b: 0.35, a: 1}
     accent: {r: 0.25, g: 0.75, b: 1, a: 1}
+  gameplayPrefab: {fileID: 3387013190401639, guid: 79504ab6a79e56941b6ce395ea0c043d, type: 3}

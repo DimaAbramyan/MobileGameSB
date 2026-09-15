@@ -16,11 +16,13 @@ MonoBehaviour:
   mass: 7.5
   drag: 9
   maximumHealthPoints: 80
-  healthRegenCooldown: 5
-  healthRegenRate: 10
+  overrideHealthRegeneration: 0
+  healthRegenCooldown: 30
+  healthRegenRate: 5
   maximumShieldPoints: 20
-  shieldRegenCooldown: 10
-  shieldRegenRate: 4
+  overrideShieldRegeneration: 0
+  shieldRegenCooldown: 15
+  shieldRegenRate: 5
   maximumEnergy: 10
   maximumWeaponCount: 3
   currentLvl: 0

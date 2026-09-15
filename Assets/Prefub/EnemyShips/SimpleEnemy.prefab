@@ -120,6 +120,7 @@ MonoBehaviour:
   _fireRate: 3
   _damage: 5
   _speed: 0
+  metalMultiplier: 1
   shieldPoints: 10
   EnBullet: {fileID: 0}
 --- !u!111 &-4444264774722151541
@@ -182,7 +183,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.34766686, y: 0.32064092}
+  m_Size: {x: 0.5, y: 0.5}
   m_EdgeRadius: 0
 --- !u!114 &2074232145891550923
 MonoBehaviour:

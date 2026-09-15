@@ -11,17 +11,34 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
 
     [Header("Paddle")]
     [SerializeField] private Vector2 paddleOffset = new Vector2(0f, -0.85f);
-    [SerializeField, Min(0.01f)] private float paddleFollowSpeed = 30f;
+    [SerializeField, HideInInspector, Min(0.01f)]
+    private float paddleFollowSpeed = 30f;
 
     [Header("Ball")]
     [SerializeField] private Vector2 ballSpawnOffset = new Vector2(0f, 0.75f);
-    [SerializeField, Min(0.01f)] private float ballSpeed = 5f;
-    [SerializeField, Min(0f)] private float ballDamage = 10f;
+    [SerializeField, HideInInspector, Min(0.01f)] private float ballSpeed = 5f;
+    [SerializeField, HideInInspector, Min(0f)] private float ballDamage = 10f;
     [SerializeField, Range(0f, 80f)] private float randomLaunchAngle = 45f;
     [SerializeField] private bool keepBallAliveWhenShipIsInactive = true;
 
     private ArkanoidPaddle paddle;
     private ArkanoidBall ball;
+
+    private ArkanoidShipMetaContract metaContract;
+
+    public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
+    {
+        if (!stats.TryGetContract(out ArkanoidShipMetaContract contract))
+            return;
+
+        metaContract = contract;
+        paddleFollowSpeed = contract.PaddleFollowSpeed;
+        ballSpeed = contract.BallSpeed;
+        ballDamage = contract.BallDamage;
+
+        if (ball != null)
+            ball.ApplyShipMetaStats(contract);
+    }
 
     public override void Init(ParentShip ship)
     {
@@ -51,6 +68,8 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
             bool shouldLaunch = ballWasCreated || !ball.gameObject.activeInHierarchy;
             ball.gameObject.SetActive(true);
             ball.Configure(owner, paddle, ballSpeed, ballDamage, ballSpawnOffset);
+            if (metaContract != null)
+                ball.ApplyShipMetaStats(metaContract);
 
             if (shouldLaunch)
             {
@@ -73,7 +92,10 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
             ball.gameObject.SetActive(false);
 
         if (paddle != null)
+        {
+            paddle.Deactivate();
             paddle.gameObject.SetActive(false);
+        }
     }
 
     public bool TryActivateStasis()
@@ -91,6 +113,9 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
 
         if (ball == null && ballPrefab != null)
             ball = CreateInstance(ballPrefab);
+
+        if (ball != null && metaContract != null)
+            ball.ApplyShipMetaStats(metaContract);
     }
 
     private T CreateInstance<T>(T prefab)

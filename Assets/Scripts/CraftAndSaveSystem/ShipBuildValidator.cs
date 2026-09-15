@@ -108,7 +108,7 @@ public static class ShipBuildValidator
         }
 
         int maxWeaponCount = Mathf.Max(0, shipData.maximumWeaponCount);
-        int maxEnergy = Mathf.Max(0, shipData.maximumEnergy);
+        int maxEnergy = Mathf.Max(0, shipData.MetaMaximumEnergy);
         int requiredCount = Mathf.Max(0, requiredWeaponCount);
 
         if (requiredWeaponCount >= 0 && weaponCount < requiredCount)

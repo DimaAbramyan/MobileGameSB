@@ -6,7 +6,6 @@ public sealed class EnemyContactImpact : MonoBehaviour
 {
     [Header("Damage")]
     [SerializeField, Min(0f)] private float contactDamage = 5f;
-    [SerializeField, Min(0f)] private float impactCooldown = 0.5f;
 
     [Header("Control")]
     [SerializeField, Min(0f)] private float controlLockDuration = 0.5f;
@@ -26,16 +25,11 @@ public sealed class EnemyContactImpact : MonoBehaviour
 
     [InjectOptional] private ShipKnockbackService knockbackService;
 
-    private float nextImpactTime;
-
     private ShipKnockbackService KnockbackService =>
         knockbackService ??= new ShipKnockbackService();
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (Time.time < nextImpactTime)
-            return;
-
         ParentShip playerShip =
             collision.collider.GetComponentInParent<ParentShip>();
         Rigidbody2D playerBody = collision.collider.attachedRigidbody;
@@ -45,11 +39,11 @@ public sealed class EnemyContactImpact : MonoBehaviour
         if (collision.collider.GetComponentInParent<TwinCloneController>() != null)
             return;
 
-        nextImpactTime = Time.time + impactCooldown;
+        if (!playerShip.TryTakeDamage(contactDamage))
+            return;
 
-        playerShip.TakeDamage(contactDamage);
         playerBody.GetComponent<PlayerController>()
-            ?.LockControls(controlLockDuration);
+            ?.ApplyControlLoss(playerShip, controlLockDuration);
         ApplyKnockback(
             playerShip,
             playerBody,
