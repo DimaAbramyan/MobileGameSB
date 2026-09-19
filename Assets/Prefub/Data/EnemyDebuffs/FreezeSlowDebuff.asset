@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b99bb3898b5e68843877e823d8489ced, type: 3}
+  m_Name: FreezeSlowDebuff
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySlowDebuffConfig
+  thresholdMode: 0
+  thresholdPercent: 100
+  thresholdAction: 0
+  triggerOncePerEnemy: 1
+  maximumSlowPercent: 50
+  normalizationDelay: 0.5
+  normalizationPercentPerSecond: 25

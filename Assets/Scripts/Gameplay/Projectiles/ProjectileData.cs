@@ -94,6 +94,45 @@ public sealed class ProjectileContinuousDamageContract : ProjectileDataContract
 }
 
 [Serializable]
+public sealed class ProjectileMovementSlowContract : ProjectileDataContract
+{
+    [SerializeField, Range(0f, 100f)] private float slowPercentPerHit = 5f;
+    [SerializeField, Range(0f, 100f)] private float maximumSlowPercent = 50f;
+
+    public override string DisplayName => "Movement Slow";
+    public float SlowPercentPerHit => Mathf.Clamp(slowPercentPerHit, 0f, 100f);
+    public float MaximumSlowPercent => Mathf.Clamp(
+        maximumSlowPercent,
+        0f,
+        100f);
+}
+
+[Serializable]
+public sealed class ProjectileEnemyDebuffsContract : ProjectileDataContract
+{
+    [SerializeField] private List<EnemyDebuffApplication> debuffs = new();
+
+    public override string DisplayName => "Enemy Debuffs";
+    public IReadOnlyList<EnemyDebuffApplication> Debuffs => debuffs;
+
+    public void AddDebuff(EnemyDebuffApplication application)
+    {
+        if (application == null)
+            return;
+
+        debuffs ??= new List<EnemyDebuffApplication>();
+        debuffs.Add(application);
+    }
+
+    public void RemoveInvalidDebuffs()
+    {
+        debuffs?.RemoveAll(application => application == null
+            || application.Debuff == null
+            || !application.IsValid);
+    }
+}
+
+[Serializable]
 public sealed class ProjectileCircularChainContract : ProjectileDataContract
 {
     [SerializeField, Min(1)] private int hitsPerTarget = 3;
@@ -266,6 +305,11 @@ public sealed class ProjectileData : ScriptableObject
 
         if (TryGetContract(out ProjectileContinuousDamageContract continuousDamage))
             runtimeConfig.continuousDamageInterval = continuousDamage.DamageTickInterval;
+
+        if (TryGetContract(out ProjectileEnemyDebuffsContract enemyDebuffs))
+        {
+            runtimeConfig.enemyDebuffs = enemyDebuffs.Debuffs;
+        }
 
         if (TryGetContract(out ProjectileCircularChainContract circularChain))
         {

@@ -22,14 +22,20 @@ MonoBehaviour:
       healthRegenRatePercent: 5
       shieldRegenRatePercent: 5
       speed: 75
-      maximumEnergy: 10
+      maximumEnergy: 30
     contracts:
-    - rid: 3397718787192520800
     - rid: 3397718787192520801
+    - rid: 3397718972302098517
   references:
     version: 2
     RefIds:
-    - rid: 3397718787192520800
+    - rid: 3397718787192520801
+      type: {class: HuskarShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        healFromDamagePercent: 0.2
+        healDuration: 6
+        missingHealthFireRateBonus: 0.5
+    - rid: 3397718972302098517
       type: {class: AbilityRecoveryShipMetaContract, ns: , asm: Assembly-CSharp}
       data:
         abilityMode: 0
@@ -39,9 +45,3 @@ MonoBehaviour:
         toggleTimeCostPerSecond: 1
         toggleRechargeStartTime: 0
         toggleRechargeDuration: 3
-    - rid: 3397718787192520801
-      type: {class: HuskarShipMetaContract, ns: , asm: Assembly-CSharp}
-      data:
-        healFromDamagePercent: 0.2
-        healDuration: 6
-        missingHealthFireRateBonus: 0.5

@@ -10,6 +10,7 @@ public class WeaponData : ScriptableObject
     [Header("Stats per level")]
     [SerializeField] private List<float> reloadTimeByLevel;
     [SerializeField] private List<float> angleByLevel;
+    [SerializeField] private List<float> initialDirectionAngleByLevel;
     [SerializeField] private List<float> damageByLevel;
     [SerializeField] private List<float> rangeByLevel;
     [SerializeField] private List<float> speedByLevel;
@@ -72,6 +73,8 @@ public class WeaponData : ScriptableObject
 
     public IReadOnlyList<float> ReloadTimeByLevel => reloadTimeByLevel;
     public IReadOnlyList<float> AngleByLevel => angleByLevel;
+    public IReadOnlyList<float> InitialDirectionAngleByLevel =>
+        initialDirectionAngleByLevel;
     public IReadOnlyList<float> DamageByLevel => damageByLevel;
     public IReadOnlyList<float> RangeByLevel => rangeByLevel;
     public IReadOnlyList<float> SpeedByLevel => speedByLevel;
@@ -242,6 +245,7 @@ public class WeaponData : ScriptableObject
         return new WeaponRuntimeStats(
             GetLegacyValue(reloadTimeByLevel, level, 1f),
             GetLegacyValue(angleByLevel, level, 0f),
+            GetLegacyValue(initialDirectionAngleByLevel, level, 0f),
             GetLegacyValue(damageByLevel, level, 1f),
             GetLegacyValue(rangeByLevel, level, 10f),
             GetLegacyValue(speedByLevel, level, 10f),
@@ -411,6 +415,7 @@ public class WeaponData : ScriptableObject
                 return new WeaponRuntimeStats(
                     metaStats.ReloadTime,
                     metaStats.Angle,
+                    metaStats.InitialDirectionAngle,
                     projectileStats.Damage,
                     projectileData.DeliveryType
                         == ProjectileDeliveryType.Projectile
@@ -465,7 +470,8 @@ public class WeaponData : ScriptableObject
             GetLegacyValue(angleByLevel, level, 0f),
             GetLegacyValue(damageByLevel, level, 1f),
             GetLegacyValue(rangeByLevel, level, 10f),
-            GetLegacyValue(speedByLevel, level, 10f));
+            GetLegacyValue(speedByLevel, level, 10f),
+            GetLegacyValue(initialDirectionAngleByLevel, level, 0f));
     }
 
     private WeaponRuntimeStats ApplyLevelBonuses(int level)
@@ -482,6 +488,7 @@ public class WeaponData : ScriptableObject
         return new WeaponRuntimeStats(
             ApplyRate(baseStats.ReloadTime, totals.FireRatePercent),
             ApplyValue(baseStats.Angle, totals.AnglePercent),
+            baseStats.InitialDirectionAngle,
             ApplyValue(
                 baseStats.Damage,
                 usesProjectileData ? 0f : totals.DamagePercent),
@@ -641,6 +648,7 @@ public class WeaponData : ScriptableObject
         int count = 0;
         count = Mathf.Max(count, reloadTimeByLevel?.Count ?? 0);
         count = Mathf.Max(count, angleByLevel?.Count ?? 0);
+        count = Mathf.Max(count, initialDirectionAngleByLevel?.Count ?? 0);
         count = Mathf.Max(count, damageByLevel?.Count ?? 0);
         count = Mathf.Max(count, rangeByLevel?.Count ?? 0);
         count = Mathf.Max(count, speedByLevel?.Count ?? 0);

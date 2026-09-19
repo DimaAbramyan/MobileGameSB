@@ -11,12 +11,12 @@ public class EndGame : MonoBehaviour
     [SerializeField] Text Bonuses;
 
     [InjectOptional] private LevelProgressService progressService;
-    [InjectOptional] private PlayerResourceWallet resourceWallet;
+    [Inject] private PlayerResourceWallet resourceWallet;
 
     private LevelProgressService Progress =>
         progressService ??= new LevelProgressService();
     private PlayerResourceWallet Resources =>
-        resourceWallet ??= new PlayerResourceWallet();
+        resourceWallet;
 
     // Start is called before the first frame update
     private void Awake()
@@ -53,7 +53,7 @@ public class EndGame : MonoBehaviour
         int gold = level.GoldReward;
         int cores = alreadyCompleted ? 0 : level.CoreReward;
 
-        Resources.AddGold(gold);
-        Resources.Add(0, cores);
+        Resources.Add(ResourceKind.Gold, gold);
+        Resources.Add(ResourceKind.Chip, cores);
     }
 }

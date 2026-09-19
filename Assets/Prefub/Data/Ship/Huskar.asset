@@ -24,7 +24,7 @@ MonoBehaviour:
   shieldRegenCooldown: 15
   shieldRegenRate: 5
   maximumEnergy: 10
-  maximumWeaponCount: 5
+  maximumWeaponCount: 4
   currentLvl: 0
   shipId: 4
   shipMetaConfig: {fileID: 11400000, guid: 8dfb89c644aa76a42a9b92af332070ce, type: 2}

@@ -4,7 +4,7 @@ using Zenject;
 public sealed class ThermalLaserWeapon : ContinuousBeamWeapon
 {
     [Inject] private DealDamageManager dealDamageManager;
-    [Inject] private EnemyHeatSystem enemyHeatSystem;
+    [Inject] private EnemyDebuffController enemyDebuffController;
 
     protected override bool TryGetBeamBlockingLayers(
         out LayerMask blockingLayers)
@@ -29,7 +29,6 @@ public sealed class ThermalLaserWeapon : ContinuousBeamWeapon
     {
         ThermalLaserData data = weaponData as ThermalLaserData;
         if (data == null
-            || enemyHeatSystem == null
             || dealDamageManager == null)
         {
             return false;
@@ -40,12 +39,16 @@ public sealed class ThermalLaserWeapon : ContinuousBeamWeapon
             Owner,
             CurrentStats.Damage,
             weaponData.DamageType);
-        if (result.DidDamageHull && !enemy.isDead)
+        if (result.DidDamageHull
+            && !enemy.isDead
+            && enemyDebuffController != null
+            && data.HeatDebuffConfig != null)
         {
-            enemyHeatSystem.ApplyHeat(
+            enemyDebuffController.Apply(
                 enemy,
+                data.HeatDebuffConfig,
                 data.GetHeatPerHitPercent(Level),
-                data.CreateHeatProfile(Owner));
+                Owner);
         }
 
         return true;

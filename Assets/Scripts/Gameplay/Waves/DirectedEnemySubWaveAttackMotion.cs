@@ -122,7 +122,9 @@ public sealed partial class DirectedEnemySubWave
             float elapsed = 0f;
             while (elapsed < duration && enemy != null && !enemy.isDead)
             {
-                elapsed += Mathf.Min(Time.deltaTime, duration - elapsed);
+                elapsed += Mathf.Min(
+                    Time.deltaTime * enemy.MovementSpeedMultiplier,
+                    duration - elapsed);
                 float curvedTime = EvaluateCurve(
                     checkpoints[segmentIndex].easeToNext,
                     Mathf.Clamp01(elapsed / duration));
@@ -174,7 +176,9 @@ public sealed partial class DirectedEnemySubWave
         float elapsed = 0f;
         while (elapsed < duration && enemy != null && !enemy.isDead)
         {
-            elapsed += Mathf.Min(Time.deltaTime, duration - elapsed);
+            elapsed += Mathf.Min(
+                Time.deltaTime * enemy.MovementSpeedMultiplier,
+                duration - elapsed);
             float progress = EvaluateCurve(
                 curve,
                 Mathf.Clamp01(elapsed / duration));

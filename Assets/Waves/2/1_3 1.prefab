@@ -1,0 +1,508 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5142897750625784009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5212052724621385386}
+  - component: {fileID: 6061423116613334325}
+  - component: {fileID: 1892880015131739310}
+  - component: {fileID: 5844631074345073144}
+  - component: {fileID: 6128642318214594173}
+  m_Layer: 0
+  m_Name: 1_3 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5212052724621385386
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142897750625784009}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5746339606963252315}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6061423116613334325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142897750625784009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffe7ea728b65c474cb417b004635ce5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Wave
+  scheduledSubWaves:
+  - subWavePrefab: {fileID: 0}
+    startDelay: 0
+  - subWavePrefab: {fileID: 0}
+    startDelay: 3.5
+  - subWavePrefab: {fileID: 0}
+    startDelay: 3.5
+  - subWavePrefab: {fileID: 0}
+    startDelay: 3.5
+  SubWavesToCreate: []
+  enableDebugLogs: 0
+--- !u!114 &1892880015131739310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142897750625784009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d1e7f35a31c38243bc1654bbf73c8e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaveDangerWarningController
+  visualPreset: {fileID: 0}
+  flashCount: 2
+  visibleDuration: 0.8
+  hiddenInterval: 0.3
+  useAlphaTransition: 1
+  alphaFadeDuration: 1
+  alphaFadeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  useGlobalColor: 1
+  globalColor: {r: 0.7019608, g: 0.41568628, b: 0.43529412, a: 0.41960785}
+  playfieldCenter: {x: 0, y: 0}
+  playfieldSize: {x: 5.625, y: 10}
+  warningMaterial: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
+  stencilReference: 89
+  sortingLayerName: Default
+  sortingOrder: 100
+  zOffset: -0.1
+  warningShapes:
+  - shapeType: 0
+    center: {x: -1, y: -0.95}
+    rotationDegrees: 0
+    size: {x: 2.12, y: 1.93}
+    segments: 32
+    lineThickness: 0.2
+    parabolaCurvature: 1
+    parabolaLength: 2
+    parabolaXRange: 1
+    parabolaPower: 2
+    parabolaSegmentLengthScale: 1
+    inverted: 0
+    color: {r: 0.703504, g: 0.41622403, b: 0.4334608, a: 0.41960785}
+  - shapeType: 0
+    center: {x: 1, y: -0.95}
+    rotationDegrees: 0
+    size: {x: 2.12, y: 1.93}
+    segments: 32
+    lineThickness: 0.2
+    parabolaCurvature: 1
+    parabolaLength: 2
+    parabolaXRange: 1
+    parabolaPower: 2
+    parabolaSegmentLengthScale: 1
+    inverted: 0
+    color: {r: 0.7019608, g: 0.41568628, b: 0.43529412, a: 0.41960785}
+  - shapeType: 0
+    center: {x: 1, y: -3}
+    rotationDegrees: 0
+    size: {x: 1.5, y: 1.19}
+    segments: 32
+    lineThickness: 0.2
+    parabolaCurvature: 1
+    parabolaLength: 2
+    parabolaXRange: 1
+    parabolaPower: 2
+    parabolaSegmentLengthScale: 1
+    inverted: 0
+    color: {r: 0.7019608, g: 0.41568628, b: 0.43529412, a: 0.41960785}
+  - shapeType: 0
+    center: {x: -1, y: -3}
+    rotationDegrees: 0
+    size: {x: 1.5, y: 1.19}
+    segments: 32
+    lineThickness: 0.2
+    parabolaCurvature: 1
+    parabolaLength: 2
+    parabolaXRange: 1
+    parabolaPower: 2
+    parabolaSegmentLengthScale: 1
+    inverted: 0
+    color: {r: 0.7019608, g: 0.41568628, b: 0.43529412, a: 0.41960785}
+--- !u!114 &5844631074345073144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142897750625784009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43690bb947b24e2f9d265bb98e889e67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaveBuffDropController
+  minBuffs: 3
+  maxBuffs: 4
+  weightProfile: {fileID: 11400000, guid: b0de9f0fe7944964ca71ae8038785d44, type: 2}
+--- !u!114 &6128642318214594173
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5142897750625784009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 424a9525fdf815047acb2606d61fedb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WaveEnemyDifficultyModifier
+  hullHealthMultiplier: 1.2
+  shieldHealthMultiplier: 1
+  damageMultiplier: 1
+  fireRateMultiplier: 1
+--- !u!1 &5415359648336746899
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5746339606963252315}
+  - component: {fileID: 7390370658139675263}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5746339606963252315
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5415359648336746899}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5212052724621385386}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7390370658139675263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5415359648336746899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f85b5f8169a4f38b4b99fd16ad14222, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
+  enableDebugLogs: 0
+  formationBehaviour: {fileID: 0}
+  phaseEntryBehaviour: {fileID: 0}
+  postBehaviourBlock: {fileID: 0}
+  completionBehaviour: {fileID: 0}
+  attackBehaviourBlock: {fileID: 0}
+  formation:
+    enemyPrefab: {fileID: 0}
+    enemyCount: 1
+    spawnInterval: 0.2
+    spawnOrderMode: 0
+    spawnOrderAngle: 0
+    spawnOrderStartAngle: 90
+    parentEnemiesToSubWave: 1
+    formationFrozen: 0
+    formationLayout: 0
+    formationCoordinateSpace: 1
+    formationCenter: {x: 0, y: 2.5, z: 0}
+    spacing: {x: 0.75, y: 0.75}
+    columns: 6
+    rows: 2
+    gridMatrixCells: 
+    arcRadius: 2
+    arcDegrees: 120
+    shapePointCount: 8
+    shapeRadius: 2
+    shapeFlattening: {x: 1, y: 1}
+    customFormationPoints: []
+    customFormationEnemyOverrides: []
+    proceduralFormationEnemyOverrides:
+    - {fileID: 0}
+    formationPointsRoot: {fileID: 0}
+  phaseEntry:
+    enabled: 0
+    spawnPoint: {fileID: 0}
+    entranceMode: 0
+    pathCoordinateSpace: 1
+    rotateEnemiesAlongEntrancePath: 0
+    pathCheckpoints: []
+    individualEntrancePoints: []
+    individualPointMovementStartDelay: 0.1
+    individualPointMovementDuration: 0.35
+    individualPointMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    individualEntranceShapeCenter: {x: 0, y: 5, z: 0}
+    individualEntranceShapeRadius: 2
+    individualEntranceShapeFlattening: {x: 1, y: 1}
+    individualEntranceShapeRotationDegrees: 0
+    entranceCompletionMode: 0
+    entranceLoopStartCheckpointIndex: 0
+    entranceLoopTeleportToStart: 0
+    entranceLoopTeleportDelay: 0
+    settleDuration: 0.35
+    settleCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  postBehaviour:
+    enabled: 0
+    postCommands: []
+    postStartDelay: 0.25
+    postCommandPipelineFixedCount: 1
+    postCommandPipelineLoop: 0
+    localMovementOffset: {x: 0.5, y: 0, z: 0}
+    localMovementDuration: 1
+    localMovementLoop: 1
+    localMovementPingPong: 1
+    localMovementCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    wobbleAmplitude: {x: 0.25, y: 0.1}
+    wobbleFrequency: 1.5
+    wobblePhaseMode: 0
+    wobblePhaseOffset: 0.7
+    wobbleDirectionAngle: 0
+    wobbleDirectionStep: 0.75
+    patrolLoop: 1
+    patrolCoordinateSpace: 0
+    patrolPoints: []
+    selfOrbitRadius: {x: 0.25, y: 0.25}
+    selfOrbitPhaseOffset: 0.35
+    selfRotationDegreesPerSecond: 90
+    formationRotationDegreesPerSecond: 45
+    formationMorphLoop: 1
+    formationMorphReturnDuration: 1
+    formationMorphReturnCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    formationMorphSteps: []
+  attackPattern:
+    behaviour: {fileID: 0}
+  completion:
+    enabled: 0
+    completeWhenAllEnemiesAreDefeated: 1
+  structuredConfigurationVersion: 0
+  legacyEnemyPrefab: {fileID: 0}
+  legacyEnemyCount: 0
+  legacySpawnInterval: 0
+  legacySpawnOrderMode: 0
+  legacySpawnOrderAngle: 0
+  legacySpawnOrderStartAngle: 0
+  legacySpawnPoint: {fileID: 0}
+  legacyParentEnemiesToSubWave: 0
+  legacyEntranceMode: 0
+  legacyPathCoordinateSpace: 0
+  legacyRotateEnemiesAlongEntrancePath: 0
+  legacyPathCheckpoints: []
+  legacyIndividualEntrancePoints: []
+  legacyIndividualPointMovementStartDelay: 0
+  legacyIndividualPointMovementDuration: 0
+  legacyIndividualPointMovementCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  legacyIndividualEntranceShapeCenter: {x: 0, y: 0, z: 0}
+  legacyIndividualEntranceShapeRadius: 0
+  legacyIndividualEntranceShapeFlattening: {x: 0, y: 0}
+  legacyIndividualEntranceShapeRotationDegrees: 0
+  legacyEntranceCompletionMode: 0
+  legacyEntranceLoopStartCheckpointIndex: 0
+  legacyEntranceLoopTeleportToStart: 0
+  legacyEntranceLoopTeleportDelay: 0
+  legacyFormationFrozen: 0
+  legacyFormationLayout: 0
+  legacyFormationCoordinateSpace: 0
+  legacyFormationCenter: {x: 0, y: 0, z: 0}
+  legacySpacing: {x: 0, y: 0}
+  legacyColumns: 0
+  legacyRows: 0
+  legacyGridMatrixCells: 
+  legacyArcRadius: 0
+  legacyArcDegrees: 0
+  legacyShapePointCount: 0
+  legacyShapeRadius: 0
+  legacyShapeFlattening: {x: 0, y: 0}
+  legacyCustomFormationPoints: []
+  legacyCustomFormationEnemyOverrides: []
+  legacyProceduralFormationEnemyOverrides: []
+  legacyFormationPointsRoot: {fileID: 0}
+  legacySettleDuration: 0
+  legacySettleCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  legacyPostCommands: []
+  legacyPostStartDelay: 0
+  legacyPostCommandPipelineFixedCount: 0
+  legacyPostCommandPipelineLoop: 0
+  legacyLocalMovementOffset: {x: 0, y: 0, z: 0}
+  legacyLocalMovementDuration: 0
+  legacyLocalMovementLoop: 0
+  legacyLocalMovementPingPong: 0
+  legacyLocalMovementCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  legacyWobbleAmplitude: {x: 0, y: 0}
+  legacyWobbleFrequency: 0
+  legacyWobblePhaseMode: 0
+  legacyWobblePhaseOffset: 0
+  legacyWobbleDirectionAngle: 0
+  legacyWobbleDirectionStep: 0
+  legacyPatrolLoop: 0
+  legacyPatrolCoordinateSpace: 0
+  legacyPatrolPoints: []
+  legacySelfOrbitRadius: {x: 0, y: 0}
+  legacySelfOrbitPhaseOffset: 0
+  legacySelfRotationDegreesPerSecond: 0
+  legacyFormationRotationDegreesPerSecond: 0
+  legacyFormationMorphLoop: 0
+  legacyFormationMorphReturnDuration: 0
+  legacyFormationMorphReturnCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  legacyFormationMorphSteps: []

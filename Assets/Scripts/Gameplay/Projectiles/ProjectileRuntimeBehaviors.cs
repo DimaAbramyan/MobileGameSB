@@ -34,6 +34,8 @@ public class ProjectileRuntimeConfig
     public float secondaryTravelDistance;
     public bool ignoreSecondaryProjectileTriggeringEnemy = true;
     public float continuousDamageInterval = 0.25f;
+    public IReadOnlyList<EnemyDebuffApplication> enemyDebuffs =
+        Array.Empty<EnemyDebuffApplication>();
     public float ballLightningAreaDamage;
     public float ballLightningAreaRadius;
     public float ballLightningAreaTickInterval = 0.5f;
@@ -364,17 +366,21 @@ public sealed class HomingMovementBehavior : IProjectileMovementBehavior
             return;
         }
 
-        Vector2 dir = target.transform.position - projectile.transform.position;
-        float targetAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
-        Quaternion targetRot = Quaternion.Euler(0f, 0f, targetAngle);
+        Vector2 targetDirection =
+            target.transform.position - projectile.transform.position;
+        if (targetDirection.sqrMagnitude > Mathf.Epsilon)
+        {
+            Vector3 nextDirection = Vector3.RotateTowards(
+                projectile.direction,
+                targetDirection.normalized,
+                rotationSpeed * Mathf.Deg2Rad * Time.fixedDeltaTime,
+                0f);
+            projectile.SetDirection(nextDirection);
+        }
 
-        projectile.transform.rotation = Quaternion.RotateTowards(
-            projectile.transform.rotation,
-            targetRot,
-            rotationSpeed * Time.deltaTime
-        );
-
-        projectile.transform.position += projectile.transform.up * projectile.speed * Time.deltaTime;
+        projectile.transform.position += projectile.direction
+            * projectile.speed
+            * Time.fixedDeltaTime;
     }
 }
 
@@ -672,8 +678,10 @@ public sealed class CircularChainContactBehavior
     private readonly EnemyManager enemyManager;
     private readonly List<Enemy> visitedTargets;
 
-    private Enemy currentTarget;
-    private float nextHitTime;
+      private Enemy currentTarget;
+      private Vector3 attachmentLocalPosition;
+      private bool isAttachedToTarget;
+      private float nextHitTime;
     private float travelSpeed;
     private int hitsAppliedToCurrentTarget;
 
@@ -714,18 +722,27 @@ public sealed class CircularChainContactBehavior
     {
     }
 
-    public void Tick(Projectile projectile)
-    {
-        if (projectile == null || currentTarget == null)
-            return;
+      public void Tick(Projectile projectile)
+      {
+          if (projectile == null)
+              return;
 
-        if (currentTarget.isDead || !currentTarget.isActiveAndEnabled)
-        {
-            ContinueChain(projectile);
-            return;
-        }
+          if (currentTarget == null)
+          {
+              if (isAttachedToTarget)
+                  ContinueChain(projectile);
 
-        projectile.transform.position = currentTarget.transform.position;
+              return;
+          }
+
+          if (currentTarget.isDead || !currentTarget.isActiveAndEnabled)
+          {
+              ContinueChain(projectile);
+              return;
+          }
+
+          projectile.transform.position = currentTarget.transform.TransformPoint(
+              attachmentLocalPosition);
         if (Time.fixedTime < nextHitTime)
             return;
 
@@ -759,18 +776,23 @@ public sealed class CircularChainContactBehavior
         if (travelSpeed <= 0f)
             travelSpeed = projectile.speed;
 
-        currentTarget = target;
-        visitedTargets.Add(target);
-        hitsAppliedToCurrentTarget = 0;
-        nextHitTime = Time.fixedTime;
-        projectile.SetSpeed(0f);
-        projectile.transform.position = target.transform.position;
-    }
+          currentTarget = target;
+          isAttachedToTarget = true;
+          attachmentLocalPosition = target.transform.InverseTransformPoint(
+              projectile.transform.position);
+          visitedTargets.Add(target);
+          hitsAppliedToCurrentTarget = 0;
+          nextHitTime = Time.fixedTime;
+          projectile.SetSpeed(0f);
+          projectile.transform.position = target.transform.TransformPoint(
+              attachmentLocalPosition);
+      }
 
-    private void ContinueChain(Projectile projectile)
-    {
-        currentTarget = null;
-        hitsAppliedToCurrentTarget = 0;
+      private void ContinueChain(Projectile projectile)
+      {
+          currentTarget = null;
+          isAttachedToTarget = false;
+          hitsAppliedToCurrentTarget = 0;
 
         if (visitedTargets.Count >= maximumTargets)
         {

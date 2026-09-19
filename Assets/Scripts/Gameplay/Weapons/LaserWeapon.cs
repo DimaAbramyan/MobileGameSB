@@ -33,9 +33,4 @@ public sealed class LaserWeapon : ContinuousBeamWeapon
         return true;
     }
 
-    public override void SetIdenticalWeaponCount(int count)
-    {
-        int weaponCount = Mathf.Max(1, count);
-        SetIdenticalWeaponMultipliers(weaponCount, 1f, weaponCount);
-    }
 }

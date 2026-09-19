@@ -29,7 +29,10 @@ public class MiniShip : Enemy
     public void Launch()
     {
         rb.linearVelocity = Vector2.zero;
-        rb.AddForce(new Vector2((transform.rotation.eulerAngles.z - 180)/(_speed/40), 0));
+        rb.AddForce(new Vector2(
+            (transform.rotation.eulerAngles.z - 180)
+                / (Mathf.Max(0.01f, EffectiveMoveSpeed) / 40),
+            0));
         transform.SetParent(null);
         //Debug.Log();
         FlyingToPlayer=true;
@@ -41,7 +44,7 @@ public class MiniShip : Enemy
             (playerController.transform.position - transform.position).normalized;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle+90);
-        rb.AddForce(direction * _speed/25, ForceMode2D.Force);
+        rb.AddForce(direction * EffectiveMoveSpeed / 25, ForceMode2D.Force);
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {

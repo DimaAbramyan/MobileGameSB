@@ -13,7 +13,8 @@ public readonly struct EnemyHeatProfile
         float transferredHeatPercent,
         float coolingDelay,
         float coolingPercentPerSecond,
-        Explode explosionPrefab)
+        Explode explosionPrefab,
+        EnemyHeatDebuffConfig sourceConfig)
     {
         Owner = owner;
         AffectedLayers = affectedLayers;
@@ -23,6 +24,7 @@ public readonly struct EnemyHeatProfile
         CoolingDelay = Mathf.Max(0f, coolingDelay);
         CoolingPerSecond = Mathf.Max(0f, coolingPercentPerSecond) / 100f;
         ExplosionPrefab = explosionPrefab;
+        SourceConfig = sourceConfig;
     }
 
     public ParentShip Owner { get; }
@@ -33,25 +35,28 @@ public readonly struct EnemyHeatProfile
     public float CoolingDelay { get; }
     public float CoolingPerSecond { get; }
     public Explode ExplosionPrefab { get; }
+    public EnemyHeatDebuffConfig SourceConfig { get; }
 }
 
-public sealed class EnemyHeatSystem : IInitializable, ITickable, IDisposable
+public sealed class EnemyHeatSystem : IInitializable, IDisposable
 {
     private const int OverlapBufferSize = 32;
     private const float FullHeat = 1f;
     private const float EmptyHeatThreshold = 0.0001f;
 
     private readonly EnemyManager enemyManager;
-    private readonly DealDamageManager dealDamageManager;
+    private readonly LazyInject<DealDamageManager> dealDamageManager;
     private readonly DiContainer container;
     private readonly Dictionary<Enemy, HeatState> states = new();
     private readonly List<Enemy> trackedEnemies = new();
     private Collider2D[] overlapBuffer = new Collider2D[OverlapBufferSize];
     private readonly Stack<ExplosionContext> explosionContextPool = new();
 
+    public event Action<Enemy, float, EnemyHeatProfile> OnHeatTransferred;
+
     public EnemyHeatSystem(
         EnemyManager enemyManager,
-        DealDamageManager dealDamageManager,
+        LazyInject<DealDamageManager> dealDamageManager,
         DiContainer container)
     {
         this.enemyManager = enemyManager;
@@ -74,45 +79,7 @@ public sealed class EnemyHeatSystem : IInitializable, ITickable, IDisposable
         explosionContextPool.Clear();
     }
 
-    public void Tick()
-    {
-        if (Time.timeScale <= 0f || trackedEnemies.Count == 0)
-            return;
-
-        float deltaTime = Time.deltaTime;
-        if (deltaTime <= 0f)
-            return;
-
-        float currentTime = Time.time;
-        for (int index = trackedEnemies.Count - 1; index >= 0; index--)
-        {
-            Enemy enemy = trackedEnemies[index];
-            if (enemy == null
-                || enemy.isDead
-                || !states.TryGetValue(enemy, out HeatState state))
-            {
-                RemoveStateAt(index);
-                continue;
-            }
-
-            if (currentTime - state.LastHitTime < state.Profile.CoolingDelay)
-                continue;
-
-            state.Heat = Mathf.Max(
-                0f,
-                state.Heat - state.Profile.CoolingPerSecond * deltaTime);
-
-            if (state.Heat <= EmptyHeatThreshold)
-            {
-                RemoveStateAt(index);
-                continue;
-            }
-
-            states[enemy] = state;
-        }
-    }
-
-    public void ApplyHeat(
+    public EnemyDebuffProgress ApplyHeat(
         Enemy enemy,
         float heatPercent,
         EnemyHeatProfile profile)
@@ -122,7 +89,7 @@ public sealed class EnemyHeatSystem : IInitializable, ITickable, IDisposable
             || enemy.isDead
             || heatPercent <= 0f)
         {
-            return;
+            return EnemyDebuffProgress.None;
         }
 
         if (!states.TryGetValue(enemy, out HeatState state))
@@ -134,10 +101,52 @@ public sealed class EnemyHeatSystem : IInitializable, ITickable, IDisposable
             trackedEnemies.Add(enemy);
         }
 
-        state.Heat = Mathf.Min(FullHeat, state.Heat + heatPercent / 100f);
+        float previousHeat = state.Heat;
+        state.Heat = Mathf.Min(
+            FullHeat,
+            state.Heat + heatPercent / 100f);
         state.LastHitTime = Time.time;
         state.Profile = profile;
         states[enemy] = state;
+        return new EnemyDebuffProgress(
+            true,
+            previousHeat * 100f,
+            state.Heat * 100f,
+            FullHeat * 100f);
+    }
+
+    public float CoolHeat(Enemy enemy, float coolingPercent)
+    {
+        if (enemy == null
+            || enemy.isDead
+            || coolingPercent <= 0f
+            || !states.TryGetValue(enemy, out HeatState state))
+        {
+            return 0f;
+        }
+
+        float removedHeat = Mathf.Min(
+            state.Heat,
+            Mathf.Max(0f, coolingPercent) / 100f);
+        state.Heat -= removedHeat;
+
+        if (state.Heat <= EmptyHeatThreshold)
+        {
+            RemoveStateAt(state.Index);
+        }
+        else
+        {
+            states[enemy] = state;
+        }
+
+        return removedHeat * 100f;
+    }
+
+    public float GetHeatPercent(Enemy enemy)
+    {
+        return enemy != null && states.TryGetValue(enemy, out HeatState state)
+            ? state.Heat * 100f
+            : 0f;
     }
 
     private void HandleEnemyDestroyed(Enemy enemy)
@@ -188,13 +197,25 @@ public sealed class EnemyHeatSystem : IInitializable, ITickable, IDisposable
 
             for (int index = 0; index < context.Enemies.Count; index++)
             {
-                ApplyHeat(
-                    context.Enemies[index],
-                    profile.TransferredHeatPercent,
-                    profile);
+                Enemy transferredEnemy = context.Enemies[index];
+                if (OnHeatTransferred != null)
+                {
+                    OnHeatTransferred.Invoke(
+                        transferredEnemy,
+                        profile.TransferredHeatPercent,
+                        profile);
+                }
+                else
+                {
+                    ApplyHeat(
+                        transferredEnemy,
+                        profile.TransferredHeatPercent,
+                        profile);
+                }
             }
 
-            if (profile.ExplosionDamage <= 0f)
+            if (profile.ExplosionDamage <= 0f
+                || dealDamageManager == null)
                 return;
 
             for (int index = 0; index < context.Enemies.Count; index++)
@@ -203,7 +224,7 @@ public sealed class EnemyHeatSystem : IInitializable, ITickable, IDisposable
                 if (enemy == null || enemy.isDead)
                     continue;
 
-                dealDamageManager.DealDamage(
+                dealDamageManager.Value.DealDamage(
                     enemy,
                     profile.Owner,
                     profile.ExplosionDamage);

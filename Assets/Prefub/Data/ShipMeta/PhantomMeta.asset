@@ -22,7 +22,7 @@ MonoBehaviour:
       healthRegenRatePercent: 5
       shieldRegenRatePercent: 5
       speed: 75
-      maximumEnergy: 10
+      maximumEnergy: 30
     contracts:
     - rid: 3397718787192520796
     - rid: 3397718787192520797

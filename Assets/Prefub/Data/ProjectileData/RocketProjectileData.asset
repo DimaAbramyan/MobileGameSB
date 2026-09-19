@@ -17,12 +17,13 @@ MonoBehaviour:
   damageType: 0
   projectilePrefab: {fileID: 5419238205650719777, guid: 24946ad4dab5aa841badfc3509ecaaea, type: 3}
   range: 8
-  speed: 2
+  speed: 9
   contracts:
   - rid: 3397718812562292844
   - rid: 3397718812562292845
   - rid: 3397718812562292846
   - rid: 3397718812562292847
+  - rid: 3397718953473343579
   references:
     version: 2
     RefIds:
@@ -34,6 +35,8 @@ MonoBehaviour:
       type: {class: ProjectileExplosionContract, ns: , asm: Assembly-CSharp}
       data:
         explosionPrefab: {fileID: 0}
+        explosionRadius: 0
+        explodeAtMaximumRange: 0
     - rid: 3397718812562292846
       type: {class: ProjectileDamageSourcesContract, ns: , asm: Assembly-CSharp}
       data:
@@ -50,3 +53,7 @@ MonoBehaviour:
         disableColliderAfterFirstPhysicsStep: 0
         fadeBeforeDespawn: 0
         fadeDuration: 0.5
+    - rid: 3397718953473343579
+      type: {class: ProjectileHomingContract, ns: , asm: Assembly-CSharp}
+      data:
+        rotationSpeed: 600

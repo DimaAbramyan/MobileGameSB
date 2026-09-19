@@ -10,12 +10,16 @@ public sealed class WeaponMetaBasicStats
     [SerializeField, Min(0f)] private float range = 10f;
     [SerializeField, Min(0f)] private float projectileSpeed = 10f;
     [SerializeField] private float angle;
+    [SerializeField, Tooltip(
+        "Degrees relative to the weapon forward direction. Random angle offset is applied around this direction.")]
+    private float initialDirectionAngle;
 
     public float ReloadTime => reloadTime;
     public float Damage => damage;
     public float Range => range;
     public float ProjectileSpeed => projectileSpeed;
     public float Angle => angle;
+    public float InitialDirectionAngle => initialDirectionAngle;
 
     public WeaponMetaBasicStats Clone()
     {
@@ -25,7 +29,8 @@ public sealed class WeaponMetaBasicStats
             damage = damage,
             range = range,
             projectileSpeed = projectileSpeed,
-            angle = angle
+            angle = angle,
+            initialDirectionAngle = initialDirectionAngle
         };
     }
 }
@@ -87,6 +92,37 @@ public sealed class BurstFireWeaponMetaContract : WeaponMetaContract
             projectilesPerVolley = projectilesPerVolley,
             delayBetweenVolleys = delayBetweenVolleys,
             spreadAngle = spreadAngle
+        };
+    }
+}
+
+[Serializable]
+public sealed class SweepFireWeaponMetaContract : WeaponMetaContract
+{
+    [SerializeField, Min(0.02f)] private float traversalDuration = 1f;
+    [SerializeField] private AnimationCurve speedCurve =
+        AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
+    public override string DisplayName => "Sweep Fire";
+    public float TraversalDuration => Mathf.Max(0.02f, traversalDuration);
+    public AnimationCurve SpeedCurve => speedCurve;
+
+    public override WeaponMetaContract Clone()
+    {
+        AnimationCurve curve = speedCurve != null
+            ? new AnimationCurve(speedCurve.keys)
+            : AnimationCurve.Linear(0f, 0f, 1f, 1f);
+        curve.preWrapMode = speedCurve != null
+            ? speedCurve.preWrapMode
+            : WrapMode.Clamp;
+        curve.postWrapMode = speedCurve != null
+            ? speedCurve.postWrapMode
+            : WrapMode.Clamp;
+
+        return new SweepFireWeaponMetaContract
+        {
+            traversalDuration = traversalDuration,
+            speedCurve = curve
         };
     }
 }
@@ -259,13 +295,19 @@ public readonly struct WeaponMetaRuntimeStats
         float continuousDamageTickInterval,
         bool usesContinuousDamage,
         bool usesHoming,
-        float homingRotationSpeed)
+        float homingRotationSpeed,
+        bool usesSweepFire,
+        float sweepTraversalDuration,
+        AnimationCurve sweepSpeedCurve)
     {
         WeaponStats = weaponStats;
         ContinuousDamageTickInterval = continuousDamageTickInterval;
         UsesContinuousDamage = usesContinuousDamage;
         UsesHoming = usesHoming;
         HomingRotationSpeed = homingRotationSpeed;
+        UsesSweepFire = usesSweepFire;
+        SweepTraversalDuration = sweepTraversalDuration;
+        SweepSpeedCurve = sweepSpeedCurve;
     }
 
     public WeaponRuntimeStats WeaponStats { get; }
@@ -273,6 +315,9 @@ public readonly struct WeaponMetaRuntimeStats
     public bool UsesContinuousDamage { get; }
     public bool UsesHoming { get; }
     public float HomingRotationSpeed { get; }
+    public bool UsesSweepFire { get; }
+    public float SweepTraversalDuration { get; }
+    public AnimationCurve SweepSpeedCurve { get; }
 }
 
 public readonly struct WeaponMetaDpsInfo
@@ -430,9 +475,19 @@ public sealed class WeaponMetaConfig : ScriptableObject
             ? homing.RotationSpeed
             : 0f;
 
+        bool usesSweepFire = level.TryGetContract(
+            out SweepFireWeaponMetaContract sweepFire);
+        float sweepTraversalDuration = usesSweepFire
+            ? sweepFire.TraversalDuration
+            : 0f;
+        AnimationCurve sweepSpeedCurve = usesSweepFire
+            ? sweepFire.SpeedCurve
+            : null;
+
         WeaponRuntimeStats weaponStats = new(
             basic.ReloadTime,
             basic.Angle,
+            basic.InitialDirectionAngle,
             basic.Damage,
             basic.Range,
             basic.ProjectileSpeed,
@@ -448,7 +503,10 @@ public sealed class WeaponMetaConfig : ScriptableObject
             tickInterval,
             usesContinuousDamage,
             usesHoming,
-            homingRotationSpeed);
+            homingRotationSpeed,
+            usesSweepFire,
+            sweepTraversalDuration,
+            sweepSpeedCurve);
     }
 
     public WeaponMetaDpsInfo GetDpsInfo(int requestedLevel)

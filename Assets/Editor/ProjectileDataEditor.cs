@@ -131,15 +131,25 @@ public sealed class ProjectileDataEditor : Editor
             case ProjectileContinuousDamageContract:
                 DrawField(contract, "damageTickInterval", "Damage Tick Interval");
                 break;
-            case ProjectileCircularChainContract:
-                DrawField(contract, "hitsPerTarget", "Hits Per Target");
-                DrawField(contract, "damagePerHit", "Damage Per Hit");
-                DrawField(contract, "hitInterval", "Hit Interval");
-                DrawField(contract, "maximumTargets", "Maximum Targets");
-                DrawField(contract, "searchConeAngle", "Search Cone Angle");
-                DrawField(contract, "searchRange", "Search Range");
-                DrawField(contract, "randomEscapeAngle", "Random Escape Angle");
-                break;
+              case ProjectileCircularChainContract:
+                  DrawField(
+                      contract,
+                      "hitsPerTarget",
+                      "Damage Applications Per Target");
+                  DrawField(contract, "damagePerHit", "Damage Per Hit");
+                  DrawField(contract, "hitInterval", "Hit Interval");
+                  DrawField(
+                      contract,
+                      "maximumTargets",
+                      "Chain Targets (Including Initial Target)");
+                  DrawField(contract, "searchConeAngle", "Search Cone Angle");
+                  DrawField(contract, "searchRange", "Search Range");
+                  DrawField(contract, "randomEscapeAngle", "Random Escape Angle");
+                  EditorGUILayout.HelpBox(
+                      "Every chain target receives Damage Applications Per Target hits. "
+                      + "For example: 3 chain targets × 3 applications = 9 total hits.",
+                      MessageType.None);
+                  break;
             case ProjectileLifetimeContract:
                 DrawField(contract, "lifetime", "Lifetime");
                 DrawField(

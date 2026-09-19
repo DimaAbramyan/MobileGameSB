@@ -8,6 +8,7 @@ public sealed class WeaponDataEditor : Editor
 {
     private SerializedProperty reloadTimeByLevel;
     private SerializedProperty angleByLevel;
+    private SerializedProperty initialDirectionAngleByLevel;
     private SerializedProperty damageByLevel;
     private SerializedProperty rangeByLevel;
     private SerializedProperty speedByLevel;
@@ -43,18 +44,12 @@ public sealed class WeaponDataEditor : Editor
     private SerializedProperty manualBaseThermalStats;
     private SerializedProperty thermalLevelBonuses;
     private SerializedProperty beamBlockingLayers;
-    private SerializedProperty thermalExplosionRadius;
-    private SerializedProperty thermalExplosionDamage;
-    private SerializedProperty transferredHeatPercent;
-    private SerializedProperty coolingDelay;
-    private SerializedProperty coolingPercentPerSecond;
-    private SerializedProperty thermalExplosionPrefab;
+    private SerializedProperty thermalDebuffConfig;
 
     private SerializedProperty qBeamLevels;
     private SerializedProperty manualBaseQBeamStats;
     private SerializedProperty qBeamLevelBonuses;
-    private SerializedProperty qBeamChargeDecayDelay;
-    private SerializedProperty qBeamChargeDecayPerSecond;
+    private SerializedProperty qBeamDebuffConfig;
 
     private SerializedProperty ballLightningLevels;
     private SerializedProperty manualBaseBallLightningStats;
@@ -71,6 +66,8 @@ public sealed class WeaponDataEditor : Editor
     {
         reloadTimeByLevel = serializedObject.FindProperty("reloadTimeByLevel");
         angleByLevel = serializedObject.FindProperty("angleByLevel");
+        initialDirectionAngleByLevel =
+            serializedObject.FindProperty("initialDirectionAngleByLevel");
         damageByLevel = serializedObject.FindProperty("damageByLevel");
         rangeByLevel = serializedObject.FindProperty("rangeByLevel");
         speedByLevel = serializedObject.FindProperty("speedByLevel");
@@ -111,27 +108,16 @@ public sealed class WeaponDataEditor : Editor
         thermalLevelBonuses =
             serializedObject.FindProperty("thermalLevelBonuses");
         beamBlockingLayers = serializedObject.FindProperty("beamBlockingLayers");
-        thermalExplosionRadius =
-            serializedObject.FindProperty("overheatExplosionRadius");
-        thermalExplosionDamage =
-            serializedObject.FindProperty("overheatExplosionDamage");
-        transferredHeatPercent =
-            serializedObject.FindProperty("transferredHeatPercent");
-        coolingDelay = serializedObject.FindProperty("coolingDelay");
-        coolingPercentPerSecond =
-            serializedObject.FindProperty("coolingPercentPerSecond");
-        thermalExplosionPrefab =
-            serializedObject.FindProperty("overheatExplosionPrefab");
+        thermalDebuffConfig =
+            serializedObject.FindProperty("heatDebuffConfig");
 
         qBeamLevels = serializedObject.FindProperty("qBeamLevels");
         manualBaseQBeamStats =
             serializedObject.FindProperty("manualBaseQBeamStats");
         qBeamLevelBonuses =
             serializedObject.FindProperty("qBeamLevelBonuses");
-        qBeamChargeDecayDelay =
-            serializedObject.FindProperty("chargeDecayDelay");
-        qBeamChargeDecayPerSecond =
-            serializedObject.FindProperty("chargeDecayPerSecond");
+        qBeamDebuffConfig =
+            serializedObject.FindProperty("disintegrationDebuffConfig");
 
         ballLightningLevels =
             serializedObject.FindProperty("ballLightningLevels");
@@ -789,6 +775,9 @@ public sealed class WeaponDataEditor : Editor
 
         EditorGUILayout.PropertyField(reloadTimeByLevel);
         EditorGUILayout.PropertyField(angleByLevel);
+        EditorGUILayout.PropertyField(
+            initialDirectionAngleByLevel,
+            new GUIContent("Initial Projectile Direction By Level (degrees)"));
         EditorGUILayout.PropertyField(damageByLevel);
         EditorGUILayout.PropertyField(rangeByLevel);
         EditorGUILayout.PropertyField(speedByLevel);
@@ -1069,29 +1058,13 @@ public sealed class WeaponDataEditor : Editor
         EditorGUILayout.PropertyField(
             beamBlockingLayers,
             new GUIContent("Beam Blocking Layers"));
-
-        EditorGUILayout.Space(2f);
-        EditorGUILayout.LabelField(
-            "Overheat Explosion",
-            EditorStyles.miniBoldLabel);
         EditorGUILayout.PropertyField(
-            thermalExplosionRadius,
-            new GUIContent("Radius"));
-        EditorGUILayout.PropertyField(
-            thermalExplosionDamage,
-            new GUIContent("Damage"));
-        EditorGUILayout.PropertyField(
-            transferredHeatPercent,
-            new GUIContent("Transferred Heat (%)"));
-        EditorGUILayout.PropertyField(
-            coolingDelay,
-            new GUIContent("Cooling Delay"));
-        EditorGUILayout.PropertyField(
-            coolingPercentPerSecond,
-            new GUIContent("Cooling Per Second (%)"));
-        EditorGUILayout.PropertyField(
-            thermalExplosionPrefab,
-            new GUIContent("Explosion Visual"));
+            thermalDebuffConfig,
+            new GUIContent("Heat Debuff"));
+        EditorGUILayout.HelpBox(
+            "Cooling, overheat explosion and threshold event are configured "
+            + "in the linked Heat Debuff asset.",
+            MessageType.None);
         EditorGUILayout.Space();
     }
 
@@ -1240,15 +1213,13 @@ public sealed class WeaponDataEditor : Editor
         EditorGUILayout.PropertyField(
             beamBlockingLayers,
             new GUIContent("Beam Blocking Layers"));
-
-        EditorGUILayout.Space(2f);
-        EditorGUILayout.LabelField("Charge Decay", EditorStyles.miniBoldLabel);
         EditorGUILayout.PropertyField(
-            qBeamChargeDecayDelay,
-            new GUIContent("Decay Delay"));
-        EditorGUILayout.PropertyField(
-            qBeamChargeDecayPerSecond,
-            new GUIContent("Charge Decay Per Second"));
+            qBeamDebuffConfig,
+            new GUIContent("Disintegration Debuff"));
+        EditorGUILayout.HelpBox(
+            "Charge decay and the threshold event are configured in the "
+            + "linked Disintegration Debuff asset.",
+            MessageType.None);
         EditorGUILayout.Space();
     }
 

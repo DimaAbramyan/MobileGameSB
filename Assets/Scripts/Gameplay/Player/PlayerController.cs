@@ -28,11 +28,13 @@ public class PlayerController : MonoBehaviour
     private float metalDropMultiplier = 1f;
     private float metalDropMultiplierUntil;
     [SerializeField] private PlayerEffectController effectController;
+    [SerializeField] private TeamBarrierController teamBarrierController;
     ShipSelect shipSelect;
 
     public bool ControlsLocked => Time.time < controlsLockedUntil;
     public bool ShipSwitchLocked => Time.time < shipSwitchLockedUntil;
     public PlayerEffectController Effects => EnsureEffectController();
+    public TeamBarrierController TeamBarrier => EnsureTeamBarrierController();
 
     void Awake()
     {
@@ -135,6 +137,12 @@ public class PlayerController : MonoBehaviour
                     movementTouchId = -1;
                 }
 
+                if (!IsInsideGameplayViewport(touch.position))
+                {
+                    movementTouchId = -1;
+                    return;
+                }
+
                 return;
             }
 
@@ -144,8 +152,10 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < Input.touchCount; i++)
         {
             Touch touch = Input.GetTouch(i);
-            if (touch.phase != TouchPhase.Began || IsPointerOverUIObject(touch))
-                continue;
+            if (touch.phase != TouchPhase.Began
+                || IsPointerOverUIObject(touch)
+                || !IsInsideGameplayViewport(touch.position))
+            continue;
 
             movementTouchId = touch.fingerId;
             return;
@@ -171,8 +181,18 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < Input.touchCount; i++)
         {
             Touch touch = Input.GetTouch(i);
-            if (IsPointerOverUIObject(touch))
+            if (IsPointerOverUIObject(touch)
+                || !IsInsideGameplayViewport(touch.position))
+            {
+                if ((touch.phase == TouchPhase.Ended
+                        || touch.phase == TouchPhase.Canceled)
+                    && touch.fingerId == activeTouchId)
+                {
+                    activeTouchId = -1;
+                }
+
                 continue;
+            }
 
             if (touch.phase == TouchPhase.Began)
                 activeTouchId = touch.fingerId;
@@ -190,6 +210,13 @@ public class PlayerController : MonoBehaviour
     {
         return EventSystem.current != null
             && EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+    }
+
+    private static bool IsInsideGameplayViewport(Vector2 screenPosition)
+    {
+        Camera gameplayCamera = Camera.main;
+        return gameplayCamera != null
+            && gameplayCamera.pixelRect.Contains(screenPosition);
     }
 
     /// <summary>
@@ -302,6 +329,11 @@ public class PlayerController : MonoBehaviour
         return restoredAnyResource;
     }
 
+    public bool CreateTeamBarrier(float health)
+    {
+        return EnsureTeamBarrierController().Activate(health);
+    }
+
     public void MultiplyMetalDropsForSeconds(float multiplier, float duration)
     {
         if (multiplier <= 0f || duration <= 0f)
@@ -342,5 +374,15 @@ public class PlayerController : MonoBehaviour
             effectController = gameObject.AddComponent<PlayerEffectController>();
 
         return effectController;
+    }
+
+    private TeamBarrierController EnsureTeamBarrierController()
+    {
+        if (teamBarrierController == null)
+            teamBarrierController = GetComponent<TeamBarrierController>();
+        if (teamBarrierController == null)
+            teamBarrierController = gameObject.AddComponent<TeamBarrierController>();
+
+        return teamBarrierController;
     }
 }

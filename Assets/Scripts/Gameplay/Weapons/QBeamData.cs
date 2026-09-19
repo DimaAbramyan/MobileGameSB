@@ -63,11 +63,18 @@ public sealed class QBeamData : WeaponData
     [Header("Beam Collision")]
     [SerializeField] private LayerMask beamBlockingLayers = ~0;
 
-    [Header("Charge Decay")]
+    [Header("Enemy Debuff")]
+    [SerializeField] private EnemyDisintegrationDebuffConfig
+        disintegrationDebuffConfig;
+
+    [HideInInspector]
     [SerializeField, Min(0f)] private float chargeDecayDelay = 0.5f;
+    [HideInInspector]
     [SerializeField, Min(0f)] private float chargeDecayPerSecond = 12f;
 
     public LayerMask BeamBlockingLayers => beamBlockingLayers;
+    public EnemyDisintegrationDebuffConfig DisintegrationDebuffConfig =>
+        disintegrationDebuffConfig;
     public float ChargeDecayDelay => Mathf.Max(0f, chargeDecayDelay);
     public float ChargeDecayPerSecond => Mathf.Max(0f, chargeDecayPerSecond);
 
@@ -91,6 +98,9 @@ public sealed class QBeamData : WeaponData
 
     public EnemyDisintegrationProfile CreateDisintegrationProfile()
     {
+        if (disintegrationDebuffConfig != null)
+            return disintegrationDebuffConfig.CreateProfile();
+
         return new EnemyDisintegrationProfile(
             ChargeDecayDelay,
             ChargeDecayPerSecond);

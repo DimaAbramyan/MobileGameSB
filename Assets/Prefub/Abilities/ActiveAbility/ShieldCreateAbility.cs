@@ -1,13 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class ShieldCreateAbility : ActiveAbility
+public sealed class ShieldCreateAbility : ActiveAbility
 {
-    private float ShieldHealth;
     private float shieldHealthMultiplier = 1f;
-    [SerializeField]
-    ShieldAbilityPrefab shieldPrefab;
+
+    // Kept only to preserve existing prefab data. The shared barrier is now
+    // handled by TeamBarrierController and does not instantiate this visual.
+    [SerializeField, HideInInspector] private ShieldAbilityPrefab shieldPrefab;
 
     protected override void ApplySpecificShipMetaStats(
         ShipMetaRuntimeStats stats)
@@ -18,18 +17,18 @@ public class ShieldCreateAbility : ActiveAbility
 
     public override bool Activate(ParentShip owner)
     {
-        ShieldHealth = 0;
-        ShieldHealth = owner.CurrentShieldPoints * shieldHealthMultiplier;
-        if (ShieldHealth > 0)
-        {
-            ShieldAbilityPrefab shield = Instantiate(shieldPrefab);
-            shield.Init(ShieldHealth);
-            owner.SetShieldPoints(0);
-            return true;
-        }
-        else
-        {
+        if (owner == null || owner.CurrentShieldPoints <= 0f)
             return false;
-        }
+
+        PlayerController controller = owner.GetComponentInParent<PlayerController>();
+        if (controller == null)
+            return false;
+
+        float barrierHealth = owner.CurrentShieldPoints * shieldHealthMultiplier;
+        if (barrierHealth <= 0f || !controller.CreateTeamBarrier(barrierHealth))
+            return false;
+
+        owner.SetShieldPoints(0f);
+        return true;
     }
 }

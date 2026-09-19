@@ -1,7 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DealDamageManager
 {
+    [Zenject.Inject] private EnemyDebuffController enemyDebuffController;
+
     public EnemyDamageResult DealDamage(
         iDamagable target,
         Projectile projectile)
@@ -9,11 +12,31 @@ public class DealDamageManager
         if (projectile == null)
             return EnemyDamageResult.None;
 
-        return DealDamage(
+        EnemyDamageResult result = DealDamage(
             target,
             projectile.Owner,
             projectile.GetDamage(),
             projectile.DamageType);
+
+        if (result.DidDamageHull
+            && target is Enemy enemy
+            && enemyDebuffController != null)
+        {
+            IReadOnlyList<EnemyDebuffApplication> debuffs =
+                projectile.EnemyDebuffs;
+            if (debuffs != null)
+            {
+                for (int index = 0; index < debuffs.Count; index++)
+                {
+                    enemyDebuffController.Apply(
+                        enemy,
+                        debuffs[index],
+                        projectile.Owner);
+                }
+            }
+        }
+
+        return result;
     }
 
     public EnemyDamageResult DealDamage(

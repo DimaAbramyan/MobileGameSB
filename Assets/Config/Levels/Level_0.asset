@@ -47,7 +47,7 @@ MonoBehaviour:
   farthestLayerSpeedMultiplier: 0.25
   parallaxLayers:
   - name: Nebula
-    sprite: {fileID: 21300000, guid: 35313af049b4a2f42a0325330c51d74a, type: 3}
+    sprite: {fileID: 21300000, guid: 60521f9b7387e9b4abc477a9a09875ab, type: 3}
     position: {x: 0, y: 0}
     scale: {x: 0.25, y: 0.25}
     scrollSpeed: {x: 0, y: 0.005}
@@ -69,14 +69,14 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 1}
   randomBackgroundObjects:
   - name: 
-    sprite: {fileID: 21300000, guid: d7cd3cce2fc5c084eb7dab8f4c559963, type: 3}
+    sprite: {fileID: 6843217621005816925, guid: 14d0e1f8b86cee64a8ba7eb721e159be, type: 3}
     color: {r: 1, g: 1, b: 1, a: 0}
     count: 1
     positionMin: {x: -2.5, y: -5}
     positionMax: {x: 2.5, y: 5}
     ySpeedMin: -0.3
     ySpeedMax: -0.5
-    scaleMin: 0.15
+    scaleMin: 0.2
     scaleMax: 0.2
     sortingOrder: -90
     respawnPadding: 1

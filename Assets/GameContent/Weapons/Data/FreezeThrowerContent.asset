@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e9d343bf1af68a4c8d8262a42aded13, type: 3}
+  m_Name: FreezeThrowerContent
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponContentDefinition
+  id: freeze_thrower
+  displayName: Freeze Thrower
+  passiveAbilityDescription: Each hit slows enemy movement.
+  activeAbilityDescription: 
+  icon: {fileID: 21300000, guid: b520897860de45a489bea7656ba71eef, type: 3}
+  prefab: {fileID: 6336481848825274547, guid: 6ee3a7a598d0c0044b2c91169683d71b, type: 3}
+  rarity: 1
+  purchasePrice: 0
+  purchaseCoresPrice: 0
+  unlockRequirement:
+    type: 0
+    requiredPlayerLevel: 1
+    requiredCompletedLevel: {fileID: 0}
+    conditionId: 
+  isStarterUnlocked: 1
+  maxUpgradeLevel: 4
+  upgradePrices: []
+  data: {fileID: 11400000, guid: d3cd31712a85b944e9ad0b587cb05e24, type: 2}
+  requiredPlatformTier: 1

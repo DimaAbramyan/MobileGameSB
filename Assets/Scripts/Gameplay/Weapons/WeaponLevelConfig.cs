@@ -8,6 +8,9 @@ public sealed class WeaponLevelConfig
     [Header("Base Stats")]
     [SerializeField, Min(0f)] private float reloadTime = 1f;
     [SerializeField] private float angle;
+    [SerializeField, Tooltip(
+        "Degrees relative to the weapon forward direction. Random angle offset is applied around this direction.")]
+    private float initialDirectionAngle;
     [SerializeField, Min(0f)] private float damage = 1f;
     [SerializeField, Min(0f)] private float range = 10f;
     [SerializeField, Min(0f)] private float speed = 10f;
@@ -26,6 +29,7 @@ public sealed class WeaponLevelConfig
 
     public float ReloadTime => reloadTime;
     public float Angle => angle;
+    public float InitialDirectionAngle => initialDirectionAngle;
     public float Damage => damage;
     public float Range => range;
     public float Speed => speed;
@@ -43,12 +47,14 @@ public sealed class WeaponLevelConfig
         float angle,
         float damage,
         float range,
-        float speed)
+        float speed,
+        float initialDirectionAngle = 0f)
     {
         return new WeaponLevelConfig
         {
             reloadTime = reloadTime,
             angle = angle,
+            initialDirectionAngle = initialDirectionAngle,
             damage = damage,
             range = range,
             speed = speed
@@ -61,6 +67,7 @@ public sealed class WeaponLevelConfig
         {
             reloadTime = reloadTime,
             angle = angle,
+            initialDirectionAngle = initialDirectionAngle,
             damage = damage,
             range = range,
             speed = speed,
@@ -78,6 +85,7 @@ public sealed class WeaponLevelConfig
         return new WeaponRuntimeStats(
             reloadTime,
             angle,
+            initialDirectionAngle,
             damage,
             range,
             speed,
@@ -95,6 +103,7 @@ public readonly struct WeaponRuntimeStats
     public WeaponRuntimeStats(
         float reloadTime,
         float angle,
+        float initialDirectionAngle,
         float damage,
         float range,
         float speed,
@@ -107,6 +116,7 @@ public readonly struct WeaponRuntimeStats
     {
         ReloadTime = reloadTime;
         Angle = angle;
+        InitialDirectionAngle = initialDirectionAngle;
         Damage = damage;
         Range = range;
         Speed = speed;
@@ -120,6 +130,7 @@ public readonly struct WeaponRuntimeStats
 
     public float ReloadTime { get; }
     public float Angle { get; }
+    public float InitialDirectionAngle { get; }
     public float Damage { get; }
     public float Range { get; }
     public float Speed { get; }

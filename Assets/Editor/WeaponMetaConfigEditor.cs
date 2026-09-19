@@ -89,7 +89,11 @@ public sealed class WeaponMetaConfigEditor : Editor
     {
         EditorGUILayout.LabelField("Basic Stats", EditorStyles.miniBoldLabel);
         DrawField(basicStats, "reloadTime", "Reload Time");
-        DrawField(basicStats, "angle", "Angle");
+        DrawField(basicStats, "angle", "Random Angle Offset (degrees)");
+        DrawField(
+            basicStats,
+            "initialDirectionAngle",
+            "Initial Projectile Direction (degrees)");
     }
 
     private void DrawContracts(int levelIndex, SerializedProperty contracts)
@@ -127,7 +131,7 @@ public sealed class WeaponMetaConfigEditor : Editor
 
                 switch (value)
                 {
-                    case BurstFireWeaponMetaContract:
+                      case BurstFireWeaponMetaContract:
                         DrawField(
                             contract,
                             "volleysPerActivation",
@@ -140,8 +144,15 @@ public sealed class WeaponMetaConfigEditor : Editor
                             contract,
                             "delayBetweenVolleys",
                             "Delay Between Volleys");
-                        DrawField(contract, "spreadAngle", "Spread Angle");
-                        break;
+                          DrawField(contract, "spreadAngle", "Spread Angle");
+                          break;
+                      case SweepFireWeaponMetaContract:
+                          DrawField(
+                              contract,
+                              "traversalDuration",
+                              "Traversal Duration (-Angle to +Angle)");
+                          DrawField(contract, "speedCurve", "Speed Curve");
+                          break;
                 }
             }
         }
@@ -153,10 +164,11 @@ public sealed class WeaponMetaConfigEditor : Editor
             return;
 
         GenericMenu menu = new();
-        List<Type> contractTypes = new()
-        {
-            typeof(BurstFireWeaponMetaContract)
-        };
+          List<Type> contractTypes = new()
+          {
+              typeof(BurstFireWeaponMetaContract),
+              typeof(SweepFireWeaponMetaContract)
+          };
         contractTypes.Sort((first, second) => string.Compare(
             GetDisplayName(first),
             GetDisplayName(second),
@@ -429,6 +441,12 @@ public sealed class WeaponMetaConfigEditor : Editor
             case ProjectileContinuousDamageContract:
                 DrawField(contract, "damageTickInterval", "Damage Tick Interval");
                 break;
+            case ProjectileEnemyDebuffsContract:
+                EditorGUILayout.PropertyField(
+                    contract.FindPropertyRelative("debuffs"),
+                    new GUIContent("Debuffs"),
+                    true);
+                break;
             case ProjectileCircularChainContract:
                 DrawField(contract, "hitsPerTarget", "Hits Per Target");
                 DrawField(contract, "damagePerHit", "Damage Per Hit");
@@ -517,13 +535,15 @@ public sealed class WeaponMetaConfigEditor : Editor
         bool isPhysicalProjectile)
     {
         if (contractType == typeof(ProjectileDamageSourcesContract)
-            || contractType == typeof(ProjectileTargetingContract))
+            || contractType == typeof(ProjectileTargetingContract)
+            || contractType == typeof(ProjectileEnemyDebuffsContract))
         {
             return true;
         }
 
         return isPhysicalProjectile
             ? contractType != typeof(ProjectileBeamContract)
+                && contractType != typeof(ProjectileMovementSlowContract)
             : contractType == typeof(ProjectileBeamContract);
     }
 

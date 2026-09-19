@@ -742,7 +742,7 @@ internal sealed class DirectedWaveAttackController
         float elapsed = 0f;
         while (elapsed < duration && enemy != null && !enemy.isDead)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.deltaTime * enemy.MovementSpeedMultiplier;
             float normalized = Mathf.Clamp01(elapsed / duration);
             float curved = EvaluateCurve(speedCurve, normalized);
             Vector3 target = GetMoveTarget(

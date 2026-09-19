@@ -23,12 +23,12 @@ public struct ContentPrice
             return "Бесплатно";
 
         if (Metal == 0)
-            return $"{Cores} ядер";
+            return $"{Cores} чипов";
 
         if (Cores == 0)
             return $"{Metal} металла";
 
-        return $"{Metal} металла, {Cores} ядер";
+        return $"{Metal} металла, {Cores} чипов";
     }
 
     public void Validate()

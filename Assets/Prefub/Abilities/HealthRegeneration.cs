@@ -21,6 +21,7 @@ public class HealthRegeneration : MonoBehaviour
 
         healthRegenCooldown = parentShip.ShipData.HealthRegenCooldown;
         healthRegenRate = parentShip.ShipData.HealthRegenRatePercent;
+        lastDamageTime = float.NegativeInfinity;
 
         parentShip.OnDamagePipeline += OnDamageTaken;
     }
@@ -29,6 +30,7 @@ public class HealthRegeneration : MonoBehaviour
     {
         lastDamageTime = Time.time;
         isRegenerating = false;
+        UpdateCooldownProgress();
         return damage;
     }
 
@@ -36,6 +38,8 @@ public class HealthRegeneration : MonoBehaviour
     {
         if (parentShip == null)
             return;
+
+        UpdateCooldownProgress();
 
         if (!CanRegenerate)
         {
@@ -79,5 +83,16 @@ public class HealthRegeneration : MonoBehaviour
     {
         if (parentShip != null)
             parentShip.OnDamagePipeline -= OnDamageTaken;
+    }
+
+    private void UpdateCooldownProgress()
+    {
+        if (parentShip == null)
+            return;
+
+        float progress = healthRegenCooldown <= 0f
+            ? 1f
+            : (Time.time - lastDamageTime) / healthRegenCooldown;
+        parentShip.SetHealthRegenerationCooldownProgress(progress);
     }
 }

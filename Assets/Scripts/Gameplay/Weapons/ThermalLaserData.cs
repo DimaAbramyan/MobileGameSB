@@ -79,15 +79,24 @@ public sealed class ThermalLaserData : WeaponData
     [Header("Beam Collision")]
     [SerializeField] private LayerMask beamBlockingLayers = ~0;
 
-    [Header("Overheat Explosion")]
+    [Header("Enemy Debuff")]
+    [SerializeField] private EnemyHeatDebuffConfig heatDebuffConfig;
+
+    [HideInInspector]
     [SerializeField, Min(0f)] private float overheatExplosionRadius = 2f;
+    [HideInInspector]
     [SerializeField, Min(0f)] private float overheatExplosionDamage = 30f;
+    [HideInInspector]
     [SerializeField, Range(0f, 100f)] private float transferredHeatPercent = 50f;
+    [HideInInspector]
     [SerializeField, Min(0f)] private float coolingDelay = 0.5f;
+    [HideInInspector]
     [SerializeField, Range(0f, 100f)] private float coolingPercentPerSecond = 25f;
+    [HideInInspector]
     [SerializeField] private Explode overheatExplosionPrefab;
 
     public LayerMask BeamBlockingLayers => beamBlockingLayers;
+    public EnemyHeatDebuffConfig HeatDebuffConfig => heatDebuffConfig;
     public float OverheatExplosionRadius => Mathf.Max(0f, overheatExplosionRadius);
     public float OverheatExplosionDamage => Mathf.Max(0f, overheatExplosionDamage);
     public float TransferredHeatPercent => Mathf.Clamp(transferredHeatPercent, 0f, 100f);
@@ -116,6 +125,9 @@ public sealed class ThermalLaserData : WeaponData
 
     public EnemyHeatProfile CreateHeatProfile(ParentShip owner)
     {
+        if (heatDebuffConfig != null)
+            return heatDebuffConfig.CreateProfile(owner);
+
         return new EnemyHeatProfile(
             owner,
             beamBlockingLayers,
@@ -124,7 +136,8 @@ public sealed class ThermalLaserData : WeaponData
             TransferredHeatPercent,
             CoolingDelay,
             CoolingPercentPerSecond,
-            OverheatExplosionPrefab);
+            OverheatExplosionPrefab,
+            null);
     }
 
     public void SynchronizeThermalLevels()

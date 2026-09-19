@@ -24,6 +24,7 @@ MonoBehaviour:
   - 0
   - 0
   - 0
+  initialDirectionAngleByLevel: []
   damageByLevel:
   - 4
   - 4
@@ -45,6 +46,7 @@ MonoBehaviour:
   levelConfigs:
   - reloadTime: 2
     angle: 0
+    initialDirectionAngle: 0
     damage: 4
     range: 7
     speed: 2
@@ -56,6 +58,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 2
     angle: 0
+    initialDirectionAngle: 0
     damage: 4
     range: 7
     speed: 2
@@ -67,6 +70,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 2
     angle: 0
+    initialDirectionAngle: 0
     damage: 4
     range: 7
     speed: 2
@@ -78,6 +82,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 2
     angle: 0
+    initialDirectionAngle: 0
     damage: 4
     range: 7
     speed: 2
@@ -89,6 +94,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 2
     angle: 0
+    initialDirectionAngle: 0
     damage: 4
     range: 7
     speed: 2
@@ -102,6 +108,7 @@ MonoBehaviour:
   manualBaseStats:
     reloadTime: 2
     angle: 0
+    initialDirectionAngle: 0
     damage: 4
     range: 7
     speed: 2
@@ -192,9 +199,89 @@ MonoBehaviour:
     spreadAnglePercent: 0
     maxTargetsPercent: 0
     targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 797f47d8d4e04985884762487f4e6a7b
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 797f47d8d4e04985884762487f4e6a7b
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 797f47d8d4e04985884762487f4e6a7b
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 797f47d8d4e04985884762487f4e6a7b
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
+  - fireRatePercent: 0
+    anglePercent: 0
+    damagePercent: 0
+    rangePercent: 0
+    speedPercent: 0
+    projectileBonuses:
+    - projectileSlotId: 797f47d8d4e04985884762487f4e6a7b
+      damagePercent: 0
+      rangePercent: 0
+      speedPercent: 0
+    volleysPerActivationPercent: 0
+    projectilesPerVolleyPercent: 0
+    delayBetweenVolleysRatePercent: 0
+    spreadAnglePercent: 0
+    maxTargetsPercent: 0
+    targetSearchRadiusPercent: 0
   weaponMetaConfig: {fileID: 11400000, guid: a53b4d6ed495e58469fd671a391ff08c, type: 2}
   startLevel: 1
-  maxLevel: 5
+  maxLevel: 10
   energyCost: 3
   battleOffset: {x: 0, y: 0, z: 0}
   damageType: 0

@@ -23,6 +23,10 @@ public class Weapon : MonoBehaviour
     private int identicalWeaponCount = 1;
     private float identicalWeaponFireRateMultiplier = 1f;
     private float identicalWeaponDamageMultiplier = 1f;
+    private bool usesSweepFire;
+    private float sweepTraversalDuration = 1f;
+    private AnimationCurve sweepSpeedCurve;
+    private float sweepStartTime;
 
     private bool ableToShoot;
     private bool subscribedToOwnerLevel;
@@ -234,8 +238,8 @@ public class Weapon : MonoBehaviour
             speed = currentStats.Speed,
             damage = Damage,
             maxLength = currentStats.Range,
-            direction = transform.up,
-            maxAngle = currentStats.Angle,
+            direction = GetProjectileDirection(),
+            maxAngle = usesSweepFire ? 0f : currentStats.Angle,
         };
     }
 
@@ -247,8 +251,8 @@ public class Weapon : MonoBehaviour
             speed = projectileStats.Speed,
             damage = projectileStats.Damage * identicalWeaponDamageMultiplier,
             maxLength = projectileStats.Range,
-            direction = transform.up,
-            maxAngle = currentStats.Angle,
+            direction = GetProjectileDirection(),
+            maxAngle = usesSweepFire ? 0f : currentStats.Angle,
         };
     }
 
@@ -311,13 +315,7 @@ public class Weapon : MonoBehaviour
     public virtual void SetIdenticalWeaponCount(int count)
     {
         int weaponCount = Mathf.Max(1, count);
-        bool isSpray = weaponData != null
-            && weaponData.DamageType == EnemyDamageType.Spray;
-
-        SetIdenticalWeaponMultipliers(
-            weaponCount,
-            isSpray ? 1f : weaponCount,
-            isSpray ? weaponCount : 1f);
+        SetIdenticalWeaponMultipliers(weaponCount, weaponCount, 1f);
     }
 
     protected void SetIdenticalWeaponMultipliers(
@@ -355,6 +353,53 @@ public class Weapon : MonoBehaviour
 
     protected virtual void OnLevelApplied()
     {
+        ConfigureSweepFire();
+    }
+
+    private void ConfigureSweepFire()
+    {
+        WeaponMetaConfig metaConfig = weaponData != null
+            ? weaponData.WeaponMetaConfig
+            : null;
+        if (metaConfig == null)
+        {
+            usesSweepFire = false;
+            return;
+        }
+
+        WeaponMetaRuntimeStats metaStats = metaConfig.GetRuntimeStats(0);
+        bool wasUsingSweepFire = usesSweepFire;
+        usesSweepFire = metaStats.UsesSweepFire;
+        sweepTraversalDuration = Mathf.Max(
+            0.02f,
+            metaStats.SweepTraversalDuration);
+        sweepSpeedCurve = metaStats.SweepSpeedCurve;
+
+        if (usesSweepFire && !wasUsingSweepFire)
+            sweepStartTime = Time.time;
+    }
+
+    private Vector3 GetProjectileDirection()
+    {
+        Vector3 initialDirection = Quaternion.Euler(
+            0f,
+            0f,
+            currentStats.InitialDirectionAngle) * transform.up;
+
+        if (!usesSweepFire || currentStats.Angle <= 0f)
+            return initialDirection;
+
+        float traversalProgress = Mathf.PingPong(
+            (Time.time - sweepStartTime) / sweepTraversalDuration,
+            1f);
+        float curveProgress = sweepSpeedCurve != null
+            ? Mathf.Clamp01(sweepSpeedCurve.Evaluate(traversalProgress))
+            : traversalProgress;
+        float angle = Mathf.Lerp(
+            -currentStats.Angle,
+            currentStats.Angle,
+            curveProgress);
+        return Quaternion.Euler(0f, 0f, angle) * initialDirection;
     }
 
     public virtual void AbleToShoot(bool newAble)

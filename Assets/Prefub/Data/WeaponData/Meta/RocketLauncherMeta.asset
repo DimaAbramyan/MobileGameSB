@@ -16,6 +16,7 @@ MonoBehaviour:
   projectileSlots:
   - id: e28d1b77ff384a7ba21ccc62c7bbba9c
     projectile: {fileID: 11400000, guid: 05f4d13aa8afeb645a99dc7733027f61, type: 2}
+    spawnedByAnotherProjectile: 0
   maxLevels: 1
   levels:
   - basicStats:
@@ -23,7 +24,8 @@ MonoBehaviour:
       damage: 0
       range: 8
       projectileSpeed: 2
-      angle: 0
+      angle: 10
+      initialDirectionAngle: 180
     contracts:
     - rid: 3397718812562292832
   references:
@@ -32,7 +34,7 @@ MonoBehaviour:
     - rid: 3397718812562292832
       type: {class: BurstFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
       data:
-        volleysPerActivation: 1
+        volleysPerActivation: 3
         projectilesPerVolley: 1
         delayBetweenVolleys: 0.15
         spreadAngle: 0

@@ -16,14 +16,16 @@ MonoBehaviour:
   projectileSlots:
   - id: 797f47d8d4e04985884762487f4e6a7b
     projectile: {fileID: 11400000, guid: 56753496d89a8b246bcc8d2b99fa8931, type: 2}
+    spawnedByAnotherProjectile: 0
   maxLevels: 1
   levels:
   - basicStats:
-      reloadTime: 2
+      reloadTime: 0.5
       damage: 4
       range: 7
       projectileSpeed: 2
       angle: 0
+      initialDirectionAngle: 0
     contracts: []
   references:
     version: 2

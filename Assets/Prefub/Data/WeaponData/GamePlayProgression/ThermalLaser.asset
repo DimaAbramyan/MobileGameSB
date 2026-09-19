@@ -14,12 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThermalLaserData
   reloadTimeByLevel: []
   angleByLevel: []
+  initialDirectionAngleByLevel: []
   damageByLevel: []
   rangeByLevel: []
   speedByLevel: []
   levelConfigs:
   - reloadTime: 0.2
     angle: 0
+    initialDirectionAngle: 0
     damage: 8
     range: 20
     speed: 0
@@ -31,6 +33,7 @@ MonoBehaviour:
     targetSearchRadius: 0
   - reloadTime: 0.18
     angle: 0
+    initialDirectionAngle: 0
     damage: 10
     range: 20
     speed: 0
@@ -42,6 +45,7 @@ MonoBehaviour:
     targetSearchRadius: 0
   - reloadTime: 0.16
     angle: 0
+    initialDirectionAngle: 0
     damage: 12
     range: 20
     speed: 0
@@ -53,6 +57,7 @@ MonoBehaviour:
     targetSearchRadius: 0
   - reloadTime: 0.14
     angle: 0
+    initialDirectionAngle: 0
     damage: 15
     range: 20
     speed: 0
@@ -64,6 +69,7 @@ MonoBehaviour:
     targetSearchRadius: 0
   - reloadTime: 0.12
     angle: 0
+    initialDirectionAngle: 0
     damage: 18
     range: 20
     speed: 0
@@ -77,6 +83,7 @@ MonoBehaviour:
   manualBaseStats:
     reloadTime: 0.2
     angle: 0
+    initialDirectionAngle: 0
     damage: 8
     range: 20
     speed: 0
@@ -216,6 +223,7 @@ MonoBehaviour:
   beamBlockingLayers:
     serializedVersion: 2
     m_Bits: 512
+  heatDebuffConfig: {fileID: 11400000, guid: d8cef57df70e195499bba5c05ba26eab, type: 2}
   overheatExplosionRadius: 2
   overheatExplosionDamage: 40
   transferredHeatPercent: 50

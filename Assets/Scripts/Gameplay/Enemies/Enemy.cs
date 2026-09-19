@@ -36,10 +36,16 @@ public class Enemy : MonoBehaviour, iDamagable
     private EnemyDamageType damageTypeForNextDamage = EnemyDamageType.Radiation;
     private float damageMultiplier = 1f;
     private float fireRateMultiplier = 1f;
+    private float movementSlowPercent;
+    private float temperaturePercent;
+    private bool isBurning;
     Animator animator;
     public event Action<Enemy> OnDied;
+    public event Action<EnemyDebuffThresholdEvent> OnDebuffThresholdReached;
+    public event Action<Enemy> OnBurningStarted;
     public virtual void Awake()
     {
+        isBurning = false;
         animator = GetComponent<Animator>();
         if (DoHaveBuff)
         enemyManager.AddEnemy(this);
@@ -154,6 +160,24 @@ public class Enemy : MonoBehaviour, iDamagable
 
     public float FireRateMultiplier => Mathf.Max(0.01f, fireRateMultiplier);
 
+    public float MovementSlowPercent => Mathf.Clamp(
+        movementSlowPercent,
+        0f,
+        100f);
+
+    public float MovementSpeedMultiplier => Mathf.Clamp01(
+        1f - MovementSlowPercent / 100f);
+
+    // Negative values mean cold/frozen, positive values mean accumulated heat.
+    public float TemperaturePercent => Mathf.Clamp(
+        temperaturePercent,
+        -100f,
+        100f);
+
+    public bool IsBurning => isBurning;
+
+    protected float EffectiveMoveSpeed => _speed * MovementSpeedMultiplier;
+
     public float MetalMultiplier => Mathf.Max(0.01f, metalMultiplier);
 
     public float ShieldPoints => Mathf.Max(0f, shieldPoints);
@@ -171,6 +195,70 @@ public class Enemy : MonoBehaviour, iDamagable
     public void MultiplyFireRate(float multiplier)
     {
         fireRateMultiplier *= Mathf.Max(0.01f, multiplier);
+    }
+
+    public void ApplyMovementSlow(
+        float slowPercentPerHit,
+        float maximumSlowPercent)
+    {
+        if (isDead)
+            return;
+
+        float previousMultiplier = MovementSpeedMultiplier;
+        float maximumSlow = Mathf.Clamp(maximumSlowPercent, 0f, 100f);
+        float slowPerHit = Mathf.Clamp(slowPercentPerHit, 0f, maximumSlow);
+        movementSlowPercent = Mathf.Min(
+            maximumSlow,
+            movementSlowPercent + slowPerHit);
+        temperaturePercent = -movementSlowPercent;
+
+        Rigidbody2D body = GetComponent<Rigidbody2D>();
+        if (body != null && previousMultiplier > Mathf.Epsilon)
+            body.linearVelocity *= MovementSpeedMultiplier / previousMultiplier;
+    }
+
+    public float RemoveMovementSlow(float amountPercent)
+    {
+        if (isDead || amountPercent <= 0f || movementSlowPercent <= 0f)
+            return 0f;
+
+        float previousMultiplier = MovementSpeedMultiplier;
+        float removedAmount = Mathf.Min(
+            movementSlowPercent,
+            Mathf.Max(0f, amountPercent));
+        movementSlowPercent -= removedAmount;
+        temperaturePercent = -movementSlowPercent;
+
+        Rigidbody2D body = GetComponent<Rigidbody2D>();
+        if (body != null && previousMultiplier > Mathf.Epsilon)
+            body.linearVelocity *= MovementSpeedMultiplier / previousMultiplier;
+
+        return removedAmount;
+    }
+
+    public void SetTemperaturePercent(float temperature)
+    {
+        temperaturePercent = Mathf.Clamp(temperature, -100f, 100f);
+    }
+
+    public void NotifyDebuffThresholdReached(
+        EnemyDebuffThresholdEvent thresholdEvent)
+    {
+        OnDebuffThresholdReached?.Invoke(thresholdEvent);
+    }
+
+    public void BeginBurning()
+    {
+        if (isBurning)
+            return;
+
+        isBurning = true;
+        OnBurningStarted?.Invoke(this);
+    }
+
+    public void StopBurning()
+    {
+        isBurning = false;
     }
 
     public void MultiplyShieldPoints(float multiplier)

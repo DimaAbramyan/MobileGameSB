@@ -46,9 +46,6 @@ public class PassiveWeaponSpeed : PassiveAbility
             maximumReloadMultiplier,
             minimumReloadMultiplier,
             normalizedSpeed);
-        Debug.Log("Multiplier: "+ multiplier);
-        Debug.Log(speed);
-        Debug.Log(maxSpeed);
         weaponController.SetReloadMultiplier(multiplier);
     }
 }

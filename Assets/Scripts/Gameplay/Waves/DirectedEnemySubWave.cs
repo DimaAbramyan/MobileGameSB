@@ -520,7 +520,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             && !enemy.isDead
             && target != null)
         {
-            float stepDeltaTime = Mathf.Min(Time.deltaTime, duration - elapsed);
+            float stepDeltaTime = Mathf.Min(
+                Time.deltaTime * enemy.MovementSpeedMultiplier,
+                duration - elapsed);
             elapsed += stepDeltaTime;
             float time = Mathf.Clamp01(elapsed / duration);
             float curvedTime = EvaluateCurve(
@@ -601,7 +603,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
                 && target != null)
             {
                 float stepDeltaTime = Mathf.Min(
-                    Time.deltaTime,
+                    Time.deltaTime * enemy.MovementSpeedMultiplier,
                     duration - elapsed);
                 elapsed += stepDeltaTime;
                 float time = Mathf.Clamp01(elapsed / duration);
@@ -653,7 +655,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
         while (elapsed < duration && target != null)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.deltaTime * enemy.MovementSpeedMultiplier;
             float time = Mathf.Clamp01(elapsed / duration);
             float curvedTime = EvaluateCurve(curve, time);
             SetEntranceRoutePosition(

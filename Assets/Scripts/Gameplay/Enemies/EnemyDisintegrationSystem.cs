@@ -82,7 +82,7 @@ public sealed class EnemyDisintegrationSystem : IInitializable, ITickable, IDisp
         }
     }
 
-    public void ApplyCharge(
+    public EnemyDebuffProgress ApplyCharge(
         Enemy enemy,
         float charge,
         EnemyDisintegrationProfile profile)
@@ -92,7 +92,7 @@ public sealed class EnemyDisintegrationSystem : IInitializable, ITickable, IDisp
             || enemy.isDead
             || charge <= 0f)
         {
-            return;
+            return EnemyDebuffProgress.None;
         }
 
         if (!states.TryGetValue(enemy, out ChargeState state))
@@ -104,16 +104,16 @@ public sealed class EnemyDisintegrationSystem : IInitializable, ITickable, IDisp
             trackedEnemies.Add(enemy);
         }
 
+        float previousCharge = state.Charge;
         state.Charge += charge;
         state.LastHitTime = Time.time;
         state.Profile = profile;
         states[enemy] = state;
-
-        if (state.Charge < enemy._currentHealth)
-            return;
-
-        RemoveStateAt(state.Index);
-        enemy.Dying();
+        return new EnemyDebuffProgress(
+            true,
+            previousCharge,
+            state.Charge,
+            Mathf.Max(0f, enemy._currentHealth));
     }
 
     private void HandleEnemyDestroyed(Enemy enemy)

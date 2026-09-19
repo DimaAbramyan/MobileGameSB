@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: CircularProjectileData
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
-  damage: 4
+  damage: 25
   damageType: 0
   projectilePrefab: {fileID: 5124484808078174344, guid: e54fd9f4cb694e04a8a6835c2ef504d8, type: 3}
   range: 7
-  speed: 2
+  speed: 6
   contracts:
   - rid: 3397718812562292841
   - rid: 3397718812562292842
@@ -27,9 +27,9 @@ MonoBehaviour:
     - rid: 3397718812562292841
       type: {class: ProjectileCircularChainContract, ns: , asm: Assembly-CSharp}
       data:
-        hitsPerTarget: 3
-        damagePerHit: 4
-        hitInterval: 0.02
+        hitsPerTarget: 9
+        damagePerHit: 25
+        hitInterval: 0.2
         maximumTargets: 3
         searchConeAngle: 15
         searchRange: 1.25

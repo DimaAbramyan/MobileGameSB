@@ -11,14 +11,14 @@ public sealed class DebugProgressResetPanel : MonoBehaviour
     [SerializeField] private string allResetMessage = "Прогресс, вещи и ресурсы сброшены";
 
     [InjectOptional] private LevelProgressService progressService;
-    [InjectOptional] private PlayerResourceWallet resourceWallet;
+    [Inject] private PlayerResourceWallet resourceWallet;
     [InjectOptional] private ContentProgressService contentProgressService;
 
     private LevelProgressService Progress =>
         progressService ??= new LevelProgressService();
 
     private PlayerResourceWallet Resources =>
-        resourceWallet ??= new PlayerResourceWallet();
+        resourceWallet;
 
     private ContentProgressService Content =>
         contentProgressService ??= new ContentProgressService(Progress, Resources);

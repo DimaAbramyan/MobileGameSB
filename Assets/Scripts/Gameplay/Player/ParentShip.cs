@@ -31,6 +31,8 @@ public class ParentShip : MonoBehaviour, iDamagable
     private float currentShieldPoints;
     private float currentHealthPoints;
     private float damageInvulnerableUntil;
+    private float healthRegenerationCooldownProgress = 1f;
+    private float shieldRegenerationCooldownProgress = 1f;
 
     public float MaximumHealthPoints { get; private set; }
     public float MaximumShieldPoints { get; private set; }
@@ -43,6 +45,10 @@ public class ParentShip : MonoBehaviour, iDamagable
         intangibleState != null && intangibleState.IsActive;
     public bool IsDamageInvulnerable =>
         Time.time < damageInvulnerableUntil;
+    public float HealthRegenerationCooldownProgress =>
+        healthRegenerationCooldownProgress;
+    public float ShieldRegenerationCooldownProgress =>
+        shieldRegenerationCooldownProgress;
 
     #region Events
     public event Action<float> OnHealthChanged;
@@ -51,6 +57,8 @@ public class ParentShip : MonoBehaviour, iDamagable
     public event Action OnShieldRegenerationStarted;
     public event Action OnHealthFullyRegenerated;
     public event Action OnShieldFullyRegenerated;
+    public event Action<float> OnHealthRegenerationCooldownProgressChanged;
+    public event Action<float> OnShieldRegenerationCooldownProgressChanged;
     public event Action<float> OnDamageTaken;
     public event Action OnDied;
 
@@ -161,6 +169,35 @@ public class ParentShip : MonoBehaviour, iDamagable
     public void NotifyShieldFullyRegenerated()
     {
         OnShieldFullyRegenerated?.Invoke();
+    }
+
+    public void SetHealthRegenerationCooldownProgress(float progress)
+    {
+        SetRegenerationCooldownProgress(
+            ref healthRegenerationCooldownProgress,
+            progress,
+            OnHealthRegenerationCooldownProgressChanged);
+    }
+
+    public void SetShieldRegenerationCooldownProgress(float progress)
+    {
+        SetRegenerationCooldownProgress(
+            ref shieldRegenerationCooldownProgress,
+            progress,
+            OnShieldRegenerationCooldownProgressChanged);
+    }
+
+    private static void SetRegenerationCooldownProgress(
+        ref float currentProgress,
+        float progress,
+        Action<float> changed)
+    {
+        float normalizedProgress = Mathf.Clamp01(progress);
+        if (Mathf.Approximately(currentProgress, normalizedProgress))
+            return;
+
+        currentProgress = normalizedProgress;
+        changed?.Invoke(currentProgress);
     }
 
     public void AddMaxHealthPoints(float addedHealth)

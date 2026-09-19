@@ -23,12 +23,12 @@ public sealed class LevelSelectionDetailsWindow : MonoBehaviour
     [FormerlySerializedAs("metalRewardText")]
     [SerializeField] private TMP_Text goldRewardText;
     [SerializeField] private TMP_Text coreRewardText;
-    [SerializeField] private string rewardFormat = "Награда: золото {0}, ядра {1}";
+    [SerializeField] private string rewardFormat = "Награда: золото {0}, чипы {1}";
     [SerializeField] private string repeatRewardFormat =
-        "Повторная награда: золото {0}, ядра {1}";
+        "Повторная награда: золото {0}, чипы {1}";
     [FormerlySerializedAs("metalRewardFormat")]
     [SerializeField] private string goldRewardFormat = "Золото: {0}";
-    [SerializeField] private string coreRewardFormat = "Ядра: {0}";
+    [SerializeField] private string coreRewardFormat = "Чипы: {0}";
 
     [Header("Buttons")]
     [SerializeField] private Button startButton;

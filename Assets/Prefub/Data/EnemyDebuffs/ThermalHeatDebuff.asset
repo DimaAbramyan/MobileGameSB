@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c599fe6eba6069144b7aea41b2fd775d, type: 3}
+  m_Name: ThermalHeatDebuff
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHeatDebuffConfig
+  thresholdMode: 1
+  thresholdPercent: 100
+  thresholdAction: 1
+  triggerOncePerEnemy: 1
+  coolingDelay: 0.5
+  coolingPercentPerSecond: 25
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 512
+  explosionRadius: 2
+  explosionDamage: 40
+  transferredHeatPercent: 50
+  explosionPrefab: {fileID: 5676898141782820409, guid: e5300a10c7f354047a8a476acb44ac55, type: 3}
+  burningDuration: 3
+  burningDamagePerTick: 5
+  burningDamageInterval: 0.5

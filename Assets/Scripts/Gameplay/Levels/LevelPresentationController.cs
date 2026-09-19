@@ -35,8 +35,8 @@ public sealed class LevelPresentationController : MonoBehaviour
     private readonly List<RuntimeBackgroundObject> backgroundObjects = new();
     private EventInstance musicInstance;
     private bool hasMusicInstance;
-    private int viewportWidth;
-    private int viewportHeight;
+    private Rect lastGameplayViewport;
+    private bool hasGameplayViewport;
 
     private void Awake()
     {
@@ -142,14 +142,19 @@ public sealed class LevelPresentationController : MonoBehaviour
                 Mathf.Abs(topRight.y - layerPosition.y)));
     }
 
-    private static float GetAtLeastViewportSize(
-        float configuredSize,
-        float minimumViewportSize)
+    private static float GetUniformViewportScale(
+        Vector2 configuredSize,
+        Vector2 minimumViewportSize)
     {
-        float sign = configuredSize < 0f ? -1f : 1f;
-        return sign * Mathf.Max(
-            Mathf.Abs(configuredSize),
-            minimumViewportSize);
+        float configuredWidth = Mathf.Abs(configuredSize.x);
+        float configuredHeight = Mathf.Abs(configuredSize.y);
+        if (configuredWidth <= Mathf.Epsilon || configuredHeight <= Mathf.Epsilon)
+            return 1f;
+
+        return Mathf.Max(
+            1f,
+            minimumViewportSize.x / configuredWidth,
+            minimumViewportSize.y / configuredHeight);
     }
 
     private void Start()
@@ -351,8 +356,15 @@ public sealed class LevelPresentationController : MonoBehaviour
 
     private void Update()
     {
-        if (viewportWidth != Screen.width || viewportHeight != Screen.height)
+        Camera gameplayCamera = Camera.main;
+        if (gameplayCamera != null
+            && (!hasGameplayViewport
+                || !ApproximatelyEqual(
+                    gameplayCamera.pixelRect,
+                    lastGameplayViewport)))
+        {
             ResizeParallaxLayersToViewport();
+        }
 
         UpdateRandomBackgroundObjects();
         UpdateParallaxLayers();
@@ -364,8 +376,8 @@ public sealed class LevelPresentationController : MonoBehaviour
         if (gameplayCamera == null)
             return;
 
-        viewportWidth = Screen.width;
-        viewportHeight = Screen.height;
+        lastGameplayViewport = gameplayCamera.pixelRect;
+        hasGameplayViewport = true;
 
         for (int i = parallaxLayers.Count - 1; i >= 0; i--)
         {
@@ -379,15 +391,22 @@ public sealed class LevelPresentationController : MonoBehaviour
             Vector2 minimumViewportSize = GetMinimumViewportSize(
                 layer.Transform,
                 gameplayCamera);
+            float uniformScale = GetUniformViewportScale(
+                layer.ConfiguredSize,
+                minimumViewportSize);
             layer.Transform.localScale = new Vector3(
-                GetAtLeastViewportSize(
-                    layer.ConfiguredSize.x,
-                    minimumViewportSize.x),
-                GetAtLeastViewportSize(
-                    layer.ConfiguredSize.y,
-                    minimumViewportSize.y),
+                layer.ConfiguredSize.x * uniformScale,
+                layer.ConfiguredSize.y * uniformScale,
                 1f);
         }
+    }
+
+    private static bool ApproximatelyEqual(Rect left, Rect right)
+    {
+        return Mathf.Approximately(left.x, right.x)
+            && Mathf.Approximately(left.y, right.y)
+            && Mathf.Approximately(left.width, right.width)
+            && Mathf.Approximately(left.height, right.height);
     }
 
     private void UpdateParallaxLayers()

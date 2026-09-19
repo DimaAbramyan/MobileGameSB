@@ -48,6 +48,8 @@ High-level vision, terminology and project-wide decisions.
 
 Fundamental gameplay rules and player experience.
 
+- [[Core Pillars]]
+    
 - [[Core-Gameplay]]
     
 - [[Game-Loop]]
@@ -63,7 +65,6 @@ Fundamental gameplay rules and player experience.
 - [[Buffs]]
     
 - [[Difficulty]]
-    
 
 `[[Combat]]` is the main document for bullet hell behaviour, projectile pressure, dodging and combat readability.
 
@@ -96,7 +97,7 @@ Individual ships:
 
 Weapon systems, restrictions and interactions.
 
-- [[Weapons]]
+- [[Weapons-Definition]]
     
 - [[Weapon-Rules]]
     
@@ -546,7 +547,7 @@ See:
 | Core gameplay             | [[Core-Gameplay]]        |
 | Bullet hell combat        | [[Combat]]               |
 | Ships                     | [[Ships]]                |
-| Weapons                   | [[Weapons]]              |
+| Weapons                   | [[Weapons-Definition]]              |
 | Damage types              | [[Damage-Types]]         |
 | Enemies                   | [[Enemies]]              |
 | Levels and waves          | [[Levels]] / [[Waves]]   |

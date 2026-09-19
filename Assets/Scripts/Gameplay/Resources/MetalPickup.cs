@@ -41,7 +41,7 @@ public sealed class MetalPickup : Buff
         }
 
         isCollected = true;
-        resourceWallet.Add(MetalAmount, 0);
+        resourceWallet.Add(ResourceKind.Metal, MetalAmount);
         Destroy(gameObject);
         return true;
     }

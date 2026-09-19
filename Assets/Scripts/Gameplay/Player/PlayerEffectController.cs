@@ -19,6 +19,7 @@ public enum PlayerEffectType
     TeamFireRate,
     TeamMagnetBoost,
     TeamInvulnerability,
+    TeamBarrier,
     TeamMetalDropBoost,
     AbilityCooldownReset,
     BlackHoleActive,
@@ -67,6 +68,12 @@ public sealed class PlayerEffect
     public float DurationNormalized => !IsTimed
         ? 1f
         : Mathf.Clamp01(RemainingDuration / TotalDuration);
+    public float ProgressNormalized => hasCustomProgress
+        ? customProgressNormalized
+        : DurationNormalized;
+
+    private bool hasCustomProgress;
+    private float customProgressNormalized = 1f;
 
     internal PlayerEffect(
         PlayerEffectType type,
@@ -102,6 +109,12 @@ public sealed class PlayerEffect
 
         RemainingDuration = Mathf.Max(0f, RemainingDuration - deltaTime);
         return RemainingDuration <= 0f;
+    }
+
+    internal void SetProgressNormalized(float value)
+    {
+        hasCustomProgress = true;
+        customProgressNormalized = Mathf.Clamp01(value);
     }
 }
 

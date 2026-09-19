@@ -58,7 +58,15 @@ public class FightingInstaller : MonoInstaller
             .AsSingle()
             .NonLazy();
 
+        Container.BindInterfacesAndSelfTo<EnemyTemperatureController>()
+            .AsSingle()
+            .NonLazy();
+
         Container.BindInterfacesAndSelfTo<EnemyDisintegrationSystem>()
+            .AsSingle()
+            .NonLazy();
+
+        Container.BindInterfacesAndSelfTo<EnemyDebuffController>()
             .AsSingle()
             .NonLazy();
     }

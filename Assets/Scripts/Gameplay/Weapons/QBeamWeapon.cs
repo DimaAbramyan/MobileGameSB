@@ -3,7 +3,7 @@ using Zenject;
 
 public sealed class QBeamWeapon : ContinuousBeamWeapon
 {
-    [Inject] private EnemyDisintegrationSystem enemyDisintegrationSystem;
+    [Inject] private EnemyDebuffController enemyDebuffController;
 
     protected override bool TryGetBeamBlockingLayers(
         out LayerMask blockingLayers)
@@ -28,14 +28,16 @@ public sealed class QBeamWeapon : ContinuousBeamWeapon
     {
         QBeamData data = weaponData as QBeamData;
         if (data == null
-            || enemyDisintegrationSystem == null
+            || enemyDebuffController == null
+            || data.DisintegrationDebuffConfig == null
             || enemy.HasActiveShield)
             return false;
 
-        enemyDisintegrationSystem.ApplyCharge(
+        enemyDebuffController.Apply(
             enemy,
+            data.DisintegrationDebuffConfig,
             data.GetChargePerHit(Level),
-            data.CreateDisintegrationProfile());
+            Owner);
         return true;
     }
 }

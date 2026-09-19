@@ -22,6 +22,7 @@ MonoBehaviour:
   - rid: 3397718808922161235
   - rid: 3397718808922161236
   - rid: 3397718808922161237
+  - rid: 3397718965780480086
   references:
     version: 2
     RefIds:
@@ -41,3 +42,9 @@ MonoBehaviour:
         disableColliderAfterFirstPhysicsStep: 0
         fadeBeforeDespawn: 0
         fadeDuration: 0.5
+    - rid: 3397718965780480086
+      type: {class: ProjectileEnemyDebuffsContract, ns: , asm: Assembly-CSharp}
+      data:
+        debuffs:
+        - debuff: {fileID: 11400000, guid: f4d5bf69e639736418c63855c867f86b, type: 2}
+          amountPerHit: 5

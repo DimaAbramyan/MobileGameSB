@@ -22,6 +22,7 @@ public class ShieldRegeneration : MonoBehaviour
 
         shieldRegenCooldown = parentShip.ShipData.ShieldRegenCooldown;
         shieldRegenRate = parentShip.ShipData.ShieldRegenRatePercent;
+        lastDamageTime = float.NegativeInfinity;
 
         parentShip.OnDamagePipeline += OnDamageTaken;
     }
@@ -30,6 +31,7 @@ public class ShieldRegeneration : MonoBehaviour
     {
         lastDamageTime = Time.time;
         isRegenerating = false;
+        UpdateCooldownProgress();
         return damage;
     }
 
@@ -37,6 +39,8 @@ public class ShieldRegeneration : MonoBehaviour
     {
         if (parentShip == null)
             return;
+
+        UpdateCooldownProgress();
 
         if (!CanRegenerate)
         {
@@ -74,5 +78,16 @@ public class ShieldRegeneration : MonoBehaviour
     {
         if (parentShip != null)
             parentShip.OnDamagePipeline -= OnDamageTaken;
+    }
+
+    private void UpdateCooldownProgress()
+    {
+        if (parentShip == null)
+            return;
+
+        float progress = shieldRegenCooldown <= 0f
+            ? 1f
+            : (Time.time - lastDamageTime) / shieldRegenCooldown;
+        parentShip.SetShieldRegenerationCooldownProgress(progress);
     }
 }

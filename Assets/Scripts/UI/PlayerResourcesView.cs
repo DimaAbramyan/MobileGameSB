@@ -9,33 +9,35 @@ public sealed class PlayerResourcesView : MonoBehaviour
     [SerializeField] private string metalFormat = "{0}";
     [SerializeField] private string coresFormat = "{0}";
 
-    [InjectOptional] private PlayerResourceWallet wallet;
-
-    private PlayerResourceWallet Wallet =>
-        wallet ??= new PlayerResourceWallet();
+    [Inject] private PlayerResourceWallet wallet;
 
     private void OnEnable()
     {
-        Wallet.OnChanged += Refresh;
-        Refresh(Wallet.Metal, Wallet.Cores);
+        wallet.OnResourceChanged += Refresh;
+        Refresh(wallet.Get(ResourceKind.Metal));
+        Refresh(wallet.Get(ResourceKind.Chip));
     }
 
     private void OnDisable()
     {
-        Wallet.OnChanged -= Refresh;
+        wallet.OnResourceChanged -= Refresh;
     }
 
     public void Refresh()
     {
-        Refresh(Wallet.Metal, Wallet.Cores);
+        Refresh(wallet.Get(ResourceKind.Metal));
+        Refresh(wallet.Get(ResourceKind.Chip));
     }
 
-    private void Refresh(int metal, int cores)
+    private void Refresh(PlayerResource resource)
     {
-        if (metalText != null)
-            metalText.text = string.Format(metalFormat, metal);
+        if (resource == null)
+            return;
 
-        if (coresText != null)
-            coresText.text = string.Format(coresFormat, cores);
+        if (resource.Kind == ResourceKind.Metal && metalText != null)
+            metalText.text = string.Format(metalFormat, resource.Amount);
+
+        if (resource.Kind == ResourceKind.Chip && coresText != null)
+            coresText.text = string.Format(coresFormat, resource.Amount);
     }
 }

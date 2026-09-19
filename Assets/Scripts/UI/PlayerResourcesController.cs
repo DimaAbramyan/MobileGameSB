@@ -6,29 +6,70 @@ public sealed class PlayerResourcesController : MonoBehaviour
 {
     [SerializeField] private TMP_Text metalAmountText;
     [SerializeField] private TMP_Text goldAmountText;
+    [SerializeField] private TMP_Text chipAmountText;
 
-    [InjectOptional] private PlayerResourceWallet wallet;
+    private PlayerResourceWallet wallet;
+    private bool isSubscribed;
 
-    private PlayerResourceWallet Wallet =>
-        wallet ??= new PlayerResourceWallet();
+    [Inject]
+    private void Construct(PlayerResourceWallet injectedWallet)
+    {
+        if (wallet == injectedWallet)
+            return;
+
+        Unsubscribe();
+        wallet = injectedWallet;
+        Subscribe();
+    }
 
     private void OnEnable()
     {
-        Wallet.OnResourcesChanged += Refresh;
-        Refresh(Wallet.Metal, Wallet.Gold, Wallet.Cores);
+        Subscribe();
     }
 
     private void OnDisable()
     {
-        Wallet.OnResourcesChanged -= Refresh;
+        Unsubscribe();
     }
 
-    private void Refresh(int metal, int gold, int cores)
+    private void Subscribe()
     {
-        if (metalAmountText != null)
-            metalAmountText.text = metal.ToString();
+        if (!isActiveAndEnabled || wallet == null || isSubscribed)
+            return;
 
-        if (goldAmountText != null)
-            goldAmountText.text = gold.ToString();
+        wallet.OnResourceChanged += Refresh;
+        isSubscribed = true;
+        RefreshAll();
+    }
+
+    private void Unsubscribe()
+    {
+        if (!isSubscribed || wallet == null)
+            return;
+
+        wallet.OnResourceChanged -= Refresh;
+        isSubscribed = false;
+    }
+
+    private void RefreshAll()
+    {
+        Refresh(wallet.Get(ResourceKind.Metal));
+        Refresh(wallet.Get(ResourceKind.Gold));
+        Refresh(wallet.Get(ResourceKind.Chip));
+    }
+
+    private void Refresh(PlayerResource resource)
+    {
+        if (resource == null)
+            return;
+
+        if (resource.Kind == ResourceKind.Metal && metalAmountText != null)
+            metalAmountText.text = resource.Amount.ToString();
+
+        if (resource.Kind == ResourceKind.Gold && goldAmountText != null)
+            goldAmountText.text = resource.Amount.ToString();
+
+        if (resource.Kind == ResourceKind.Chip && chipAmountText != null)
+            chipAmountText.text = resource.Amount.ToString();
     }
 }

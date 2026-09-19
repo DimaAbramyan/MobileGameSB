@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adb675bc5663fd64ea99558cab71ba3b, type: 3}
+  m_Name: ResourceCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceCatalog
+  metal: {fileID: 11400000, guid: 39791fc56a386974489c648a2b762d2f, type: 2}
+  gold: {fileID: 11400000, guid: 2f9a49b11dbd58c4cb3f923662a24fd2, type: 2}
+  chip: {fileID: 11400000, guid: 0ff9c95433cc4c74ab1915bc33a02ec3, type: 2}

@@ -16,6 +16,7 @@ MonoBehaviour:
   projectileSlots:
   - id: 232df04a9376462789d389ff154d1ee8
     projectile: {fileID: 11400000, guid: b66509a6ff831244bb193a6b95ebbe86, type: 2}
+    spawnedByAnotherProjectile: 0
   maxLevels: 1
   levels:
   - basicStats:
@@ -24,7 +25,36 @@ MonoBehaviour:
       range: 10
       projectileSpeed: 8
       angle: 5
-    contracts: []
+    contracts:
+    - rid: 3397718921078898777
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 3397718921078898777
+      type: {class: SweepFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        traversalDuration: 0.5
+        speedCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4

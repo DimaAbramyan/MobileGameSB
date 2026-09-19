@@ -8,6 +8,7 @@ public class ProjectManagerInstaller : MonoInstaller
     [SerializeField] private LevelCatalog levelCatalog;
     [SerializeField] private HullCatalog hullCatalog;
     [SerializeField] private WeaponCatalog weaponCatalog;
+    [SerializeField] private ResourceCatalog resourceCatalog;
     [SerializeField] private AudioServiceHost audioHostPrefab;
     [SerializeField] private AudioVolumeSettings audioVolumeSettings = new();
 
@@ -29,6 +30,10 @@ public class ProjectManagerInstaller : MonoInstaller
 
         Container.Bind<WeaponCatalog>()
                  .FromInstance(weaponCatalog)
+                 .AsSingle();
+
+        Container.Bind<ResourceCatalog>()
+                 .FromInstance(resourceCatalog)
                  .AsSingle();
 
         Container.Bind<ContentCatalogService>()

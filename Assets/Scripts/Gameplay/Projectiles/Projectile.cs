@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 using Zenject;
 public class Projectile : MonoBehaviour
@@ -33,10 +34,12 @@ public class Projectile : MonoBehaviour
     private iDamagable ignoredDamageTarget;
     private bool hasSecondaryProjectileRuntimeStats;
     private ProjectileRuntimeStats secondaryProjectileRuntimeStats;
+    private IReadOnlyList<EnemyDebuffApplication> enemyDebuffs;
     public ParentShip Owner { get; set; }
     Vector3 startPosition;
     public float GetDamage() => damage;
     public float GetSpeed() => speed;
+    public IReadOnlyList<EnemyDebuffApplication> EnemyDebuffs => enemyDebuffs;
 
     public void Awake()
     {
@@ -75,6 +78,7 @@ public class Projectile : MonoBehaviour
         ignoredDamageTarget = null;
         hasSecondaryProjectileRuntimeStats = false;
         secondaryProjectileRuntimeStats = default;
+        enemyDebuffs = null;
         runtimeBehaviors?.Reset();
         runtimeBehaviors = null;
         transform.localScale = initialScale;
@@ -155,6 +159,7 @@ public class Projectile : MonoBehaviour
             runtimeConfig.secondaryProjectileDamage,
             runtimeConfig.secondaryProjectileRange,
             runtimeConfig.secondaryProjectileSpeed);
+        enemyDebuffs = runtimeConfig.enemyDebuffs;
         RestoreColliderStates();
 
         if (spriteRenderer != null)
