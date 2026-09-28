@@ -6,7 +6,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     IEnemyBurstAttackExecutor,
     IEnemyBurstAttackSettingsOverrideReceiver
 {
-    [Inject] private DiContainer container;
+    [Inject] private EnemyProjectileEcsSpawner projectileSpawner;
 
     [SerializeField] private EnemyBullet projectilePrefab;
     [SerializeField] private Transform projectileSpawnPoint;
@@ -26,7 +26,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         && enemy != null
         && !enemy.isDead
         && projectilePrefab != null
-        && container != null;
+        && projectileSpawner != null;
 
     public EnemyBurstAttackSettings BurstAttackSettings => burstAttackSettings;
 
@@ -113,21 +113,12 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             else
                 projectileDirection.Normalize();
 
-            EnemyBullet projectile = container.InstantiatePrefabForComponent<EnemyBullet>(
-                projectilePrefab,
-                spawnPosition,
-                Quaternion.identity,
-                null);
-            projectile.SetDamageMultiplier(enemy.DamageMultiplier);
-            projectile.Launch(projectileDirection);
-
-            float angle = Mathf.Atan2(
-                projectileDirection.y,
-                projectileDirection.x) * Mathf.Rad2Deg;
-            projectile.transform.rotation = Quaternion.Euler(
-                0f,
-                0f,
-                angle + 90f);
+            if (!projectileSpawner.TrySpawn(
+                    projectilePrefab,
+                    spawnPosition,
+                    projectileDirection,
+                    enemy.DamageMultiplier))
+                return false;
         }
 
         return true;

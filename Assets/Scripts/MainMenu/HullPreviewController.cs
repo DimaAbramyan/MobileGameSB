@@ -44,9 +44,7 @@ public sealed class HullPreviewController : MonoBehaviour
     private void Awake()
     {
         DisablePreviewRootRaycasts();
-        MoveToPreviewHost();
-        ConfigurePreviewSurface();
-        CreatePreviewCamera();
+        EnsurePreviewResources();
     }
 
     private void DisablePreviewRootRaycasts()
@@ -77,11 +75,7 @@ public sealed class HullPreviewController : MonoBehaviour
         Clear();
         RestoreMainMenuCameraMask();
 
-        if (renderTexture != null)
-        {
-            renderTexture.Release();
-            Destroy(renderTexture);
-        }
+        ReleaseRenderTexture();
 
         if (previewCamera != null)
             Destroy(previewCamera.gameObject);
@@ -104,6 +98,9 @@ public sealed class HullPreviewController : MonoBehaviour
     {
         Clear();
         if (hull == null || hull.Prefab == null)
+            return;
+
+        if (!EnsurePreviewResources())
             return;
 
         previewInstance = Instantiate(hull.Prefab, Vector3.zero, Quaternion.identity);
@@ -167,6 +164,26 @@ public sealed class HullPreviewController : MonoBehaviour
         transform.SetAsLastSibling();
     }
 
+    private bool EnsurePreviewResources()
+    {
+        MoveToPreviewHost();
+        ConfigurePreviewSurface();
+        EnsureRenderTexture();
+
+        if (previewCamera == null)
+            CreatePreviewCamera();
+        else
+        {
+            previewCamera.targetTexture = renderTexture;
+            ExcludePreviewLayerFromMainMenuCamera();
+        }
+
+        if (previewImage != null)
+            previewImage.texture = renderTexture;
+
+        return previewCamera != null && previewImage != null && renderTexture != null;
+    }
+
     private void ConfigurePreviewSurface()
     {
         Transform existingSurface = transform.Find(PreviewSurfaceName);
@@ -193,14 +210,12 @@ public sealed class HullPreviewController : MonoBehaviour
 
     private void CreatePreviewCamera()
     {
-        renderTexture = new RenderTexture(textureResolution, textureResolution, 24)
-        {
-            name = "Hull Preview Render Texture",
-            antiAliasing = 1
-        };
-        renderTexture.Create();
+        EnsureRenderTexture();
+        if (renderTexture == null)
+            return;
 
         GameObject cameraObject = new GameObject("Hull Preview Camera");
+        cameraObject.transform.SetParent(transform, true);
         previewCamera = cameraObject.AddComponent<Camera>();
         previewCamera.orthographic = true;
         previewCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -211,16 +226,50 @@ public sealed class HullPreviewController : MonoBehaviour
 
         ExcludePreviewLayerFromMainMenuCamera();
 
-        previewImage.texture = renderTexture;
+        if (previewImage != null)
+            previewImage.texture = renderTexture;
+    }
+
+    private void EnsureRenderTexture()
+    {
+        if (renderTexture != null && renderTexture.IsCreated())
+            return;
+
+        ReleaseRenderTexture();
+        renderTexture = new RenderTexture(textureResolution, textureResolution, 24)
+        {
+            name = "Hull Preview Render Texture",
+            antiAliasing = 1
+        };
+        renderTexture.Create();
+    }
+
+    private void ReleaseRenderTexture()
+    {
+        if (renderTexture == null)
+            return;
+
+        renderTexture.Release();
+        Destroy(renderTexture);
+        renderTexture = null;
     }
 
     private void ExcludePreviewLayerFromMainMenuCamera()
     {
         if (mainMenuCamera == null)
         {
+            shouldRestoreMainMenuCameraMask = false;
+            mainMenuCamera = Camera.main;
+        }
+
+        if (mainMenuCamera == null)
+        {
             Debug.LogError("Hull preview requires the main menu camera reference.", this);
             return;
         }
+
+        if (shouldRestoreMainMenuCameraMask)
+            return;
 
         mainMenuCameraCullingMask = mainMenuCamera.cullingMask;
         mainMenuCamera.cullingMask = mainMenuCameraCullingMask & ~(1 << previewLayer);

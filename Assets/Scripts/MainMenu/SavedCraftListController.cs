@@ -28,6 +28,7 @@ public sealed class SavedCraftListController : MonoBehaviour
     public event Action<SaveShip> ShipSelected;
     public event Action<SaveShip> FocusedShipChanged;
     public SaveShip SelectedShip => selectedShip;
+      public SaveShip FocusedShip => focusedShip;
 
     public string GetFocusedShipName()
     {
@@ -143,6 +144,32 @@ public sealed class SavedCraftListController : MonoBehaviour
     {
         EditCraft(selectedShip ?? focusedShip);
     }
+
+      public bool TryDeleteFocusedCraft(out string deletedShipName)
+      {
+          deletedShipName = null;
+          if (!ValidateConfiguration())
+              return false;
+
+          SaveShip shipToDelete = focusedShip ?? selectedShip;
+          if (shipToDelete == null || string.IsNullOrWhiteSpace(shipToDelete.shipName))
+              return false;
+
+          if (!saveManager.TryDeleteShip(shipToDelete.shipName, out string error))
+          {
+              Debug.LogWarning(error, this);
+              return false;
+          }
+
+          deletedShipName = shipToDelete.shipName;
+          selectedShipName = null;
+          selectedShip = null;
+          SetSelectedCraft(null);
+          SetFocusedShip(null);
+          ShipSelected?.Invoke(null);
+          Refresh();
+          return true;
+      }
 
     public void EditCraft(SaveShip ship)
     {

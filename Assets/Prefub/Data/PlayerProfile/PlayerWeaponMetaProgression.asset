@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d40134aa2458d5408f53a165f78068e, type: 3}
   m_Name: PlayerWeaponMetaProgression
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWeaponMetaProgressionConfig
-  weapons: []
+  weapons:
+  - weapon: {fileID: 11400000, guid: 7434c02295631a143a91cd43717b71df, type: 2}
+    level: 0

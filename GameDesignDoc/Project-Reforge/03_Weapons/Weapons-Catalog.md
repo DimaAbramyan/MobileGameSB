@@ -5,7 +5,8 @@ Every weapon entry should use the following structure:
 ```text
 ## Weapon Name
 
-**Rank:**  
+**Rank:**
+**Rarity**  
 **Weapon Type:**  
 **Damage Type:**  
 **Effects:**  
@@ -16,8 +17,8 @@ Short description of the weapon and its defining mechanic.
 | Rarity\Damage Type | Kinetic                         | Explosion                                                         | Plasma                                                             | Resonance                 | Electric                              | Chemical                            |
 | ------------------ | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------- | ------------------------------------- | ----------------------------------- |
 | Common             | [[#MiniGun\|MiniGun]]           | [[#Piercing Explosive Projectile\|Piercing Explosive Projectile]] | [[#PlasmaGun\|PlasmaGun]], [[#Continuous Laser\|Continuous Laser]] | [[#Microwave\|Microwave]] |                                       |                                     |
-| Rare               | [[#Circular Saw\|Circular Saw]] | [[#Rocket Launcher\|Rocket Launcher]]                             |                                                                    |                           | [[#Ball Lightning\|Ball Lightning]]   | [[#FlameThrower\|FlameThrower]]     |
-| Epic               |                                 |                                                                   | [[#Heating Beam\|Heating Beam]]                                    | Resonance Sphere?         | [[#Chain Lightning\|Chain Lightning]] | [[#Freeze Sprayer\|Freeze Sprayer]] |
+| Rare               | [[#Drill]]                      | [[#Rocket Launcher\|Rocket Launcher]]                             |                                                                    |                           | [[#Ball Lightning\|Ball Lightning]]   | [[#FlameThrower\|FlameThrower]]     |
+| Epic               | [[#Circular Saw\|Circular Saw]] |                                                                   | [[#Heating Beam\|Heating Beam]]                                    | Resonance Sphere?         | [[#Chain Lightning\|Chain Lightning]] | [[#Freeze Sprayer\|Freeze Sprayer]] |
 | Legendary          |                                 |                                                                   | [[#Q-Beam\|Q-Beam]]                                                |                           | [[#Arc Nodes\|Arc Nodes]]             | [[#Acid Sprayer\|Acid Sprayer]]     |
 
 # Weapon Roster
@@ -25,6 +26,9 @@ Short description of the weapon and its defining mechanic.
 ## Kinetic
 
 ### MiniGun
+**Rarity:**  Common
+
+**Tier:** 1
 
 **Weapon Type:** Projectile
 
@@ -35,6 +39,9 @@ Rapidly fires physical projectiles at enemies.
 ---
 
 ### Circular Saw
+**Rarity:**  Epic
+
+**Tier:** 2
 
 **Weapon Type:** Projectile
 
@@ -47,6 +54,9 @@ Fires a spinning saw that can pass through enemies and bounce before disappearin
 ---
 
 ### Boomerang (not done yet)
+**Rarity:**  Epic
+
+**Tier:** 2
 
 **Weapon Type:** Projectile
 
@@ -55,10 +65,26 @@ Fires a spinning saw that can pass through enemies and bounce before disappearin
 Fires a projectile that travels forward and then returns toward the player.
 
 ---
+### Drill 
+**Rarity:**  Rare
+
+**Tier:** 1
+
+**Weapon Type:** Meele
+
+**Damage Type:** Kinetic
+
+On each attack decrease enemy's protection of armor. Damage incrieses multiple times by ddecreasing armor
+
+---
 
 ## Explosion
 
 ### Rocket Launcher
+
+**Rarity:**  Rare
+
+**Tier:** 2
 
 **Weapon Type:** Launcher
 
@@ -72,6 +98,10 @@ Fires homing missile by volley that explode on impact and damage enemies in an a
 
 ### Piercing Explosive Projectile
 
+**Rarity:**  Rare
+
+**Tier:** 1
+
 **Weapon Type:** Projectile
 
 **Damage Type:** Explosion
@@ -84,6 +114,9 @@ Passes through a target and detonates behind it.
 
 ## Chemical
 
+**Rarity:**  Rare
+
+**Tier:** 1
 ### FlameThrower
 
 **Weapon Type:** Spray
@@ -96,6 +129,10 @@ Sprays fire that bypass Shield and damage Armor directly. Incrieses enemy's heat
 
 ### Freeze Sprayer
 
+**Rarity:**  Epic
+
+**Tier:** 2
+
 **Weapon Type:** Spray
 
 **Damage Type:** Chemical
@@ -105,6 +142,10 @@ Sprays cryogen that bypass Shield and damage Armor directly. Slows enemy's moves
 ---
 
 ### Acid Sprayer
+
+**Rarity:**  Legendary
+
+**Tier:** 2
 
 **Weapon Type:** Spray
 
@@ -118,6 +159,11 @@ Sprays corrosive chemicals that bypass Shield and damage Armor directly. Incries
 
 ### PlasmaGun
 
+
+**Rarity:**  Common
+
+**Tier:** 1
+
 **Weapon Type:** Projectile
 
 **Damage Type:** Plasma
@@ -128,6 +174,10 @@ Fires a multiple projectiles in a fan shape.
 
 ### Continuous Laser
 
+**Rarity:**  Common
+
+**Tier:** 1
+
 **Weapon Type:** Beam
 
 **Damage Type:** Plasma
@@ -137,6 +187,10 @@ Maintains a continuous beam against a single target.
 ---
 
 ### Heating Beam
+
+**Rarity:**  Epic
+
+**Tier:** 1
 
 **Weapon Type:** Beam
 
@@ -149,6 +203,10 @@ The weapon may interact with additional heat-related effects defined in [[Weapon
 ---
 
 ### Q-Beam
+
+**Rarity:**  Legendary
+
+**Tier:** 2
 
 **Weapon Type:** Beam
 
@@ -173,6 +231,8 @@ Accumulates a charge, if the charge damages the enemy's health, he immediately d
 **Weapon Type:** Projectile
 
 **Damage Type:** Electric
+
+Tier:3
 
 Fires projectiles that deal no damage on impact and remain active for a limited time.
 
@@ -201,6 +261,15 @@ Hits one enemy and then jumps between nearby targets.
 **Damage Type:** Electric
 
 Fires a slow-moving electrical sphere that periodically attacks nearby enemies.
+
+---
+### ???
+
+**Weapon Type:** ???
+
+**Damage Type:** ???
+
+Whenever enemy dies by this effect, spread all debuffs from enemy he killed all nearby enemyes
 
 ---
 

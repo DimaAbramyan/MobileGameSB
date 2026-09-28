@@ -106,7 +106,7 @@ MonoBehaviour:
   playfieldCenter: {x: 0, y: 0}
   playfieldSize: {x: 5.625, y: 10}
   warningMaterial: {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
-  stencilReference: 89
+  stencilReference: 1
   sortingLayerName: Default
   sortingOrder: 100
   zOffset: -0.1

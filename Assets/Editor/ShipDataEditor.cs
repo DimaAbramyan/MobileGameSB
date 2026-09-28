@@ -18,6 +18,7 @@ public sealed class ShipDataEditor : Editor
     private SerializedProperty maximumEnergy;
     private SerializedProperty maximumWeaponCount;
     private SerializedProperty currentLevel;
+        private SerializedProperty abilityDamageProgressionConfig;
     private SerializedProperty shipId;
     private SerializedProperty shipMetaConfig;
 
@@ -41,6 +42,8 @@ public sealed class ShipDataEditor : Editor
         maximumEnergy = serializedObject.FindProperty("maximumEnergy");
         maximumWeaponCount = serializedObject.FindProperty("maximumWeaponCount");
         currentLevel = serializedObject.FindProperty("currentLvl");
+            abilityDamageProgressionConfig = serializedObject.FindProperty(
+                "abilityDamageProgressionConfig");
         shipId = serializedObject.FindProperty("shipId");
         shipMetaConfig = serializedObject.FindProperty("shipMetaConfig");
     }
@@ -69,6 +72,8 @@ public sealed class ShipDataEditor : Editor
         DrawShield(hasMetaConfig);
         EditorGUILayout.Space();
         DrawBuildLimits(hasMetaConfig);
+        EditorGUILayout.Space();
+        DrawAbilityDamageProgression();
         EditorGUILayout.Space();
         EditorGUILayout.PropertyField(currentLevel, new GUIContent("Start Level"));
         EditorGUILayout.PropertyField(shipId, new GUIContent("Ship ID"));
@@ -173,6 +178,29 @@ public sealed class ShipDataEditor : Editor
             maximumEnergy,
             "Maximum energy is configured in Ship Meta Config.");
         EditorGUILayout.PropertyField(maximumWeaponCount);
+    }
+
+    private void DrawAbilityDamageProgression()
+    {
+        EditorGUILayout.LabelField(
+            "Battle Ability Damage Progression",
+            EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(
+                abilityDamageProgressionConfig,
+                new GUIContent("Progression Config"));
+            if (abilityDamageProgressionConfig.objectReferenceValue == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "No config is assigned: existing inline progression remains "
+                    + "the runtime fallback.",
+                    MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.HelpBox(
+                "Each config value is an additional percent, cumulative like "
+                + "weapon progression. Select the referenced asset to edit it.",
+                MessageType.None);
     }
 
     private static void DrawMetaFieldOrInfo(

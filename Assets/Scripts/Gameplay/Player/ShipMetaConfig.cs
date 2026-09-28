@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public sealed class ShipMetaBasicStats
@@ -449,37 +450,40 @@ public sealed class DictatorShipMetaContract : ShipMetaContract
 [Serializable]
 public sealed class PrismShipMetaContract : ShipMetaContract
 {
-    [Header("Active Beam")]
-    [SerializeField, Min(0f)] private float beamDamage = 150f;
+    [Header("Active Plasma")]
+    [FormerlySerializedAs("beamDamage")]
+    [SerializeField, Min(0f)] private float plasmaDamage = 150f;
 
     [Header("Passive Damage Bonus")]
-    [SerializeField, Min(0f)] private float beamDamageBonusPercent = 15f;
-    [SerializeField, Min(0f)] private float energyDamageBonusPercent = 10f;
+    [FormerlySerializedAs("beamDamageBonusPercent")]
+    [SerializeField, Min(0f)] private float plasmaDamageBonusPercent = 15f;
+    [FormerlySerializedAs("energyDamageBonusPercent")]
+    [SerializeField, Min(0f)] private float electricDamageBonusPercent = 10f;
 
-    public override string DisplayName => "Prism Beam and Damage Passive";
-    public float BeamDamage => Mathf.Max(0f, beamDamage);
-    public float BeamDamageBonusPercent =>
-        Mathf.Max(0f, beamDamageBonusPercent);
-    public float EnergyDamageBonusPercent =>
-        Mathf.Max(0f, energyDamageBonusPercent);
+    public override string DisplayName => "Prism Plasma and Damage Passive";
+    public float PlasmaDamage => Mathf.Max(0f, plasmaDamage);
+    public float PlasmaDamageBonusPercent =>
+        Mathf.Max(0f, plasmaDamageBonusPercent);
+    public float ElectricDamageBonusPercent =>
+        Mathf.Max(0f, electricDamageBonusPercent);
 
     public void Configure(
-        float activeBeamDamage,
-        float beamBonusPercent,
-        float energyBonusPercent)
+        float activePlasmaDamage,
+        float plasmaBonusPercent,
+        float electricBonusPercent)
     {
-        beamDamage = Mathf.Max(0f, activeBeamDamage);
-        beamDamageBonusPercent = Mathf.Max(0f, beamBonusPercent);
-        energyDamageBonusPercent = Mathf.Max(0f, energyBonusPercent);
+        plasmaDamage = Mathf.Max(0f, activePlasmaDamage);
+        plasmaDamageBonusPercent = Mathf.Max(0f, plasmaBonusPercent);
+        electricDamageBonusPercent = Mathf.Max(0f, electricBonusPercent);
     }
 
     public override ShipMetaContract Clone()
     {
         var clone = new PrismShipMetaContract();
         clone.Configure(
-            BeamDamage,
-            BeamDamageBonusPercent,
-            EnergyDamageBonusPercent);
+            PlasmaDamage,
+            PlasmaDamageBonusPercent,
+            ElectricDamageBonusPercent);
         return clone;
     }
 }

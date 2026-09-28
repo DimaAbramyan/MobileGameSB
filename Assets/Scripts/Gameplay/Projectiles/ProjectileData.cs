@@ -5,7 +5,14 @@ using UnityEngine;
 public enum ProjectileDeliveryType
 {
     Projectile,
-    Beam
+    Beam,
+    Contact
+}
+
+public enum ProjectileSimulationBackend
+{
+    MonoBehaviour,
+    Entities
 }
 
 public enum ProjectileDamageTrigger
@@ -52,6 +59,24 @@ public sealed class ProjectileFlightContract : ProjectileDataContract
     public override string DisplayName => "Flight";
     public bool GrowDuringFlight => growDuringFlight;
     public Vector2 ScaleGrowthPerSecond => scaleGrowthPerSecond;
+}
+
+[Serializable]
+public sealed class ProjectileResonanceSphereContract : ProjectileDataContract
+{
+    [Header("Charge")]
+    [SerializeField, Min(0f)] private float maximumStoredDamage = 1000f;
+
+    [Header("Detonation")]
+    [SerializeField, Min(0.02f)] private float lifetime = 5f;
+    [SerializeField, Min(0f)] private float explosionRadius = 5f;
+    [SerializeField, Min(0.01f)] private float waveSpeed = 2f;
+
+    public override string DisplayName => "Resonance Sphere";
+    public float MaximumStoredDamage => Mathf.Max(0f, maximumStoredDamage);
+    public float Lifetime => Mathf.Max(0.02f, lifetime);
+    public float ExplosionRadius => Mathf.Max(0f, explosionRadius);
+    public float WaveSpeed => Mathf.Max(0.01f, waveSpeed);
 }
 
 [Serializable]
@@ -124,6 +149,11 @@ public sealed class ProjectileEnemyDebuffsContract : ProjectileDataContract
         debuffs.Add(application);
     }
 
+    public void ClearDebuffs()
+    {
+        debuffs?.Clear();
+    }
+
     public void RemoveInvalidDebuffs()
     {
         debuffs?.RemoveAll(application => application == null
@@ -151,6 +181,41 @@ public sealed class ProjectileCircularChainContract : ProjectileDataContract
     public float SearchConeAngle => Mathf.Clamp(searchConeAngle, 0f, 360f);
     public float SearchRange => Mathf.Max(0.01f, searchRange);
     public float RandomEscapeAngle => Mathf.Clamp(randomEscapeAngle, 0f, 360f);
+}
+
+/// <summary>
+/// Turns harmless Entity projectiles into Arc Nodes. Nodes belonging to the
+/// same owner and ProjectileData periodically link to nearby nodes; only the
+/// segments between nodes deal Electric damage.
+/// </summary>
+[Serializable]
+public sealed class ProjectileArcNodesContract : ProjectileDataContract
+{
+    [Header("Arc Damage")]
+    [SerializeField, Min(0f)] private float damagePerArc = 10f;
+    [SerializeField, Min(0.01f)] private float connectionRange = 4f;
+    [SerializeField, Min(0.02f)] private float pulseInterval = 0.5f;
+    [SerializeField, Range(1, 8)] private int maximumConnections = 2;
+    [SerializeField, Min(0f)] private float arcHitRadius = 0.08f;
+
+    [Header("Arc Visual")]
+    [SerializeField, Min(0f)] private float visualDuration = 0.12f;
+    [SerializeField, Min(0f)] private float visualWidth = 0.06f;
+    [SerializeField, Range(1, 16)] private int visualSegments = 5;
+    [SerializeField, Min(0f)] private float visualJitter = 0.08f;
+    [SerializeField] private Color visualColor = new(0.3f, 0.9f, 1f, 1f);
+
+    public override string DisplayName => "Arc Nodes";
+    public float DamagePerArc => Mathf.Max(0f, damagePerArc);
+    public float ConnectionRange => Mathf.Max(0.01f, connectionRange);
+    public float PulseInterval => Mathf.Max(0.02f, pulseInterval);
+    public int MaximumConnections => Mathf.Clamp(maximumConnections, 1, 8);
+    public float ArcHitRadius => Mathf.Max(0f, arcHitRadius);
+    public float VisualDuration => Mathf.Max(0f, visualDuration);
+    public float VisualWidth => Mathf.Max(0f, visualWidth);
+    public int VisualSegments => Mathf.Clamp(visualSegments, 1, 16);
+    public float VisualJitter => Mathf.Max(0f, visualJitter);
+    public Color VisualColor => visualColor;
 }
 
 [Serializable]
@@ -220,6 +285,15 @@ public sealed class ProjectileBeamContract : ProjectileDataContract
     public IReadOnlyList<GameObject> ImpactEffects => impactEffects;
 }
 
+[Serializable]
+public sealed class ProjectileContactAreaContract : ProjectileDataContract
+{
+    [SerializeField] private ContactArea contactArea;
+
+    public override string DisplayName => "Contact Area";
+    public ContactArea ContactArea => contactArea;
+}
+
 public readonly struct ProjectileRuntimeStats
 {
     public ProjectileRuntimeStats(float damage, float range, float speed)
@@ -239,6 +313,7 @@ public sealed class ProjectileData : ScriptableObject
 {
     [Header("Delivery")]
     [SerializeField] private ProjectileDeliveryType deliveryType;
+    [SerializeField] private ProjectileSimulationBackend simulationBackend;
 
     [Header("Direct Damage")]
     [SerializeField, Min(0f)] private float damage = 1f;
@@ -252,6 +327,8 @@ public sealed class ProjectileData : ScriptableObject
     [SerializeReference] private List<ProjectileDataContract> contracts = new();
 
     public ProjectileDeliveryType DeliveryType => deliveryType;
+    public ProjectileSimulationBackend SimulationBackend => simulationBackend;
+    public bool UsesEntities => simulationBackend == ProjectileSimulationBackend.Entities;
     public Projectile ProjectilePrefab => projectilePrefab;
     public float Damage => Mathf.Max(0f, damage);
     public EnemyDamageType DamageType => damageType;
@@ -311,7 +388,7 @@ public sealed class ProjectileData : ScriptableObject
             runtimeConfig.enemyDebuffs = enemyDebuffs.Debuffs;
         }
 
-        if (TryGetContract(out ProjectileCircularChainContract circularChain))
+          if (TryGetContract(out ProjectileCircularChainContract circularChain))
         {
             runtimeConfig.contactMode = ProjectileContactMode.CircularChain;
             runtimeConfig.circularChainHitsPerTarget =
@@ -326,7 +403,24 @@ public sealed class ProjectileData : ScriptableObject
             runtimeConfig.circularChainSearchRange = circularChain.SearchRange;
             runtimeConfig.circularChainRandomEscapeAngle =
                 circularChain.RandomEscapeAngle;
-        }
+          }
+
+          if (TryGetContract(out ProjectileArcNodesContract arcNodes))
+          {
+              runtimeConfig.isArcNode = true;
+              runtimeConfig.contactMode = ProjectileContactMode.Ignore;
+              runtimeConfig.damageType = EnemyDamageType.Electric;
+              runtimeConfig.arcNodesDamagePerArc = arcNodes.DamagePerArc;
+              runtimeConfig.arcNodesConnectionRange = arcNodes.ConnectionRange;
+              runtimeConfig.arcNodesPulseInterval = arcNodes.PulseInterval;
+              runtimeConfig.arcNodesMaximumConnections = arcNodes.MaximumConnections;
+              runtimeConfig.arcNodesHitRadius = arcNodes.ArcHitRadius;
+              runtimeConfig.arcNodesVisualDuration = arcNodes.VisualDuration;
+              runtimeConfig.arcNodesVisualWidth = arcNodes.VisualWidth;
+              runtimeConfig.arcNodesVisualSegments = arcNodes.VisualSegments;
+              runtimeConfig.arcNodesVisualJitter = arcNodes.VisualJitter;
+              runtimeConfig.arcNodesVisualColor = arcNodes.VisualColor;
+          }
 
         if (TryGetContract(out ProjectileLifetimeContract lifetime))
         {
@@ -335,6 +429,19 @@ public sealed class ProjectileData : ScriptableObject
                 lifetime.DisableColliderAfterFirstPhysicsStep;
             runtimeConfig.fadeDuringLifetime = lifetime.FadeBeforeDespawn;
             runtimeConfig.fadeDuration = lifetime.FadeDuration;
+        }
+
+        if (TryGetContract(
+                out ProjectileResonanceSphereContract resonanceSphere))
+        {
+            runtimeConfig.isResonanceSphere = true;
+            runtimeConfig.resonanceSphereMaximumStoredDamage =
+                resonanceSphere.MaximumStoredDamage;
+            runtimeConfig.resonanceSphereExplosionRadius =
+                resonanceSphere.ExplosionRadius;
+            runtimeConfig.resonanceSphereWaveSpeed = resonanceSphere.WaveSpeed;
+            runtimeConfig.projectileLifetime = resonanceSphere.Lifetime;
+            runtimeConfig.contactMode = ProjectileContactMode.Ignore;
         }
 
         if (TryGetContract(out ProjectileExplosionContract explosion))

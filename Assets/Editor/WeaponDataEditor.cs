@@ -326,10 +326,6 @@ public sealed class WeaponDataEditor : Editor
                     levelBonus,
                     "delayBetweenVolleysRatePercent",
                     "Delay Between Volleys Rate");
-                DrawBonusField(
-                    levelBonus,
-                    "spreadAnglePercent",
-                    "Spread Angle");
             }
 
             if (usesTargetingBonuses)
@@ -364,10 +360,15 @@ public sealed class WeaponDataEditor : Editor
         }
     }
 
-    private void DrawDpsHint(WeaponData weaponData, int levelIndex)
-    {
-        WeaponRuntimeStats stats = weaponData.GetRuntimeStats(levelIndex);
-        float damage = stats.Damage;
+      private void DrawDpsHint(WeaponData weaponData, int levelIndex)
+      {
+          WeaponRuntimeStats stats = weaponData.GetRuntimeStats(levelIndex);
+          float damage = stats.Damage;
+          int fanProjectileCount = weaponData.WeaponMetaConfig != null
+              && weaponData.WeaponMetaConfig.GetLevel(0).TryGetContract(
+                  out FanFireWeaponMetaContract fanFire)
+              ? fanFire.ProjectileCount
+              : 1;
         bool usesContinuousDamage = UsesContinuousContact();
         float continuousInterval = continuousDamageInterval.floatValue;
         if (weaponData.TryGetPrimaryProjectileRuntimeStats(
@@ -397,21 +398,25 @@ public sealed class WeaponDataEditor : Editor
             }
         }
 
-        float damagePerActivation = damage
-            * stats.VolleysPerActivation
-            * stats.ProjectilesPerVolley;
+          int volleys = Mathf.Max(1, stats.VolleysPerActivation);
+          int projectilesPerActivation = volleys
+              * Mathf.Max(1, stats.ProjectilesPerVolley)
+              * fanProjectileCount;
+          float attackCycleDuration = stats.ReloadTime
+              + (volleys - 1) * Mathf.Max(0f, stats.DelayBetweenVolleys);
+          float damagePerActivation = damage * projectilesPerActivation;
         float dpsInterval = usesContinuousDamage
             ? continuousInterval
-            : stats.ReloadTime;
+            : attackCycleDuration;
         string formula = usesContinuousDamage
             ? "Damage / Continuous Damage Interval"
-            : "Damage per activation / Reload Time";
+            : "Damage per activation / Attack Cycle";
         string dps = dpsInterval <= 0f
             ? "—"
             : (damagePerActivation / dpsInterval).ToString("0.##");
-        string shotsPerSecond = stats.ReloadTime <= 0f
+        string shotsPerSecond = attackCycleDuration <= 0f
             ? "—"
-            : (1f / stats.ReloadTime).ToString("0.##");
+            : (projectilesPerActivation / attackCycleDuration).ToString("0.##");
 
         EditorGUILayout.HelpBox(
             $"Effective DPS: {dps} ({formula})",
@@ -529,7 +534,6 @@ public sealed class WeaponDataEditor : Editor
         float delayRate = GetCumulativeBonus(
             "delayBetweenVolleysRatePercent",
             levelIndex);
-        float spread = GetCumulativeBonus("spreadAnglePercent", levelIndex);
         float targets = GetCumulativeBonus("maxTargetsPercent", levelIndex);
         float searchRadius = GetCumulativeBonus(
             "targetSearchRadiusPercent",
@@ -545,8 +549,7 @@ public sealed class WeaponDataEditor : Editor
         {
             summary += $"\nVolleys {volleys:+0.##;-0.##;0}% | "
                 + $"Projectiles {projectiles:+0.##;-0.##;0}% | "
-                + $"Volley Rate {delayRate:+0.##;-0.##;0}% | "
-                + $"Spread {spread:+0.##;-0.##;0}%";
+                + $"Volley Rate {delayRate:+0.##;-0.##;0}%";
         }
 
         if (usesTargetingBonuses)
@@ -615,13 +618,9 @@ public sealed class WeaponDataEditor : Editor
             float delayRate = GetCumulativeBonus(
                 "delayBetweenVolleysRatePercent",
                 levelIndex);
-            float spread = GetCumulativeBonus(
-                "spreadAnglePercent",
-                levelIndex);
             summary += $"\nVolleys {volleys:+0.##;-0.##;0}% | "
                 + $"Projectiles {projectiles:+0.##;-0.##;0}% | "
-                + $"Volley Rate {delayRate:+0.##;-0.##;0}% | "
-                + $"Spread {spread:+0.##;-0.##;0}%";
+                + $"Volley Rate {delayRate:+0.##;-0.##;0}%";
         }
 
         EditorGUILayout.HelpBox(summary, MessageType.None);

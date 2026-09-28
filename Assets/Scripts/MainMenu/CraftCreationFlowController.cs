@@ -652,6 +652,24 @@ public sealed class CraftCreationFlowController : MonoBehaviour
         return true;
     }
 
+    public bool TryValidateCurrentCraft(out string error)
+    {
+        if (SelectedHull == null || SelectedHull.Data == null)
+        {
+            error = "Сначала выберите корпус корабля.";
+            return false;
+        }
+
+        if (!TryCreateWeaponSaveData(out WeaponDataSer[] weapons, out error))
+            return false;
+
+        return ShipBuildValidator.TryValidate(
+            SelectedHull.Data,
+            weapons,
+            out error,
+            WeaponSlotCount);
+    }
+
     private bool AssignFocusedWeaponToSlot()
     {
         if (string.IsNullOrEmpty(focusedWeaponSlotId) || focusedWeapon == null)
@@ -660,7 +678,7 @@ public sealed class CraftCreationFlowController : MonoBehaviour
         if (!AssignWeaponToSlot(focusedWeaponSlotId, focusedWeapon))
             return false;
 
-        ClearFocus();
+        ClearFocusedWeaponSlot();
         return true;
     }
 
@@ -769,17 +787,22 @@ public sealed class CraftCreationFlowController : MonoBehaviour
 
     private void ClearFocus()
     {
-        bool hadFocusedSlot = !string.IsNullOrEmpty(focusedWeaponSlotId);
+        ClearFocusedWeaponSlot();
+
         bool hadFocusedWeapon = focusedWeapon != null;
-
-        focusedWeaponSlotId = null;
         focusedWeapon = null;
-
-        if (hadFocusedSlot)
-            WeaponSlotFocusChanged?.Invoke(null);
 
         if (hadFocusedWeapon)
             WeaponFocusChanged?.Invoke(null);
+    }
+
+    private void ClearFocusedWeaponSlot()
+    {
+        if (string.IsNullOrEmpty(focusedWeaponSlotId))
+            return;
+
+        focusedWeaponSlotId = null;
+        WeaponSlotFocusChanged?.Invoke(null);
     }
 
     private void SetFocusedWeapon(WeaponContentDefinition weapon)

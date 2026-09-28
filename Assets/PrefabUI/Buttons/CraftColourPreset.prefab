@@ -1,0 +1,166 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5236285769693501374
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 133273080839120167, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_Name
+      value: CraftColourPreset
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8316185095570588544, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 133273080839120167, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2881952444058915987}
+  m_SourcePrefab: {fileID: 100100000, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+--- !u!114 &527223909694990924 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5762942244549426674, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+  m_PrefabInstance: {fileID: 5236285769693501374}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5292429964699382425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2ad003a2490324cb4e7fe594df6ace, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CraftUIButton
+--- !u!114 &4243111533767899855 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8235264437382720881, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+  m_PrefabInstance: {fileID: 5236285769693501374}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+--- !u!1 &5292429964699382425 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 133273080839120167, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+  m_PrefabInstance: {fileID: 5236285769693501374}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2881952444058915987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5292429964699382425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70d0a24abb0850e4db5ea9c80296aa53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CraftColourPreset
+  presetName: 
+  targetHull: {fileID: 0}
+  primaryColor: {r: 1, g: 1, b: 1, a: 1}
+  secondaryColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+  accentColor: {r: 0.25, g: 0.75, b: 1, a: 1}
+  whiteReference: {r: 1, g: 1, b: 1, a: 1}
+  grayReference: {r: 0.245, g: 0.245, b: 0.245, a: 1}
+  blueReference: {r: 0.198, g: 0.473, b: 1, a: 1}
+  tolerance: 0.05
+  craftButton: {fileID: 527223909694990924}
+  button: {fileID: 6580055630273324582}
+  shipVisual: {fileID: 4243111533767899855}
+  icon: {fileID: 0}
+  previewMaterial: {fileID: 0}
+--- !u!114 &6580055630273324582 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1439475751278850456, guid: 2aaa874895b7075479e365fe8fecc8f1, type: 3}
+  m_PrefabInstance: {fileID: 5236285769693501374}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button

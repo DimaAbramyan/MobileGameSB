@@ -33,10 +33,11 @@ public class Enemy : MonoBehaviour, iDamagable
     private EnemyShieldModifier shieldModifier;
     private bool bypassShieldForNextDamage;
     private bool hasDamageTypeForNextDamage;
-    private EnemyDamageType damageTypeForNextDamage = EnemyDamageType.Radiation;
+    private EnemyDamageType damageTypeForNextDamage = EnemyDamageType.Resonance;
     private float damageMultiplier = 1f;
     private float fireRateMultiplier = 1f;
     private float movementSlowPercent;
+    private float hullDamageVulnerabilityPercent;
     private float temperaturePercent;
     private bool isBurning;
     Animator animator;
@@ -67,7 +68,7 @@ public class Enemy : MonoBehaviour, iDamagable
         EnemyDamageProfile profile = EnemyDamageProfiles.Get(
             hasDamageTypeForNextDamage
                 ? damageTypeForNextDamage
-                : EnemyDamageType.Radiation);
+                : EnemyDamageType.Resonance);
         float hullDamage = CalculateHullDamage(t, profile);
         if (Mathf.Approximately(hullDamage, 0f))
             return;
@@ -143,7 +144,7 @@ public class Enemy : MonoBehaviour, iDamagable
 
     public void TakeDamageIgnoringShield(float damage)
     {
-        TakeDamageWithType(damage, EnemyDamageType.Radiation, true);
+        TakeDamageWithType(damage, EnemyDamageType.Resonance, true);
     }
 
     public void MultiplyHealth(float multiplier)
@@ -168,6 +169,10 @@ public class Enemy : MonoBehaviour, iDamagable
     public float MovementSpeedMultiplier => Mathf.Clamp01(
         1f - MovementSlowPercent / 100f);
 
+    public float HullDamageVulnerabilityPercent => Mathf.Max(
+        0f,
+        hullDamageVulnerabilityPercent);
+
     // Negative values mean cold/frozen, positive values mean accumulated heat.
     public float TemperaturePercent => Mathf.Clamp(
         temperaturePercent,
@@ -184,6 +189,10 @@ public class Enemy : MonoBehaviour, iDamagable
 
     public bool HasActiveShield => shieldModifier != null
         && shieldModifier.IsShieldActive;
+
+    public Vector3 DamageNumberCenter => spriteRenderer != null
+        ? spriteRenderer.bounds.center
+        : transform.position;
 
     public void MultiplyDamage(float multiplier)
     {
@@ -215,6 +224,20 @@ public class Enemy : MonoBehaviour, iDamagable
         Rigidbody2D body = GetComponent<Rigidbody2D>();
         if (body != null && previousMultiplier > Mathf.Epsilon)
             body.linearVelocity *= MovementSpeedMultiplier / previousMultiplier;
+    }
+
+    public float ApplyHullDamageVulnerability(
+        float percentPerHit,
+        float maximumPercent)
+    {
+        if (isDead || percentPerHit <= 0f)
+            return HullDamageVulnerabilityPercent;
+
+        float maximum = Mathf.Max(0f, maximumPercent);
+        hullDamageVulnerabilityPercent = Mathf.Min(
+            maximum,
+            HullDamageVulnerabilityPercent + percentPerHit);
+        return hullDamageVulnerabilityPercent;
     }
 
     public float RemoveMovementSlow(float amountPercent)
@@ -275,12 +298,15 @@ public class Enemy : MonoBehaviour, iDamagable
         bool previousHasDamageType = hasDamageTypeForNextDamage;
         EnemyDamageType previousDamageType = damageTypeForNextDamage;
         bypassShieldForNextDamage = bypassesShield;
-        hasDamageTypeForNextDamage = true;
-        damageTypeForNextDamage = damageType;
-        float healthBeforeDamage = _currentHealth;
-        try
-        {
-            TakeDamage(damage);
+          hasDamageTypeForNextDamage = true;
+          damageTypeForNextDamage = damageType;
+          float healthBeforeDamage = _currentHealth;
+          float shieldBeforeDamage = shieldModifier != null
+              ? shieldModifier.CurrentShieldPoints
+              : 0f;
+          try
+          {
+              TakeDamage(damage);
         }
         finally
         {
@@ -289,16 +315,20 @@ public class Enemy : MonoBehaviour, iDamagable
             damageTypeForNextDamage = previousDamageType;
         }
 
-        return new EnemyDamageResult(
-            healthBeforeDamage - _currentHealth);
-    }
+          return new EnemyDamageResult(
+              healthBeforeDamage - _currentHealth,
+              shieldBeforeDamage - (shieldModifier != null
+                  ? shieldModifier.CurrentShieldPoints
+                  : 0f));
+      }
 
     private float CalculateHullDamage(
         float incomingDamage,
         EnemyDamageProfile profile)
     {
         if (incomingDamage <= 0f || bypassShieldForNextDamage)
-            return incomingDamage * profile.HullMultiplier;
+            return ApplyHullDamageVulnerability(
+                incomingDamage * profile.HullMultiplier);
 
         float shieldInput = incomingDamage
             * (1f - profile.ShieldBypassFraction);
@@ -309,7 +339,15 @@ public class Enemy : MonoBehaviour, iDamagable
                 profile.ShieldMultiplier);
         float hullInput = incomingDamage * profile.ShieldBypassFraction
             + shieldOverflow;
-        return hullInput * profile.HullMultiplier;
+        return ApplyHullDamageVulnerability(hullInput * profile.HullMultiplier);
+    }
+
+    private float ApplyHullDamageVulnerability(float hullDamage)
+    {
+        if (hullDamage <= 0f)
+            return 0f;
+
+        return hullDamage * (1f + HullDamageVulnerabilityPercent / 100f);
     }
 
     public void OnDeathAnimationFinished()

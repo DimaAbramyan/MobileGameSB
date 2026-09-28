@@ -57,6 +57,15 @@ public class ShipData : ScriptableObject
     [Header("StartLevel")]
     public int currentLvl;
 
+      [Space(10)]
+      [Header("Battle Ability Damage Progression")]
+      // Kept as a serialized fallback for existing ShipData assets. New hulls use
+      // the referenced config below, matching the weapon progression workflow.
+      [SerializeField, HideInInspector] private ShipAbilityDamageProgression
+          abilityDamageProgression = new();
+      [SerializeField] private ShipAbilityDamageProgressionConfig
+          abilityDamageProgressionConfig;
+
     [Space(10)]
     [Header("Meta")]
     public int shipId;
@@ -90,6 +99,25 @@ public class ShipData : ScriptableObject
         GetMetaRuntimeStats(0).MaximumShieldPoints;
     public int MetaMaximumEnergy => GetMetaRuntimeStats(0).MaximumEnergy;
 
+      public float GetAbilityDamageMultiplier(int battleLevel)
+      {
+          if (abilityDamageProgressionConfig != null)
+              return abilityDamageProgressionConfig.GetDamageMultiplier(battleLevel);
+
+          return abilityDamageProgression != null
+              ? abilityDamageProgression.GetDamageMultiplier(battleLevel)
+              : 1f;
+      }
+
+      public ShipAbilityDamageProgressionConfig AbilityDamageProgressionConfig =>
+          abilityDamageProgressionConfig;
+
+      public void SetAbilityDamageProgressionConfig(
+          ShipAbilityDamageProgressionConfig config)
+      {
+          abilityDamageProgressionConfig = config;
+      }
+
     public void SetShipMetaConfig(ShipMetaConfig config)
     {
         shipMetaConfig = config;
@@ -102,9 +130,14 @@ public class ShipData : ScriptableObject
         shieldRegenCooldown = Mathf.Max(0f, shieldRegenCooldown);
         healthRegenRate = Mathf.Max(0f, healthRegenRate);
         shieldRegenRate = Mathf.Max(0f, shieldRegenRate);
-        maximumEnergy = Mathf.Max(0, maximumEnergy);
-        maximumWeaponCount = Mathf.Max(0, maximumWeaponCount);
-    }
+          maximumEnergy = Mathf.Max(0, maximumEnergy);
+          maximumWeaponCount = Mathf.Max(0, maximumWeaponCount);
+          abilityDamageProgression ??= new ShipAbilityDamageProgression();
+          abilityDamageProgression.EnsureLevelCount(
+              ShipAbilityDamageProgression.DefaultLevelCount);
+          abilityDamageProgressionConfig?.EnsureLevelCount(
+              ShipAbilityDamageProgression.DefaultLevelCount);
+      }
 #endif
 }
 

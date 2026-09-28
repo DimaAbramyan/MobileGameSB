@@ -22,6 +22,11 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
         new(2);
     private readonly List<MonoBehaviour> formationAttackComponents = new(2);
     private readonly List<Coroutine> movementRoutines = new();
+    private Vector3[] preparedFormationPositions = System.Array.Empty<Vector3>();
+    private int[] preparedSpawnOrder = System.Array.Empty<int>();
+    private DirectedWaveRuntimeCheckpoint[] preparedPathCheckpoints =
+        System.Array.Empty<DirectedWaveRuntimeCheckpoint>();
+    private bool hasPreparedActivationPlan;
     private Coroutine spawnRoutine;
     private Coroutine postBehaviorRoutine;
     private DirectedWaveEnemyFactory enemyFactory;
@@ -64,7 +69,28 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
         enemyBodies.Clear();
         formationPositionsByIndex.Clear();
         formationMorphSegments.Clear();
+        preparedFormationPositions = System.Array.Empty<Vector3>();
+        preparedSpawnOrder = System.Array.Empty<int>();
+        preparedPathCheckpoints =
+            System.Array.Empty<DirectedWaveRuntimeCheckpoint>();
+        hasPreparedActivationPlan = false;
         ResetRuntimeTimelineState();
+    }
+
+    public override void PrepareForActivation()
+    {
+        int effectiveEnemyCount = GetEffectiveEnemyCount();
+        preparedFormationPositions = new Vector3[effectiveEnemyCount];
+        for (int i = 0; i < effectiveEnemyCount; i++)
+            preparedFormationPositions[i] = CalculateFormationPosition(i);
+
+        preparedSpawnOrder = DirectedWaveSpawnOrderResolver.Build(
+            preparedFormationPositions,
+            spawnOrderMode,
+            spawnOrderAngle,
+            spawnOrderStartAngle);
+        preparedPathCheckpoints = BuildWorldPathCheckpoints();
+        hasPreparedActivationPlan = true;
     }
 
     public override void ActivateSubWave()
@@ -203,9 +229,16 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
     private int[] BuildSpawnOrder(int count)
     {
         count = Mathf.Max(0, count);
+        if (hasPreparedActivationPlan
+            && preparedFormationPositions.Length == count
+            && preparedSpawnOrder.Length == count)
+        {
+            return preparedSpawnOrder;
+        }
+
         Vector3[] positions = new Vector3[count];
         for (int i = 0; i < count; i++)
-            positions[i] = GetFormationPosition(i);
+            positions[i] = CalculateFormationPosition(i);
 
         return DirectedWaveSpawnOrderResolver.Build(
             positions,
@@ -807,6 +840,14 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
 
     private DirectedWaveRuntimeCheckpoint[] GetWorldPathCheckpoints()
     {
+        if (hasPreparedActivationPlan)
+            return preparedPathCheckpoints;
+
+        return BuildWorldPathCheckpoints();
+    }
+
+    private DirectedWaveRuntimeCheckpoint[] BuildWorldPathCheckpoints()
+    {
         if (!HasPhaseEntry
             || UsesIndividualEntrancePoints()
             || pathCheckpoints == null
@@ -845,6 +886,16 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
     }
 
     private Vector3 GetFormationPosition(int index)
+    {
+        if (hasPreparedActivationPlan
+            && index >= 0
+            && index < preparedFormationPositions.Length)
+            return preparedFormationPositions[index];
+
+        return CalculateFormationPosition(index);
+    }
+
+    private Vector3 CalculateFormationPosition(int index)
     {
         DirectedWaveFormationSettings settings = new(
             formationFrozen,

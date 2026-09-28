@@ -20,6 +20,7 @@ public sealed class StudioShipSelectionController : MonoBehaviour
     }
 
     [SerializeField] private SavedCraftListController savedCraftList;
+      [SerializeField] private Button deleteButton;
     [SerializeField] private ShipSlotView[] shipSlots = Array.Empty<ShipSlotView>();
     [SerializeField] private Sprite emptyShipIcon;
     [SerializeField] private Color selectedSlotColor = new Color(0.35f, 0.8f, 1f, 1f);
@@ -47,6 +48,7 @@ public sealed class StudioShipSelectionController : MonoBehaviour
         ResolveProjectDependencies();
         ResolveSavedCraftList();
         RegisterSlotButtons();
+          RegisterDeleteButton();
     }
 
     private void OnEnable()
@@ -55,15 +57,20 @@ public sealed class StudioShipSelectionController : MonoBehaviour
             return;
 
         savedCraftList.ShipSelected += SelectShip;
+          savedCraftList.FocusedShipChanged += HandleFocusedShipChanged;
         selectedShipsService.Changed += RefreshSlots;
         savedCraftList.Refresh();
         RefreshSlots();
+          RefreshDeleteButton();
     }
 
     private void OnDisable()
     {
         if (savedCraftList != null)
+          {
             savedCraftList.ShipSelected -= SelectShip;
+              savedCraftList.FocusedShipChanged -= HandleFocusedShipChanged;
+          }
 
         if (selectedShipsService != null)
             selectedShipsService.Changed -= RefreshSlots;
@@ -72,6 +79,7 @@ public sealed class StudioShipSelectionController : MonoBehaviour
     private void OnDestroy()
     {
         UnregisterSlotButtons();
+          UnregisterDeleteButton();
     }
 
     public void OpenForShipSlot(int slotIndex)
@@ -99,6 +107,24 @@ public sealed class StudioShipSelectionController : MonoBehaviour
 
         savedCraftList.EditCraft(ship);
     }
+
+      public void DeleteFocusedCraft()
+      {
+          ResolveProjectDependencies();
+          ResolveSavedCraftList();
+
+          if (savedCraftList == null
+              || !savedCraftList.TryDeleteFocusedCraft(out string deletedShipName))
+          {
+              return;
+          }
+
+          selectedShipsService?.RemoveShip(deletedShipName);
+          selectedSavedShip = null;
+          targetSlotIndex = -1;
+          RefreshSlots();
+          RefreshDeleteButton();
+      }
 
     private SaveShip GetCraftForEditing()
     {
@@ -254,6 +280,29 @@ public sealed class StudioShipSelectionController : MonoBehaviour
                 slot.Button.onClick.RemoveListener(slotHandlers[i]);
         }
     }
+
+      private void RegisterDeleteButton()
+      {
+          if (deleteButton != null)
+              deleteButton.onClick.AddListener(DeleteFocusedCraft);
+      }
+
+      private void UnregisterDeleteButton()
+      {
+          if (deleteButton != null)
+              deleteButton.onClick.RemoveListener(DeleteFocusedCraft);
+      }
+
+      private void HandleFocusedShipChanged(SaveShip ship)
+      {
+          RefreshDeleteButton();
+      }
+
+      private void RefreshDeleteButton()
+      {
+          if (deleteButton != null)
+              deleteButton.interactable = savedCraftList != null && savedCraftList.FocusedShip != null;
+      }
 
     private bool ValidateConfiguration()
     {

@@ -32,6 +32,26 @@ public class FightingInstaller : MonoInstaller
             .AsSingle()
             .NonLazy();
 
+        Container.BindInterfacesAndSelfTo<EnemyProjectileEcsSpawner>()
+            .AsSingle()
+            .NonLazy();
+
+        Container.BindInterfacesAndSelfTo<PlayerProjectileEcsSpawner>()
+            .AsSingle()
+            .NonLazy();
+
+        Container.Bind<EnemyProjectileCollisionRegistry>()
+            .FromNewComponentOnNewGameObject()
+            .WithGameObjectName("Enemy Projectile Collision Registry")
+            .AsSingle()
+            .NonLazy();
+
+        Container.Bind<PlayerProjectileCollisionRegistry>()
+            .FromNewComponentOnNewGameObject()
+            .WithGameObjectName("Player Projectile Collision Registry")
+            .AsSingle()
+            .NonLazy();
+
         Container.Bind<WaveManager>()
             .FromComponentInHierarchy()
             .AsSingle();
@@ -43,6 +63,11 @@ public class FightingInstaller : MonoInstaller
         Container.Bind<DealDamageManager>()
             .AsSingle()
             .IfNotBound();
+
+        Container.Bind<DamageNumberController>()
+            .FromComponentInHierarchy()
+            .AsSingle()
+            .NonLazy();
 
         Container.Bind<ShipKnockbackService>()
             .AsSingle()
@@ -62,11 +87,15 @@ public class FightingInstaller : MonoInstaller
             .AsSingle()
             .NonLazy();
 
-        Container.BindInterfacesAndSelfTo<EnemyDisintegrationSystem>()
-            .AsSingle()
-            .NonLazy();
+          Container.BindInterfacesAndSelfTo<EnemyDisintegrationSystem>()
+              .AsSingle()
+              .NonLazy();
 
-        Container.BindInterfacesAndSelfTo<EnemyDebuffController>()
+          Container.BindInterfacesAndSelfTo<EnemyPeriodicDamageSystem>()
+              .AsSingle()
+              .NonLazy();
+
+          Container.BindInterfacesAndSelfTo<EnemyDebuffController>()
             .AsSingle()
             .NonLazy();
     }

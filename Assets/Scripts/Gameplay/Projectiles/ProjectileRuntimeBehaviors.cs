@@ -47,6 +47,21 @@ public class ProjectileRuntimeConfig
     public float circularChainSearchConeAngle = 15f;
     public float circularChainSearchRange = 1.25f;
     public float circularChainRandomEscapeAngle = 15f;
+    public bool isResonanceSphere;
+    public float resonanceSphereMaximumStoredDamage = 1000f;
+      public float resonanceSphereExplosionRadius = 5f;
+      public float resonanceSphereWaveSpeed = 2f;
+      public bool isArcNode;
+      public float arcNodesDamagePerArc = 10f;
+      public float arcNodesConnectionRange = 4f;
+      public float arcNodesPulseInterval = 0.5f;
+      public int arcNodesMaximumConnections = 2;
+      public float arcNodesHitRadius = 0.08f;
+      public float arcNodesVisualDuration = 0.12f;
+      public float arcNodesVisualWidth = 0.06f;
+      public int arcNodesVisualSegments = 5;
+      public float arcNodesVisualJitter = 0.08f;
+      public Color arcNodesVisualColor = Color.cyan;
 }
 
 public enum ProjectileFlightMode
@@ -63,7 +78,8 @@ public enum ProjectileContactMode
     ExplodeAndSpawn,
     BallLightning,
     CircularChain,
-    ExplodeOnContact
+    ExplodeOnContact,
+    Ignore
 }
 
 public interface IProjectileMovementBehavior
@@ -86,6 +102,21 @@ public interface IProjectileTickBehavior
 public interface IProjectileMaximumRangeBehavior
 {
     bool TryHandleMaximumRange(Projectile projectile);
+}
+
+public sealed class IgnoreContactBehavior : IProjectileContactBehavior
+{
+    public void OnEnter(iDamagable target, Projectile projectile)
+    {
+    }
+
+    public void OnStay(iDamagable target, Projectile projectile)
+    {
+    }
+
+    public void OnExit(iDamagable target, Projectile projectile)
+    {
+    }
 }
 
 public sealed class ProjectileRuntimeBehaviorSet
@@ -146,6 +177,7 @@ public sealed class ProjectileRuntimeBehaviorSet
         {
             contactBehavior = config.contactMode switch
             {
+                ProjectileContactMode.Ignore => new IgnoreContactBehavior(),
                 ProjectileContactMode.PierceOnce =>
                     new PierceOnceContactBehavior(dealDamageManager),
                 ProjectileContactMode.PierceContinuous =>

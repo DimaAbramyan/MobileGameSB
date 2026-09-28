@@ -10,7 +10,7 @@ using Zenject;
 
 public class CircleShip : Enemy
 {
-    [Inject] private DiContainer container;
+    [Inject] private EnemyProjectileEcsSpawner projectileSpawner;
     [SerializeField] private EnemyBullet EnBullet;
     private float Timer;
     private bool waveAttackControlled;
@@ -35,12 +35,11 @@ public class CircleShip : Enemy
         Timer -= Time.deltaTime * FireRateMultiplier / Timer;
         if (Timer <= 0)
         {
-            EnemyBullet projectile = container.InstantiatePrefabForComponent<EnemyBullet>(
+            projectileSpawner?.TrySpawn(
                 EnBullet,
                 transform.position,
-                Quaternion.identity,
-                null);
-            projectile.SetDamageMultiplier(DamageMultiplier);
+                Vector3.down,
+                DamageMultiplier);
             Timer = Random.Range(_fireRate/10+1, _fireRate);
         }
     }

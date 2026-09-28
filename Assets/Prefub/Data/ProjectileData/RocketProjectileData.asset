@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: RocketProjectileData
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
+  simulationBackend: 1
   damage: 0
   damageType: 0
   projectilePrefab: {fileID: 5419238205650719777, guid: 24946ad4dab5aa841badfc3509ecaaea, type: 3}

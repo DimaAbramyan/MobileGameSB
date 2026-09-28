@@ -394,6 +394,22 @@ internal sealed class DirectedWaveAttackController
 
         Vector3 startPosition = enemy.transform.position;
         Vector3 targetPosition = wave.GetPlayerTargetPosition();
+        bool stopsAtPlayerRadius =
+            settings.DiveTargetMode == DirectedWaveDiveTargetMode.StopAtPlayerRadius;
+        if (stopsAtPlayerRadius
+            && IsInsidePlayerStandoffRadius(startPosition, targetPosition))
+        {
+            if (settings.HasFireMode && CanFire(enemy, executor))
+            {
+                EnemyBurstAttackSettings attackSettings = GetBurstSettings(executor);
+                yield return FireFullAttack(enemy, executor, attackSettings);
+            }
+
+            CompleteSequentialAttack(enemy);
+            CompleteMovement(enemy);
+            yield break;
+        }
+
         Vector3 direction = targetPosition - startPosition;
         if (direction.sqrMagnitude < 0.0001f)
             direction = Vector3.down;
@@ -409,8 +425,6 @@ internal sealed class DirectedWaveAttackController
         }
 
         float diveSpeed = settings.GetRandomDiveSpeed();
-        bool stopsAtPlayerRadius =
-            settings.DiveTargetMode == DirectedWaveDiveTargetMode.StopAtPlayerRadius;
         Vector3 diveEndPosition = stopsAtPlayerRadius
             ? GetPlayerStandoffPosition(startPosition, targetPosition)
             : targetPosition + direction * settings.GetRandomDiveDepth();
@@ -880,6 +894,17 @@ internal sealed class DirectedWaveAttackController
         }
 
         return playerStandoffCenter + direction.normalized * radius;
+    }
+
+    private bool IsInsidePlayerStandoffRadius(
+        Vector3 position,
+        Vector3 playerStandoffCenter)
+    {
+        float radius = settings.PlayerStandoffRadius;
+        if (radius <= 0f)
+            return false;
+
+        return (position - playerStandoffCenter).sqrMagnitude <= radius * radius;
     }
 
     private void CompleteMovement(Enemy enemy)

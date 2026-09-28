@@ -142,6 +142,11 @@ public abstract class ActiveAbility : MonoBehaviour
         ValidateRuntimeValues();
     }
 
+    public virtual void ApplyBattleAbilityDamageMultiplier(
+        float damageMultiplier)
+    {
+    }
+
     protected virtual void ApplySpecificShipMetaStats(
         ShipMetaRuntimeStats stats)
     {

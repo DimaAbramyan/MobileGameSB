@@ -6,7 +6,7 @@
       {
         "id": "dd68d550a9a408d7",
         "type": "tabs",
-        "dimension": 49.8062015503876,
+        "dimension": 49.6124031007752,
         "children": [
           {
             "id": "99f16e06b2e6078b",
@@ -29,12 +29,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Project-Reforge/00_Project/Statistic.md",
+                "file": "Project-Reforge/03_Weapons/Weapons-Catalog.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Statistic"
+              "title": "Weapons-Catalog"
             }
           }
         ],
@@ -43,7 +43,7 @@
       {
         "id": "af689ae3aaf2da75",
         "type": "tabs",
-        "dimension": 50.1937984496124,
+        "dimension": 50.3875968992248,
         "children": [
           {
             "id": "8a1e0259a9ff35cc",
@@ -89,12 +89,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Project-Reforge/00_Project/Statistic.md",
+                "file": "Project-Reforge/03_Weapons/Weapons-Catalog.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Statistic"
+              "title": "Weapons-Catalog"
             }
           }
         ],
@@ -267,20 +267,22 @@
   },
   "active": "d0fd7aba02879b4e",
   "lastOpenFiles": [
-    "Project-Reforge/03_Weapons/Weapon-Checklist.md",
-    "Project-Reforge/00_Project/Statistic.md",
-    "Project-Reforge/03_Weapons/Weapons-Catalog.md",
-    "Project-Reforge/01_Core-Gameplay/Core Pillars.md",
-    "Project-Reforge/03_Weapons/Damage-Types.md",
     "Project-Reforge/03_Weapons/Weapons-Definition.md",
-    "Project-Reforge/03_Weapons/Без названия.canvas",
-    "Project-Reforge/01_Core-Gameplay/Core-Gameplay.md",
-    "Project-Reforge/Home.md",
-    "Vision.md",
-    "Project-Reforge/10_Art/Color Palette.md",
-    "Performance-Rules.md",
+    "Project-Reforge/00_Project/Statistic.md",
+    "Project-Reforge/03_Weapons/Weapon-Checklist.md",
+    "Project-Reforge/03_Weapons/Weapons-Catalog.md",
+    "Project-Reforge/02_Ships/Ships-Catalog.md",
+    "Project-Reforge/02_Ships/Ships Types.md",
+    "Project-Reforge/03_Weapons/Damage-Types.md",
     "Project-Reforge/AI-Agent-Workflow.md",
     "Project-Reforge/12_Technical-Design/Code/Code Style.md",
+    "Project-Reforge/10_Art/Color Palette.md",
+    "Project-Reforge/01_Core-Gameplay/Core-Gameplay.md",
+    "Project-Reforge/01_Core-Gameplay/Core Pillars.md",
+    "Project-Reforge/03_Weapons/Без названия.canvas",
+    "Project-Reforge/Home.md",
+    "Vision.md",
+    "Performance-Rules.md",
     "Project-Reforge/12_Technical-Design/Code",
     "Project-Reforge/15_Development/Releases/Release-0.md",
     "Project-Reforge/15_Development/Releases",

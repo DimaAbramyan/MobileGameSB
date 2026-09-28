@@ -165,6 +165,32 @@ public class SaveManager
         }
     }
 
+    public bool TryDeleteShip(string shipName, out string error)
+    {
+        if (!TryNormalizeExistingShipName(shipName, out string normalizedName, out error))
+            return false;
+
+        string savePath = GetSavePath(normalizedName);
+        if (!File.Exists(savePath))
+        {
+            error = $"Сохранение крафта '{normalizedName}' не найдено.";
+            return false;
+        }
+
+        try
+        {
+            File.Delete(savePath);
+            LoadAllSaves();
+            error = string.Empty;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = $"Не удалось удалить крафт '{normalizedName}': {exception.Message}";
+            return false;
+        }
+    }
+
     private bool TryNormalizeExistingShipName(
         string requestedName,
         out string normalizedName,

@@ -96,8 +96,8 @@ public sealed class WeaponMetaConfigEditor : Editor
             "Initial Projectile Direction (degrees)");
     }
 
-    private void DrawContracts(int levelIndex, SerializedProperty contracts)
-    {
+      private void DrawContracts(int levelIndex, SerializedProperty contracts)
+      {
         if (contracts == null || contracts.arraySize == 0)
             return;
 
@@ -129,8 +129,8 @@ public sealed class WeaponMetaConfigEditor : Editor
                     }
                 }
 
-                switch (value)
-                {
+                      switch (value)
+                      {
                       case BurstFireWeaponMetaContract:
                         DrawField(
                             contract,
@@ -140,35 +140,148 @@ public sealed class WeaponMetaConfigEditor : Editor
                             contract,
                             "projectilesPerVolley",
                             "Projectiles Per Volley");
-                        DrawField(
-                            contract,
-                            "delayBetweenVolleys",
-                            "Delay Between Volleys");
-                          DrawField(contract, "spreadAngle", "Spread Angle");
-                          break;
-                      case SweepFireWeaponMetaContract:
+                          DrawField(
+                              contract,
+                              "delayBetweenVolleys",
+                              "Delay Between Volleys");
+                            break;
+                        case SweepFireWeaponMetaContract:
                           DrawField(
                               contract,
                               "traversalDuration",
                               "Traversal Duration (-Angle to +Angle)");
-                          DrawField(contract, "speedCurve", "Speed Curve");
-                          break;
-                }
+                            DrawField(contract, "speedCurve", "Speed Curve");
+                            break;
+                        case FanFireWeaponMetaContract:
+                            DrawFanFireContract(contract);
+                            break;
+                  }
             }
-        }
-    }
+          }
+      }
 
-    private void DrawAddContractButton()
+      private static void DrawFanFireContract(SerializedProperty contract)
+      {
+          SerializedProperty projectileCount =
+              contract.FindPropertyRelative("projectileCount");
+          SerializedProperty totalSpreadAngle =
+              contract.FindPropertyRelative("totalSpreadAngle");
+            SerializedProperty customAngles =
+                contract.FindPropertyRelative("customAngles");
+            SerializedProperty angles = contract.FindPropertyRelative("angles");
+              SerializedProperty usePartialFan =
+                  contract.FindPropertyRelative("usePartialFan");
+              SerializedProperty cyclePartialFanGroups =
+                  contract.FindPropertyRelative("cyclePartialFanGroups");
+              SerializedProperty fanFireDisabled =
+                  contract.FindPropertyRelative("fanFireDisabled");
+              SerializedProperty partialFanGroups =
+                  contract.FindPropertyRelative("partialFanGroups");
+            if (projectileCount == null
+                || totalSpreadAngle == null
+                || customAngles == null
+                  || angles == null
+                  || usePartialFan == null
+                  || cyclePartialFanGroups == null
+                  || fanFireDisabled == null
+                  || partialFanGroups == null)
+            {
+                return;
+            }
+
+            bool fanFireEnabled = !fanFireDisabled.boolValue;
+            bool updatedFanFireEnabled = EditorGUILayout.Toggle(
+                new GUIContent("Fire In Fan"),
+                fanFireEnabled);
+            if (updatedFanFireEnabled != fanFireEnabled)
+                fanFireDisabled.boolValue = !updatedFanFireEnabled;
+
+            if (!updatedFanFireEnabled)
+            {
+                EditorGUILayout.HelpBox(
+                    "The configured fan is kept, but this weapon fires straight ahead.",
+                    MessageType.None);
+                return;
+            }
+
+            DrawField(contract, "usePartialFan", "Use Attack Pattern");
+            if (usePartialFan.boolValue)
+            {
+                EditorGUILayout.HelpBox(
+                    "Each group defines a projectile count and symmetric angle. "
+                    + "Enable Cycle Groups Per Attack to use one group per shot "
+                    + "and loop back to the first group.",
+                    MessageType.None);
+                DrawField(
+                    contract,
+                    "cyclePartialFanGroups",
+                    "Cycle Groups Per Attack");
+                EditorGUILayout.PropertyField(
+                    partialFanGroups,
+                    new GUIContent("Attack Pattern Groups"),
+                    true);
+                return;
+            }
+
+            DrawField(contract, "projectileCount", "Projectile Count");
+          DrawField(contract, "customAngles", "Custom Angles");
+          if (!customAngles.boolValue)
+          {
+              DrawField(contract, "totalSpreadAngle", "Total Spread Angle");
+              return;
+          }
+
+          int count = Mathf.Max(1, projectileCount.intValue);
+          bool initializeAllAngles = angles.arraySize <= 1 && count > 1;
+          int previousCount = angles.arraySize;
+          if (previousCount != count)
+              angles.arraySize = count;
+
+          float spread = Mathf.Max(0f, totalSpreadAngle.floatValue);
+          int firstAngleToInitialize = initializeAllAngles
+              ? 0
+              : Mathf.Min(previousCount, count);
+          for (int index = firstAngleToInitialize; index < count; index++)
+          {
+              angles.GetArrayElementAtIndex(index).floatValue =
+                  GetDefaultFanAngle(index, count, spread);
+          }
+
+          EditorGUILayout.Space(2f);
+          EditorGUILayout.LabelField("Angles", EditorStyles.miniBoldLabel);
+          EditorGUI.indentLevel++;
+          for (int index = 0; index < count; index++)
+          {
+              EditorGUILayout.PropertyField(
+                  angles.GetArrayElementAtIndex(index),
+                  new GUIContent($"Projectile {index + 1}"));
+          }
+          EditorGUI.indentLevel--;
+      }
+
+      private static float GetDefaultFanAngle(int index, int count, float spread)
+      {
+          if (count <= 1)
+              return 0f;
+
+          return Mathf.Lerp(
+              -spread * 0.5f,
+              spread * 0.5f,
+              (float)index / (count - 1));
+      }
+
+      private void DrawAddContractButton()
     {
         if (!GUILayout.Button("Add Contract"))
             return;
 
         GenericMenu menu = new();
-          List<Type> contractTypes = new()
-          {
-              typeof(BurstFireWeaponMetaContract),
-              typeof(SweepFireWeaponMetaContract)
-          };
+            List<Type> contractTypes = new()
+            {
+                typeof(BurstFireWeaponMetaContract),
+                typeof(FanFireWeaponMetaContract),
+                typeof(SweepFireWeaponMetaContract)
+            };
         contractTypes.Sort((first, second) => string.Compare(
             GetDisplayName(first),
             GetDisplayName(second),
@@ -427,6 +540,20 @@ public sealed class WeaponMetaConfigEditor : Editor
                         "scaleGrowthPerSecond",
                         "Scale Growth Per Second");
                 }
+                break;
+            case ProjectileResonanceSphereContract:
+                DrawField(
+                    contract,
+                    "maximumStoredDamage",
+                    "Maximum Stored Damage");
+                DrawField(contract, "lifetime", "Lifetime");
+                DrawField(contract, "explosionRadius", "Explosion Radius");
+                DrawField(contract, "waveSpeed", "Wave Speed");
+                EditorGUILayout.HelpBox(
+                    "The sphere does not deal contact damage. It stores damage "
+                    + "from player projectiles except Resonance, then deals the "
+                    + "stored damage once to each enemy as the wave reaches it.",
+                    MessageType.None);
                 break;
             case ProjectileHomingContract:
                 DrawField(contract, "rotationSpeed", "Rotation Speed");

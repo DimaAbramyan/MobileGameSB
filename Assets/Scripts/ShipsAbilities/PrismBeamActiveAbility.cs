@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Zenject;
 
 public sealed class PrismBeamActiveAbility : ActiveAbility
@@ -12,15 +13,19 @@ public sealed class PrismBeamActiveAbility : ActiveAbility
     [Inject] private DealDamageManager dealDamageManager;
 
     [Header("Default Meta Contract")]
+    [FormerlySerializedAs("defaultBeamDamage")]
     [SerializeField, HideInInspector, Min(0f)]
-    private float defaultBeamDamage = 150f;
+    private float defaultPlasmaDamage = 150f;
+    [FormerlySerializedAs("defaultBeamDamageBonusPercent")]
     [SerializeField, HideInInspector, Min(0f)]
-    private float defaultBeamDamageBonusPercent = 15f;
+    private float defaultPlasmaDamageBonusPercent = 15f;
+    [FormerlySerializedAs("defaultEnergyDamageBonusPercent")]
     [SerializeField, HideInInspector, Min(0f)]
-    private float defaultEnergyDamageBonusPercent = 10f;
+    private float defaultElectricDamageBonusPercent = 10f;
 
-    private PrismShipMetaContract metaContract;
-    private Coroutine chargeCoroutine;
+      private PrismShipMetaContract metaContract;
+      private Coroutine chargeCoroutine;
+      private float abilityDamageMultiplier = 1f;
 
     protected override void Awake()
     {
@@ -29,19 +34,25 @@ public sealed class PrismBeamActiveAbility : ActiveAbility
             cooldown = 12f;
     }
 
-    protected override void ApplySpecificShipMetaStats(
-        ShipMetaRuntimeStats stats)
+      protected override void ApplySpecificShipMetaStats(
+          ShipMetaRuntimeStats stats)
     {
         stats.TryGetContract(out metaContract);
-    }
+      }
+
+      public override void ApplyBattleAbilityDamageMultiplier(
+          float damageMultiplier)
+      {
+          abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
+      }
 
     public PrismShipMetaContract CreateDefaultMetaContract()
     {
         var contract = new PrismShipMetaContract();
         contract.Configure(
-            defaultBeamDamage,
-            defaultBeamDamageBonusPercent,
-            defaultEnergyDamageBonusPercent);
+            defaultPlasmaDamage,
+            defaultPlasmaDamageBonusPercent,
+            defaultElectricDamageBonusPercent);
         return contract;
     }
 
@@ -118,10 +129,10 @@ public sealed class PrismBeamActiveAbility : ActiveAbility
                 continue;
 
             dealDamageManager.DealDamage(
-                enemy,
-                activationOwner,
-                metaContract.BeamDamage,
-                EnemyDamageType.Beam);
+                  enemy,
+                  activationOwner,
+                  metaContract.PlasmaDamage * abilityDamageMultiplier,
+                  EnemyDamageType.Plasma);
         }
     }
 

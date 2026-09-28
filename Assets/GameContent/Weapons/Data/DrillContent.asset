@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e9d343bf1af68a4c8d8262a42aded13, type: 3}
+  m_Name: DrillContent
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponContentDefinition
+  id: drill
+  displayName: Drill
+  passiveAbilityDescription: Short-range kinetic drill. Deals 50 damage every 0.2
+    seconds and applies Hull Destruction.
+  activeAbilityDescription: 
+  icon: {fileID: 2462164431660002672, guid: 431c7b60d0303f741bb07acbddb5541c, type: 3}
+  prefab: {fileID: 3783366818579219487, guid: a09e58396fa84d64b9ae3e1ad4b600f0, type: 3}
+  rarity: 0
+  purchasePrice: 0
+  purchaseCoresPrice: 0
+  unlockRequirement:
+    type: 0
+    requiredPlayerLevel: 1
+    requiredCompletedLevel: {fileID: 0}
+    conditionId: 
+  isStarterUnlocked: 1
+  maxUpgradeLevel: 4
+  upgradePrices: []
+  data: {fileID: 11400000, guid: dcd917be30b786945a7dfa478dd46434, type: 2}
+  requiredPlatformTier: 1

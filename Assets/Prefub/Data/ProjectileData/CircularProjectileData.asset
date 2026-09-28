@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: CircularProjectileData
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
+  simulationBackend: 1
   damage: 25
   damageType: 0
   projectilePrefab: {fileID: 5124484808078174344, guid: e54fd9f4cb694e04a8a6835c2ef504d8, type: 3}
@@ -21,6 +22,7 @@ MonoBehaviour:
   contracts:
   - rid: 3397718812562292841
   - rid: 3397718812562292842
+  - rid: 3397719034154188889
   references:
     version: 2
     RefIds:
@@ -41,3 +43,9 @@ MonoBehaviour:
         disableColliderAfterFirstPhysicsStep: 0
         fadeBeforeDespawn: 0
         fadeDuration: 0.5
+    - rid: 3397719034154188889
+      type: {class: ProjectileEnemyDebuffsContract, ns: , asm: Assembly-CSharp}
+      data:
+        debuffs:
+        - debuff: {fileID: 11400000, guid: 15cd44a1c4950664d8bc5e6ae7a33639, type: 2}
+          amountPerHit: 2.5

@@ -6,15 +6,19 @@ public sealed class ContentCatalogService
 {
     private readonly HullCatalog hullCatalog;
     private readonly WeaponCatalog weaponCatalog;
+    private readonly List<HullContentDefinition> sortedHulls;
+    private readonly List<WeaponContentDefinition> sortedWeapons;
 
     public ContentCatalogService(HullCatalog hullCatalog, WeaponCatalog weaponCatalog)
     {
         this.hullCatalog = hullCatalog ?? throw new ArgumentNullException(nameof(hullCatalog));
         this.weaponCatalog = weaponCatalog ?? throw new ArgumentNullException(nameof(weaponCatalog));
+        sortedHulls = CreateSortedList(this.hullCatalog.Hulls);
+        sortedWeapons = CreateSortedList(this.weaponCatalog.Weapons);
     }
 
-    public IReadOnlyList<HullContentDefinition> Hulls => hullCatalog.Hulls;
-    public IReadOnlyList<WeaponContentDefinition> Weapons => weaponCatalog.Weapons;
+    public IReadOnlyList<HullContentDefinition> Hulls => sortedHulls;
+    public IReadOnlyList<WeaponContentDefinition> Weapons => sortedWeapons;
 
     public bool TryGetHull(string contentId, out HullContentDefinition hull)
     {
@@ -102,5 +106,40 @@ public sealed class ContentCatalogService
         }
 
         return false;
+    }
+
+    private static List<T> CreateSortedList<T>(IReadOnlyList<T> source)
+        where T : CraftContentDefinition
+    {
+        var result = new List<T>(source?.Count ?? 0);
+        if (source == null)
+            return result;
+
+        for (int index = 0; index < source.Count; index++)
+        {
+            T content = source[index];
+            if (content != null)
+                result.Add(content);
+        }
+
+        result.Sort(CompareContent);
+        return result;
+    }
+
+    private static int CompareContent(CraftContentDefinition first, CraftContentDefinition second)
+    {
+        int rarityComparison = first.Rarity.CompareTo(second.Rarity);
+        if (rarityComparison != 0)
+            return rarityComparison;
+
+        int nameComparison = StringComparer.OrdinalIgnoreCase.Compare(
+            first.DisplayName ?? string.Empty,
+            second.DisplayName ?? string.Empty);
+        if (nameComparison != 0)
+            return nameComparison;
+
+        return StringComparer.Ordinal.Compare(
+            first.Id ?? string.Empty,
+            second.Id ?? string.Empty);
     }
 }

@@ -34,11 +34,16 @@ public class Wave : MonoBehaviour, IWaveEncounter
 
     private List<InfoAboutSubWave> subWavesInfo;
     private readonly List<Coroutine> activationRoutines = new();
+    private readonly List<InfoAboutSubWave> pendingActivationSubWaves = new();
+    private readonly List<float> pendingActivationDelays = new();
     private int subWavesLeft;
     WaveManager waveManager;
     private WaveMetalDropSettings metalDropSettings;
     private MetalPickup metalPickupPrefab;
     private WaveMetalDropPlan metalDropPlan;
+    private bool isPrepared;
+    private bool hasValidPreparation;
+    private bool hasStarted;
 
     public IReadOnlyList<WaveSubWaveCue> ScheduledSubWaves => scheduledSubWaves;
 
@@ -53,22 +58,33 @@ public class Wave : MonoBehaviour, IWaveEncounter
 
     public void Init(WaveManager waveManager)
     {
-        this.waveManager = waveManager;
+        Prepare(waveManager);
+        Begin();
+    }
+
+    /// <summary>
+    /// Creates inactive subwaves and their static runtime plans. It is safe to
+    /// call while the encounter is preloaded, before the wave is visible.
+    /// </summary>
+    public bool Prepare(WaveManager owner)
+    {
+        if (isPrepared)
+            return hasValidPreparation;
+
+        isPrepared = true;
+        hasValidPreparation = false;
+        waveManager = owner;
 
         subWavesInfo = new List<InfoAboutSubWave>();
         activationRoutines.Clear();
-        List<InfoAboutSubWave> pendingActivationSubWaves = new();
-        List<float> pendingActivationDelays = new();
+        pendingActivationSubWaves.Clear();
+        pendingActivationDelays.Clear();
         List<WaveSubWaveCue> schedule = GetEffectiveSchedule();
-        WaveDangerWarningController dangerWarning =
-            GetComponent<WaveDangerWarningController>();
 
         if (schedule.Count == 0)
         {
-            LogWarning("No subwaves configured. Completing wave immediately.");
-            waveManager?.GoToNextWave();
-            Destroy(gameObject);
-            return;
+            LogWarning("No subwaves configured.");
+            return false;
         }
 
         subWavesLeft = 0;
@@ -107,6 +123,7 @@ public class Wave : MonoBehaviour, IWaveEncounter
             subWave.OnSubWaveCleared += WhenSubWaveCleared;
 
             instance.SetActive(false);
+            subWave.PrepareForActivation();
 
             subWavesInfo.Add(subWave);
             subWavesLeft++;
@@ -123,11 +140,37 @@ public class Wave : MonoBehaviour, IWaveEncounter
 
         if (subWavesLeft <= 0)
         {
-            LogWarning("No valid subwaves were registered. Completing wave immediately.");
+            LogWarning("No valid subwaves were registered.");
+            return false;
+        }
+
+        hasValidPreparation = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Starts the already prepared encounter. Time-based activation remains in
+    /// runtime so it begins only when this wave becomes current.
+    /// </summary>
+    public void Begin()
+    {
+        if (hasStarted)
+            return;
+
+        hasStarted = true;
+        if (!isPrepared)
+            Prepare(waveManager);
+
+        if (!hasValidPreparation)
+        {
+            LogWarning("Wave preparation failed. Completing wave immediately.");
             waveManager?.GoToNextWave();
             Destroy(gameObject);
             return;
         }
+
+        WaveDangerWarningController dangerWarning =
+            GetComponent<WaveDangerWarningController>();
 
         float warningDuration = dangerWarning != null
             && dangerWarning.ShouldPlayWarning
@@ -211,6 +254,8 @@ public class Wave : MonoBehaviour, IWaveEncounter
         }
 
         activationRoutines.Clear();
+        pendingActivationSubWaves.Clear();
+        pendingActivationDelays.Clear();
 
         if (subWavesInfo == null)
             return;

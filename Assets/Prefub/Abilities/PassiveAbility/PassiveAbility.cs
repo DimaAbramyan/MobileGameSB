@@ -8,6 +8,8 @@ public abstract class PassiveAbility : MonoBehaviour
 
     public virtual void Init(ParentShip ship) { }
     public virtual void ApplyShipMetaStats(ShipMetaRuntimeStats stats) { }
+    public virtual void ApplyBattleAbilityDamageMultiplier(
+        float damageMultiplier) { }
     public virtual void Off()
     {
         isActive = false;

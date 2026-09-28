@@ -2,11 +2,12 @@ public enum EnemyDamageType
 {
     // Explicit values preserve the meaning of already serialized weapon data.
     Kinetic = 0,
-    Beam = 1,
-    Spray = 2,
-    Energy = 3,
-    Radiation = 4,
-    Explosion = 5
+    Plasma = 1,
+    Chemical = 2,
+    Electric = 3,
+    Resonance = 4,
+    Explosion = 5,
+    Microwave = 6
 }
 
 public readonly struct EnemyDamageProfile
@@ -34,11 +35,12 @@ public static class EnemyDamageProfiles
         {
             EnemyDamageType.Kinetic => new EnemyDamageProfile(0.75f, 1.25f, 0f),
             EnemyDamageType.Explosion => new EnemyDamageProfile(0.9f, 1.1f, 0f),
-            EnemyDamageType.Radiation => new EnemyDamageProfile(1f, 1f, 0f),
-            EnemyDamageType.Energy => new EnemyDamageProfile(1.1f, 0.9f, 0f),
-            EnemyDamageType.Beam => new EnemyDamageProfile(1.25f, 0.75f, 0f),
+            EnemyDamageType.Resonance => new EnemyDamageProfile(1f, 1f, 0f),
+            EnemyDamageType.Electric => new EnemyDamageProfile(1.1f, 0.9f, 0f),
+            EnemyDamageType.Microwave => new EnemyDamageProfile(1.1f, 0.9f, 0f),
+            EnemyDamageType.Plasma => new EnemyDamageProfile(1.25f, 0.75f, 0f),
             // A full bypass leaves the shield untouched and deals damage to the hull.
-            EnemyDamageType.Spray => new EnemyDamageProfile(1f, 1f, 1f),
+            EnemyDamageType.Chemical => new EnemyDamageProfile(1f, 1f, 1f),
             _ => new EnemyDamageProfile(1f, 1f, 0f)
         };
     }

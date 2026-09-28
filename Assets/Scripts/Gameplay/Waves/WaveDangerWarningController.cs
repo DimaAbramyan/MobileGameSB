@@ -112,7 +112,7 @@ public sealed class WaveDangerWarningController : MonoBehaviour
     [Header("Rendering")]
     [Tooltip("Optional material template. The warning shader is applied automatically to prevent alpha stacking in intersections.")]
     [SerializeField] private Material warningMaterial;
-    [SerializeField, Range(1, 255)] private int stencilReference = 177;
+      [SerializeField, Range(1, 255)] private int stencilReference = 1;
     [SerializeField] private string sortingLayerName = "Default";
     [SerializeField] private int sortingOrder = 100;
     [SerializeField] private float zOffset = -0.1f;

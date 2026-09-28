@@ -6,19 +6,22 @@ public sealed class DictatorTurret : MonoBehaviour
     private ProjectilePoolController projectilePoolController;
     private EnemyManager enemyManager;
     private DictatorShipMetaContract contract;
-    private float expiresAt;
-    private float reloadRemaining;
+      private float expiresAt;
+      private float reloadRemaining;
+      private float abilityDamageMultiplier = 1f;
 
     public void Initialize(
         ParentShip sourceOwner,
         ProjectilePoolController poolController,
         EnemyManager manager,
-        DictatorShipMetaContract metaContract)
+          DictatorShipMetaContract metaContract,
+          float damageMultiplier)
     {
         owner = sourceOwner;
         projectilePoolController = poolController;
         enemyManager = manager;
-        contract = metaContract;
+          contract = metaContract;
+          abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
         expiresAt = Time.time + contract.TurretLifetime;
         reloadRemaining = 0f;
     }
@@ -72,7 +75,8 @@ public sealed class DictatorTurret : MonoBehaviour
             new ProjectileParams
             {
                 speed = contract.TurretProjectileSpeed,
-                damage = contract.TurretProjectileDamage,
+                  damage = contract.TurretProjectileDamage
+                      * GetCurrentDamageMultiplier(),
                 maxLength = contract.TurretTargetingRange,
                 maxAngle = 0f,
                 direction = direction
@@ -89,6 +93,13 @@ public sealed class DictatorTurret : MonoBehaviour
             },
             owner);
 
-        reloadRemaining = contract.TurretReloadTime;
-    }
-}
+          reloadRemaining = contract.TurretReloadTime;
+      }
+
+      private float GetCurrentDamageMultiplier()
+      {
+          return owner != null && owner.ShipData != null
+              ? owner.ShipData.GetAbilityDamageMultiplier(owner.GetLevel())
+              : abilityDamageMultiplier;
+      }
+  }

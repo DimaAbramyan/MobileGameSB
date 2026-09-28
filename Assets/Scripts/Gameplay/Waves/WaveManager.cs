@@ -16,6 +16,7 @@ public class WaveManager : MonoBehaviour
     public event Action OnWaveCleared;
     private List<GameObject> wavePrefabs;
     private List<int> waveConfigIndices;
+    private readonly List<GameObject> preloadedWaveInstances = new();
     private LevelConfig selectedLevelConfig;
     private GameObject currentWaveInstance;
     private InfoAboutSubWave currentInlineSubWave;
@@ -67,6 +68,7 @@ public class WaveManager : MonoBehaviour
         }
 
         canStartWaves = true;
+        PreloadWaves();
     }
     void Start()
     {
@@ -122,8 +124,18 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        Log($"Instantiating wave prefab: {prefab.name}", prefab);
-        currentWaveInstance = container.InstantiatePrefab(prefab, transform);
+        bool wasPreloaded = TryTakePreloadedWave(
+            currentWaveIndex,
+            out currentWaveInstance);
+        if (!wasPreloaded)
+        {
+            Log($"Instantiating wave prefab: {prefab.name}", prefab);
+            currentWaveInstance = container.InstantiatePrefab(prefab, transform);
+        }
+        else
+        {
+            Log($"Activating preloaded wave prefab: {prefab.name}", prefab);
+        }
 
         if (currentWaveInstance == null)
         {
@@ -132,14 +144,17 @@ public class WaveManager : MonoBehaviour
             return;
         }
 
-        ConfigureMetalDropsForCurrentWave();
-        ConfigureEnemyDifficultyForCurrentWave();
+        if (!wasPreloaded)
+            ConfigureWaveInstance(currentWaveInstance, currentWaveIndex);
 
         IWaveEncounter encounter =
             currentWaveInstance.GetComponent<IWaveEncounter>();
         if (encounter != null)
         {
-            encounter.Init(this);
+            if (wasPreloaded && encounter is Wave preparedWave)
+                preparedWave.Begin();
+            else
+                encounter.Init(this);
             Log(
                 $"Activated {encounter.GetType().Name}: "
                 + currentWaveInstance.name,
@@ -190,20 +205,21 @@ public class WaveManager : MonoBehaviour
         currentInlineSubWave = null;
     }
 
-    private void ConfigureMetalDropsForCurrentWave()
+    private void ConfigureMetalDrops(GameObject waveInstance, int waveIndex)
     {
         if (selectedLevelConfig == null
             || waveConfigIndices == null
-            || currentWaveIndex < 0
-            || currentWaveIndex >= waveConfigIndices.Count)
+            || waveInstance == null
+            || waveIndex < 0
+            || waveIndex >= waveConfigIndices.Count)
         {
             return;
         }
 
         WaveMetalDropSettings settings =
             selectedLevelConfig.GetWaveMetalDropSettings(
-                waveConfigIndices[currentWaveIndex]);
-        Wave wave = currentWaveInstance.GetComponent<Wave>();
+                waveConfigIndices[waveIndex]);
+        Wave wave = waveInstance.GetComponent<Wave>();
         if (wave != null)
         {
             wave.ConfigureMetalDrops(
@@ -215,19 +231,90 @@ public class WaveManager : MonoBehaviour
         if (settings.IsEnabled)
         {
             LogWarning(
-                $"Metal drop is configured for {currentWaveInstance.name}, but it has no {nameof(Wave)} component.",
-                currentWaveInstance);
+                $"Metal drop is configured for {waveInstance.name}, but it has no {nameof(Wave)} component.",
+                waveInstance);
         }
     }
 
-    private void ConfigureEnemyDifficultyForCurrentWave()
+    private void ConfigureEnemyDifficulty(GameObject waveInstance)
     {
-        if (selectedLevelConfig == null || currentWaveInstance == null)
+        if (selectedLevelConfig == null || waveInstance == null)
             return;
 
         WaveEnemyDifficultyModifier modifier =
-            currentWaveInstance.GetComponent<WaveEnemyDifficultyModifier>();
+            waveInstance.GetComponent<WaveEnemyDifficultyModifier>();
         modifier?.ConfigureLevelMultipliers(selectedLevelConfig);
+    }
+
+    private void PreloadWaves()
+    {
+        preloadedWaveInstances.Clear();
+        GameObject root = new GameObject("[Preloaded Waves]");
+        Transform preloadedWavesRoot = root.transform;
+        preloadedWavesRoot.SetParent(transform, false);
+        root.SetActive(false);
+
+        for (int waveIndex = 0; waveIndex < wavePrefabs.Count; waveIndex++)
+        {
+            GameObject prefab = wavePrefabs[waveIndex];
+            if (!CanPreload(prefab))
+            {
+                preloadedWaveInstances.Add(null);
+                continue;
+            }
+
+            GameObject instance = container.InstantiatePrefab(
+                prefab,
+                preloadedWavesRoot);
+            if (instance == null)
+            {
+                LogWarning(
+                    $"Could not preload wave prefab: {prefab.name}. It will be instantiated when needed.",
+                    prefab);
+                preloadedWaveInstances.Add(null);
+                continue;
+            }
+
+            ConfigureWaveInstance(instance, waveIndex);
+
+            Wave wave = instance.GetComponent<Wave>();
+            if (wave != null)
+                wave.Prepare(this);
+            else
+                instance.GetComponent<InfoAboutSubWave>()?.PrepareForActivation();
+
+            preloadedWaveInstances.Add(instance);
+        }
+    }
+
+    private static bool CanPreload(GameObject prefab)
+    {
+        return prefab != null
+            && (prefab.GetComponent<Wave>() != null
+                || prefab.GetComponent<InfoAboutSubWave>() != null);
+    }
+
+    private bool TryTakePreloadedWave(
+        int waveIndex,
+        out GameObject instance)
+    {
+        instance = null;
+        if (waveIndex < 0 || waveIndex >= preloadedWaveInstances.Count)
+            return false;
+
+        instance = preloadedWaveInstances[waveIndex];
+        if (instance == null)
+            return false;
+
+        preloadedWaveInstances[waveIndex] = null;
+        instance.transform.SetParent(transform, false);
+        return true;
+    }
+
+    private void ConfigureWaveInstance(GameObject waveInstance, int waveIndex)
+    {
+        ConfigureMetalDrops(waveInstance, waveIndex);
+        ConfigureEnemyDifficulty(waveInstance);
     }
     void ReturnToMap()
     {
@@ -265,5 +352,6 @@ public class WaveManager : MonoBehaviour
             StopCoroutine(waveRoutine);
 
         CleanupCurrentInlineSubWave();
+        preloadedWaveInstances.Clear();
     }
 }

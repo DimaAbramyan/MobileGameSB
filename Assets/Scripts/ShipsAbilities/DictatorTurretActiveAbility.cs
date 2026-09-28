@@ -31,7 +31,8 @@ public sealed class DictatorTurretActiveAbility : ActiveAbility
         new DictatorTurretSpawnGroup(new Vector2(0.75f, 0f))
     };
 
-    private DictatorShipMetaContract metaContract;
+      private DictatorShipMetaContract metaContract;
+      private float abilityDamageMultiplier = 1f;
 
     protected override void Awake()
     {
@@ -40,11 +41,17 @@ public sealed class DictatorTurretActiveAbility : ActiveAbility
             cooldown = 12f;
     }
 
-    protected override void ApplySpecificShipMetaStats(
+      protected override void ApplySpecificShipMetaStats(
         ShipMetaRuntimeStats stats)
     {
         stats.TryGetContract(out metaContract);
-    }
+      }
+
+      public override void ApplyBattleAbilityDamageMultiplier(
+          float damageMultiplier)
+      {
+          abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
+      }
 
     public DictatorShipMetaContract CreateDefaultMetaContract()
     {
@@ -105,9 +112,10 @@ public sealed class DictatorTurretActiveAbility : ActiveAbility
                     activationOwner.transform.rotation);
                 turret.Initialize(
                     activationOwner,
-                    projectilePoolController,
-                    enemyManager,
-                    metaContract);
+                      projectilePoolController,
+                      enemyManager,
+                      metaContract,
+                      abilityDamageMultiplier);
                 spawnedAnyTurret = true;
             }
         }

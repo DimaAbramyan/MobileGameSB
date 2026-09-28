@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: FreezeThrowerProjectile
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
+  simulationBackend: 1
   damage: 3.75
   damageType: 2
   projectilePrefab: {fileID: 6144194406446952310, guid: fb737a9d5ebd055479fda0b8f6cafb2d, type: 3}

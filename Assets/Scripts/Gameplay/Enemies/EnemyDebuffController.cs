@@ -8,16 +8,19 @@ public sealed class EnemyDebuffController : IInitializable, IDisposable
     private readonly EnemyManager enemyManager;
     private readonly EnemyTemperatureController temperatureController;
     private readonly EnemyDisintegrationSystem disintegrationSystem;
+    private readonly EnemyPeriodicDamageSystem periodicDamageSystem;
     private readonly HashSet<ThresholdKey> triggeredThresholds = new();
 
     public EnemyDebuffController(
         EnemyManager enemyManager,
         EnemyTemperatureController temperatureController,
-        EnemyDisintegrationSystem disintegrationSystem)
+        EnemyDisintegrationSystem disintegrationSystem,
+        EnemyPeriodicDamageSystem periodicDamageSystem)
     {
         this.enemyManager = enemyManager;
         this.temperatureController = temperatureController;
         this.disintegrationSystem = disintegrationSystem;
+        this.periodicDamageSystem = periodicDamageSystem;
     }
 
     public event Action<EnemyDebuffThresholdEvent> OnThresholdReached;
@@ -26,12 +29,18 @@ public sealed class EnemyDebuffController : IInitializable, IDisposable
     {
         if (enemyManager != null)
             enemyManager.OnEnemyDestroyed += HandleEnemyDestroyed;
+
+        if (periodicDamageSystem != null)
+            periodicDamageSystem.OnTickDamagedHull += HandlePeriodicDamageTickDamagedHull;
     }
 
     public void Dispose()
     {
         if (enemyManager != null)
             enemyManager.OnEnemyDestroyed -= HandleEnemyDestroyed;
+
+        if (periodicDamageSystem != null)
+            periodicDamageSystem.OnTickDamagedHull -= HandlePeriodicDamageTickDamagedHull;
 
         triggeredThresholds.Clear();
     }
@@ -73,21 +82,54 @@ public sealed class EnemyDebuffController : IInitializable, IDisposable
             EnemyHeatDebuffConfig heat => temperatureController != null
                 ? temperatureController.ApplyHeat(enemy, heat, amount, owner)
                 : EnemyDebuffProgress.None,
-            EnemyDisintegrationDebuffConfig disintegration =>
-                disintegrationSystem != null
-                    ? disintegrationSystem.ApplyCharge(
-                        enemy,
-                        amount,
-                        disintegration.CreateProfile())
-                    : EnemyDebuffProgress.None,
-            _ => EnemyDebuffProgress.None
-        };
+              EnemyDisintegrationDebuffConfig disintegration =>
+                  disintegrationSystem != null
+                      ? disintegrationSystem.ApplyCharge(
+                          enemy,
+                          amount,
+                          disintegration.CreateProfile())
+                      : EnemyDebuffProgress.None,
+              EnemyHullDestructionDebuffConfig hullDestruction =>
+                  ApplyHullDestruction(enemy, amount, hullDestruction),
+              EnemyPeriodicDamageDebuffConfig periodicDamage => periodicDamageSystem != null
+                  ? periodicDamageSystem.Apply(enemy, periodicDamage, owner)
+                  : EnemyDebuffProgress.None,
+              _ => EnemyDebuffProgress.None
+          };
 
         if (!progress.IsValid)
             return false;
 
         TryRaiseThreshold(enemy, debuff, progress);
         return true;
+    }
+
+    private static EnemyDebuffProgress ApplyHullDestruction(
+        Enemy enemy,
+        float amount,
+        EnemyHullDestructionDebuffConfig debuff)
+    {
+        float previousValue = enemy.HullDamageVulnerabilityPercent;
+        float currentValue = enemy.ApplyHullDamageVulnerability(
+            amount,
+            debuff.MaximumBonusPercent);
+        return new EnemyDebuffProgress(
+            true,
+            previousValue,
+            currentValue,
+            debuff.MaximumBonusPercent);
+    }
+
+    private void HandlePeriodicDamageTickDamagedHull(
+        Enemy enemy,
+        ParentShip owner,
+        IReadOnlyList<EnemyDebuffApplication> tickDebuffs)
+    {
+        if (tickDebuffs == null)
+            return;
+
+        for (int index = 0; index < tickDebuffs.Count; index++)
+            Apply(enemy, tickDebuffs[index], owner);
     }
 
     private void TryRaiseThreshold(

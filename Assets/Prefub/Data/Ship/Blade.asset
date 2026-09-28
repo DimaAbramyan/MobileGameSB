@@ -26,5 +26,18 @@ MonoBehaviour:
   maximumEnergy: 10
   maximumWeaponCount: 3
   currentLvl: 0
+  abilityDamageProgression:
+    damageBonusPercentByLevel:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+  abilityDamageProgressionConfig: {fileID: 11400000, guid: 1c1818485f028e443825639ef10477e9, type: 2}
   shipId: 0
   shipMetaConfig: {fileID: 11400000, guid: 2d69e91125dcfcc4b920de38a0b87a13, type: 2}

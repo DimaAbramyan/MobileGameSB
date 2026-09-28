@@ -1,12 +1,14 @@
 using UnityEngine;
 
 using System;
+using System.Collections.Generic;
 using Zenject;
 
 public class Weapon : MonoBehaviour
 {
     [Inject] DiContainer container;
     [Inject] private ProjectilePoolController projectilePoolController;
+    [Inject] private PlayerProjectileEcsSpawner playerProjectileEcsSpawner;
 
     [SerializeField] protected Projectile projectilePrefab;
     [SerializeField] protected Transform projectileSpawn;
@@ -23,14 +25,19 @@ public class Weapon : MonoBehaviour
     private int identicalWeaponCount = 1;
     private float identicalWeaponFireRateMultiplier = 1f;
     private float identicalWeaponDamageMultiplier = 1f;
-    private bool usesSweepFire;
-    private float sweepTraversalDuration = 1f;
-    private AnimationCurve sweepSpeedCurve;
-    private float sweepStartTime;
+      private bool usesSweepFire;
+      private float sweepTraversalDuration = 1f;
+      private AnimationCurve sweepSpeedCurve;
+      private float sweepStartTime;
+      private FanFireWeaponMetaContract fanFireContract;
+      private int fanFireGroupIndex;
 
-    private bool ableToShoot;
-    private bool subscribedToOwnerLevel;
-    private bool reportedUnsupportedConfiguredProjectile;
+      private bool ableToShoot;
+      private bool subscribedToOwnerLevel;
+      private bool reportedUnsupportedConfiguredProjectile;
+      private int remainingBurstVolleys;
+      private float burstDelayRemaining;
+      private float burstReloadMultiplier = 1f;
 
     public event Action<int> OnLevelChanged;
     public event Action<Weapon> OnShot;
@@ -76,6 +83,7 @@ public class Weapon : MonoBehaviour
         }
 
         ApplyLevel(level, false);
+        PrewarmEntityProjectileConfigurations();
     }
     private void HandleLevelChanged(int newLevel)
     {
@@ -98,21 +106,38 @@ public class Weapon : MonoBehaviour
             SetLevel(owner.GetLevel());
     }
 
-    public virtual bool TryToShoot()
-    {
-        if (!ableToShoot) return false;
+      public virtual bool TryToShoot()
+      {
+          if (!ableToShoot) return false;
 
-        currentReloadTime -= Time.deltaTime;
-        if (currentReloadTime <= 0f)
-        {
-            bool shotFired = Fire();
-            currentReloadTime = reloadTime;
+          if (remainingBurstVolleys > 0)
+          {
+              burstDelayRemaining -= Time.deltaTime;
+              if (burstDelayRemaining > 0f)
+                  return false;
 
-            if (shotFired)
-                RaiseShotFired();
+              Fire();
+              remainingBurstVolleys--;
+              if (remainingBurstVolleys > 0)
+              {
+                  burstDelayRemaining += GetBurstDelay();
+              }
+              else
+              {
+                  currentReloadTime = reloadTime * burstReloadMultiplier;
+              }
 
-            return true;
-        }
+              return false;
+          }
+
+          currentReloadTime -= Time.deltaTime;
+          if (currentReloadTime <= 0f)
+          {
+              bool shotFired = BeginFireSequence();
+              currentReloadTime = reloadTime;
+
+              return true;
+          }
 
         return false;
     }
@@ -122,29 +147,75 @@ public class Weapon : MonoBehaviour
         if (!ableToShoot || !gameObject.activeInHierarchy)
             return false;
 
-        bool shotFired = Fire();
-        currentReloadTime = reloadTime
+          bool shotFired = Fire();
+          currentReloadTime = reloadTime
             * Mathf.Max(0f, reloadMultiplier)
             / IdenticalWeaponFireRateMultiplier;
 
         // A forced shot deliberately does not raise OnShot, preventing trigger loops.
-        return shotFired;
-    }
+          return shotFired;
+      }
 
-    protected virtual bool Fire()
-    {
-        if (weaponData == null || projectileSpawn == null)
-            return false;
+      private bool BeginFireSequence(bool raiseShotEvent = true)
+      {
+          bool shotFired = Fire();
+          if (!shotFired)
+              return false;
 
-        if (weaponData.UsesProjectileData)
-            return FireConfiguredProjectiles();
+          if (shotFired && raiseShotEvent)
+              RaiseShotFired();
 
-        if (projectilePrefab == null)
-            return false;
+          int volleys = Mathf.Max(1, currentStats.VolleysPerActivation);
+          remainingBurstVolleys = volleys - 1;
+          if (remainingBurstVolleys <= 0)
+              return shotFired;
 
-        return TrySpawnProjectile(
-            CreateProjectileParams(),
-            CreateProjectileRuntimeConfig());
+          float volleyDelay = GetBurstDelay();
+          if (volleyDelay > 0f)
+          {
+              burstDelayRemaining = volleyDelay;
+              return shotFired;
+          }
+
+          while (remainingBurstVolleys > 0)
+          {
+              Fire();
+              remainingBurstVolleys--;
+          }
+
+          return shotFired;
+      }
+
+      private float GetBurstDelay()
+      {
+          return Mathf.Max(0f, currentStats.DelayBetweenVolleys);
+      }
+
+      protected virtual bool Fire()
+      {
+          if (weaponData == null || projectileSpawn == null)
+              return false;
+
+          bool shotFired;
+          if (weaponData.UsesProjectileData)
+          {
+              shotFired = FireConfiguredProjectiles();
+          }
+          else
+          {
+              if (projectilePrefab == null)
+                  return false;
+
+              shotFired = TryFireProjectileFan(
+                  projectilePrefab,
+                  CreateProjectileParams(),
+                  CreateProjectileRuntimeConfig());
+          }
+
+          if (shotFired)
+              AdvanceFanFirePattern();
+
+          return shotFired;
     }
 
     private bool FireConfiguredProjectiles()
@@ -164,6 +235,24 @@ public class Weapon : MonoBehaviour
                 continue;
 
             ProjectileData projectileData = projectileSlot.Projectile;
+            if (!weaponData.TryGetProjectileRuntimeStats(
+                    projectileSlot.Id,
+                    level,
+                    out _,
+                    out ProjectileRuntimeStats projectileStats))
+            {
+                continue;
+            }
+
+            ProjectileParams parameters = CreateProjectileParams(projectileStats);
+            if (projectileData.DeliveryType == ProjectileDeliveryType.Contact)
+            {
+                firedAnyProjectile |= TryFireEntityContact(
+                    projectileData,
+                    parameters);
+                continue;
+            }
+
             if (projectileData.DeliveryType != ProjectileDeliveryType.Projectile)
             {
                 ReportUnsupportedConfiguredProjectile(
@@ -178,12 +267,16 @@ public class Weapon : MonoBehaviour
                 continue;
             }
 
-            if (!weaponData.TryGetProjectileRuntimeStats(
-                    projectileSlot.Id,
-                    level,
-                    out _,
-                    out ProjectileRuntimeStats projectileStats))
+            if (projectileData.UsesEntities)
             {
+                bool hasSecondaryRuntimeStats = TryGetPrimarySecondaryProjectileRuntimeStats(
+                    projectileData,
+                    out ProjectileRuntimeStats secondaryRuntimeStats);
+                firedAnyProjectile |= TryFireEntityProjectileFan(
+                    projectileData,
+                    parameters,
+                    hasSecondaryRuntimeStats,
+                    secondaryRuntimeStats);
                 continue;
             }
 
@@ -191,9 +284,9 @@ public class Weapon : MonoBehaviour
                 projectileData.CreateRuntimeConfig();
             runtimeConfig.explosionDamage *= identicalWeaponDamageMultiplier;
             ConfigureSecondaryProjectileRuntimeStats(runtimeConfig);
-            firedAnyProjectile |= TrySpawnProjectile(
+            firedAnyProjectile |= TryFireProjectileFan(
                 projectileData.ProjectilePrefab,
-                CreateProjectileParams(projectileStats),
+                parameters,
                 runtimeConfig);
         }
 
@@ -203,11 +296,8 @@ public class Weapon : MonoBehaviour
     private void ConfigureSecondaryProjectileRuntimeStats(
         ProjectileRuntimeConfig runtimeConfig)
     {
-        if (runtimeConfig.secondaryProjectile == null
-            || !weaponData.TryGetProjectileRuntimeStats(
+        if (!TryGetSecondaryProjectileRuntimeStats(
                 runtimeConfig.secondaryProjectile,
-                level,
-                out _,
                 out ProjectileRuntimeStats secondaryStats))
         {
             return;
@@ -218,6 +308,42 @@ public class Weapon : MonoBehaviour
             * identicalWeaponDamageMultiplier;
         runtimeConfig.secondaryProjectileRange = secondaryStats.Range;
         runtimeConfig.secondaryProjectileSpeed = secondaryStats.Speed;
+    }
+
+    private bool TryGetPrimarySecondaryProjectileRuntimeStats(
+        ProjectileData primaryProjectile,
+        out ProjectileRuntimeStats secondaryStats)
+    {
+        secondaryStats = default;
+        if (primaryProjectile == null)
+            return false;
+
+        return TryGetSecondaryProjectileRuntimeStats(
+            primaryProjectile.CreateRuntimeConfig().secondaryProjectile,
+            out secondaryStats);
+    }
+
+    private bool TryGetSecondaryProjectileRuntimeStats(
+        ProjectileData secondaryProjectile,
+        out ProjectileRuntimeStats secondaryStats)
+    {
+        secondaryStats = default;
+        if (secondaryProjectile == null
+            || weaponData == null
+            || !weaponData.TryGetProjectileRuntimeStats(
+                secondaryProjectile,
+                level,
+                out _,
+                out secondaryStats))
+        {
+            return false;
+        }
+
+        secondaryStats = new ProjectileRuntimeStats(
+            secondaryStats.Damage * identicalWeaponDamageMultiplier,
+            secondaryStats.Range,
+            secondaryStats.Speed);
+        return true;
     }
 
     private void ReportUnsupportedConfiguredProjectile(string reason)
@@ -284,9 +410,9 @@ public class Weapon : MonoBehaviour
         return TrySpawnProjectile(projectilePrefab, parameters, runtimeConfig);
     }
 
-    protected bool TrySpawnProjectile(
-        Projectile projectileToSpawn,
-        ProjectileParams parameters,
+      protected bool TrySpawnProjectile(
+          Projectile projectileToSpawn,
+          ProjectileParams parameters,
         ProjectileRuntimeConfig runtimeConfig)
     {
         if (projectileToSpawn == null
@@ -304,12 +430,152 @@ public class Weapon : MonoBehaviour
         if (proj != null)
             proj.Init(parameters, runtimeConfig, owner);
 
-        return proj != null;
+          return proj != null;
+      }
+
+      private bool TryFireProjectileFan(
+          Projectile projectileToSpawn,
+          ProjectileParams baseParameters,
+          ProjectileRuntimeConfig runtimeConfig)
+      {
+            int projectileCount = GetFanProjectileCount();
+          bool firedAnyProjectile = false;
+          for (int projectileIndex = 0;
+               projectileIndex < projectileCount;
+               projectileIndex++)
+          {
+              ProjectileParams parameters = baseParameters;
+                if (UsesFanFire())
+                {
+                    float angleOffset = fanFireContract.GetAngleOffset(
+                        projectileIndex,
+                        fanFireGroupIndex);
+                  parameters.direction = Quaternion.Euler(0f, 0f, angleOffset)
+                      * baseParameters.direction;
+                  parameters.maxAngle = 0f;
+              }
+
+              firedAnyProjectile |= TrySpawnProjectile(
+                  projectileToSpawn,
+                  parameters,
+                  runtimeConfig);
+          }
+
+          return firedAnyProjectile;
+      }
+
+    protected bool TrySpawnEntityBallLightning(
+            ProjectileData projectileData,
+            ProjectileParams parameters,
+            float areaDamage,
+            float areaRadius,
+            float areaTickInterval,
+            int damageLayers)
+        {
+            if (playerProjectileEcsSpawner == null || projectileSpawn == null)
+            {
+                Debug.LogError(
+                    $"Weapon '{name}' requires {nameof(PlayerProjectileEcsSpawner)} "
+                    + "and a projectile spawn point for Ball Lightning.",
+                    this);
+                return false;
+            }
+
+            return playerProjectileEcsSpawner.TrySpawnBallLightning(
+                projectileData,
+                projectileSpawn.position,
+                parameters,
+                owner,
+                areaDamage,
+                areaRadius,
+                areaTickInterval,
+                damageLayers);
+        }
+
+    private bool TryFireEntityContact(
+        ProjectileData projectileData,
+        ProjectileParams parameters)
+    {
+        if (playerProjectileEcsSpawner == null || projectileSpawn == null)
+        {
+            Debug.LogError(
+                $"Weapon '{name}' requires {nameof(PlayerProjectileEcsSpawner)} "
+                + "and a contact spawn point for Contact delivery.",
+                this);
+            return false;
+        }
+
+        return playerProjectileEcsSpawner.TrySpawnContact(
+            projectileData,
+            projectileSpawn.position,
+            parameters,
+            owner);
     }
 
-    public virtual void Reload(float multiplier)
+      private bool TryFireEntityProjectileFan(
+          ProjectileData projectileData,
+          ProjectileParams baseParameters,
+          bool hasSecondaryRuntimeStats = false,
+          ProjectileRuntimeStats secondaryRuntimeStats = default)
+      {
+          if (playerProjectileEcsSpawner == null)
+          {
+              Debug.LogError(
+                  $"Weapon '{name}' requires {nameof(PlayerProjectileEcsSpawner)} "
+                  + "for its Entity projectile.",
+                  this);
+              return false;
+          }
+
+          int projectileCount = GetFanProjectileCount();
+          bool firedAnyProjectile = false;
+          for (int projectileIndex = 0;
+               projectileIndex < projectileCount;
+               projectileIndex++)
+          {
+              ProjectileParams parameters = baseParameters;
+              if (UsesFanFire())
+              {
+                  float angleOffset = fanFireContract.GetAngleOffset(
+                      projectileIndex,
+                      fanFireGroupIndex);
+                  parameters.direction = Quaternion.Euler(0f, 0f, angleOffset)
+                      * baseParameters.direction;
+                  parameters.maxAngle = 0f;
+              }
+
+               firedAnyProjectile |= playerProjectileEcsSpawner.TrySpawn(
+                   projectileData,
+                   projectileSpawn.position,
+                   parameters,
+                   owner,
+                   hasSecondaryRuntimeStats,
+                   secondaryRuntimeStats);
+          }
+
+          return firedAnyProjectile;
+      }
+
+    private void PrewarmEntityProjectileConfigurations()
     {
-        currentReloadTime = reloadTime * multiplier;
+        if (weaponData?.WeaponMetaConfig == null || playerProjectileEcsSpawner == null)
+            return;
+
+        IReadOnlyList<WeaponProjectileSlot> projectileSlots =
+            weaponData.WeaponMetaConfig.ProjectileSlots;
+        for (int index = 0; index < projectileSlots.Count; index++)
+        {
+            ProjectileData projectileData = projectileSlots[index]?.Projectile;
+            if (projectileData != null && projectileData.UsesEntities)
+                playerProjectileEcsSpawner.Prewarm(projectileData);
+        }
+    }
+
+      public virtual void Reload(float multiplier)
+      {
+          burstReloadMultiplier = Mathf.Max(0f, multiplier);
+          if (remainingBurstVolleys == 0)
+              currentReloadTime = reloadTime * burstReloadMultiplier;
     }
 
     public virtual void SetIdenticalWeaponCount(int count)
@@ -351,10 +617,44 @@ public class Weapon : MonoBehaviour
             OnLevelChanged?.Invoke(level);
     }
 
-    protected virtual void OnLevelApplied()
-    {
-        ConfigureSweepFire();
-    }
+      protected virtual void OnLevelApplied()
+      {
+          ConfigureSweepFire();
+          ConfigureFanFire();
+      }
+
+      private void ConfigureFanFire()
+      {
+          WeaponMetaConfig metaConfig = weaponData != null
+              ? weaponData.WeaponMetaConfig
+              : null;
+          fanFireContract = metaConfig != null
+              && metaConfig.GetLevel(0).TryGetContract(
+                  out FanFireWeaponMetaContract contract)
+              ? contract
+              : null;
+          fanFireGroupIndex = 0;
+      }
+
+      private bool UsesFanFire()
+      {
+          return fanFireContract != null && fanFireContract.IsEnabled;
+      }
+
+      private int GetFanProjectileCount()
+      {
+          return UsesFanFire()
+              ? fanFireContract.GetProjectileCount(fanFireGroupIndex)
+              : 1;
+      }
+
+      private void AdvanceFanFirePattern()
+      {
+          if (fanFireContract == null || !fanFireContract.CyclesPartialFanGroups)
+              return;
+
+          fanFireGroupIndex++;
+      }
 
     private void ConfigureSweepFire()
     {
@@ -435,8 +735,8 @@ public class Weapon : MonoBehaviour
         subscribedToOwnerLevel = false;
     }
 
-    private void OnDestroy()
-    {
-        UnsubscribeFromOwnerLevel();
-    }
+      private void OnDestroy()
+      {
+          UnsubscribeFromOwnerLevel();
+      }
 }

@@ -7,6 +7,7 @@ public sealed class WeaponSelectionListController : MonoBehaviour
     [SerializeField] private CraftUIButton craftButtonPrefab;
     [SerializeField] private Transform contentRoot;
     [SerializeField] private CraftCreationFlowController craftCreationFlow;
+    [SerializeField, Min(0.01f)] private float buttonScale = 1f;
 
     private readonly List<CraftUIButton> createdButtons = new();
     private readonly Dictionary<CraftUIButton, WeaponContentDefinition> buttonWeapons = new();
@@ -61,6 +62,7 @@ public sealed class WeaponSelectionListController : MonoBehaviour
 
             bool isOwned = contentProgressService.IsOwned(weapon);
             CraftUIButton button = Instantiate(craftButtonPrefab, contentRoot);
+            button.transform.localScale = Vector3.one * buttonScale;
             button.SetContent(weapon);
             button.SetSelected(weapon == craftCreationFlow.FocusedWeapon);
             button.SetAvailability(isOwned);

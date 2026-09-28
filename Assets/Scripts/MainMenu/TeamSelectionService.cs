@@ -81,6 +81,29 @@ public sealed class TeamSelectionService
         Changed?.Invoke();
     }
 
+    public void RemoveShip(string shipName)
+    {
+        if (string.IsNullOrWhiteSpace(shipName))
+            return;
+
+        bool changed = false;
+        for (int i = 0; i < state.shipNames.Length; i++)
+        {
+            if (!string.Equals(state.shipNames[i], shipName, StringComparison.Ordinal))
+                continue;
+
+            state.ships[i] = null;
+            state.shipNames[i] = null;
+            changed = true;
+        }
+
+        if (!changed)
+            return;
+
+        SaveState();
+        Changed?.Invoke();
+    }
+
     private static SelectedShipsState LoadState()
     {
         string json = PlayerPrefs.GetString(StorageKey, string.Empty);

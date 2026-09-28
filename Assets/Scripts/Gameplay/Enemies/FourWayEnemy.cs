@@ -8,7 +8,7 @@ public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
 {
     private const int CurrentBurstSettingsVersion = 2;
 
-    [Inject] private DiContainer container;
+    [Inject] private EnemyProjectileEcsSpawner projectileSpawner;
 
     [Header("Projectile")]
     [SerializeField] private EnemyBullet projectilePrefab;
@@ -40,7 +40,7 @@ public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
         isActiveAndEnabled
         && !isDead
         && projectilePrefab != null
-        && container != null;
+        && projectileSpawner != null;
 
     public EnemyBurstAttackSettings BurstAttackSettings => burstAttackSettings;
 
@@ -222,16 +222,11 @@ public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
 
     private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction)
     {
-        EnemyBullet projectile = container.InstantiatePrefabForComponent<EnemyBullet>(
+        projectileSpawner.TrySpawn(
             projectilePrefab,
             spawnPosition,
-            Quaternion.identity,
-            null);
-        projectile.SetDamageMultiplier(DamageMultiplier);
-        projectile.Launch(direction);
-
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        projectile.transform.rotation = Quaternion.Euler(0f, 0f, angle + 90f);
+            direction,
+            DamageMultiplier);
     }
 
     private void FireFourWayVolley(

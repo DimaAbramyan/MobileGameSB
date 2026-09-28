@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: ImpactRelaySecondaryProjectile
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
+  simulationBackend: 1
   damage: 30
   damageType: 5
   projectilePrefab: {fileID: 5419238205650719777, guid: ed6005005bd613f49843c3a83ab50c04, type: 3}

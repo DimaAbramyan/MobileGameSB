@@ -3,8 +3,8 @@ using UnityEngine;
 public sealed class PrismDamagePassiveAbility : PassiveAbility,
     IOutgoingDamageModifier
 {
-    private float beamDamageBonusPercent = 15f;
-    private float energyDamageBonusPercent = 10f;
+    private float plasmaDamageBonusPercent = 15f;
+    private float electricDamageBonusPercent = 10f;
 
     public override void Init(ParentShip ship)
     {
@@ -16,8 +16,8 @@ public sealed class PrismDamagePassiveAbility : PassiveAbility,
         if (!stats.TryGetContract(out PrismShipMetaContract contract))
             return;
 
-        beamDamageBonusPercent = contract.BeamDamageBonusPercent;
-        energyDamageBonusPercent = contract.EnergyDamageBonusPercent;
+        plasmaDamageBonusPercent = contract.PlasmaDamageBonusPercent;
+        electricDamageBonusPercent = contract.ElectricDamageBonusPercent;
     }
 
     public float ModifyOutgoingDamage(EnemyDamageType damageType, float damage)
@@ -27,8 +27,8 @@ public sealed class PrismDamagePassiveAbility : PassiveAbility,
 
         float bonusPercent = damageType switch
         {
-            EnemyDamageType.Beam => beamDamageBonusPercent,
-            EnemyDamageType.Energy => energyDamageBonusPercent,
+            EnemyDamageType.Plasma => plasmaDamageBonusPercent,
+            EnemyDamageType.Electric => electricDamageBonusPercent,
             _ => 0f
         };
 

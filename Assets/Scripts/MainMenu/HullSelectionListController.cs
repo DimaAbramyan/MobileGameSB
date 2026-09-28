@@ -7,6 +7,7 @@ public sealed class HullSelectionListController : MonoBehaviour
     [SerializeField] private CraftUIButton craftButtonPrefab;
     [SerializeField] private Transform contentRoot;
     [SerializeField] private CraftCreationFlowController craftCreationFlow;
+    [SerializeField, Min(0.01f)] private float buttonScale = 1f;
 
     private readonly List<CraftUIButton> createdButtons = new();
     private ContentCatalogService catalogService;
@@ -58,6 +59,7 @@ public sealed class HullSelectionListController : MonoBehaviour
 
             bool isOwned = contentProgressService.IsOwned(hull);
             CraftUIButton button = Instantiate(craftButtonPrefab, contentRoot);
+            button.transform.localScale = Vector3.one * buttonScale;
             button.SetContent(hull);
             button.SetSelected(craftCreationFlow.SelectedHull == hull);
             button.SetAvailability(isOwned);

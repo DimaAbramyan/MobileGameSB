@@ -16,23 +16,33 @@ MonoBehaviour:
   projectileSlots:
   - id: c4780c78552d4b7b943c65b323eab422
     projectile: {fileID: 11400000, guid: 3cc856854cec25b45b2a3ebb95128186, type: 2}
+    spawnedByAnotherProjectile: 0
   maxLevels: 1
   levels:
   - basicStats:
-      reloadTime: 0.2
+      reloadTime: 0.5
       damage: 9
       range: 10
       projectileSpeed: 8
-      angle: 5
+      angle: 0
+      initialDirectionAngle: 0
     contracts:
     - rid: 3397718806744006732
+    - rid: 3397719010030125154
   references:
     version: 2
     RefIds:
     - rid: 3397718806744006732
       type: {class: BurstFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
       data:
-        volleysPerActivation: 2
-        projectilesPerVolley: 5
-        delayBetweenVolleys: 0.02
-        spreadAngle: 15
+        volleysPerActivation: 5
+        projectilesPerVolley: 1
+        delayBetweenVolleys: 0.1
+    - rid: 3397719010030125154
+      type: {class: FanFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        projectileCount: 5
+        totalSpreadAngle: 15
+        customAngles: 0
+        angles:
+        - 0

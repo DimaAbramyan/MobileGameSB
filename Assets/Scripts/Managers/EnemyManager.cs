@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class EnemyManager
 {
+    public event Action<Enemy> OnEnemyAdded;
     public event Action<Enemy> OnEnemyDestroyed;
     public List<Enemy> enemyList { get; private set; }
     public void AddEnemy(Enemy enemy)
@@ -13,7 +14,11 @@ public class EnemyManager
         {
             enemyList = new List<Enemy>();
         }
+        if (enemy == null || enemyList.Contains(enemy))
+            return;
+
         enemyList.Add(enemy);
+        OnEnemyAdded?.Invoke(enemy);
     }
 
     public Enemy FindNearestEnemy(Vector3 fromPosition)

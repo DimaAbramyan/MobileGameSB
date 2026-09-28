@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4d9d5c0c0a0df241a2e560150420daa, type: 3}
+  m_Name: DrillContactPulse
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
+  deliveryType: 2
+  simulationBackend: 1
+  damage: 50
+  damageType: 0
+  projectilePrefab: {fileID: 0}
+  range: 0
+  speed: 0
+  contracts:
+  - rid: 3397719102540218463
+  - rid: 3397719105430880345
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397719102540218463
+      type: {class: ProjectileEnemyDebuffsContract, ns: , asm: Assembly-CSharp}
+      data:
+        debuffs:
+        - debuff: {fileID: 11400000, guid: 15cd44a1c4950664d8bc5e6ae7a33639, type: 2}
+          amountPerHit: 8
+    - rid: 3397719105430880345
+      type: {class: ProjectileContactAreaContract, ns: , asm: Assembly-CSharp}
+      data:
+        contactArea: {fileID: 4665938179444004894, guid: 7195a520f794dac4a91d574abdd5f2c0, type: 3}

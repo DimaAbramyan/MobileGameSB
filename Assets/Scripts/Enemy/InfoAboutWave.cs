@@ -30,6 +30,14 @@ public class InfoAboutSubWave : MonoBehaviour
         gameObject.SetActive(true);
     }
 
+    /// <summary>
+    /// Builds data that is independent of the player and can be reused when
+    /// this subwave is activated later. Base subwaves do not need a plan.
+    /// </summary>
+    public virtual void PrepareForActivation()
+    {
+    }
+
     public virtual int GetRewardEligibleEnemyCount()
     {
         return 0;

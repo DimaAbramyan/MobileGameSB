@@ -48,12 +48,6 @@ Primary red-brown palette:
 `#9C6658`
 `#A36F61`
 
-General direction:
-
-🟥 `#261214` → 🟥 `#552823` → 🟥 `#80463A` → 🟥 `#A36F61`
-
-The lightest colors should not occupy large portions of the image.
-
 ---
 
 ### Blue / Violet Nebula
@@ -76,15 +70,6 @@ Cold alternative to the red background.
 `#5B82A4`
 `#668EAD`
 `#729AB6`
-
-General direction:
-
-🟪 `#161225` → 🟪 `#272043` → 🟦 `#34406B`
-→ 🟦 `#486B92` → 🩵 `#729AB6`
-
-Dark areas should lean toward violet.
-Midtones should transition into blue.
-The brightest areas may shift toward a muted cold cyan-blue.
 
 ---
 

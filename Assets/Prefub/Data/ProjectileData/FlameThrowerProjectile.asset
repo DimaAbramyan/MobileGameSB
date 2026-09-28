@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: FlameThrowerProjectile
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
+  simulationBackend: 1
   damage: 3.75
   damageType: 2
   projectilePrefab: {fileID: 6144194406446952310, guid: b9f84f0e4062f874ab497e4a5b4d14b5, type: 3}

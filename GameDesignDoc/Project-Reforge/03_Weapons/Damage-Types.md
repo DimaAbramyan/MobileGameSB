@@ -16,7 +16,7 @@ Damage Type is independent from [[Weapon-Types]] and [[Weapon-Effects]].
 | Explosion   |           90% |         110% |
 | Chemical    |        Bypass |         100% |
 | Plasma      |          125% |          75% |
-| Microwave   |          110% |          90% |
+| Resonance   |          110% |          90% |
 | Electric    |          110% |          90% |
 
 ---

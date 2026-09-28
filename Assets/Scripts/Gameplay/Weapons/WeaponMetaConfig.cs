@@ -73,32 +73,29 @@ public abstract class WeaponMetaContract
 [Serializable]
 public sealed class BurstFireWeaponMetaContract : WeaponMetaContract
 {
-    [SerializeField, Min(1)] private int volleysPerActivation = 1;
-    [SerializeField, Min(1)] private int projectilesPerVolley = 1;
-    [SerializeField, Min(0f)] private float delayBetweenVolleys;
-    [SerializeField, Min(0f)] private float spreadAngle;
+      [SerializeField, Min(1)] private int volleysPerActivation = 1;
+      [SerializeField, Min(1)] private int projectilesPerVolley = 1;
+      [SerializeField, Min(0f)] private float delayBetweenVolleys;
 
     public override string DisplayName => "Fire Bonuses";
-    public int VolleysPerActivation => Mathf.Max(1, volleysPerActivation);
-    public int ProjectilesPerVolley => Mathf.Max(1, projectilesPerVolley);
-    public float DelayBetweenVolleys => Mathf.Max(0f, delayBetweenVolleys);
-    public float SpreadAngle => Mathf.Max(0f, spreadAngle);
+      public int VolleysPerActivation => Mathf.Max(1, volleysPerActivation);
+      public int ProjectilesPerVolley => Mathf.Max(1, projectilesPerVolley);
+      public float DelayBetweenVolleys => Mathf.Max(0f, delayBetweenVolleys);
 
     public override WeaponMetaContract Clone()
     {
         return new BurstFireWeaponMetaContract
         {
-            volleysPerActivation = volleysPerActivation,
-            projectilesPerVolley = projectilesPerVolley,
-            delayBetweenVolleys = delayBetweenVolleys,
-            spreadAngle = spreadAngle
+              volleysPerActivation = volleysPerActivation,
+              projectilesPerVolley = projectilesPerVolley,
+              delayBetweenVolleys = delayBetweenVolleys
         };
     }
 }
 
 [Serializable]
-public sealed class SweepFireWeaponMetaContract : WeaponMetaContract
-{
+  public sealed class SweepFireWeaponMetaContract : WeaponMetaContract
+  {
     [SerializeField, Min(0.02f)] private float traversalDuration = 1f;
     [SerializeField] private AnimationCurve speedCurve =
         AnimationCurve.Linear(0f, 0f, 1f, 1f);
@@ -124,6 +121,219 @@ public sealed class SweepFireWeaponMetaContract : WeaponMetaContract
             traversalDuration = traversalDuration,
             speedCurve = curve
         };
+      }
+  }
+
+  [Serializable]
+public sealed class FanFireWeaponMetaContract : WeaponMetaContract
+{
+    // The contract remains on the weapon while this is off, so designers can
+    // switch between a straight shot and the configured fan without rebuilding it.
+    [SerializeField] private bool fanFireDisabled;
+    [SerializeField, Min(1)] private int projectileCount = 1;
+    [SerializeField, Min(0f)] private float totalSpreadAngle;
+    [SerializeField] private bool customAngles;
+    [SerializeField] private List<float> angles = new() { 0f };
+    [SerializeField] private bool usePartialFan;
+    [SerializeField] private bool cyclePartialFanGroups;
+    [SerializeField] private List<FanFireAngleGroup> partialFanGroups = new()
+    {
+        new FanFireAngleGroup(1, 0f)
+    };
+
+      public override string DisplayName => "Fan Fire";
+    public bool IsEnabled => !fanFireDisabled;
+    public bool CyclesPartialFanGroups => usePartialFan && cyclePartialFanGroups;
+    public int ProjectileCount => usePartialFan
+        ? GetPartialProjectileCount()
+        : Mathf.Max(1, projectileCount);
+      public float TotalSpreadAngle => Mathf.Max(0f, totalSpreadAngle);
+    public bool CustomAngles => customAngles;
+    public IReadOnlyList<float> Angles => angles;
+    public bool UsePartialFan => usePartialFan;
+    public IReadOnlyList<FanFireAngleGroup> PartialFanGroups => partialFanGroups;
+
+      public float GetAngleOffset(int projectileIndex)
+      {
+        return GetAngleOffset(projectileIndex, 0);
+      }
+
+      public int GetProjectileCount(int groupIndex)
+      {
+        if (!IsEnabled)
+            return 1;
+
+        if (!CyclesPartialFanGroups)
+            return ProjectileCount;
+
+        return GetPartialFanGroup(groupIndex)?.ProjectileCount ?? 1;
+      }
+
+      public float GetAngleOffset(int projectileIndex, int groupIndex)
+      {
+        if (!IsEnabled)
+            return 0f;
+
+        if (CyclesPartialFanGroups)
+            return GetPartialFanGroup(groupIndex)?.GetAngleOffset(projectileIndex) ?? 0f;
+
+        int count = ProjectileCount;
+        int clampedIndex = Mathf.Clamp(projectileIndex, 0, count - 1);
+        if (usePartialFan)
+            return GetPartialAngleOffset(clampedIndex);
+
+          if (customAngles
+              && angles != null
+              && clampedIndex < angles.Count)
+          {
+              return angles[clampedIndex];
+          }
+
+          if (count <= 1)
+              return 0f;
+
+          return Mathf.Lerp(
+              -TotalSpreadAngle * 0.5f,
+              TotalSpreadAngle * 0.5f,
+              (float)clampedIndex / (count - 1));
+      }
+
+      public override WeaponMetaContract Clone()
+      {
+          return new FanFireWeaponMetaContract
+          {
+              projectileCount = projectileCount,
+              fanFireDisabled = fanFireDisabled,
+                totalSpreadAngle = totalSpreadAngle,
+                customAngles = customAngles,
+                angles = angles != null ? new List<float>(angles) : new List<float>(),
+                usePartialFan = usePartialFan,
+                cyclePartialFanGroups = cyclePartialFanGroups,
+                partialFanGroups = ClonePartialFanGroups()
+            };
+        }
+
+    public float GetAverageProjectileCount()
+    {
+        if (!IsEnabled)
+            return 1f;
+
+        if (!CyclesPartialFanGroups)
+            return ProjectileCount;
+
+        if (partialFanGroups == null || partialFanGroups.Count == 0)
+            return 1f;
+
+        int projectileCountSum = 0;
+        int validGroupCount = 0;
+        for (int index = 0; index < partialFanGroups.Count; index++)
+        {
+            FanFireAngleGroup group = partialFanGroups[index];
+            if (group == null)
+                continue;
+
+            projectileCountSum += group.ProjectileCount;
+            validGroupCount++;
+        }
+
+        return validGroupCount == 0
+            ? 1f
+            : (float)projectileCountSum / validGroupCount;
+    }
+
+    private int GetPartialProjectileCount()
+    {
+        if (partialFanGroups == null || partialFanGroups.Count == 0)
+            return 1;
+
+        int count = 0;
+        for (int index = 0; index < partialFanGroups.Count; index++)
+            count += partialFanGroups[index]?.ProjectileCount ?? 0;
+
+        return Mathf.Max(1, count);
+    }
+
+    private float GetPartialAngleOffset(int projectileIndex)
+    {
+        if (partialFanGroups == null || partialFanGroups.Count == 0)
+            return 0f;
+
+        int remainingIndex = projectileIndex;
+        for (int index = 0; index < partialFanGroups.Count; index++)
+        {
+            FanFireAngleGroup group = partialFanGroups[index];
+            int groupCount = group?.ProjectileCount ?? 0;
+            if (remainingIndex < groupCount)
+                return group.GetAngleOffset(remainingIndex);
+
+            remainingIndex -= groupCount;
+        }
+
+        return 0f;
+    }
+
+    private FanFireAngleGroup GetPartialFanGroup(int groupIndex)
+    {
+        if (partialFanGroups == null || partialFanGroups.Count == 0)
+            return null;
+
+        int normalizedIndex = groupIndex % partialFanGroups.Count;
+        if (normalizedIndex < 0)
+            normalizedIndex += partialFanGroups.Count;
+
+        return partialFanGroups[normalizedIndex];
+    }
+
+    private List<FanFireAngleGroup> ClonePartialFanGroups()
+    {
+        var clone = new List<FanFireAngleGroup>();
+        if (partialFanGroups == null)
+            return clone;
+
+        for (int index = 0; index < partialFanGroups.Count; index++)
+        {
+            if (partialFanGroups[index] != null)
+                clone.Add(partialFanGroups[index].Clone());
+        }
+
+        return clone;
+    }
+}
+
+[Serializable]
+public sealed class FanFireAngleGroup
+{
+    [SerializeField, Min(1)] private int projectileCount = 1;
+    [SerializeField, Min(0f)] private float angleOffset;
+
+    public FanFireAngleGroup()
+    {
+    }
+
+    public FanFireAngleGroup(int projectileCount, float angleOffset)
+    {
+        this.projectileCount = Mathf.Max(1, projectileCount);
+        this.angleOffset = Mathf.Max(0f, angleOffset);
+    }
+
+    public int ProjectileCount => Mathf.Max(1, projectileCount);
+    public float AngleOffset => Mathf.Max(0f, angleOffset);
+
+    public float GetAngleOffset(int index)
+    {
+        if (ProjectileCount <= 1)
+            return 0f;
+
+        return Mathf.Lerp(
+            -AngleOffset,
+            AngleOffset,
+            (float)Mathf.Clamp(index, 0, ProjectileCount - 1)
+                / (ProjectileCount - 1));
+    }
+
+    public FanFireAngleGroup Clone()
+    {
+        return new FanFireAngleGroup(ProjectileCount, AngleOffset);
     }
 }
 
@@ -443,16 +653,14 @@ public sealed class WeaponMetaConfig : ScriptableObject
         WeaponMetaLevel level = GetLevel(requestedLevel);
         WeaponMetaBasicStats basic = level.BasicStats ?? new WeaponMetaBasicStats();
 
-        int volleysPerActivation = 1;
-        int projectilesPerVolley = 1;
-        float delayBetweenVolleys = 0f;
-        float spreadAngle = 0f;
-        if (level.TryGetContract(out BurstFireWeaponMetaContract burstFire))
-        {
-            volleysPerActivation = burstFire.VolleysPerActivation;
-            projectilesPerVolley = burstFire.ProjectilesPerVolley;
-            delayBetweenVolleys = burstFire.DelayBetweenVolleys;
-            spreadAngle = burstFire.SpreadAngle;
+          int volleysPerActivation = 1;
+          int projectilesPerVolley = 1;
+          float delayBetweenVolleys = 0f;
+          if (level.TryGetContract(out BurstFireWeaponMetaContract burstFire))
+          {
+              volleysPerActivation = burstFire.VolleysPerActivation;
+              projectilesPerVolley = burstFire.ProjectilesPerVolley;
+              delayBetweenVolleys = burstFire.DelayBetweenVolleys;
         }
 
         int maxTargets = 1;
@@ -491,10 +699,10 @@ public sealed class WeaponMetaConfig : ScriptableObject
             basic.Damage,
             basic.Range,
             basic.ProjectileSpeed,
-            volleysPerActivation,
-            projectilesPerVolley,
-            delayBetweenVolleys,
-            spreadAngle,
+              volleysPerActivation,
+              projectilesPerVolley,
+              delayBetweenVolleys,
+              0f,
             maxTargets,
             targetSearchRadius);
 
@@ -509,11 +717,16 @@ public sealed class WeaponMetaConfig : ScriptableObject
             sweepSpeedCurve);
     }
 
-    public WeaponMetaDpsInfo GetDpsInfo(int requestedLevel)
-    {
-        WeaponMetaRuntimeStats runtimeStats = GetRuntimeStats(requestedLevel);
-        WeaponRuntimeStats weaponStats = runtimeStats.WeaponStats;
-        float damage = weaponStats.Damage;
+      public WeaponMetaDpsInfo GetDpsInfo(int requestedLevel)
+      {
+          WeaponMetaLevel level = GetLevel(requestedLevel);
+          WeaponMetaRuntimeStats runtimeStats = GetRuntimeStats(requestedLevel);
+          WeaponRuntimeStats weaponStats = runtimeStats.WeaponStats;
+          float damage = weaponStats.Damage;
+          float fanProjectileCount = level.TryGetContract(
+              out FanFireWeaponMetaContract fanFire)
+              ? fanFire.GetAverageProjectileCount()
+              : 1f;
         bool usesContinuousDamage = runtimeStats.UsesContinuousDamage;
         float continuousDamageTickInterval =
             runtimeStats.ContinuousDamageTickInterval;
@@ -545,24 +758,30 @@ public sealed class WeaponMetaConfig : ScriptableObject
             }
         }
 
-        float shotsPerSecond = weaponStats.ReloadTime <= 0f
-            ? 0f
-            : 1f / weaponStats.ReloadTime;
+          int volleys = Mathf.Max(1, weaponStats.VolleysPerActivation);
+          float projectilesPerActivation = volleys
+              * Mathf.Max(1, weaponStats.ProjectilesPerVolley)
+              * fanProjectileCount;
+          float attackCycleDuration = weaponStats.ReloadTime
+              + (volleys - 1) * Mathf.Max(0f, weaponStats.DelayBetweenVolleys);
+          float shotsPerSecond = attackCycleDuration <= 0f
+              ? 0f
+              : projectilesPerActivation / attackCycleDuration;
 
         if (usesContinuousDamage)
         {
-            float dps = continuousDamageTickInterval <= 0f
-                ? 0f
-                : damage / continuousDamageTickInterval;
+              float dps = continuousDamageTickInterval <= 0f
+                  ? 0f
+                  : damage * projectilesPerActivation
+                      / continuousDamageTickInterval;
             return new WeaponMetaDpsInfo(dps, shotsPerSecond, true);
         }
 
-        float damagePerActivation = damage
-            * weaponStats.VolleysPerActivation
-            * weaponStats.ProjectilesPerVolley;
-        float burstDps = weaponStats.ReloadTime <= 0f
-            ? 0f
-            : damagePerActivation / weaponStats.ReloadTime;
+          float damagePerActivation = damage
+              * projectilesPerActivation;
+          float burstDps = attackCycleDuration <= 0f
+              ? 0f
+              : damagePerActivation / attackCycleDuration;
         return new WeaponMetaDpsInfo(burstDps, shotsPerSecond, false);
     }
 

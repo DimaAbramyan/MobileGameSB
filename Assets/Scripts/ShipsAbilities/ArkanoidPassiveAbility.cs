@@ -25,6 +25,7 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
     private ArkanoidBall ball;
 
     private ArkanoidShipMetaContract metaContract;
+    private float abilityDamageMultiplier = 1f;
 
     public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
     {
@@ -38,6 +39,14 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
 
         if (ball != null)
             ball.ApplyShipMetaStats(contract);
+    }
+
+    public override void ApplyBattleAbilityDamageMultiplier(
+        float damageMultiplier)
+    {
+        abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
+        if (ball != null)
+            ball.ApplyBattleAbilityDamageMultiplier(abilityDamageMultiplier);
     }
 
     public override void Init(ParentShip ship)
@@ -70,6 +79,7 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
             ball.Configure(owner, paddle, ballSpeed, ballDamage, ballSpawnOffset);
             if (metaContract != null)
                 ball.ApplyShipMetaStats(metaContract);
+            ball.ApplyBattleAbilityDamageMultiplier(abilityDamageMultiplier);
 
             if (shouldLaunch)
             {
@@ -116,6 +126,9 @@ public sealed class ArkanoidPassiveAbility : PassiveAbility
 
         if (ball != null && metaContract != null)
             ball.ApplyShipMetaStats(metaContract);
+
+        if (ball != null)
+            ball.ApplyBattleAbilityDamageMultiplier(abilityDamageMultiplier);
     }
 
     private T CreateInstance<T>(T prefab)

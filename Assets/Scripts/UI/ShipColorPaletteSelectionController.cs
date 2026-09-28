@@ -12,31 +12,14 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
         Accent
     }
 
-    private readonly struct SwatchView
-    {
-        public readonly ShipColorPaletteColor color;
-        public readonly Image image;
-        public readonly Outline outline;
-        public readonly GameObject gameObject;
-
-        public SwatchView(
-            ShipColorPaletteColor color,
-            Image image,
-            Outline outline,
-            GameObject gameObject)
-        {
-            this.color = color;
-            this.image = image;
-            this.outline = outline;
-            this.gameObject = gameObject;
-        }
-    }
-
     [Header("Data")]
     [SerializeField] private ShipColorPaletteConfig colorPaletteConfig;
 
-    [Header("Palette UI")]
+    [Header("Color Button Content")]
     [SerializeField] private RectTransform swatchRoot;
+    [SerializeField] private ShipColorPaletteButton colorButtonPrefab;
+
+    [Header("Color Button Visuals")]
     [SerializeField] private Image previewImage;
     [SerializeField] private Sprite fallbackSwatchSprite;
     [SerializeField] private Color selectedOutlineColor = new(0.2f, 0.75f, 1f, 1f);
@@ -44,8 +27,11 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
 
     [Header("Channel Buttons")]
     [SerializeField] private Button primaryChannelButton;
+    [SerializeField] private Image primaryChannelColorImage;
     [SerializeField] private Button secondaryChannelButton;
+    [SerializeField] private Image secondaryChannelColorImage;
     [SerializeField] private Button accentChannelButton;
+    [SerializeField] private Image accentChannelColorImage;
 
     [Header("Ship Preview")]
     [SerializeField] private ShipColorMaterialApplier shipPreview;
@@ -54,7 +40,7 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
     [SerializeField] private ColorChannel selectedChannel = ColorChannel.Primary;
     [SerializeField] private ShipColorPalette palette = new ShipColorPalette();
 
-    private readonly List<SwatchView> swatches = new();
+    private readonly List<ShipColorPaletteButton> swatches = new();
     private int selectedColorNumber = -1;
 
     public event Action<ShipColorPalette> PaletteChanged;
@@ -85,6 +71,13 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
         RefreshVisuals();
     }
 
+    public void ApplyPalette(ShipColorPalette sourcePalette)
+    {
+        SetPalette(sourcePalette);
+        PaletteChanged?.Invoke(Palette);
+        PaletteEditCompleted?.Invoke();
+    }
+
     public void SelectPrimary() => SelectChannel(ColorChannel.Primary);
     public void SelectSecondary() => SelectChannel(ColorChannel.Secondary);
     public void SelectAccent() => SelectChannel(ColorChannel.Accent);
@@ -100,8 +93,13 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
     {
         ClearSwatches();
 
-        if (colorPaletteConfig == null || swatchRoot == null)
+        if (colorPaletteConfig == null || swatchRoot == null || colorButtonPrefab == null)
+        {
+            Debug.LogError(
+                "Ship color palette selector requires a color config, content root, and button prefab.",
+                this);
             return;
+        }
 
         IReadOnlyList<ShipColorPaletteColor> colors = colorPaletteConfig.Colors;
         HashSet<int> colorNumbers = new();
@@ -125,33 +123,16 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
 
     private void CreateSwatch(ShipColorPaletteColor color)
     {
-        GameObject swatchObject = new(
-            $"Color {color.ColorNumber}",
-            typeof(RectTransform),
-            typeof(CanvasRenderer),
-            typeof(Image),
-            typeof(Button),
-            typeof(Outline));
-        swatchObject.transform.SetParent(swatchRoot, false);
-        swatchObject.layer = swatchRoot.gameObject.layer;
-
-        Image image = swatchObject.GetComponent<Image>();
-        image.sprite = color.Preview != null ? color.Preview : fallbackSwatchSprite;
-        image.color = color.Color;
-
-        Button button = swatchObject.GetComponent<Button>();
-        button.targetGraphic = image;
-        button.transition = Selectable.Transition.None;
-        button.navigation = new Navigation { mode = Navigation.Mode.None };
-        button.onClick.AddListener(() => SelectColor(color));
-
-        Outline outline = swatchObject.GetComponent<Outline>();
-        outline.effectColor = selectedOutlineColor;
-        outline.effectDistance = new Vector2(outlineDistance, -outlineDistance);
-        outline.useGraphicAlpha = false;
-        outline.enabled = false;
-
-        swatches.Add(new SwatchView(color, image, outline, swatchObject));
+        ShipColorPaletteButton colorButton = Instantiate(colorButtonPrefab, swatchRoot);
+        colorButton.gameObject.name = $"Color {color.ColorNumber}";
+        colorButton.gameObject.layer = swatchRoot.gameObject.layer;
+        colorButton.Initialize(
+            color,
+            fallbackSwatchSprite,
+            selectedOutlineColor,
+            outlineDistance,
+            SelectColor);
+        swatches.Add(colorButton);
     }
 
     private void SelectColor(ShipColorPaletteColor color)
@@ -224,18 +205,15 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
         if (shipPreview != null)
             shipPreview.Apply(palette);
 
-        SetButtonColor(primaryChannelButton, palette.primary);
-        SetButtonColor(secondaryChannelButton, palette.secondary);
-        SetButtonColor(accentChannelButton, palette.accent);
+        SetButtonColor(primaryChannelButton, primaryChannelColorImage, palette.primary);
+        SetButtonColor(secondaryChannelButton, secondaryChannelColorImage, palette.secondary);
+        SetButtonColor(accentChannelButton, accentChannelColorImage, palette.accent);
 
         for (int i = 0; i < swatches.Count; i++)
         {
-            SwatchView swatch = swatches[i];
-            if (swatch.image != null)
-                swatch.image.color = swatch.color.Color;
-
-            if (swatch.outline != null)
-                swatch.outline.enabled = swatch.color.ColorNumber == selectedColorNumber;
+            ShipColorPaletteButton swatch = swatches[i];
+            if (swatch != null)
+                swatch.SetSelected(swatch.ColorNumber == selectedColorNumber);
         }
     }
 
@@ -267,7 +245,8 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
     {
         for (int i = 0; i < swatches.Count; i++)
         {
-            GameObject swatchObject = swatches[i].gameObject;
+            ShipColorPaletteButton swatch = swatches[i];
+            GameObject swatchObject = swatch != null ? swatch.gameObject : null;
             if (swatchObject != null)
                 Destroy(swatchObject);
         }
@@ -275,10 +254,16 @@ public sealed class ShipColorPaletteSelectionController : MonoBehaviour
         swatches.Clear();
     }
 
-    private static void SetButtonColor(Button button, Color color)
+    private static void SetButtonColor(Button button, Image colorImage, Color color)
     {
-        if (button != null && button.image != null)
-            button.image.color = color;
+        Image targetImage = colorImage != null
+            ? colorImage
+            : button != null
+                ? button.image
+                : null;
+
+        if (targetImage != null)
+            targetImage.color = color;
     }
 
     private static bool AreColorsEqual(Color first, Color second)

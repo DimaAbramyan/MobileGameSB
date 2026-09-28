@@ -10,7 +10,7 @@ using Zenject;
 
 public class ShootingShip : Enemy
 {
-    [Inject] private DiContainer container;
+    [Inject] private EnemyProjectileEcsSpawner projectileSpawner;
     [SerializeField] private EnemyBullet EnBullet;
     [SerializeField] Animator animator;
     private float Timer;
@@ -43,18 +43,11 @@ public class ShootingShip : Enemy
     private void StartAnimation()
     {
         Vector3 direction = transform.up.normalized;
-        EnemyBullet bull =
-            container.InstantiatePrefabForComponent<EnemyBullet>(
-                EnBullet,
-                transform.position + new Vector3(0, -0.25f),
-                Quaternion.identity,
-                null);
-        bull.SetDamageMultiplier(DamageMultiplier);
-        bull._position = direction;
-
-        // Поворачиваем снаряд в сторону направления полёта
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        bull.transform.rotation = Quaternion.Euler(0, 0, angle+90);
+        projectileSpawner?.TrySpawn(
+            EnBullet,
+            transform.position + new Vector3(0, -0.25f),
+            direction,
+            DamageMultiplier);
 
         animator.SetBool("Shooting", false);
     }

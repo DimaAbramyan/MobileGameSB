@@ -486,14 +486,23 @@ public static class WeaponProjectileMigrationUtility
         float delay = Mathf.Max(
             0f,
             manualBaseStats.FindPropertyRelative("delayBetweenVolleys").floatValue);
-        float spread = Mathf.Max(
-            0f,
-            manualBaseStats.FindPropertyRelative("spreadAngle").floatValue);
-        if (volleys == 1 && projectiles == 1 && delay <= 0f && spread <= 0f)
-            return;
+          float spread = Mathf.Max(
+              0f,
+              manualBaseStats.FindPropertyRelative("spreadAngle").floatValue);
+          bool usesFanFire = spread > 0f && projectiles > 1;
+          bool usesBurstFire = volleys > 1 || delay > 0f
+              || (projectiles > 1 && !usesFanFire);
+          if (!usesBurstFire && !usesFanFire)
+              return;
 
-        metaConfig.TryAddContractToAllLevels(
-            typeof(BurstFireWeaponMetaContract));
+          if (usesBurstFire)
+          {
+              metaConfig.TryAddContractToAllLevels(
+                  typeof(BurstFireWeaponMetaContract));
+          }
+
+          if (usesFanFire)
+              metaConfig.TryAddContractToAllLevels(typeof(FanFireWeaponMetaContract));
 
         SerializedObject metaSerialized = new(metaConfig);
         SerializedProperty levels = metaSerialized.FindProperty("levels");
@@ -508,19 +517,25 @@ public static class WeaponProjectileMigrationUtility
             {
                 SerializedProperty contract = contracts.GetArrayElementAtIndex(
                     contractIndex);
-                if (contract.managedReferenceValue
-                    is not BurstFireWeaponMetaContract)
-                {
-                    continue;
-                }
+                  if (contract.managedReferenceValue is BurstFireWeaponMetaContract)
+                  {
+                      contract.FindPropertyRelative("volleysPerActivation").intValue =
+                          volleys;
+                      contract.FindPropertyRelative("projectilesPerVolley").intValue =
+                          usesFanFire ? 1 : projectiles;
+                      contract.FindPropertyRelative("delayBetweenVolleys").floatValue =
+                          delay;
+                      continue;
+                  }
 
-                contract.FindPropertyRelative("volleysPerActivation").intValue =
-                    volleys;
-                contract.FindPropertyRelative("projectilesPerVolley").intValue =
-                    projectiles;
-                contract.FindPropertyRelative("delayBetweenVolleys").floatValue =
-                    delay;
-                contract.FindPropertyRelative("spreadAngle").floatValue = spread;
+                  if (contract.managedReferenceValue is FanFireWeaponMetaContract)
+                  {
+                      contract.FindPropertyRelative("projectileCount").intValue =
+                          projectiles;
+                      contract.FindPropertyRelative("totalSpreadAngle").floatValue =
+                          spread;
+                      contract.FindPropertyRelative("customAngles").boolValue = false;
+                  }
             }
         }
 

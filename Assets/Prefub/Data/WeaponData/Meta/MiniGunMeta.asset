@@ -25,36 +25,17 @@ MonoBehaviour:
       range: 10
       projectileSpeed: 8
       angle: 5
+      initialDirectionAngle: 0
     contracts:
-    - rid: 3397718921078898777
+    - rid: 3397719010030125149
   references:
     version: 2
     RefIds:
-    - rid: 3397718921078898777
-      type: {class: SweepFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
+    - rid: 3397719010030125149
+      type: {class: FanFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
       data:
-        traversalDuration: 0.5
-        speedCurve:
-          serializedVersion: 2
-          m_Curve:
-          - serializedVersion: 3
-            time: 0
-            value: 0
-            inSlope: 0
-            outSlope: 0
-            tangentMode: 0
-            weightedMode: 0
-            inWeight: 0
-            outWeight: 0
-          - serializedVersion: 3
-            time: 1
-            value: 1
-            inSlope: 0
-            outSlope: 0
-            tangentMode: 0
-            weightedMode: 0
-            inWeight: 0
-            outWeight: 0
-          m_PreInfinity: 2
-          m_PostInfinity: 2
-          m_RotationOrder: 4
+        projectileCount: 5
+        totalSpreadAngle: 17.5
+        customAngles: 0
+        angles:
+        - 0

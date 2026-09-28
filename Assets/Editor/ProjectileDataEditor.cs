@@ -7,6 +7,7 @@ using UnityEngine;
 public sealed class ProjectileDataEditor : Editor
 {
     private SerializedProperty deliveryType;
+    private SerializedProperty simulationBackend;
     private SerializedProperty damage;
     private SerializedProperty damageType;
     private SerializedProperty projectilePrefab;
@@ -17,6 +18,7 @@ public sealed class ProjectileDataEditor : Editor
     private void OnEnable()
     {
         deliveryType = serializedObject.FindProperty("deliveryType");
+        simulationBackend = serializedObject.FindProperty("simulationBackend");
         damage = serializedObject.FindProperty("damage");
         damageType = serializedObject.FindProperty("damageType");
         projectilePrefab = serializedObject.FindProperty("projectilePrefab");
@@ -32,15 +34,29 @@ public sealed class ProjectileDataEditor : Editor
         EditorGUILayout.LabelField("Delivery", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(deliveryType, new GUIContent("Type"));
 
-        EditorGUILayout.Space(2f);
-        EditorGUILayout.LabelField("Direct Damage", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(damage);
-        EditorGUILayout.PropertyField(damageType, new GUIContent("Damage Type"));
-
         if (IsProjectile())
+        {
+            EditorGUILayout.Space(2f);
+            EditorGUILayout.LabelField("Direct Damage", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(damage);
+            EditorGUILayout.PropertyField(damageType, new GUIContent("Damage Type"));
             DrawPhysicalProjectileFields();
+        }
+        else if (IsContact())
+        {
+            EditorGUILayout.Space(2f);
+            EditorGUILayout.LabelField("Contact Damage", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(damageType, new GUIContent("Damage Type"));
+            DrawContactHelp();
+        }
         else
+        {
+            EditorGUILayout.Space(2f);
+            EditorGUILayout.LabelField("Direct Damage", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(damage);
+            EditorGUILayout.PropertyField(damageType, new GUIContent("Damage Type"));
             DrawBeamHelp();
+        }
 
         DrawContracts();
         serializedObject.ApplyModifiedProperties();
@@ -53,6 +69,19 @@ public sealed class ProjectileDataEditor : Editor
         EditorGUILayout.PropertyField(projectilePrefab, new GUIContent("Prefab"));
         EditorGUILayout.PropertyField(range);
         EditorGUILayout.PropertyField(speed);
+        EditorGUILayout.PropertyField(
+            simulationBackend,
+            new GUIContent("Simulation Backend"));
+        if (simulationBackend.enumValueIndex
+            == (int)ProjectileSimulationBackend.Entities)
+        {
+            EditorGUILayout.HelpBox(
+                "Entities supports straight or homing Damage And Destroy, Pierce Once, "
+                + "Pierce Continuous and Explode And Spawn projectiles, including Scale "
+                + "Growth and Enemy Debuffs. Fade, collider-lifetime and custom contact "
+                + "damage-source contracts remain MonoBehaviour-only.",
+                MessageType.Info);
+        }
     }
 
     private static void DrawBeamHelp()
@@ -62,6 +91,23 @@ public sealed class ProjectileDataEditor : Editor
             "Beam range is intentionally not configured yet. Add the Beam "
             + "contract below for width, damage interval and impact effects.",
             MessageType.Info);
+    }
+
+    private void DrawContactHelp()
+    {
+        EditorGUILayout.Space(2f);
+        EditorGUILayout.LabelField("Contact", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(
+            simulationBackend,
+            new GUIContent("Simulation Backend"));
+        EditorGUILayout.HelpBox(
+            "Contact runs through ECS. Damage and tick interval come from the owning "
+            + "WeaponData. Add a Contact Area contract and edit its PolygonCollider2D "
+            + "vertices to set the hit area.",
+            simulationBackend.enumValueIndex
+                == (int)ProjectileSimulationBackend.Entities
+                ? MessageType.Info
+                : MessageType.Error);
     }
 
     private void DrawContracts()
@@ -115,6 +161,20 @@ public sealed class ProjectileDataEditor : Editor
                         "Scale Growth Per Second");
                 }
                 break;
+            case ProjectileResonanceSphereContract:
+                DrawField(
+                    contract,
+                    "maximumStoredDamage",
+                    "Maximum Stored Damage");
+                DrawField(contract, "lifetime", "Lifetime");
+                DrawField(contract, "explosionRadius", "Explosion Radius");
+                DrawField(contract, "waveSpeed", "Wave Speed");
+                EditorGUILayout.HelpBox(
+                    "The sphere does not deal contact damage. It stores damage "
+                    + "from player projectiles except Resonance, then deals the "
+                    + "stored damage once to each enemy as the wave reaches it.",
+                    MessageType.None);
+                break;
             case ProjectileHomingContract:
                 DrawField(contract, "rotationSpeed", "Rotation Speed");
                 break;
@@ -131,7 +191,7 @@ public sealed class ProjectileDataEditor : Editor
             case ProjectileContinuousDamageContract:
                 DrawField(contract, "damageTickInterval", "Damage Tick Interval");
                 break;
-              case ProjectileCircularChainContract:
+            case ProjectileCircularChainContract:
                   DrawField(
                       contract,
                       "hitsPerTarget",
@@ -150,6 +210,27 @@ public sealed class ProjectileDataEditor : Editor
                       + "For example: 3 chain targets × 3 applications = 9 total hits.",
                       MessageType.None);
                   break;
+            case ProjectileArcNodesContract:
+                DrawField(contract, "damagePerArc", "Electric Damage Per Arc");
+                DrawField(contract, "connectionRange", "Connection Range");
+                DrawField(contract, "pulseInterval", "Pulse Interval");
+                DrawField(
+                    contract,
+                    "maximumConnections",
+                    "Maximum Connections Per Node");
+                DrawField(contract, "arcHitRadius", "Arc Hit Radius");
+                EditorGUILayout.Space(2f);
+                EditorGUILayout.LabelField("Arc Visual", EditorStyles.miniBoldLabel);
+                DrawField(contract, "visualDuration", "Duration");
+                DrawField(contract, "visualWidth", "Width");
+                DrawField(contract, "visualSegments", "Segments");
+                DrawField(contract, "visualJitter", "Jitter");
+                DrawField(contract, "visualColor", "Color");
+                EditorGUILayout.HelpBox(
+                    "Arc Nodes ignore direct contact. Only a segment between two "
+                    + "nearby nodes deals Electric damage.",
+                    MessageType.None);
+                break;
             case ProjectileLifetimeContract:
                 DrawField(contract, "lifetime", "Lifetime");
                 DrawField(
@@ -194,12 +275,22 @@ public sealed class ProjectileDataEditor : Editor
                     + "It uses its own Projectile Data for damage, range, speed and contracts.",
                     MessageType.None);
                 break;
-            case ProjectileDamageSourcesContract:
-                EditorGUILayout.PropertyField(
-                    contract.FindPropertyRelative("sources"),
-                    new GUIContent("Sources"),
-                    true);
-                break;
+                case ProjectileDamageSourcesContract:
+                    EditorGUILayout.PropertyField(
+                        contract.FindPropertyRelative("sources"),
+                        new GUIContent("Sources"),
+                        true);
+                    break;
+                case ProjectileEnemyDebuffsContract:
+                    EditorGUILayout.PropertyField(
+                        contract.FindPropertyRelative("debuffs"),
+                        new GUIContent("Debuffs"),
+                        true);
+                    EditorGUILayout.HelpBox(
+                        "Debuffs are applied only when this hit deals hull damage. "
+                        + "A shield-only hit does not add a stack.",
+                        MessageType.None);
+                    break;
             case ProjectileBeamContract:
                 DrawField(contract, "width", "Width");
                 DrawField(contract, "damageTickInterval", "Damage Tick Interval");
@@ -207,6 +298,13 @@ public sealed class ProjectileDataEditor : Editor
                     contract.FindPropertyRelative("impactEffects"),
                     new GUIContent("Impact Effects"),
                     true);
+                break;
+            case ProjectileContactAreaContract:
+                DrawField(contract, "contactArea", "Contact Area");
+                EditorGUILayout.HelpBox(
+                    "The PolygonCollider2D on this prefab is the Contact hitbox. "
+                    + "Select the prefab to edit its vertices and their coordinates.",
+                    MessageType.None);
                 break;
         }
     }
@@ -245,6 +343,12 @@ public sealed class ProjectileDataEditor : Editor
 
     private bool IsAvailableForCurrentType(Type contractType)
     {
+        if (IsContact())
+        {
+            return contractType == typeof(ProjectileContactAreaContract)
+                || contractType == typeof(ProjectileEnemyDebuffsContract);
+        }
+
         if (contractType == typeof(ProjectileDamageSourcesContract)
             || contractType == typeof(ProjectileTargetingContract))
             return true;
@@ -280,6 +384,13 @@ public sealed class ProjectileDataEditor : Editor
         return deliveryType == null
             || deliveryType.enumValueIndex
                 == (int)ProjectileDeliveryType.Projectile;
+    }
+
+    private bool IsContact()
+    {
+        return deliveryType != null
+            && deliveryType.enumValueIndex
+                == (int)ProjectileDeliveryType.Contact;
     }
 
     private static string GetDisplayName(Type contractType)

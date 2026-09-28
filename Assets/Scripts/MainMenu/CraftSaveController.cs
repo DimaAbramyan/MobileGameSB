@@ -30,7 +30,7 @@ public sealed class CraftSaveController : MonoBehaviour
     [SerializeField] private TMP_InputField craftNameInput;
     [SerializeField] private TMP_Text feedbackText;
     [SerializeField] private GameObject saveDialog;
-    [SerializeField] private bool createDefaultDialogWhenUnconfigured = true;
+    [SerializeField] private bool createDefaultDialogWhenUnconfigured;
 
     private SaveManager saveManager;
     [InjectOptional] private TeamSelectionService teamSelectionService;
@@ -58,8 +58,20 @@ public sealed class CraftSaveController : MonoBehaviour
         }
 
         EnsureDialog();
+        BindCraftNameInput();
         BindRandomNameButton();
         CloseSaveDialog();
+    }
+
+    private void OnEnable()
+    {
+        RegisterFlowEvents();
+        RefreshFinishButtons();
+    }
+
+    private void OnDisable()
+    {
+        UnregisterFlowEvents();
     }
 
     private void OnDestroy()
@@ -77,10 +89,61 @@ public sealed class CraftSaveController : MonoBehaviour
         }
 
         if (craftNameInput != null)
+        {
             craftNameInput.onValueChanged.RemoveListener(ValidateEnteredName);
+            craftNameInput.onSubmit.RemoveListener(SubmitCraftName);
+        }
 
         if (randomNameButton != null)
             randomNameButton.onClick.RemoveListener(UseRandomName);
+    }
+
+    private void RegisterFlowEvents()
+    {
+        if (craftCreationFlow == null)
+            return;
+
+        craftCreationFlow.HullSelectionChanged += HandleHullSelectionChanged;
+        craftCreationFlow.WeaponAssignmentChanged += HandleWeaponAssignmentChanged;
+    }
+
+    private void UnregisterFlowEvents()
+    {
+        if (craftCreationFlow == null)
+            return;
+
+        craftCreationFlow.HullSelectionChanged -= HandleHullSelectionChanged;
+        craftCreationFlow.WeaponAssignmentChanged -= HandleWeaponAssignmentChanged;
+    }
+
+    private void HandleHullSelectionChanged(HullContentDefinition _)
+    {
+        RefreshFinishButtons();
+    }
+
+    private void HandleWeaponAssignmentChanged(
+        string _,
+        WeaponContentDefinition __)
+    {
+        RefreshFinishButtons();
+    }
+
+    private void RefreshFinishButtons()
+    {
+        bool canSave = craftCreationFlow != null
+            && craftCreationFlow.TryValidateCurrentCraft(out _);
+
+        if (finishButton != null)
+            finishButton.interactable = canSave;
+
+        if (finishButtons == null)
+            return;
+
+        for (int i = 0; i < finishButtons.Length; i++)
+        {
+            if (finishButtons[i] != null)
+                finishButtons[i].interactable = canSave;
+        }
     }
 
     public void OpenSaveDialog()
@@ -160,17 +223,11 @@ public sealed class CraftSaveController : MonoBehaviour
             return false;
         }
 
-        if (!craftCreationFlow.TryCreateWeaponSaveData(out WeaponDataSer[] weapons, out error))
+        if (!craftCreationFlow.TryValidateCurrentCraft(out error))
             return false;
 
-        if (!ShipBuildValidator.TryValidate(
-                hull.Data,
-                weapons,
-                out error,
-                craftCreationFlow.WeaponSlotCount))
-        {
+        if (!craftCreationFlow.TryCreateWeaponSaveData(out WeaponDataSer[] weapons, out error))
             return false;
-        }
 
         ShipColorPalette palette = craftCreationFlow.SelectedColorPalette
             ?? hull.DefaultColorPalette;
@@ -372,6 +429,22 @@ public sealed class CraftSaveController : MonoBehaviour
 
         randomNameButton.onClick.RemoveListener(UseRandomName);
         randomNameButton.onClick.AddListener(UseRandomName);
+    }
+
+    private void BindCraftNameInput()
+    {
+        if (craftNameInput == null)
+            return;
+
+        craftNameInput.onValueChanged.RemoveListener(ValidateEnteredName);
+        craftNameInput.onValueChanged.AddListener(ValidateEnteredName);
+        craftNameInput.onSubmit.RemoveListener(SubmitCraftName);
+        craftNameInput.onSubmit.AddListener(SubmitCraftName);
+    }
+
+    private void SubmitCraftName(string _)
+    {
+        SaveCurrentCraft();
     }
 
     private bool BindFinishButtons()

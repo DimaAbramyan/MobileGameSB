@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
+  m_Name: DrillMeta
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  energyCost: 2
+  projectileSlots:
+  - id: 232df04a9376462789d389ff154d1ee8
+    projectile: {fileID: 11400000, guid: 8b0d99c3bcc2c824d88efc3b6792645b, type: 2}
+    spawnedByAnotherProjectile: 0
+  maxLevels: 1
+  levels:
+  - basicStats:
+      reloadTime: 0.22
+      damage: 50
+      range: 0
+      projectileSpeed: 0
+      angle: 5
+      initialDirectionAngle: 0
+    contracts:
+    - rid: 3397719010030125149
+  references:
+    version: 2
+    RefIds:
+    - rid: 3397719010030125149
+      type: {class: FanFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        projectileCount: 5
+        totalSpreadAngle: 17.5
+        customAngles: 0
+        angles:
+        - 0

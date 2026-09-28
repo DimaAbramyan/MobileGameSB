@@ -14,6 +14,7 @@ public class ParentShip : MonoBehaviour, iDamagable
     [Inject] AudioDatabase audioDatabase;
     [Inject] private PlayerController playerController;
     [Inject] private WaveManager waveManager;
+    [Inject] private EnemyProjectileCollisionRegistry enemyProjectileCollisionRegistry;
 
     [Header("Abilities")]
     [SerializeField] private ActiveAbility activeAbility;
@@ -49,6 +50,16 @@ public class ParentShip : MonoBehaviour, iDamagable
         healthRegenerationCooldownProgress;
     public float ShieldRegenerationCooldownProgress =>
         shieldRegenerationCooldownProgress;
+
+    private void OnEnable()
+    {
+        enemyProjectileCollisionRegistry?.RegisterShip(this);
+    }
+
+    private void OnDisable()
+    {
+        enemyProjectileCollisionRegistry?.UnregisterShip(this);
+    }
 
     #region Events
     public event Action<float> OnHealthChanged;
@@ -114,11 +125,14 @@ public class ParentShip : MonoBehaviour, iDamagable
         activeAbility?.ApplyShipMetaStats(metaStats);
         passiveAbility?.ApplyShipMetaStats(metaStats);
     }
-    public virtual void Start()
-    {
-        currentLevel = MinWeaponLevel;
+      public virtual void Start()
+      {
+          currentLevel = MinWeaponLevel;
+          ApplyAbilityDamageProgression();
 
-        passiveAbility?.Init(this);
+          enemyProjectileCollisionRegistry?.RegisterShip(this);
+
+          passiveAbility?.Init(this);
     }
     #endregion
 
@@ -395,6 +409,7 @@ public class ParentShip : MonoBehaviour, iDamagable
             newLevel,
             MinWeaponLevel,
             MaxWeaponLevel);
+        ApplyAbilityDamageProgression();
         OnLevelChanged?.Invoke(currentLevel);
     }
 
@@ -403,7 +418,17 @@ public class ParentShip : MonoBehaviour, iDamagable
         if (IsWeaponLevelMax) return;
         soundManager.PlaySound(audioDatabase.LevelUp, transform.position);
         currentLevel++;
+        ApplyAbilityDamageProgression();
         OnLevelChanged?.Invoke(currentLevel);
+    }
+
+    private void ApplyAbilityDamageProgression()
+    {
+        float multiplier = ShipData != null
+            ? ShipData.GetAbilityDamageMultiplier(currentLevel)
+            : 1f;
+        activeAbility?.ApplyBattleAbilityDamageMultiplier(multiplier);
+        passiveAbility?.ApplyBattleAbilityDamageMultiplier(multiplier);
     }
     #endregion
 

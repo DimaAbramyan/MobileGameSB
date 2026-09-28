@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
+  m_Name: AcidSprayerMeta
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  energyCost: 3
+  projectileSlots:
+  - id: 68b5f12fb75d4f9093d7deaea655a2b4
+    projectile: {fileID: 11400000, guid: 4f0368f3a0ca7a844a6c87418304e448, type: 2}
+    spawnedByAnotherProjectile: 0
+  maxLevels: 1
+  levels:
+  - basicStats:
+      reloadTime: 0.05
+      damage: 3.75
+      range: 3
+      projectileSpeed: 5
+      angle: 0
+      initialDirectionAngle: 0
+    contracts: []
+  references:
+    version: 2
+    RefIds: []

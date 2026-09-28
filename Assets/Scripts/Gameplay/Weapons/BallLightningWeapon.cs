@@ -8,11 +8,16 @@ public sealed class BallLightningWeapon : Weapon
             return false;
 
         bool firedAnyProjectile = false;
-        int ballCount = data.BallsPerShot;
-        float spreadAngle = data.BallSpreadAngle;
-        ProjectileRuntimeConfig runtimeConfig = CreateProjectileRuntimeConfig();
+          int ballCount = data.BallsPerShot;
+          float spreadAngle = data.BallSpreadAngle;
+          ProjectileRuntimeConfig runtimeConfig = CreateProjectileRuntimeConfig();
+          bool usesEntities = weaponData.TryGetPrimaryProjectileData(
+              out _,
+              out ProjectileData projectileData)
+              && projectileData != null
+              && projectileData.UsesEntities;
 
-        for (int ballIndex = 0; ballIndex < ballCount; ballIndex++)
+          for (int ballIndex = 0; ballIndex < ballCount; ballIndex++)
         {
             ProjectileParams parameters = CreateProjectileParams();
             parameters.direction = GetBallDirection(
@@ -21,8 +26,17 @@ public sealed class BallLightningWeapon : Weapon
                 ballCount,
                 spreadAngle);
 
-            if (TrySpawnProjectile(parameters, runtimeConfig))
-                firedAnyProjectile = true;
+              bool fired = usesEntities
+                  ? TrySpawnEntityBallLightning(
+                      projectileData,
+                      parameters,
+                      data.GetAreaDamage(Level),
+                      data.AreaRadius,
+                      data.GetAreaTickInterval(Level),
+                      data.AreaDamageLayers.value)
+                  : TrySpawnProjectile(parameters, runtimeConfig);
+              if (fired)
+                  firedAnyProjectile = true;
         }
 
         return firedAnyProjectile;

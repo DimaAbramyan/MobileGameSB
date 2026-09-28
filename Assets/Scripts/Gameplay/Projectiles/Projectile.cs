@@ -35,6 +35,8 @@ public class Projectile : MonoBehaviour
     private bool hasSecondaryProjectileRuntimeStats;
     private ProjectileRuntimeStats secondaryProjectileRuntimeStats;
     private IReadOnlyList<EnemyDebuffApplication> enemyDebuffs;
+    private readonly List<IProjectileRuntimeLifecycleHandler> lifecycleHandlers = new();
+    private bool isExternalLifetimeManaged;
     public ParentShip Owner { get; set; }
     Vector3 startPosition;
     public float GetDamage() => damage;
@@ -52,6 +54,13 @@ public class Projectile : MonoBehaviour
 
         initialScale = transform.localScale;
         initialColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+
+        MonoBehaviour[] components = GetComponents<MonoBehaviour>();
+        for (int index = 0; index < components.Length; index++)
+        {
+            if (components[index] is IProjectileRuntimeLifecycleHandler handler)
+                lifecycleHandlers.Add(handler);
+        }
     }
 
     public void SetPoolController(ProjectilePoolController controller)
@@ -79,8 +88,11 @@ public class Projectile : MonoBehaviour
         hasSecondaryProjectileRuntimeStats = false;
         secondaryProjectileRuntimeStats = default;
         enemyDebuffs = null;
+        isExternalLifetimeManaged = false;
         runtimeBehaviors?.Reset();
         runtimeBehaviors = null;
+        for (int index = 0; index < lifecycleHandlers.Count; index++)
+            lifecycleHandlers[index].ResetProjectile();
         transform.localScale = initialScale;
 
         if (physicsBody != null)
@@ -174,6 +186,9 @@ public class Projectile : MonoBehaviour
         runtimeBehaviors = new ProjectileRuntimeBehaviorSet(dealDamageManager, enemyManager);
         runtimeBehaviors.Build(runtimeConfig, this);
         Owner = owner;
+        isExternalLifetimeManaged = false;
+        for (int index = 0; index < lifecycleHandlers.Count; index++)
+            lifecycleHandlers[index].Initialize(this, runtimeConfig);
     }
 
     public bool HasReachedTravelDistance(float travelDistance)
@@ -233,7 +248,7 @@ public class Projectile : MonoBehaviour
 
     private void Update()
     {
-        if (!isActive)
+        if (!isActive || isExternalLifetimeManaged)
             return;
 
         remainingLifetime -= Time.deltaTime;
@@ -247,12 +262,20 @@ public class Projectile : MonoBehaviour
         }
 
         if (remainingLifetime <= 0f)
+        {
+            for (int index = 0; index < lifecycleHandlers.Count; index++)
+            {
+                if (lifecycleHandlers[index].TryHandleLifetimeExpired(this))
+                    return;
+            }
+
             ReturnToPool();
+        }
     }
 
     void FixedUpdate()
     {
-        if (!isActive)
+        if (!isActive || isExternalLifetimeManaged)
             return;
 
         UpdateColliderLifetime();
@@ -304,11 +327,27 @@ public class Projectile : MonoBehaviour
             Destroy(gameObject);
     }
 
+    public void SuspendRuntimeForExternalLifecycle()
+    {
+        if (!isActive)
+            return;
+
+        isExternalLifetimeManaged = true;
+        if (physicsBody != null)
+        {
+            physicsBody.linearVelocity = Vector2.zero;
+            physicsBody.angularVelocity = 0f;
+        }
+
+        for (int index = 0; index < projectileColliders.Length; index++)
+            projectileColliders[index].enabled = false;
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.TryGetComponent<iDamagable>(out var target))
         {
-            if (target == ignoredDamageTarget)
+            if (ShouldIgnoreContact(target))
                 return;
 
             runtimeBehaviors?.OnContactEnter(target, this);
@@ -318,7 +357,7 @@ public class Projectile : MonoBehaviour
     {
         if (other.TryGetComponent<iDamagable>(out var target))
         {
-            if (target == ignoredDamageTarget)
+            if (ShouldIgnoreContact(target))
                 return;
 
             runtimeBehaviors?.OnContactStay(target, this);
@@ -329,10 +368,17 @@ public class Projectile : MonoBehaviour
     {
         if (other.TryGetComponent<iDamagable>(out var target))
         {
-            if (target == ignoredDamageTarget)
+            if (ShouldIgnoreContact(target))
                 return;
 
             runtimeBehaviors?.OnContactExit(target, this);
         }
+    }
+
+    private bool ShouldIgnoreContact(iDamagable target)
+    {
+        return target == ignoredDamageTarget
+            || (target is IProjectileDamageReceiver receiver
+                && !receiver.CanReceiveProjectileDamage(this));
     }
 }

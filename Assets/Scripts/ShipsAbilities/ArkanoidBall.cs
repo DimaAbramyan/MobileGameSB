@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 public sealed class ArkanoidBall : MonoBehaviour
 {
@@ -37,6 +38,7 @@ public sealed class ArkanoidBall : MonoBehaviour
     private ContactFilter2D stasisProjectileFilter;
 
     private ParentShip owner;
+    [InjectOptional] private EnemyProjectileCollisionRegistry enemyProjectileCollisionRegistry;
     private ArkanoidPaddle paddle;
     private Camera mainCamera;
     private Vector2 direction = Vector2.up;
@@ -45,8 +47,14 @@ public sealed class ArkanoidBall : MonoBehaviour
     private float stasisTickTimer;
     private float respawnTimer;
     private Vector2 spawnOffset;
+    private float abilityDamageMultiplier = 1f;
     private bool isStasisActive;
     private bool isRespawning;
+
+    private void OnEnable()
+    {
+        enemyProjectileCollisionRegistry?.RegisterInterceptor(this);
+    }
 
     private void Awake()
     {
@@ -74,6 +82,7 @@ public sealed class ArkanoidBall : MonoBehaviour
         speed = Mathf.Max(0.01f, ballSpeed);
         contactDamage = Mathf.Max(0f, ballDamage);
         spawnOffset = ballSpawnOffset;
+        enemyProjectileCollisionRegistry?.RegisterInterceptor(this);
     }
 
     public void ApplyShipMetaStats(ArkanoidShipMetaContract contract)
@@ -87,6 +96,11 @@ public sealed class ArkanoidBall : MonoBehaviour
         stasisRadiusMultiplier = contract.StasisRadiusMultiplier;
         stasisDamagePerSecond = contract.StasisDamagePerSecond;
         stasisTickInterval = contract.StasisTickInterval;
+    }
+
+    public void ApplyBattleAbilityDamageMultiplier(float damageMultiplier)
+    {
+        abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
     }
 
     public void ResetAndLaunch(
@@ -289,10 +303,15 @@ public sealed class ArkanoidBall : MonoBehaviour
             return false;
 
         Destroy(projectile.gameObject);
-        if (!isStasisActive && !isRespawning && rb != null)
-            rb.linearVelocity = direction.normalized * speed;
+        NotifyEnemyProjectileIntercepted();
 
         return true;
+    }
+
+    public void NotifyEnemyProjectileIntercepted()
+    {
+        if (!isStasisActive && !isRespawning && rb != null)
+            rb.linearVelocity = direction.normalized * speed;
     }
 
     private bool IsDestroyBoundary(Collider2D other)
@@ -403,8 +422,9 @@ public sealed class ArkanoidBall : MonoBehaviour
         }
 
         nextEnemyHitTimes[enemy] = Time.time + sameEnemyHitCooldown;
-        enemy.TakeDamage(contactDamage);
-        owner?.NotifyDamageDealt(contactDamage);
+        float damage = contactDamage * abilityDamageMultiplier;
+        enemy.TakeDamage(damage);
+        owner?.NotifyDamageDealt(damage);
     }
 
     private void TickStasis()
@@ -433,7 +453,9 @@ public sealed class ArkanoidBall : MonoBehaviour
             GetWorldRadius(),
             stasisEnemyFilter,
             stasisHits);
-        float damage = stasisDamagePerSecond * stasisTickInterval;
+        float damage = stasisDamagePerSecond
+            * stasisTickInterval
+            * abilityDamageMultiplier;
 
         for (int i = 0; i < count; i++)
         {
@@ -549,6 +571,8 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void OnDisable()
     {
+        enemyProjectileCollisionRegistry?.UnregisterInterceptor(this);
+
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
     }

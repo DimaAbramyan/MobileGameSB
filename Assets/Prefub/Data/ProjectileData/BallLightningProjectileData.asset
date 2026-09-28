@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: BallLightningProjectileData
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
+  simulationBackend: 1
   damage: 0.45
   damageType: 4
   projectilePrefab: {fileID: 116200000000001006, guid: 3e5f829bb4894fa4bd0aaefda5b440ac, type: 3}

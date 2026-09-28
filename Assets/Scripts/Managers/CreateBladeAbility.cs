@@ -18,9 +18,10 @@ public class CreateBladeAbility : ActiveAbility
     private Coroutine collectCoroutine;
     private LineRenderer previewLine;
     private ParentShip intangibleOwner;
-    private WeaponController suppressedWeaponController;
+      private WeaponController suppressedWeaponController;
+      private float abilityDamageMultiplier = 1f;
 
-    protected override void ApplySpecificShipMetaStats(
+      protected override void ApplySpecificShipMetaStats(
         ShipMetaRuntimeStats stats)
     {
         if (!stats.TryGetContract(out BladeShipMetaContract contract))
@@ -32,7 +33,13 @@ public class CreateBladeAbility : ActiveAbility
         bladeSpeed = contract.Speed;
         bladeDamage = contract.Damage;
         bladeLifetime = contract.Lifetime;
-    }
+      }
+
+      public override void ApplyBattleAbilityDamageMultiplier(
+          float damageMultiplier)
+      {
+          abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
+      }
 
     public override bool Activate(ParentShip owner)
     {
@@ -89,13 +96,15 @@ public class CreateBladeAbility : ActiveAbility
         if (materializedBlade == null)
             materializedBlade = trail.AddComponent<MaterializedBladeTrail>();
 
-        materializedBlade.Init(
-            savedPoints,
-            GetForwardDirection(owner),
-            bladeWidth,
-            bladeSpeed,
-            bladeDamage,
-            bladeLifetime);
+          materializedBlade.Init(
+              savedPoints,
+              GetForwardDirection(owner),
+              bladeWidth,
+              bladeSpeed,
+              bladeDamage,
+              bladeLifetime,
+              owner,
+              abilityDamageMultiplier);
         savedPoints.Clear();
     }
 
@@ -199,21 +208,27 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
     private float damage;
     private float lifetime;
     private float aliveTime;
-    private float speed;
-    private Rigidbody2D body;
-    private Vector2 direction = Vector2.right;
+      private float speed;
+      private Rigidbody2D body;
+      private Vector2 direction = Vector2.right;
+      private ParentShip owner;
+      private float fallbackDamageMultiplier = 1f;
 
     public void Init(
         IReadOnlyList<Vector2> worldPoints,
         Vector2 direction,
         float width,
-        float speed,
-        float damage,
-        float lifetime)
+          float speed,
+          float damage,
+          float lifetime,
+          ParentShip sourceOwner,
+          float damageMultiplier)
     {
         this.speed = speed;
         this.damage = damage;
-        this.lifetime = lifetime;
+          this.lifetime = lifetime;
+          owner = sourceOwner;
+          fallbackDamageMultiplier = Mathf.Max(1f, damageMultiplier);
         this.direction = direction.sqrMagnitude > 0.001f
             ? direction.normalized
             : Vector2.right;
@@ -325,6 +340,13 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
             return;
 
         damagedEnemies.Add(enemy);
-        enemy.TakeDamage(damage);
-    }
-}
+          enemy.TakeDamage(damage * GetCurrentDamageMultiplier());
+      }
+
+      private float GetCurrentDamageMultiplier()
+      {
+          return owner != null && owner.ShipData != null
+              ? owner.ShipData.GetAbilityDamageMultiplier(owner.GetLevel())
+              : fallbackDamageMultiplier;
+      }
+  }

@@ -8,10 +8,11 @@ public class BlackHoleActive : ActiveAbility
     [SerializeField]
     BlackHolePrefab blackHole;
     [SerializeField, HideInInspector] float duration;
-    private float metaDuration = -1f;
-    private float metaDamage = -1f;
+      private float metaDuration = -1f;
+      private float metaDamage = -1f;
+      private float abilityDamageMultiplier = 1f;
 
-    protected override void ApplySpecificShipMetaStats(
+      protected override void ApplySpecificShipMetaStats(
         ShipMetaRuntimeStats stats)
     {
         if (!stats.TryGetContract(out BlackHoleShipMetaContract contract))
@@ -19,7 +20,13 @@ public class BlackHoleActive : ActiveAbility
 
         metaDuration = contract.Duration;
         metaDamage = contract.Damage;
-    }
+      }
+
+      public override void ApplyBattleAbilityDamageMultiplier(
+          float damageMultiplier)
+      {
+          abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
+      }
 
     public override bool Activate(ParentShip owner)
     {
@@ -38,7 +45,11 @@ public class BlackHoleActive : ActiveAbility
         owner?.SetIntangibleForSeconds(activeDuration);
 
         BlackHolePrefab currentBlackHole = Instantiate(blackHole, transform);
-        currentBlackHole.Init(activeDuration, metaDamage);
+          currentBlackHole.Init(
+              activeDuration,
+              metaDamage,
+              owner,
+              abilityDamageMultiplier);
         audioManager.PlaySound(audioDatabase.blackHole, transform.position);
         GetComponent<WeaponController>().StopShootingForSeconds(activeDuration);
         return true;

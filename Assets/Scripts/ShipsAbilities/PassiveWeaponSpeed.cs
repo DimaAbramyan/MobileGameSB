@@ -12,7 +12,7 @@ public class PassiveWeaponSpeed : PassiveAbility
 
     private float passiveSpeedDivisor = 40f;
     private float passiveSpeedMultiplier = 1.2f;
-    private float maximumReloadMultiplier = 2f;
+    private float maximumReloadMultiplier = 1.2f;
     private float minimumReloadMultiplier = 0.25f;
 
     public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
