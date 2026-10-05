@@ -72,11 +72,23 @@ public sealed class ProjectileResonanceSphereContract : ProjectileDataContract
     [SerializeField, Min(0f)] private float explosionRadius = 5f;
     [SerializeField, Min(0.01f)] private float waveSpeed = 2f;
 
+    [Header("Detonation Approach")]
+    [SerializeField] private float slowdownStartY = 3.5f;
+    [SerializeField] private float detonationY = 4f;
+    [SerializeField, Min(0.02f)] private float slowdownDuration = 3f;
+
+    [Header("Full Charge Detonation")]
+    [SerializeField, Min(0f)] private float fullChargeDetonationDelay = 1f;
+
     public override string DisplayName => "Resonance Sphere";
     public float MaximumStoredDamage => Mathf.Max(0f, maximumStoredDamage);
     public float Lifetime => Mathf.Max(0.02f, lifetime);
     public float ExplosionRadius => Mathf.Max(0f, explosionRadius);
     public float WaveSpeed => Mathf.Max(0.01f, waveSpeed);
+    public float SlowdownStartY => slowdownStartY;
+    public float DetonationY => Mathf.Max(slowdownStartY + 0.01f, detonationY);
+    public float SlowdownDuration => Mathf.Max(0.02f, slowdownDuration);
+    public float FullChargeDetonationDelay => Mathf.Max(0f, fullChargeDetonationDelay);
 }
 
 [Serializable]
@@ -440,6 +452,13 @@ public sealed class ProjectileData : ScriptableObject
             runtimeConfig.resonanceSphereExplosionRadius =
                 resonanceSphere.ExplosionRadius;
             runtimeConfig.resonanceSphereWaveSpeed = resonanceSphere.WaveSpeed;
+            runtimeConfig.resonanceSphereSlowdownStartY =
+                resonanceSphere.SlowdownStartY;
+            runtimeConfig.resonanceSphereDetonationY = resonanceSphere.DetonationY;
+            runtimeConfig.resonanceSphereSlowdownDuration =
+                resonanceSphere.SlowdownDuration;
+            runtimeConfig.resonanceSphereFullChargeDetonationDelay =
+                resonanceSphere.FullChargeDetonationDelay;
             runtimeConfig.projectileLifetime = resonanceSphere.Lifetime;
             runtimeConfig.contactMode = ProjectileContactMode.Ignore;
         }

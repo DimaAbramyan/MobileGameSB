@@ -193,7 +193,120 @@ public partial struct PlayerProjectileBallLightningSystem : ISystem
 
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateBefore(typeof(PlayerProjectileMovementSystem))]
+public partial struct PlayerProjectileResonanceSphereApproachSystem : ISystem
+{
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<PlayerProjectileCollisionRegistryTag>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        foreach ((RefRW<LocalTransform> transform,
+                  RefRW<PlayerProjectilePreviousPosition> previousPosition,
+                  RefRW<PlayerProjectileVelocity> velocity,
+                  RefRW<PlayerProjectileResolution> resolution,
+                  RefRW<PlayerProjectileResonanceSphereState> sphereState,
+                  RefRO<PlayerProjectileResonanceSphereStaticData> sphereData)
+                 in SystemAPI.Query<RefRW<LocalTransform>,
+                     RefRW<PlayerProjectilePreviousPosition>,
+                     RefRW<PlayerProjectileVelocity>,
+                     RefRW<PlayerProjectileResolution>,
+                     RefRW<PlayerProjectileResonanceSphereState>,
+                     RefRO<PlayerProjectileResonanceSphereStaticData>>())
+        {
+            if (sphereState.ValueRO.IsDetonating != 0
+                || resolution.ValueRO.Kind != PlayerProjectileResolutionKind.None)
+            {
+                continue;
+            }
+
+            PlayerProjectileResonanceSphereStaticData data = sphereData.ValueRO;
+            PlayerProjectileResonanceSphereState currentState = sphereState.ValueRO;
+            bool fullChargeDetonationPending = currentState
+                .IsFullChargeDetonationPending != 0;
+            if (fullChargeDetonationPending)
+            {
+                currentState.FullChargeDetonationElapsed += deltaTime;
+                if (currentState.FullChargeDetonationElapsed
+                    >= data.FullChargeDetonationDelay)
+                {
+                    resolution.ValueRW = new PlayerProjectileResolution
+                    {
+                        Kind = PlayerProjectileResolutionKind.Expired,
+                        TargetId = 0,
+                        TargetKind = PlayerProjectileCollisionTargetKind.Enemy
+                    };
+                    sphereState.ValueRW = currentState;
+                    continue;
+                }
+            }
+
+            float2 currentPosition = transform.ValueRO.Position.xy;
+            if (currentState.IsSlowingDown == 0)
+            {
+                if (currentPosition.y < data.SlowdownStartY)
+                    continue;
+
+                currentState.IsSlowingDown = 1;
+                currentState.SlowdownElapsed = 0f;
+                currentState.SlowdownStartX = currentPosition.x;
+                currentPosition = new float2(
+                    currentState.SlowdownStartX,
+                    data.SlowdownStartY);
+                transform.ValueRW.Position = new float3(
+                    currentPosition.x,
+                    currentPosition.y,
+                    transform.ValueRO.Position.z);
+            }
+
+            float duration = math.max(0.02f, data.SlowdownDuration);
+            currentState.SlowdownElapsed = math.min(
+                duration,
+                currentState.SlowdownElapsed + deltaTime);
+            float progress = math.saturate(currentState.SlowdownElapsed / duration);
+            float remainingProgress = 1f - progress;
+            float easedProgress = 1f - remainingProgress * remainingProgress;
+            float2 targetPosition = new(
+                currentState.SlowdownStartX,
+                math.lerp(data.SlowdownStartY, data.DetonationY, easedProgress));
+
+            if (progress >= 1f)
+            {
+                transform.ValueRW.Position = new float3(
+                    targetPosition.x,
+                    targetPosition.y,
+                    transform.ValueRO.Position.z);
+                previousPosition.ValueRW.Value = targetPosition;
+                velocity.ValueRW.Value = float2.zero;
+                if (!fullChargeDetonationPending)
+                {
+                    resolution.ValueRW = new PlayerProjectileResolution
+                    {
+                        Kind = PlayerProjectileResolutionKind.Expired,
+                        TargetId = 0,
+                        TargetKind = PlayerProjectileCollisionTargetKind.Enemy
+                    };
+                }
+            }
+            else
+            {
+                velocity.ValueRW.Value = (targetPosition - currentPosition)
+                    / math.max(0.0001f, deltaTime);
+            }
+
+            sphereState.ValueRW = currentState;
+        }
+    }
+}
+
+[BurstCompile]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PlayerProjectileLifetimeSystem))]
+[UpdateAfter(typeof(PlayerProjectileResonanceSphereApproachSystem))]
 [UpdateBefore(typeof(PlayerProjectileCleanupSystem))]
 public partial struct PlayerProjectileResonanceSphereSystem : ISystem
 {

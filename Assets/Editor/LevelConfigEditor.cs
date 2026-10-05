@@ -5,19 +5,82 @@ using UnityEngine;
 [CustomEditor(typeof(LevelConfig))]
 public sealed class LevelConfigEditor : Editor
 {
+    private readonly struct EnemyCount
+    {
+        public EnemyCount(Enemy enemy, int count)
+        {
+            Enemy = enemy;
+            Count = count;
+        }
+
+        public Enemy Enemy { get; }
+        public int Count { get; }
+    }
+
+    private sealed class EnemyComposition
+    {
+        public EnemyComposition(List<EnemyCount> enemies, int totalCount)
+        {
+            Enemies = enemies;
+            TotalCount = totalCount;
+        }
+
+        public List<EnemyCount> Enemies { get; }
+        public int TotalCount { get; }
+    }
+
+    private sealed class SubWaveEnemyComposition
+    {
+        public SubWaveEnemyComposition(string name, EnemyComposition composition)
+        {
+            Name = name;
+            Composition = composition;
+        }
+
+        public string Name { get; }
+        public EnemyComposition Composition { get; }
+    }
+
+    private sealed class WaveEnemyComposition
+    {
+        public WaveEnemyComposition(
+            EnemyComposition composition,
+            List<SubWaveEnemyComposition> subWaves)
+        {
+            Composition = composition;
+            SubWaves = subWaves;
+        }
+
+        public EnemyComposition Composition { get; }
+        public List<SubWaveEnemyComposition> SubWaves { get; }
+    }
+
     private SerializedProperty waveMetalDrops;
     private readonly Dictionary<int, bool> subwaveCompositionExpanded = new();
+    private readonly Dictionary<int, WaveEnemyComposition> waveCompositionCache = new();
+    private EnemyComposition levelCompositionCache;
 
     private void OnEnable()
     {
         waveMetalDrops = serializedObject.FindProperty("waveMetalDrops");
+        EditorApplication.projectChanged += InvalidateEnemyCompositionCache;
+        Undo.undoRedoPerformed += InvalidateEnemyCompositionCache;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.projectChanged -= InvalidateEnemyCompositionCache;
+        Undo.undoRedoPerformed -= InvalidateEnemyCompositionCache;
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
+        EditorGUI.BeginChangeCheck();
         DrawPropertiesExcluding(serializedObject, "m_Script", "waveMetalDrops");
-        serializedObject.ApplyModifiedProperties();
+        bool propertiesChanged = EditorGUI.EndChangeCheck();
+        if (serializedObject.ApplyModifiedProperties() || propertiesChanged)
+            InvalidateEnemyCompositionCache();
 
         LevelConfig levelConfig = (LevelConfig)target;
         int waveCount = levelConfig.Waves?.Count ?? 0;
@@ -27,6 +90,7 @@ public sealed class LevelConfigEditor : Editor
             levelConfig.EnsureWaveMetalDropSettings();
             EditorUtility.SetDirty(levelConfig);
             serializedObject.Update();
+            InvalidateEnemyCompositionCache();
         }
 
         EditorGUILayout.Space();
@@ -72,9 +136,8 @@ public sealed class LevelConfigEditor : Editor
         if (wavePrefab == null)
             return;
 
-        InfoAboutSubWave[] subWaves =
-            wavePrefab.GetComponentsInChildren<InfoAboutSubWave>(true);
-        if (subWaves.Length == 0)
+        WaveEnemyComposition composition = GetWaveEnemyComposition(wavePrefab);
+        if (composition.SubWaves.Count == 0)
         {
             EditorGUILayout.HelpBox(
                 "No configured subwaves were found in this wave prefab.",
@@ -82,11 +145,8 @@ public sealed class LevelConfigEditor : Editor
             return;
         }
 
-        Dictionary<Enemy, int> enemyCounts = new();
-        CollectWaveEnemyCounts(wavePrefab, enemyCounts);
-
         EditorGUI.indentLevel++;
-        DrawEnemySummary("Wave Enemy Summary", enemyCounts);
+        DrawEnemySummary("Wave Enemy Summary", composition.Composition);
 
         int expansionKey = levelConfig.GetInstanceID() * 397 ^ waveIndex;
         bool expanded = subwaveCompositionExpanded.TryGetValue(
@@ -105,40 +165,38 @@ public sealed class LevelConfigEditor : Editor
         }
 
         EditorGUI.indentLevel++;
-        for (int i = 0; i < subWaves.Length; i++)
-            DrawSubWaveEnemyComposition(i, subWaves[i]);
+        for (int i = 0; i < composition.SubWaves.Count; i++)
+            DrawSubWaveEnemyComposition(i, composition.SubWaves[i]);
         EditorGUI.indentLevel--;
         EditorGUI.indentLevel--;
     }
 
-    private static void DrawLevelEnemySummary(LevelConfig levelConfig)
+    private void DrawLevelEnemySummary(LevelConfig levelConfig)
     {
-        Dictionary<Enemy, int> enemyCounts = new();
-        IReadOnlyList<GameObject> waves = levelConfig.Waves;
-        if (waves != null)
-        {
-            for (int i = 0; i < waves.Count; i++)
-                CollectWaveEnemyCounts(waves[i], enemyCounts);
-        }
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Level Enemy Summary", EditorStyles.boldLabel);
+        if (GUILayout.Button("Refresh", GUILayout.Width(70f)))
+            InvalidateEnemyCompositionCache();
+        EditorGUILayout.EndHorizontal();
 
-        DrawEnemySummary("Level Enemy Summary", enemyCounts);
+        DrawEnemySummaryContents(GetLevelEnemyComposition(levelConfig));
     }
 
     private static void DrawEnemySummary(
         string title,
-        Dictionary<Enemy, int> enemyCounts)
+        EnemyComposition composition)
     {
         EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        DrawEnemySummaryContents(composition);
+    }
 
-        int totalCount = 0;
-        foreach (int count in enemyCounts.Values)
-            totalCount += count;
-
+    private static void DrawEnemySummaryContents(EnemyComposition composition)
+    {
         EditorGUILayout.LabelField(
-            $"Total enemies: {totalCount}",
+            $"Total enemies: {composition.TotalCount}",
             EditorStyles.miniBoldLabel);
 
-        if (enemyCounts.Count == 0)
+        if (composition.Enemies.Count == 0)
         {
             EditorGUILayout.HelpBox(
                 "No configured enemies were found.",
@@ -146,90 +204,146 @@ public sealed class LevelConfigEditor : Editor
             return;
         }
 
-        List<KeyValuePair<Enemy, int>> types = new(enemyCounts);
-        types.Sort((left, right) => string.Compare(
-            left.Key != null ? left.Key.name : "Missing Enemy",
-            right.Key != null ? right.Key.name : "Missing Enemy",
-            System.StringComparison.Ordinal));
-
         EditorGUI.indentLevel++;
-        for (int i = 0; i < types.Count; i++)
+        for (int i = 0; i < composition.Enemies.Count; i++)
         {
-            KeyValuePair<Enemy, int> pair = types[i];
-            string enemyName = pair.Key != null ? pair.Key.name : "Missing Enemy";
-            string eligibility = pair.Key != null && pair.Key.CanContainBuff()
+            EnemyCount pair = composition.Enemies[i];
+            string enemyName = pair.Enemy != null ? pair.Enemy.name : "Missing Enemy";
+            string eligibility = pair.Enemy != null && pair.Enemy.CanContainBuff()
                 ? string.Empty
                 : " (no metal)";
             EditorGUILayout.LabelField(
-                $"{enemyName}: {pair.Value}{eligibility}",
+                $"{enemyName}: {pair.Count}{eligibility}",
                 EditorStyles.miniLabel);
         }
         EditorGUI.indentLevel--;
     }
 
-    private static void CollectWaveEnemyCounts(
-        GameObject wavePrefab,
-        Dictionary<Enemy, int> enemyCounts)
-    {
-        if (wavePrefab == null)
-            return;
-
-        InfoAboutSubWave[] subWaves =
-            wavePrefab.GetComponentsInChildren<InfoAboutSubWave>(true);
-        for (int i = 0; i < subWaves.Length; i++)
-            CollectEnemyCounts(subWaves[i], enemyCounts);
-    }
-
     private static void DrawSubWaveEnemyComposition(
         int subWaveIndex,
-        InfoAboutSubWave subWave)
+        SubWaveEnemyComposition subWave)
     {
-        Dictionary<Enemy, int> enemyCounts = new();
-        CollectEnemyCounts(subWave, enemyCounts);
-
-        string subWaveName = string.IsNullOrWhiteSpace(subWave.name)
-            ? subWave.GetType().Name
-            : subWave.name;
-
-        if (enemyCounts.Count == 0)
+        EnemyComposition composition = subWave.Composition;
+        if (composition.Enemies.Count == 0)
         {
             EditorGUILayout.HelpBox(
-                $"{subWaveIndex + 1}. {subWaveName}: enemy composition is unavailable.",
+                $"{subWaveIndex + 1}. {subWave.Name}: enemy composition is unavailable.",
                 MessageType.Warning);
             return;
         }
 
-        int totalCount = 0;
-        List<KeyValuePair<Enemy, int>> types = new(enemyCounts);
-        foreach (KeyValuePair<Enemy, int> pair in enemyCounts)
-            totalCount += pair.Value;
-
-        types.Sort((left, right) => string.Compare(
-            left.Key != null ? left.Key.name : "Missing Enemy",
-            right.Key != null ? right.Key.name : "Missing Enemy",
-            System.StringComparison.Ordinal));
-
         EditorGUILayout.LabelField(
-            $"{subWaveIndex + 1}. {subWaveName}",
+            $"{subWaveIndex + 1}. {subWave.Name}",
             EditorStyles.miniBoldLabel);
         EditorGUI.indentLevel++;
         EditorGUILayout.LabelField(
-            $"Total enemies: {totalCount}",
+            $"Total enemies: {composition.TotalCount}",
             EditorStyles.miniLabel);
         EditorGUI.indentLevel++;
-        for (int i = 0; i < types.Count; i++)
+        for (int i = 0; i < composition.Enemies.Count; i++)
         {
-            KeyValuePair<Enemy, int> pair = types[i];
-            string enemyName = pair.Key != null ? pair.Key.name : "Missing Enemy";
-            string eligibility = pair.Key != null && pair.Key.CanContainBuff()
+            EnemyCount pair = composition.Enemies[i];
+            string enemyName = pair.Enemy != null ? pair.Enemy.name : "Missing Enemy";
+            string eligibility = pair.Enemy != null && pair.Enemy.CanContainBuff()
                 ? string.Empty
                 : " (no metal)";
             EditorGUILayout.LabelField(
-                $"{enemyName}: {pair.Value}{eligibility}",
+                $"{enemyName}: {pair.Count}{eligibility}",
                 EditorStyles.wordWrappedMiniLabel);
         }
         EditorGUI.indentLevel--;
         EditorGUI.indentLevel--;
+    }
+
+    private EnemyComposition GetLevelEnemyComposition(LevelConfig levelConfig)
+    {
+        if (levelCompositionCache != null)
+            return levelCompositionCache;
+
+        Dictionary<Enemy, int> enemyCounts = new();
+        IReadOnlyList<GameObject> waves = levelConfig.Waves;
+        if (waves != null)
+        {
+            for (int i = 0; i < waves.Count; i++)
+                MergeEnemyCounts(enemyCounts, GetWaveEnemyComposition(waves[i]).Composition);
+        }
+
+        levelCompositionCache = CreateEnemyComposition(enemyCounts);
+        return levelCompositionCache;
+    }
+
+    private WaveEnemyComposition GetWaveEnemyComposition(GameObject wavePrefab)
+    {
+        if (wavePrefab == null)
+            return new WaveEnemyComposition(
+                CreateEnemyComposition(new Dictionary<Enemy, int>()),
+                new List<SubWaveEnemyComposition>());
+
+        int waveId = wavePrefab.GetInstanceID();
+        if (waveCompositionCache.TryGetValue(waveId, out WaveEnemyComposition cached))
+            return cached;
+
+        InfoAboutSubWave[] subWaves =
+            wavePrefab.GetComponentsInChildren<InfoAboutSubWave>(true);
+        var subWaveCompositions = new List<SubWaveEnemyComposition>(subWaves.Length);
+        var enemyCounts = new Dictionary<Enemy, int>();
+        for (int i = 0; i < subWaves.Length; i++)
+        {
+            InfoAboutSubWave subWave = subWaves[i];
+            var subWaveEnemyCounts = new Dictionary<Enemy, int>();
+            CollectEnemyCounts(subWave, subWaveEnemyCounts);
+            EnemyComposition subWaveComposition =
+                CreateEnemyComposition(subWaveEnemyCounts);
+            string subWaveName = string.IsNullOrWhiteSpace(subWave.name)
+                ? subWave.GetType().Name
+                : subWave.name;
+            subWaveCompositions.Add(new SubWaveEnemyComposition(
+                subWaveName,
+                subWaveComposition));
+            MergeEnemyCounts(enemyCounts, subWaveComposition);
+        }
+
+        var composition = new WaveEnemyComposition(
+            CreateEnemyComposition(enemyCounts),
+            subWaveCompositions);
+        waveCompositionCache.Add(waveId, composition);
+        return composition;
+    }
+
+    private static EnemyComposition CreateEnemyComposition(
+        Dictionary<Enemy, int> enemyCounts)
+    {
+        var enemies = new List<EnemyCount>(enemyCounts.Count);
+        int totalCount = 0;
+        foreach (KeyValuePair<Enemy, int> pair in enemyCounts)
+        {
+            enemies.Add(new EnemyCount(pair.Key, pair.Value));
+            totalCount += pair.Value;
+        }
+
+        enemies.Sort((left, right) => string.Compare(
+            left.Enemy != null ? left.Enemy.name : "Missing Enemy",
+            right.Enemy != null ? right.Enemy.name : "Missing Enemy",
+            System.StringComparison.Ordinal));
+        return new EnemyComposition(enemies, totalCount);
+    }
+
+    private static void MergeEnemyCounts(
+        Dictionary<Enemy, int> destination,
+        EnemyComposition source)
+    {
+        for (int i = 0; i < source.Enemies.Count; i++)
+        {
+            EnemyCount pair = source.Enemies[i];
+            destination.TryGetValue(pair.Enemy, out int count);
+            destination[pair.Enemy] = count + pair.Count;
+        }
+    }
+
+    private void InvalidateEnemyCompositionCache()
+    {
+        waveCompositionCache.Clear();
+        levelCompositionCache = null;
     }
 
     private static void CollectEnemyCounts(

@@ -1,9 +1,9 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
+public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttackAimTarget
 {
     [Inject] private DiContainer container;
     [Inject] private EnemyManager enemyManager;
@@ -288,7 +288,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             if (movementStartDelay > 0f)
                 yield return new WaitForSeconds(movementStartDelay);
 
-            if (enemy != null && individualPointMovementDuration > 0f)
+            if (enemy != null
+                && !enemy.isDead
+                && individualPointMovementDuration > 0f)
             {
                 yield return MoveBetween(
                     enemy,
@@ -299,7 +301,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
                     individualPointMovementDuration,
                     individualPointMovementCurve);
             }
-            else if (enemy != null)
+            else if (enemy != null && !enemy.isDead)
             {
                 SetEntranceRoutePosition(
                     enemy,
@@ -351,7 +353,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
                 }
             }
 
-            if (enemy != null && settleDuration > 0f)
+            if (enemy != null && !enemy.isDead && settleDuration > 0f)
             {
                 Vector3 from = GetEntranceRoutePosition(
                     enemy,
@@ -365,7 +367,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
                     settleDuration,
                     settleCurve);
             }
-            else if (enemy != null)
+            else if (enemy != null && !enemy.isDead)
             {
                 SetEntranceRoutePosition(
                     enemy,
@@ -686,7 +688,10 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
     {
         float elapsed = 0f;
 
-        while (elapsed < duration && target != null)
+        while (elapsed < duration
+            && enemy != null
+            && !enemy.isDead
+            && target != null)
         {
             elapsed += Time.deltaTime * enemy.MovementSpeedMultiplier;
             float time = Mathf.Clamp01(elapsed / duration);
@@ -699,7 +704,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             yield return null;
         }
 
-        if (target != null)
+        if (enemy != null && !enemy.isDead && target != null)
             SetEntranceRoutePosition(enemy, target, body, to);
     }
 
@@ -2480,6 +2485,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             && command.type != DirectedWavePostCommandType.LegacyAttack;
     }
 
+    Vector3 IEnemyAttackAimTarget.AttackTargetPosition => GetPlayerTargetPosition();
+
     internal Vector3 GetPlayerTargetPosition()
     {
         if (playerController == null)
@@ -2551,6 +2558,26 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             return transform.position;
 
         return GetFormationPosition(slotIndex);
+    }
+
+    public DirectedWaveEnemyOverride GetConfiguredEnemyOverrideForSlot(int slotIndex)
+    {
+        return formationFrozen || formationLayout == DirectedWaveFormationLayout.TransformPoints
+            ? GetTransformPointEnemyOverrideComponent(slotIndex) : null;
+    }
+
+    public Transform GetConfiguredEnemyOverrideHostForSlot(int slotIndex)
+    {
+        if (!formationFrozen
+            && formationLayout != DirectedWaveFormationLayout.TransformPoints
+            || formationPointsRoot == null
+            || slotIndex < 0
+            || slotIndex >= formationPointsRoot.childCount)
+        {
+            return null;
+        }
+
+        return formationPointsRoot.GetChild(slotIndex);
     }
 
     public Enemy GetConfiguredEnemyPrefabForSlot(int slotIndex)
@@ -2833,7 +2860,11 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
         }
     }
 
-    private void ValidatePostCommands(DirectedWavePostCommand[] commands)
+    private const int MaxPostCommandNestingDepth = 2;
+
+    private void ValidatePostCommands(
+        DirectedWavePostCommand[] commands,
+        int depth = 0)
     {
         if (commands == null)
             return;
@@ -2871,9 +2902,51 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave
             if (command.morphTarget != null)
                 ValidateMorphStep(command.morphTarget);
 
-            ValidatePostCommands(command.parallelCommands);
-            ValidatePostCommands(command.loopCommands);
+            if (depth >= MaxPostCommandNestingDepth)
+            {
+                ClearNestedPostCommands(command);
+                continue;
+            }
+
+            switch (command.type)
+            {
+                case DirectedWavePostCommandType.Parallel:
+                    ClearLoopCommands(command);
+                    ValidatePostCommands(
+                        command.parallelCommands,
+                        depth + 1);
+                    break;
+                case DirectedWavePostCommandType.Loop:
+                    ClearParallelCommands(command);
+                    ValidatePostCommands(
+                        command.loopCommands,
+                        depth + 1);
+                    break;
+                default:
+                    ClearNestedPostCommands(command);
+                    break;
+            }
         }
+    }
+
+    private static void ClearNestedPostCommands(DirectedWavePostCommand command)
+    {
+        ClearParallelCommands(command);
+        ClearLoopCommands(command);
+    }
+
+    private static void ClearParallelCommands(DirectedWavePostCommand command)
+    {
+        if (command.parallelCommands?.Length > 0)
+            command.parallelCommands =
+                System.Array.Empty<DirectedWavePostCommand>();
+    }
+
+    private static void ClearLoopCommands(DirectedWavePostCommand command)
+    {
+        if (command.loopCommands?.Length > 0)
+            command.loopCommands =
+                System.Array.Empty<DirectedWavePostCommand>();
     }
 
     private struct FormationMorphRuntimeSegment

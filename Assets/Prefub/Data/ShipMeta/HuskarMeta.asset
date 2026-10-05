@@ -19,8 +19,8 @@ MonoBehaviour:
   - basicStats:
       maximumHealthPoints: 160
       maximumShieldPoints: 40
-      healthRegenRatePercent: 5
-      shieldRegenRatePercent: 5
+      healthRegenRatePercent: 10
+      shieldRegenRatePercent: 10
       speed: 75
       maximumEnergy: 30
     contracts:

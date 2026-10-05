@@ -36,7 +36,7 @@ public sealed class QBeamWeapon : ContinuousBeamWeapon
         enemyDebuffController.Apply(
             enemy,
             data.DisintegrationDebuffConfig,
-            data.GetChargePerHit(Level),
+            data.GetChargePerHit(Level) * enemy.QBeamChargeMultiplier,
             Owner);
         return true;
     }

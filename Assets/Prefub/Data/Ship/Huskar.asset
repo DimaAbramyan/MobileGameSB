@@ -17,14 +17,27 @@ MonoBehaviour:
   drag: 7.5
   maximumHealthPoints: 160
   overrideHealthRegeneration: 0
-  healthRegenCooldown: 30
-  healthRegenRate: 5
+  healthRegenCooldown: 20
+  healthRegenRate: 10
   maximumShieldPoints: 40
   overrideShieldRegeneration: 0
-  shieldRegenCooldown: 15
-  shieldRegenRate: 5
+  shieldRegenCooldown: 10
+  shieldRegenRate: 10
   maximumEnergy: 10
   maximumWeaponCount: 4
   currentLvl: 0
+  abilityDamageProgression:
+    damageBonusPercentByLevel:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+  abilityDamageProgressionConfig: {fileID: 0}
   shipId: 4
   shipMetaConfig: {fileID: 11400000, guid: 8dfb89c644aa76a42a9b92af332070ce, type: 2}

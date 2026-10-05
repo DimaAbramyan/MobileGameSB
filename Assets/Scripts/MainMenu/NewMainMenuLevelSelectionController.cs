@@ -27,6 +27,12 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
     [SerializeField] private TMP_Text levelNumberText;
     [SerializeField] private string levelNumberFormat = "Уровень {0}";
 
+    [Header("Difficulty")]
+    [SerializeField] private Button normalDifficultyButton;
+    [SerializeField] private Button hardDifficultyButton;
+    [SerializeField] private Button extremeDifficultyButton;
+    [SerializeField] private Color selectedDifficultyColor = new Color(0.55f, 0.8f, 1f, 1f);
+
     [Header("Equipment")]
     [SerializeField] private ShipSlotView[] shipSlots = Array.Empty<ShipSlotView>();
     [SerializeField] private Sprite emptyShipIcon;
@@ -46,6 +52,13 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
     private LevelConfig selectedLevel;
     private LoadLevelConfig selectedLoader;
     private bool showRequested;
+    private LevelDifficulty selectedDifficulty;
+    private Color normalDifficultyColor;
+    private Color hardDifficultyColor;
+    private Color extremeDifficultyColor;
+
+    public LevelConfig SelectedLevel => selectedLevel;
+    public LevelDifficulty SelectedDifficulty => selectedDifficulty;
 
     public static bool TryGetSceneController(
         out NewMainMenuLevelSelectionController controller)
@@ -110,6 +123,9 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
         if (level == null)
             return;
 
+        selectedLevel = level;
+        selectedLoader = loader;
+        selectedDifficulty = level.Difficulty;
         showRequested = true;
         ResolveDependencies();
 
@@ -118,8 +134,6 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
         else
             gameObject.SetActive(true);
 
-        selectedLevel = level;
-        selectedLoader = loader;
         Refresh();
     }
 
@@ -133,7 +147,30 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
             return;
         }
 
-        selectedLoader.StartLevel();
+        selectedLoader.StartLevel(selectedLevel);
+    }
+
+    public void SelectNormalDifficulty() => SelectDifficulty(LevelDifficulty.Normal);
+    public void SelectHardDifficulty() => SelectDifficulty(LevelDifficulty.Hard);
+    public void SelectExtremeDifficulty() => SelectDifficulty(LevelDifficulty.Extreme);
+
+    public void SelectDifficulty(LevelDifficulty difficulty)
+    {
+        LevelDefinitionConfig definition = selectedLoader != null
+            ? selectedLoader.LevelDefinition
+            : null;
+        LevelConfig config = definition != null
+            ? definition.GetDifficulty(difficulty)
+            : difficulty == LevelDifficulty.Normal ? selectedLoader?.LevelConfig : null;
+        if (config == null)
+        {
+            Debug.LogError($"Selected level has no {difficulty} configuration.", this);
+            return;
+        }
+
+        selectedLevel = config;
+        selectedDifficulty = difficulty;
+        Refresh();
     }
 
     private void Refresh()
@@ -147,9 +184,28 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
 
         if (startButton != null)
             startButton.interactable = selectedLoader != null
-                && selectedLoader.CanLoad();
+                && selectedLoader.CanLoad(selectedLevel);
 
+        RefreshDifficultyButton(normalDifficultyButton, LevelDifficulty.Normal, normalDifficultyColor);
+        RefreshDifficultyButton(hardDifficultyButton, LevelDifficulty.Hard, hardDifficultyColor);
+        RefreshDifficultyButton(extremeDifficultyButton, LevelDifficulty.Extreme, extremeDifficultyColor);
         RefreshEquipment();
+    }
+
+    private void RefreshDifficultyButton(Button button, LevelDifficulty difficulty, Color originalColor)
+    {
+        if (button == null)
+            return;
+
+        LevelDefinitionConfig definition = selectedLoader?.LevelDefinition;
+        LevelConfig config = definition != null
+            ? definition.GetDifficulty(difficulty)
+            : difficulty == LevelDifficulty.Normal ? selectedLoader?.LevelConfig : null;
+        button.interactable = config != null && selectedLoader.CanLoad(config);
+        if (button.image != null)
+            button.image.color = config != null && selectedDifficulty == difficulty
+                ? selectedDifficultyColor
+                : originalColor;
     }
 
     private void RefreshEquipment()
@@ -197,6 +253,12 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
     private void RegisterButtons()
     {
         startButton?.onClick.AddListener(StartSelectedLevel);
+        normalDifficultyColor = GetButtonColor(normalDifficultyButton);
+        hardDifficultyColor = GetButtonColor(hardDifficultyButton);
+        extremeDifficultyColor = GetButtonColor(extremeDifficultyButton);
+        normalDifficultyButton?.onClick.AddListener(SelectNormalDifficulty);
+        hardDifficultyButton?.onClick.AddListener(SelectHardDifficulty);
+        extremeDifficultyButton?.onClick.AddListener(SelectExtremeDifficulty);
 
         shipSlotHandlers = new UnityAction[shipSlots.Length];
         for (int index = 0; index < shipSlots.Length; index++)
@@ -215,6 +277,9 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
     private void UnregisterButtons()
     {
         startButton?.onClick.RemoveListener(StartSelectedLevel);
+        normalDifficultyButton?.onClick.RemoveListener(SelectNormalDifficulty);
+        hardDifficultyButton?.onClick.RemoveListener(SelectHardDifficulty);
+        extremeDifficultyButton?.onClick.RemoveListener(SelectExtremeDifficulty);
         if (shipSlotHandlers == null)
             return;
 
@@ -227,6 +292,11 @@ public sealed class NewMainMenuLevelSelectionController : MonoBehaviour
                 slot.Button.onClick.RemoveListener(shipSlotHandlers[index]);
             }
         }
+    }
+
+    private static Color GetButtonColor(Button button)
+    {
+        return button != null && button.image != null ? button.image.color : Color.white;
     }
 
     private void RegisterSceneController()

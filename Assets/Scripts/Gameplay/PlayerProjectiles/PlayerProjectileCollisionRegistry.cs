@@ -30,8 +30,13 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
     private readonly Dictionary<ProjectileData, int> explosionConfigIds = new();
     private readonly Dictionary<int, RegisteredExplosionConfig>
         explosionConfigsById = new();
+    private readonly List<PlayerProjectileExplosionRequest>
+        pendingExplosionRequests = new();
     private readonly Dictionary<ProjectileData, int> secondaryProjectileConfigIds = new();
     private readonly Dictionary<int, ProjectileData> secondaryProjectileConfigsById = new();
+    private readonly List<PlayerProjectileSecondarySpawnRequest>
+        pendingSecondarySpawnRequests = new();
+    private readonly List<PendingGridEntry> pendingGridEntries = new(32);
 
     [Inject] private EnemyManager enemyManager;
     [Inject] private DealDamageManager dealDamageManager;
@@ -225,6 +230,10 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
                   ComponentType.ReadOnly<PlayerProjectileStaticData>());
               entityManager.DestroyEntity(playerProjectiles);
 
+              EntityQuery explosions = entityManager.CreateEntityQuery(
+                  ComponentType.ReadOnly<PlayerProjectileExplosionData>());
+              entityManager.DestroyEntity(explosions);
+
               if (entityManager.Exists(registryEntity))
                   entityManager.DestroyEntity(registryEntity);
           }
@@ -402,38 +411,51 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
     {
         DynamicBuffer<PlayerProjectileExplosionRequest> requests = entityManager
             .GetBuffer<PlayerProjectileExplosionRequest>(registryEntity);
+
         for (int index = 0; index < requests.Length; index++)
+            pendingExplosionRequests.Add(requests[index]);
+
+        requests.Clear();
+
+        for (int index = 0; index < pendingExplosionRequests.Count; index++)
         {
-            PlayerProjectileExplosionRequest request = requests[index];
+            PlayerProjectileExplosionRequest request = pendingExplosionRequests[index];
             if (!explosionConfigsById.TryGetValue(
                     request.ExplosionConfigId,
-                    out RegisteredExplosionConfig config))
+                    out RegisteredExplosionConfig config)
+                || secondaryProjectileSpawner == null)
             {
                 continue;
             }
 
             ownersById.TryGetValue(request.OwnerId, out ParentShip owner);
-            ProjectileExplosionSpawner.Spawn(
+            secondaryProjectileSpawner.TrySpawnExplosion(
                 config.Prefab,
                 config.Damage,
                 config.DamageType,
                 config.BypassesEnemyShield,
                 config.Radius,
                 new Vector3(request.Position.x, request.Position.y, 0f),
-                owner,
-                dealDamageManager);
+                owner);
         }
 
-        requests.Clear();
+        pendingExplosionRequests.Clear();
     }
 
     private void ResolveSecondaryProjectileSpawnRequests()
     {
         DynamicBuffer<PlayerProjectileSecondarySpawnRequest> requests = entityManager
             .GetBuffer<PlayerProjectileSecondarySpawnRequest>(registryEntity);
+
         for (int index = 0; index < requests.Length; index++)
+            pendingSecondarySpawnRequests.Add(requests[index]);
+
+        requests.Clear();
+
+        for (int index = 0; index < pendingSecondarySpawnRequests.Count; index++)
         {
-            PlayerProjectileSecondarySpawnRequest request = requests[index];
+            PlayerProjectileSecondarySpawnRequest request =
+                pendingSecondarySpawnRequests[index];
             if (secondaryProjectileSpawner == null
                 || !secondaryProjectileConfigsById.TryGetValue(
                     request.SecondaryProjectileConfigId,
@@ -461,7 +483,7 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
                 request.IgnoredTargetId);
         }
 
-        requests.Clear();
+        pendingSecondarySpawnRequests.Clear();
     }
 
     private void ResolveDamageReceiverEvent(
@@ -496,6 +518,7 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
         targets.Clear();
         grid.Clear();
         homingTargets.Clear();
+        pendingGridEntries.Clear();
 
         for (int enemyIndex = enemies.Count - 1; enemyIndex >= 0; enemyIndex--)
         {
@@ -532,7 +555,7 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
                 Bounds bounds = collider.bounds;
                 AddColliderSnapshot(
                     targets,
-                    grid,
+                    pendingGridEntries,
                     enemy.Id,
                     PlayerProjectileCollisionTargetKind.Enemy,
                     bounds);
@@ -561,23 +584,26 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
 
                 AddColliderSnapshot(
                     targets,
-                    grid,
+                    pendingGridEntries,
                     receiver.Id,
                     PlayerProjectileCollisionTargetKind.DamageReceiver,
                     collider.bounds);
             }
         }
+
+        BuildGridIndex(grid);
     }
 
     private static void AddColliderSnapshot(
         DynamicBuffer<PlayerProjectileCollisionTarget> targets,
-        DynamicBuffer<PlayerProjectileCollisionGridEntry> grid,
+        List<PendingGridEntry> gridEntries,
         int targetId,
         PlayerProjectileCollisionTargetKind targetKind,
         Bounds bounds)
     {
         float2 minimum = new(bounds.min.x, bounds.min.y);
         float2 maximum = new(bounds.max.x, bounds.max.y);
+        int targetIndex = targets.Length;
         targets.Add(new PlayerProjectileCollisionTarget
         {
             TargetId = targetId,
@@ -594,13 +620,57 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
         {
             for (int cellY = minimumY; cellY <= maximumY; cellY++)
             {
-                grid.Add(new PlayerProjectileCollisionGridEntry
-                {
-                    CellX = cellX,
-                    CellY = cellY,
-                    TargetId = targetId
-                });
+                gridEntries.Add(new PendingGridEntry(
+                    cellX,
+                    cellY,
+                    targetIndex));
             }
+        }
+    }
+
+    private void BuildGridIndex(
+        DynamicBuffer<PlayerProjectileCollisionGridEntry> grid)
+    {
+        if (pendingGridEntries.Count == 0)
+            return;
+
+        pendingGridEntries.Sort(PendingGridEntryComparer.Instance);
+        for (int index = 0; index < pendingGridEntries.Count; index++)
+        {
+            PendingGridEntry entry = pendingGridEntries[index];
+            grid.Add(new PlayerProjectileCollisionGridEntry
+            {
+                CellX = entry.CellX,
+                CellY = entry.CellY,
+                TargetIndex = entry.TargetIndex
+            });
+        }
+    }
+
+    private readonly struct PendingGridEntry
+    {
+        public readonly int CellX;
+        public readonly int CellY;
+        public readonly int TargetIndex;
+
+        public PendingGridEntry(int cellX, int cellY, int targetIndex)
+        {
+            CellX = cellX;
+            CellY = cellY;
+            TargetIndex = targetIndex;
+        }
+    }
+
+    private sealed class PendingGridEntryComparer : IComparer<PendingGridEntry>
+    {
+        public static readonly PendingGridEntryComparer Instance = new();
+
+        public int Compare(PendingGridEntry left, PendingGridEntry right)
+        {
+            int xComparison = left.CellX.CompareTo(right.CellX);
+            return xComparison != 0
+                ? xComparison
+                : left.CellY.CompareTo(right.CellY);
         }
     }
 

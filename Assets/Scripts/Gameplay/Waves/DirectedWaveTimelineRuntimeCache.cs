@@ -52,6 +52,20 @@ public sealed partial class DirectedEnemySubWave
             SimulationCommandArrayPlan> commandArrayPlans = new();
         private readonly Dictionary<DirectedWavePostCommand, float>
             commandDurations = new();
+        // A repeated post-command pipeline used to replay every completed cycle
+        // from the formation origin on every frame. Keep its finished state so a
+        // long-running wave only evaluates a cycle once.
+        private readonly Dictionary<int, Vector3> completedPipelinePositions =
+            new();
+        private readonly Dictionary<
+            DirectedWavePostCommand,
+            SimulatedBackgroundCommand> persistentBackgrounds = new(16);
+        private readonly List<DirectedWavePostCommand> expiredBackgroundCommands =
+            new(16);
+        private DirectedWavePostCommand[] completedPipelineCommands;
+        private float completedPipelineDuration;
+        private int completedPipelineCycles;
+        private bool hasCompletedPipelineState;
         private Vector3[] morphPositions = System.Array.Empty<Vector3>();
         private int positionBufferCursor;
         private float frameElapsed;
@@ -69,6 +83,7 @@ public sealed partial class DirectedEnemySubWave
             activeBackgrounds.Clear();
             morphFreeTargetIndices.Clear();
             frameElapsed = Mathf.Max(0f, elapsed);
+            RestoreActiveBackgrounds();
         }
 
         public void RecordBackground(
@@ -78,7 +93,14 @@ public sealed partial class DirectedEnemySubWave
             if (command == null || startTime > frameElapsed)
                 return;
 
-            if (activeBackgrounds.TryGetValue(
+            float duration = Mathf.Max(0.01f, command.duration);
+            if (!command.infiniteParallel
+                && frameElapsed >= startTime + duration)
+            {
+                return;
+            }
+
+            if (persistentBackgrounds.TryGetValue(
                     command,
                     out SimulatedBackgroundCommand previous))
             {
@@ -90,9 +112,51 @@ public sealed partial class DirectedEnemySubWave
                     return;
             }
 
-            activeBackgrounds[command] = new SimulatedBackgroundCommand(
+            SimulatedBackgroundCommand background = new(
                 command,
                 startTime);
+            persistentBackgrounds[command] = background;
+            activeBackgrounds[command] = background;
+        }
+
+        public Dictionary<int, Vector3> GetCompletedPipelinePositions(
+            Dictionary<int, Vector3> formationPositions,
+            DirectedWavePostCommand[] commands,
+            float duration,
+            int targetCycles,
+            out int appliedCycles)
+        {
+            bool isCompatible = hasCompletedPipelineState
+                && completedPipelineCommands == commands
+                && Mathf.Approximately(completedPipelineDuration, duration)
+                && targetCycles >= completedPipelineCycles;
+            if (!isCompatible)
+            {
+                completedPipelinePositions.Clear();
+                foreach (KeyValuePair<int, Vector3> pair in formationPositions)
+                    completedPipelinePositions[pair.Key] = pair.Value;
+
+                completedPipelineCommands = commands;
+                completedPipelineDuration = duration;
+                completedPipelineCycles = 0;
+                hasCompletedPipelineState = true;
+                persistentBackgrounds.Clear();
+                activeBackgrounds.Clear();
+            }
+
+            appliedCycles = completedPipelineCycles;
+            return RentPositions(completedPipelinePositions);
+        }
+
+        public void StoreCompletedPipelinePositions(
+            Dictionary<int, Vector3> positions,
+            int appliedCycles)
+        {
+            completedPipelinePositions.Clear();
+            foreach (KeyValuePair<int, Vector3> pair in positions)
+                completedPipelinePositions[pair.Key] = pair.Value;
+
+            completedPipelineCycles = appliedCycles;
         }
 
         public Dictionary<int, Vector3> RentPositions(int capacity)
@@ -184,6 +248,41 @@ public sealed partial class DirectedEnemySubWave
             BeginFrame(0f);
             commandArrayPlans.Clear();
             commandDurations.Clear();
+            completedPipelinePositions.Clear();
+            persistentBackgrounds.Clear();
+            expiredBackgroundCommands.Clear();
+            completedPipelineCommands = null;
+            completedPipelineDuration = 0f;
+            completedPipelineCycles = 0;
+            hasCompletedPipelineState = false;
+        }
+
+        private void RestoreActiveBackgrounds()
+        {
+            if (persistentBackgrounds.Count == 0)
+                return;
+
+            expiredBackgroundCommands.Clear();
+            foreach (KeyValuePair<DirectedWavePostCommand,
+                         SimulatedBackgroundCommand> pair
+                     in persistentBackgrounds)
+            {
+                SimulatedBackgroundCommand background = pair.Value;
+                DirectedWavePostCommand command = background.command;
+                if (command == null
+                    || (!command.infiniteParallel
+                        && frameElapsed >= background.startTime
+                            + Mathf.Max(0.01f, command.duration)))
+                {
+                    expiredBackgroundCommands.Add(pair.Key);
+                    continue;
+                }
+
+                activeBackgrounds[pair.Key] = background;
+            }
+
+            for (int i = 0; i < expiredBackgroundCommands.Count; i++)
+                persistentBackgrounds.Remove(expiredBackgroundCommands[i]);
         }
     }
 

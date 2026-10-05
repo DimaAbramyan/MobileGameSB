@@ -203,6 +203,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
   enableDebugLogs: 0
+  formationBehaviour: {fileID: 0}
+  phaseEntryBehaviour: {fileID: 0}
+  postBehaviourBlock: {fileID: 0}
+  completionBehaviour: {fileID: 0}
+  attackBehaviourBlock: {fileID: 0}
   formation:
     enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
     enemyCount: 10
@@ -243,6 +248,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 1878800833022778397}
     entranceMode: 0
     pathCoordinateSpace: 0
+    rotateEnemiesAlongEntrancePath: 0
     pathCheckpoints:
     - position: {x: -4.5, y: 0, z: 0}
       durationToNext: 0.5
@@ -644,6 +650,7 @@ MonoBehaviour:
   legacyParentEnemiesToSubWave: 0
   legacyEntranceMode: 0
   legacyPathCoordinateSpace: 0
+  legacyRotateEnemiesAlongEntrancePath: 0
   legacyPathCheckpoints:
   - position: {x: -4.5, y: 0, z: 0}
     durationToNext: 0.5
@@ -1072,8 +1079,9 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 1
+    forwardFireHalfAngle: 15
     movementMode: 0
-    serializedVersion: 10
+    serializedVersion: 11
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 0.2
     waitForPreviousAttack: 0
@@ -1082,9 +1090,134 @@ MonoBehaviour:
     overrideEnemyAttackCooldown: 0
     enemyAttackCooldown: 1
     waveBurstSettings:
+      attackPatterns: 0
+      patterns: []
+      facingMode: 0
+      facingPatternId: 
+      facingSpeed: 360
+      facingAngleOffset: 0
       repeatBurst: 0
+      burstAttack: 0
       useAttackStartDelay: 0
       attackStartDelay: 1
+      shooting:
+        shootingType: 0
+        projectileType: 0
+        overrideProjectileBaseSpeed: 0
+        projectileBaseSpeed: 1
+        overrideProjectileLifetime: 0
+        projectileLifetime: 1
+        initialSpeedMode: 0
+        randomInitialSpeedMinimum: 1
+        randomInitialSpeedMaximum: 2
+        consistentInitialSpeedChangePerVolley: -0.1
+        shootingMode: 0
+        fanMode: 0
+        projectilePatternVersion: 2
+        directionCount: 4
+        fanProjectileCount: 3
+        fanMinAngle: -45
+        fanMaxAngle: 45
+        randomMinAngle: -15
+        randomMaxAngle: 15
+        shotGunMode: 0
+        shotGunProjectileCount: 3
+        shotGunDirection: {x: 0, y: -1}
+        shotGunInitialSpeed: 5
+        projectileSpeedBehavior: 0
+        projectileSpeedChangeY: 0
+        projectileSpeedByDistance:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 10
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileMovementPattern: 0
+        projectileAngularSpeed: 90
+        projectileLateralSpeed: 1
+        projectileOrbitCenterMode: 0
+        projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+        projectileOrbitRadius: 0
+        projectileOrbitRadialSpeed: 0
+        projectileSizeBehavior: 0
+        projectileSizeChangeY: 0
+        projectileSizeChangeSpeed: 1
+        projectileSizeChangeCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileFinalSize: 1
+        rotate: 1
+        rotation:
+          direction: 0
+          rotationMode: 0
+          rotationSpeedDegreesPerSecond: 90
+          rotationProgressCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 1
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 1
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+          rotationAngle: 360
+          rotationFromAngle: 0
+          resetRotationOnEnable: 1
+      shootingSettingsVersion: 1
       useAreaAttack: 0
       areaAttackProjectileCount: 3
       areaAttackMinAngle: -45
@@ -1096,7 +1229,7 @@ MonoBehaviour:
       burstShotInterval: 0.15
       legacyShotsPerBurst: 1
       legacyShotInterval: 0.15
-      serializedVersion: 1
+      serializedVersion: 2
     legacyBurstShotCount: 1
     legacyBurstShotInterval: 0.15
     minDiveDepth: 1.5
@@ -1191,6 +1324,8 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  overrideBaseProjectileSpeed: 0
+  baseProjectileSpeed: 1
   attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
@@ -1294,6 +1429,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
   enableDebugLogs: 0
+  formationBehaviour: {fileID: 0}
+  phaseEntryBehaviour: {fileID: 0}
+  postBehaviourBlock: {fileID: 0}
+  completionBehaviour: {fileID: 0}
+  attackBehaviourBlock: {fileID: 0}
   formation:
     enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
     enemyCount: 26
@@ -1341,6 +1481,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 5005625296983741546}
     entranceMode: 0
     pathCoordinateSpace: 0
+    rotateEnemiesAlongEntrancePath: 0
     pathCheckpoints:
     - position: {x: 0, y: 6, z: 0}
       durationToNext: 0.5
@@ -1712,6 +1853,7 @@ MonoBehaviour:
   legacyParentEnemiesToSubWave: 0
   legacyEntranceMode: 0
   legacyPathCoordinateSpace: 0
+  legacyRotateEnemiesAlongEntrancePath: 0
   legacyPathCheckpoints:
   - position: {x: 0, y: 6, z: 0}
     durationToNext: 0.5
@@ -2117,8 +2259,9 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 0
+    forwardFireHalfAngle: 15
     movementMode: 0
-    serializedVersion: 10
+    serializedVersion: 11
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 0.5
     waitForPreviousAttack: 0
@@ -2127,9 +2270,134 @@ MonoBehaviour:
     overrideEnemyAttackCooldown: 0
     enemyAttackCooldown: 1
     waveBurstSettings:
+      attackPatterns: 0
+      patterns: []
+      facingMode: 0
+      facingPatternId: 
+      facingSpeed: 360
+      facingAngleOffset: 0
       repeatBurst: 0
+      burstAttack: 0
       useAttackStartDelay: 0
       attackStartDelay: 1
+      shooting:
+        shootingType: 0
+        projectileType: 0
+        overrideProjectileBaseSpeed: 0
+        projectileBaseSpeed: 1
+        overrideProjectileLifetime: 0
+        projectileLifetime: 1
+        initialSpeedMode: 0
+        randomInitialSpeedMinimum: 1
+        randomInitialSpeedMaximum: 2
+        consistentInitialSpeedChangePerVolley: -0.1
+        shootingMode: 0
+        fanMode: 0
+        projectilePatternVersion: 2
+        directionCount: 4
+        fanProjectileCount: 3
+        fanMinAngle: -45
+        fanMaxAngle: 45
+        randomMinAngle: -15
+        randomMaxAngle: 15
+        shotGunMode: 0
+        shotGunProjectileCount: 3
+        shotGunDirection: {x: 0, y: -1}
+        shotGunInitialSpeed: 5
+        projectileSpeedBehavior: 0
+        projectileSpeedChangeY: 0
+        projectileSpeedByDistance:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 10
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileMovementPattern: 0
+        projectileAngularSpeed: 90
+        projectileLateralSpeed: 1
+        projectileOrbitCenterMode: 0
+        projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+        projectileOrbitRadius: 0
+        projectileOrbitRadialSpeed: 0
+        projectileSizeBehavior: 0
+        projectileSizeChangeY: 0
+        projectileSizeChangeSpeed: 1
+        projectileSizeChangeCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileFinalSize: 1
+        rotate: 1
+        rotation:
+          direction: 0
+          rotationMode: 0
+          rotationSpeedDegreesPerSecond: 90
+          rotationProgressCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 1
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 1
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+          rotationAngle: 360
+          rotationFromAngle: 0
+          resetRotationOnEnable: 1
+      shootingSettingsVersion: 1
       useAreaAttack: 0
       areaAttackProjectileCount: 3
       areaAttackMinAngle: -45
@@ -2141,7 +2409,7 @@ MonoBehaviour:
       burstShotInterval: 0.15
       legacyShotsPerBurst: 1
       legacyShotInterval: 0.15
-      serializedVersion: 1
+      serializedVersion: 2
     legacyBurstShotCount: 1
     legacyBurstShotInterval: 0.15
     minDiveDepth: 1.5
@@ -2236,6 +2504,8 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  overrideBaseProjectileSpeed: 0
+  baseProjectileSpeed: 1
   attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
@@ -2371,6 +2641,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
   enableDebugLogs: 0
+  formationBehaviour: {fileID: 0}
+  phaseEntryBehaviour: {fileID: 0}
+  postBehaviourBlock: {fileID: 0}
+  completionBehaviour: {fileID: 0}
+  attackBehaviourBlock: {fileID: 0}
   formation:
     enemyPrefab: {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
     enemyCount: 1
@@ -2402,6 +2677,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 0}
     entranceMode: 0
     pathCoordinateSpace: 1
+    rotateEnemiesAlongEntrancePath: 0
     pathCheckpoints:
     - position: {x: 0, y: 3.7087111, z: 0}
       durationToNext: 1
@@ -2609,6 +2885,7 @@ MonoBehaviour:
   legacyParentEnemiesToSubWave: 1
   legacyEntranceMode: 0
   legacyPathCoordinateSpace: 1
+  legacyRotateEnemiesAlongEntrancePath: 0
   legacyPathCheckpoints:
   - position: {x: 0, y: 3.7087111, z: 0}
     durationToNext: 1
@@ -2834,8 +3111,9 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 0
+    forwardFireHalfAngle: 15
     movementMode: 0
-    serializedVersion: 10
+    serializedVersion: 11
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 1
     waitForPreviousAttack: 0
@@ -2844,9 +3122,134 @@ MonoBehaviour:
     overrideEnemyAttackCooldown: 0
     enemyAttackCooldown: 1
     waveBurstSettings:
+      attackPatterns: 0
+      patterns: []
+      facingMode: 0
+      facingPatternId: 
+      facingSpeed: 360
+      facingAngleOffset: 0
       repeatBurst: 1
+      burstAttack: 1
       useAttackStartDelay: 0
       attackStartDelay: 1
+      shooting:
+        shootingType: 0
+        projectileType: 0
+        overrideProjectileBaseSpeed: 0
+        projectileBaseSpeed: 1
+        overrideProjectileLifetime: 0
+        projectileLifetime: 1
+        initialSpeedMode: 0
+        randomInitialSpeedMinimum: 1
+        randomInitialSpeedMaximum: 2
+        consistentInitialSpeedChangePerVolley: -0.1
+        shootingMode: 0
+        fanMode: 0
+        projectilePatternVersion: 2
+        directionCount: 4
+        fanProjectileCount: 3
+        fanMinAngle: -45
+        fanMaxAngle: 45
+        randomMinAngle: -15
+        randomMaxAngle: 15
+        shotGunMode: 0
+        shotGunProjectileCount: 3
+        shotGunDirection: {x: 0, y: -1}
+        shotGunInitialSpeed: 5
+        projectileSpeedBehavior: 0
+        projectileSpeedChangeY: 0
+        projectileSpeedByDistance:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 10
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileMovementPattern: 0
+        projectileAngularSpeed: 90
+        projectileLateralSpeed: 1
+        projectileOrbitCenterMode: 0
+        projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+        projectileOrbitRadius: 0
+        projectileOrbitRadialSpeed: 0
+        projectileSizeBehavior: 0
+        projectileSizeChangeY: 0
+        projectileSizeChangeSpeed: 1
+        projectileSizeChangeCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileFinalSize: 1
+        rotate: 1
+        rotation:
+          direction: 0
+          rotationMode: 0
+          rotationSpeedDegreesPerSecond: 90
+          rotationProgressCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 1
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 1
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+          rotationAngle: 360
+          rotationFromAngle: 0
+          resetRotationOnEnable: 1
+      shootingSettingsVersion: 1
       useAreaAttack: 0
       areaAttackProjectileCount: 3
       areaAttackMinAngle: -45
@@ -2858,7 +3261,7 @@ MonoBehaviour:
       burstShotInterval: 0.15
       legacyShotsPerBurst: 1
       legacyShotInterval: 0.15
-      serializedVersion: 1
+      serializedVersion: 2
     legacyBurstShotCount: 1
     legacyBurstShotInterval: 0.15
     minDiveDepth: 1.5
@@ -2953,6 +3356,8 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  overrideBaseProjectileSpeed: 0
+  baseProjectileSpeed: 1
   attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0
@@ -3149,11 +3554,138 @@ MonoBehaviour:
   enemyPrefabOverride: {fileID: 8685434851879268153, guid: 5c0793c7d2b54a2f9e4f673d2bb586d4, type: 3}
   overrideSpriteTint: 0
   spriteTint: {r: 1, g: 1, b: 1, a: 1}
+  overrideProjectileType: 0
+  projectileType: 0
   overrideBurstAttackSettings: 1
   burstAttackSettings:
+    attackPatterns: 0
+    patterns: []
+    facingMode: 0
+    facingPatternId: 
+    facingSpeed: 360
+    facingAngleOffset: 0
     repeatBurst: 0
+    burstAttack: 0
     useAttackStartDelay: 0
     attackStartDelay: 1
+    shooting:
+      shootingType: 0
+      projectileType: 0
+      overrideProjectileBaseSpeed: 0
+      projectileBaseSpeed: 1
+      overrideProjectileLifetime: 0
+      projectileLifetime: 1
+      initialSpeedMode: 0
+      randomInitialSpeedMinimum: 1
+      randomInitialSpeedMaximum: 2
+      consistentInitialSpeedChangePerVolley: -0.1
+      shootingMode: 0
+      fanMode: 0
+      projectilePatternVersion: 2
+      directionCount: 4
+      fanProjectileCount: 3
+      fanMinAngle: -45
+      fanMaxAngle: 45
+      randomMinAngle: -15
+      randomMaxAngle: 15
+      shotGunMode: 0
+      shotGunProjectileCount: 3
+      shotGunDirection: {x: 0, y: -1}
+      shotGunInitialSpeed: 5
+      projectileSpeedBehavior: 0
+      projectileSpeedChangeY: 0
+      projectileSpeedByDistance:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 10
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileMovementPattern: 0
+      projectileAngularSpeed: 90
+      projectileLateralSpeed: 1
+      projectileOrbitCenterMode: 0
+      projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+      projectileOrbitRadius: 0
+      projectileOrbitRadialSpeed: 0
+      projectileSizeBehavior: 0
+      projectileSizeChangeY: 0
+      projectileSizeChangeSpeed: 1
+      projectileSizeChangeCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileFinalSize: 1
+      rotate: 1
+      rotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+    shootingSettingsVersion: 1
     useAreaAttack: 0
     areaAttackProjectileCount: 3
     areaAttackMinAngle: -45
@@ -3165,7 +3697,156 @@ MonoBehaviour:
     burstShotInterval: 0.15
     legacyShotsPerBurst: 1
     legacyShotInterval: 0.15
-    serializedVersion: 1
+    serializedVersion: 2
+  overrideAttackPattern: 1
+  inheritWaveFireMode: 1
+  fireMode: 0
+  forwardFireHalfAngle: 15
+  attackPattern:
+    attackPatterns: 0
+    patterns: []
+    facingMode: 0
+    facingPatternId: 
+    facingSpeed: 360
+    facingAngleOffset: 0
+    repeatBurst: 0
+    burstAttack: 0
+    useAttackStartDelay: 0
+    attackStartDelay: 1
+    shooting:
+      shootingType: 0
+      projectileType: 0
+      overrideProjectileBaseSpeed: 0
+      projectileBaseSpeed: 1
+      overrideProjectileLifetime: 0
+      projectileLifetime: 1
+      initialSpeedMode: 0
+      randomInitialSpeedMinimum: 1
+      randomInitialSpeedMaximum: 2
+      consistentInitialSpeedChangePerVolley: -0.1
+      shootingMode: 0
+      fanMode: 0
+      projectilePatternVersion: 2
+      directionCount: 4
+      fanProjectileCount: 3
+      fanMinAngle: -45
+      fanMaxAngle: 45
+      randomMinAngle: -15
+      randomMaxAngle: 15
+      shotGunMode: 0
+      shotGunProjectileCount: 3
+      shotGunDirection: {x: 0, y: -1}
+      shotGunInitialSpeed: 5
+      projectileSpeedBehavior: 0
+      projectileSpeedChangeY: 0
+      projectileSpeedByDistance:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 10
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileMovementPattern: 0
+      projectileAngularSpeed: 90
+      projectileLateralSpeed: 1
+      projectileOrbitCenterMode: 0
+      projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+      projectileOrbitRadius: 0
+      projectileOrbitRadialSpeed: 0
+      projectileSizeBehavior: 0
+      projectileSizeChangeY: 0
+      projectileSizeChangeSpeed: 1
+      projectileSizeChangeCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileFinalSize: 1
+      rotate: 1
+      rotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+    shootingSettingsVersion: 1
+    useAreaAttack: 0
+    areaAttackProjectileCount: 3
+    areaAttackMinAngle: -45
+    areaAttackMaxAngle: 45
+    attackShotCount: 1
+    attackShotInterval: 0.15
+    attackCooldown: 1
+    burstShotCount: 1
+    burstShotInterval: 0.15
+    legacyShotsPerBurst: 1
+    legacyShotInterval: 0.15
+    serializedVersion: 2
+  overrideProjectileBaseSpeed: 0
+  projectileBaseSpeed: 1
+  useLegacyFullAttackSettings: 1
+  attackOverrideVersion: 2
   overrideFourWayRotation: 1
   fourWayRotation:
     direction: 0
@@ -3735,6 +4416,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectedEnemySubWave
   enableDebugLogs: 0
+  formationBehaviour: {fileID: 0}
+  phaseEntryBehaviour: {fileID: 0}
+  postBehaviourBlock: {fileID: 0}
+  completionBehaviour: {fileID: 0}
+  attackBehaviourBlock: {fileID: 0}
   formation:
     enemyPrefab: {fileID: 8685434851879268153, guid: 13776ea8b4af4de4f844af0c2b206bb8, type: 3}
     enemyCount: 10
@@ -3775,6 +4461,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 6884006559776918049}
     entranceMode: 0
     pathCoordinateSpace: 0
+    rotateEnemiesAlongEntrancePath: 0
     pathCheckpoints:
     - position: {x: 4.5, y: 1, z: 0}
       durationToNext: 0.5
@@ -4176,6 +4863,7 @@ MonoBehaviour:
   legacyParentEnemiesToSubWave: 0
   legacyEntranceMode: 0
   legacyPathCoordinateSpace: 0
+  legacyRotateEnemiesAlongEntrancePath: 0
   legacyPathCheckpoints:
   - position: {x: 4.5, y: 1, z: 0}
     durationToNext: 0.5
@@ -4604,8 +5292,9 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 1
+    forwardFireHalfAngle: 15
     movementMode: 0
-    serializedVersion: 10
+    serializedVersion: 11
     attacksPerEnemyPerCycle: 1
     attacksPerSecond: 0.2
     waitForPreviousAttack: 0
@@ -4614,9 +5303,134 @@ MonoBehaviour:
     overrideEnemyAttackCooldown: 0
     enemyAttackCooldown: 1
     waveBurstSettings:
+      attackPatterns: 0
+      patterns: []
+      facingMode: 0
+      facingPatternId: 
+      facingSpeed: 360
+      facingAngleOffset: 0
       repeatBurst: 0
+      burstAttack: 0
       useAttackStartDelay: 0
       attackStartDelay: 1
+      shooting:
+        shootingType: 0
+        projectileType: 0
+        overrideProjectileBaseSpeed: 0
+        projectileBaseSpeed: 1
+        overrideProjectileLifetime: 0
+        projectileLifetime: 1
+        initialSpeedMode: 0
+        randomInitialSpeedMinimum: 1
+        randomInitialSpeedMaximum: 2
+        consistentInitialSpeedChangePerVolley: -0.1
+        shootingMode: 0
+        fanMode: 0
+        projectilePatternVersion: 2
+        directionCount: 4
+        fanProjectileCount: 3
+        fanMinAngle: -45
+        fanMaxAngle: 45
+        randomMinAngle: -15
+        randomMaxAngle: 15
+        shotGunMode: 0
+        shotGunProjectileCount: 3
+        shotGunDirection: {x: 0, y: -1}
+        shotGunInitialSpeed: 5
+        projectileSpeedBehavior: 0
+        projectileSpeedChangeY: 0
+        projectileSpeedByDistance:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 10
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileMovementPattern: 0
+        projectileAngularSpeed: 90
+        projectileLateralSpeed: 1
+        projectileOrbitCenterMode: 0
+        projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+        projectileOrbitRadius: 0
+        projectileOrbitRadialSpeed: 0
+        projectileSizeBehavior: 0
+        projectileSizeChangeY: 0
+        projectileSizeChangeSpeed: 1
+        projectileSizeChangeCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        projectileFinalSize: 1
+        rotate: 1
+        rotation:
+          direction: 0
+          rotationMode: 0
+          rotationSpeedDegreesPerSecond: 90
+          rotationProgressCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 0
+              inSlope: 0
+              outSlope: 1
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 1
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+          rotationAngle: 360
+          rotationFromAngle: 0
+          resetRotationOnEnable: 1
+      shootingSettingsVersion: 1
       useAreaAttack: 0
       areaAttackProjectileCount: 3
       areaAttackMinAngle: -45
@@ -4628,7 +5442,7 @@ MonoBehaviour:
       burstShotInterval: 0.15
       legacyShotsPerBurst: 1
       legacyShotInterval: 0.15
-      serializedVersion: 1
+      serializedVersion: 2
     legacyBurstShotCount: 1
     legacyBurstShotInterval: 0.15
     minDiveDepth: 1.5
@@ -4723,6 +5537,8 @@ MonoBehaviour:
   attackPreset: {fileID: 0}
   overridePresetAttacksPerSecond: 0
   presetAttacksPerSecond: 1
+  overrideBaseProjectileSpeed: 0
+  baseProjectileSpeed: 1
   attackPatterns: []
   entranceAttackSettings:
     isEnabled: 0

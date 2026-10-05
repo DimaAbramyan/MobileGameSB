@@ -69,6 +69,11 @@ public class FightingInstaller : MonoInstaller
             .AsSingle()
             .NonLazy();
 
+        Container.Bind<BuffPickupMessageController>()
+            .FromComponentInHierarchy()
+            .AsCached()
+            .NonLazy();
+
         Container.Bind<ShipKnockbackService>()
             .AsSingle()
             .IfNotBound();

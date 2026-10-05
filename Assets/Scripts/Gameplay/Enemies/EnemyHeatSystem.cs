@@ -9,7 +9,7 @@ public readonly struct EnemyHeatProfile
         ParentShip owner,
         LayerMask affectedLayers,
         float explosionRadius,
-        float explosionDamage,
+        float explosionDamagePercent,
         float transferredHeatPercent,
         float coolingDelay,
         float coolingPercentPerSecond,
@@ -19,7 +19,7 @@ public readonly struct EnemyHeatProfile
         Owner = owner;
         AffectedLayers = affectedLayers;
         ExplosionRadius = Mathf.Max(0f, explosionRadius);
-        ExplosionDamage = Mathf.Max(0f, explosionDamage);
+        ExplosionDamagePercent = Mathf.Clamp(explosionDamagePercent, 0f, 100f);
         TransferredHeatPercent = Mathf.Max(0f, transferredHeatPercent);
         CoolingDelay = Mathf.Max(0f, coolingDelay);
         CoolingPerSecond = Mathf.Max(0f, coolingPercentPerSecond) / 100f;
@@ -30,7 +30,7 @@ public readonly struct EnemyHeatProfile
     public ParentShip Owner { get; }
     public LayerMask AffectedLayers { get; }
     public float ExplosionRadius { get; }
-    public float ExplosionDamage { get; }
+    public float ExplosionDamagePercent { get; }
     public float TransferredHeatPercent { get; }
     public float CoolingDelay { get; }
     public float CoolingPerSecond { get; }
@@ -214,7 +214,9 @@ public sealed class EnemyHeatSystem : IInitializable, IDisposable
                 }
             }
 
-            if (profile.ExplosionDamage <= 0f
+            float explosionDamage = sourceEnemy.MaximumHealth
+                * profile.ExplosionDamagePercent / 100f;
+            if (explosionDamage <= 0f
                 || dealDamageManager == null)
                 return;
 
@@ -227,7 +229,8 @@ public sealed class EnemyHeatSystem : IInitializable, IDisposable
                 dealDamageManager.Value.DealDamage(
                     enemy,
                     profile.Owner,
-                    profile.ExplosionDamage);
+                    explosionDamage,
+                    EnemyDamageType.Explosion);
             }
         }
         finally

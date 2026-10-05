@@ -15,8 +15,8 @@ public class Magnite : MonoBehaviour
     public float forceAmount = 10f;
 
     private readonly Collider2D[] hits = new Collider2D[32];
-    private readonly HashSet<Buff> attractedBuffs = new();
-    private readonly List<Buff> invalidAttractedBuffs = new();
+    private readonly HashSet<CollectiblePickup> attractedPickups = new();
+    private readonly List<CollectiblePickup> invalidAttractedPickups = new();
     private CircleCollider2D magnetZone;
     private ParentShip ownerShip;
     private ContactFilter2D contactFilter;
@@ -27,7 +27,7 @@ public class Magnite : MonoBehaviour
     private void Awake()
     {
         magnetZone = GetComponent<CircleCollider2D>();
-        ownerShip = GetComponent<ParentShip>();
+        ownerShip = GetComponentInParent<ParentShip>();
         SyncMagnetZoneRadius();
         ConfigureContactFilter();
     }
@@ -49,9 +49,9 @@ public class Magnite : MonoBehaviour
             hits);
 
         for (int i = 0; i < count; i++)
-            TryPullBuff(hits[i]);
+            TryPullPickup(hits[i]);
 
-        PullAttractedBuffs();
+        PullAttractedPickups();
     }
 
     private void Update()
@@ -92,69 +92,70 @@ public class Magnite : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        TryPullBuff(collision);
+        TryPullPickup(collision);
     }
 
-    private void TryPullBuff(Collider2D collision)
+    private void TryPullPickup(Collider2D collision)
     {
         if (collision == null)
             return;
 
-        Buff buff = collision.GetComponentInParent<Buff>();
-        if (buff == null)
+        CollectiblePickup pickup =
+            collision.GetComponentInParent<CollectiblePickup>();
+        if (pickup == null)
             return;
 
-        if (buff is MetalPickup metalPickup)
-            metalPickup.StartMagneticAttraction();
-
-        attractedBuffs.Add(buff);
-        PullBuff(buff, collision.attachedRigidbody);
+        pickup.StartMagneticAttraction();
+        attractedPickups.Add(pickup);
+        PullPickup(pickup, collision.attachedRigidbody);
     }
 
-    private void PullAttractedBuffs()
+    private void PullAttractedPickups()
     {
-        invalidAttractedBuffs.Clear();
+        invalidAttractedPickups.Clear();
 
-        foreach (Buff buff in attractedBuffs)
+        foreach (CollectiblePickup pickup in attractedPickups)
         {
-            if (buff == null || !buff.isActiveAndEnabled)
+            if (pickup == null || !pickup.isActiveAndEnabled)
             {
-                invalidAttractedBuffs.Add(buff);
+                invalidAttractedPickups.Add(pickup);
                 continue;
             }
 
-            PullBuff(buff, null);
+            PullPickup(pickup, null);
         }
 
-        foreach (Buff buff in invalidAttractedBuffs)
-            attractedBuffs.Remove(buff);
+        foreach (CollectiblePickup pickup in invalidAttractedPickups)
+            attractedPickups.Remove(pickup);
     }
 
-    private void PullBuff(Buff buff, Rigidbody2D fallbackBody)
+    private void PullPickup(
+        CollectiblePickup pickup,
+        Rigidbody2D fallbackBody)
     {
-        if (TryCollectMetal(buff))
+        if (TryCollectPickup(pickup))
             return;
 
         Vector2 targetPosition = GetMagnetCenter();
         Rigidbody2D targetBody =
-            buff.GetComponent<Rigidbody2D>()
+            pickup.GetComponent<Rigidbody2D>()
             ?? fallbackBody;
 
         if (targetBody != null)
         {
             MoveBodyToTarget(targetBody, targetPosition);
-            TryCollectMetal(buff);
+            TryCollectPickup(pickup);
             return;
         }
 
-        MoveTransformToTarget(buff.transform, targetPosition);
-        TryCollectMetal(buff);
+        MoveTransformToTarget(pickup.transform, targetPosition);
+        TryCollectPickup(pickup);
     }
 
     private void OnDisable()
     {
-        attractedBuffs.Clear();
-        invalidAttractedBuffs.Clear();
+        attractedPickups.Clear();
+        invalidAttractedPickups.Clear();
     }
 
     public Vector2 GetMagnetCenter()
@@ -203,34 +204,31 @@ public class Magnite : MonoBehaviour
         magnetZone.radius = MagnetRadius;
     }
 
-    private bool TryCollectMetal(Buff buff)
+    private bool TryCollectPickup(CollectiblePickup pickup)
     {
-        if (ownerShip == null || buff is not MetalPickup metalPickup)
+        if (ownerShip == null || pickup == null)
             return false;
 
-        if (Vector2.Distance(buff.transform.position, GetMagnetCenter())
+        if (Vector2.Distance(pickup.transform.position, GetMagnetCenter())
             > MagnetRadius)
         {
             return false;
         }
 
-        return metalPickup.TryCollect(ownerShip);
+        return pickup.TryCollect(ownerShip);
     }
 
     private void MoveBodyToTarget(
         Rigidbody2D targetBody,
         Vector2 targetPosition)
     {
-        Vector2 currentPosition = targetBody.position;
+        Vector2 currentPosition = targetBody.transform.position;
         float distance = Vector2.Distance(currentPosition, targetPosition);
 
         if (distance <= pickupSnapDistance)
         {
             targetBody.linearVelocity = Vector2.zero;
-            targetBody.transform.position = new Vector3(
-                targetPosition.x,
-                targetPosition.y,
-                targetBody.transform.position.z);
+            targetBody.position = targetPosition;
             return;
         }
 
@@ -239,10 +237,7 @@ public class Magnite : MonoBehaviour
             currentPosition,
             targetPosition,
             forceAmount * Time.fixedDeltaTime);
-        targetBody.transform.position = new Vector3(
-            nextPosition.x,
-            nextPosition.y,
-            targetBody.transform.position.z);
+        targetBody.position = nextPosition;
     }
 
     private void MoveTransformToTarget(

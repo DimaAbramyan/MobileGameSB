@@ -1,37 +1,21 @@
 using UnityEngine;
 using Zenject;
 
-public sealed class MetalPickup : Buff
+public sealed class MetalPickup : CollectiblePickup
 {
     [SerializeField, Min(1)] private int metalAmount = 1;
 
     [Inject] private PlayerResourceWallet resourceWallet;
 
-    private bool isCollected;
-    private bool isMagneticallyAttracted;
-
     public int MetalAmount => Mathf.Max(1, metalAmount);
-    public bool IsMagneticallyAttracted => isMagneticallyAttracted;
 
     public void Configure(int amount)
     {
         metalAmount = Mathf.Max(1, amount);
     }
 
-    public void StartMagneticAttraction()
+    protected override bool TryApplyCollection(ParentShip collectorShip)
     {
-        isMagneticallyAttracted = true;
-    }
-
-    public bool TryCollect(ParentShip collectorShip)
-    {
-        if (isCollected
-            || collectorShip == null
-            || collectorShip.IsIntangible)
-        {
-            return false;
-        }
-
         if (resourceWallet == null)
         {
             Debug.LogError(
@@ -40,21 +24,11 @@ public sealed class MetalPickup : Buff
             return false;
         }
 
-        isCollected = true;
         resourceWallet.Add(ResourceKind.Metal, MetalAmount);
-        Destroy(gameObject);
         return true;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (isCollected)
-            return;
-
-        ParentShip colliderShip =
-            collision.GetComponentInParent<ParentShip>();
-        TryCollect(colliderShip);
-    }
+    protected override bool CountsAsBonus => false;
 
     private void OnValidate()
     {

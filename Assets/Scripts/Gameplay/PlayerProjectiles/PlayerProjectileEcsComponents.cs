@@ -45,6 +45,30 @@ public struct PlayerContactHitTarget : IBufferElementData
     public int TargetId;
 }
 
+/// <summary>
+/// One stationary ECS explosion created by an Entity projectile. Damage is
+/// applied once to each target during its short active window.
+/// </summary>
+public struct PlayerProjectileExplosionData : IComponentData
+{
+    public float Radius;
+    public float Damage;
+    public int OwnerId;
+    public EnemyDamageType DamageType;
+    public byte BypassesEnemyShield;
+}
+
+public struct PlayerProjectileExplosionRemainingLifetime : IComponentData
+{
+    public float Value;
+}
+
+[InternalBufferCapacity(8)]
+public struct PlayerProjectileExplosionHitTarget : IBufferElementData
+{
+    public int TargetId;
+}
+
 public struct PlayerProjectileVelocity : IComponentData
 {
     public float2 Value;
@@ -141,13 +165,14 @@ public struct PlayerProjectileCollisionTarget : IBufferElementData
 }
 
 /// <summary>
-/// Broad-phase cell -> target mapping. A large enemy may occupy more than one cell.
+/// Broad-phase cell -> collider snapshot mapping. Entries are sorted by cell so
+/// projectile systems can find a cell with binary search.
 /// </summary>
 public struct PlayerProjectileCollisionGridEntry : IBufferElementData
 {
     public int CellX;
     public int CellY;
-    public int TargetId;
+    public int TargetIndex;
 }
 
 /// <summary>
@@ -174,13 +199,22 @@ public struct PlayerProjectileCollisionGridEntry : IBufferElementData
       public float WaveSpeed;
       public float SpriteDiameter;
       public float InitialAlpha;
+        public float SlowdownStartY;
+        public float DetonationY;
+        public float SlowdownDuration;
+        public float FullChargeDetonationDelay;
   }
 
   public struct PlayerProjectileResonanceSphereState : IComponentData
   {
       public float StoredDamage;
       public float CurrentWaveRadius;
+        public float SlowdownElapsed;
+        public float SlowdownStartX;
+        public float FullChargeDetonationElapsed;
       public byte IsDetonating;
+        public byte IsSlowingDown;
+        public byte IsFullChargeDetonationPending;
   }
 
   [InternalBufferCapacity(16)]
@@ -339,8 +373,8 @@ public struct PlayerProjectileResolutionEvent : IBufferElementData
 }
 
 /// <summary>
-/// ECS-to-managed request for the existing explosion visual and its collision
-/// handling. ECS carries only a compact config id, never a prefab reference.
+/// ECS-to-managed request to create an ECS explosion. The registry resolves its
+/// compact config id and never places a prefab reference on an Entity.
 /// </summary>
 public struct PlayerProjectileExplosionRequest : IBufferElementData
 {

@@ -20,7 +20,7 @@ MonoBehaviour:
   maxLevels: 1
   levels:
   - basicStats:
-      reloadTime: 3
+      reloadTime: 7.5
       damage: 0
       range: 15
       projectileSpeed: 2

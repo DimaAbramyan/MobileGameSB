@@ -8,6 +8,7 @@ public sealed class ShipIntangibleState : MonoBehaviour
     [SerializeField] private bool autoCollectChildColliders = true;
 
     private bool[] initialColliderStates;
+    private bool usesAutoCollectedHitboxes;
     private int activeRequests;
 
     public bool IsActive => activeRequests > 0;
@@ -44,6 +45,22 @@ public sealed class ShipIntangibleState : MonoBehaviour
         StartCoroutine(ActivateForSecondsRoutine(duration));
     }
 
+    public void ConfigureDefaultHitbox(Collider2D hitbox)
+    {
+        if (hitbox == null
+            || (hitboxColliders != null
+                && hitboxColliders.Length > 0
+                && !usesAutoCollectedHitboxes))
+        {
+            return;
+        }
+
+        hitboxColliders = new[] { hitbox };
+        initialColliderStates = null;
+        usesAutoCollectedHitboxes = false;
+        EnsureInitialStates();
+    }
+
     private IEnumerator ActivateForSecondsRoutine(float duration)
     {
         Enter();
@@ -65,6 +82,7 @@ public sealed class ShipIntangibleState : MonoBehaviour
         hitboxColliders = autoCollectChildColliders
             ? GetComponentsInChildren<Collider2D>(true)
             : GetComponents<Collider2D>();
+        usesAutoCollectedHitboxes = true;
         EnsureInitialStates();
     }
 

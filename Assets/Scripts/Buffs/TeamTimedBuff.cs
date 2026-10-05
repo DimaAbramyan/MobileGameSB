@@ -1,28 +1,16 @@
 using UnityEngine;
 
-public abstract class TeamTimedBuff : Buff
+public abstract class TeamTimedBuff : CollectiblePickup
 {
-    private bool isCollected;
-
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected override bool TryApplyCollection(ParentShip collectorShip)
     {
-        if (isCollected)
-            return;
-
-        ParentShip collectorShip =
-            collision.GetComponentInParent<ParentShip>();
-        if (collectorShip == null || collectorShip.IsIntangible)
-            return;
-
         PlayerController playerController =
             collectorShip.GetComponentInParent<PlayerController>();
         if (playerController == null)
-            return;
+            return false;
 
-        isCollected = true;
         ApplyToTeam(playerController);
-        PointsCollector.Bonuses += 1;
-        Destroy(gameObject);
+        return true;
     }
 
     protected abstract void ApplyToTeam(PlayerController playerController);

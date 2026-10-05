@@ -25,6 +25,8 @@ public class ParentShip : MonoBehaviour, iDamagable
     [SerializeField] public Transform ShieldAnchor;
     public ShipData ShipData;
     [SerializeField] private Magnite buffMagnet;
+    [Tooltip("The root collider used by ECS enemy projectiles to damage this ship.")]
+    [SerializeField] private Collider2D damageHitboxCollider;
 
     [HideInInspector] public bool IsVisible;
 
@@ -50,6 +52,14 @@ public class ParentShip : MonoBehaviour, iDamagable
         healthRegenerationCooldownProgress;
     public float ShieldRegenerationCooldownProgress =>
         shieldRegenerationCooldownProgress;
+    public Collider2D DamageHitboxCollider
+    {
+        get
+        {
+            CacheDamageHitboxCollider();
+            return damageHitboxCollider;
+        }
+    }
 
     private void OnEnable()
     {
@@ -111,6 +121,8 @@ public class ParentShip : MonoBehaviour, iDamagable
     #region Initialization
     public virtual void Awake()
     {
+        CacheDamageHitboxCollider();
+        EnsureHitboxIndicator();
         EnsureIntangibleState();
         EnsureBuffMagnet();
 
@@ -125,6 +137,35 @@ public class ParentShip : MonoBehaviour, iDamagable
         activeAbility?.ApplyShipMetaStats(metaStats);
         passiveAbility?.ApplyShipMetaStats(metaStats);
     }
+
+    private void OnValidate()
+    {
+        CacheDamageHitboxCollider();
+    }
+
+    private void CacheDamageHitboxCollider()
+    {
+        if (damageHitboxCollider != null
+            && damageHitboxCollider.gameObject == gameObject)
+        {
+            return;
+        }
+
+        damageHitboxCollider = GetComponent<Collider2D>();
+    }
+
+    private void EnsureHitboxIndicator()
+    {
+        if (damageHitboxCollider == null)
+            return;
+
+        PlayerHitboxIndicator indicator = GetComponent<PlayerHitboxIndicator>();
+        if (indicator == null)
+            indicator = gameObject.AddComponent<PlayerHitboxIndicator>();
+
+        indicator.Initialize(this, damageHitboxCollider);
+    }
+
       public virtual void Start()
       {
           currentLevel = MinWeaponLevel;
@@ -133,7 +174,7 @@ public class ParentShip : MonoBehaviour, iDamagable
           enemyProjectileCollisionRegistry?.RegisterShip(this);
 
           passiveAbility?.Init(this);
-    }
+      }
     #endregion
 
     #region Health & Shield
@@ -355,6 +396,7 @@ public class ParentShip : MonoBehaviour, iDamagable
             intangibleState = GetComponent<ShipIntangibleState>();
         if (intangibleState == null)
             intangibleState = gameObject.AddComponent<ShipIntangibleState>();
+        intangibleState.ConfigureDefaultHitbox(DamageHitboxCollider);
     }
 
     private void EnsureBuffMagnet()

@@ -3,9 +3,9 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewShipData", menuName = "Game/Ship Data")]
 public class ShipData : ScriptableObject
 {
-    public const float DefaultHealthRegenCooldown = 30f;
-    public const float DefaultShieldRegenCooldown = 15f;
-    public const float DefaultRegenRatePercent = 5f;
+    public const float DefaultHealthRegenCooldown = 20f;
+    public const float DefaultShieldRegenCooldown = 10f;
+    public const float DefaultRegenRatePercent = 10f;
 
     [Header("Controllability")]
 

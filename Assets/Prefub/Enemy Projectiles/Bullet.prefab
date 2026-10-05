@@ -30,8 +30,8 @@ Transform:
   m_GameObject: {fileID: 7559937981771103671}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.23, y: 0, z: 0}
-  m_LocalScale: {x: 0.05, y: 0.15, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.15, y: 0.15, z: 0}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -85,8 +85,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -9095717837082945937, guid: 207ee8102dd4143d288186ef0be518ee, type: 3}
-  m_Color: {r: 1, g: 0.013891038, b: 0, a: 1}
+  m_Sprite: {fileID: 1473171779247187627, guid: b9e5d091cc0a1f04f94745a3e553240e, type: 3}
+  m_Color: {r: 1, g: 0, b: 0.34327602, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -130,7 +130,7 @@ CapsuleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Size: {x: 1, y: 2}
+  m_Size: {x: 1, y: 0.0001}
   m_Direction: 0
 --- !u!114 &3753107629597168881
 MonoBehaviour:
@@ -146,8 +146,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Speed: 0
   _damage: 10
-  _MaxRange: 100
-  _speed: 3.5
+  _MaxRange: 10
+  _speed: 2.5
   _position: {x: 0, y: -1, z: 0}
 --- !u!50 &2173987028420482047
 Rigidbody2D:
@@ -191,8 +191,45 @@ MonoBehaviour:
   legacyProjectile: {fileID: 3753107629597168881}
   visualRenderer: {fileID: 7664917326589810635}
   baseDamage: 10
-  radius: 0.15
+  radius: 0.082
   baseLifetime: 28.571428
-  baseSpeed: 3.5
-  visualScale: {x: 0.05, y: 0.05}
+  baseSpeed: 3
+  visualScale: {x: 0.2, y: 0.2}
   collisionScale: 1
+  flightMode: 0
+  homingTurnSpeedDegreesPerSecond: 180
+  homingDuration: 0
+  burstDetonationPoint: {x: 0, y: 0}
+  burstDetonationRadius: 0.1
+  burstProjectilePrefab: {fileID: 0}
+  burstWaveCount: 1
+  burstWaveInterval: 0
+  burstProjectilesPerWave: 18
+  burstAngleStepDegrees: 20
+  burstStartAngleDegrees: 0
+  scaleBehavior: 0
+  scaleChangeY: 0
+  scaleMultiplierByDistance:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 10
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

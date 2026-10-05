@@ -17,10 +17,10 @@ MonoBehaviour:
   maxLevels: 1
   levels:
   - basicStats:
-      maximumHealthPoints: 20
+      maximumHealthPoints: 999999
       maximumShieldPoints: 20
-      healthRegenRatePercent: 5
-      shieldRegenRatePercent: 5
+      healthRegenRatePercent: 10
+      shieldRegenRatePercent: 10
       speed: 300
       maximumEnergy: 999
     contracts:

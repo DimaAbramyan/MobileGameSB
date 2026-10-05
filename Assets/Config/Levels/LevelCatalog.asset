@@ -11,9 +11,15 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eda1d8631dbc4a4c872c84bdcc319d4f, type: 3}
   m_Name: LevelCatalog
-  m_EditorClassIdentifier:
-  defaultLevel: {fileID: 11400000, guid: 028361d96a9d43bb9855fa41b1bfa5f0, type: 2}
-  levels:
+  m_EditorClassIdentifier: 
+  defaultLevelDefinition: {fileID: 11400000, guid: 393c284e109f8d54685a355fda8954c3, type: 2}
+  levelDefinitions:
+  - {fileID: 11400000, guid: 393c284e109f8d54685a355fda8954c3, type: 2}
+  - {fileID: 11400000, guid: d694282afdd76474483b1d43d1deddcf, type: 2}
+  - {fileID: 11400000, guid: 21f8bcfe9adc7964b975d31cfee72098, type: 2}
+  - {fileID: 11400000, guid: 9805099625e698e40a0bdeaeff7ee8e4, type: 2}
+  legacyDefaultLevel: {fileID: 11400000, guid: 028361d96a9d43bb9855fa41b1bfa5f0, type: 2}
+  legacyLevels:
   - {fileID: 11400000, guid: 028361d96a9d43bb9855fa41b1bfa5f0, type: 2}
   - {fileID: 11400000, guid: 7856d40f869d419d8a2520e719f42157, type: 2}
   - {fileID: 11400000, guid: da01e0dd8b6844a493817563015fb540, type: 2}

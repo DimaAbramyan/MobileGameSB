@@ -5,6 +5,8 @@ using Zenject;
 
 public class BlackHoleActive : ActiveAbility
 {
+    [Inject] private EnemyProjectileCollisionRegistry projectileCollisionRegistry;
+
     [SerializeField]
     BlackHolePrefab blackHole;
     [SerializeField, HideInInspector] float duration;
@@ -49,7 +51,8 @@ public class BlackHoleActive : ActiveAbility
               activeDuration,
               metaDamage,
               owner,
-              abilityDamageMultiplier);
+              abilityDamageMultiplier,
+              projectileCollisionRegistry);
         audioManager.PlaySound(audioDatabase.blackHole, transform.position);
         GetComponent<WeaponController>().StopShootingForSeconds(activeDuration);
         return true;

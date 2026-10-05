@@ -7,6 +7,8 @@ using Zenject;
 [DefaultExecutionOrder(-100)]
 public sealed class LevelPresentationController : MonoBehaviour
 {
+    private const string BackgroundShaderName = "Universal Render Pipeline/Unlit";
+
     private sealed class RuntimeBackgroundObject
     {
         public Transform Transform;
@@ -292,10 +294,14 @@ public sealed class LevelPresentationController : MonoBehaviour
         Color color,
         string materialName)
     {
-        Shader shader = Shader.Find("Unlit/Transparent")
-            ?? Shader.Find("Universal Render Pipeline/Unlit")
-            ?? Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default")
-            ?? Shader.Find("Sprites/Default");
+        Shader shader = Shader.Find(BackgroundShaderName);
+        if (shader == null)
+        {
+            Debug.LogError(
+                $"Background shader '{BackgroundShaderName}' is unavailable. "
+                + "Add it to Always Included Shaders.");
+            return null;
+        }
 
         var material = new Material(shader)
         {
@@ -304,7 +310,7 @@ public sealed class LevelPresentationController : MonoBehaviour
             color = color
         };
 
-        material.mainTexture.wrapMode = TextureWrapMode.Repeat;
+        ConfigureTransparentMaterial(material);
         material.SetTexture("_MainTex", sprite.texture);
         material.SetTextureOffset("_MainTex", Vector2.zero);
         material.SetTextureScale("_MainTex", Vector2.one);
@@ -323,6 +329,32 @@ public sealed class LevelPresentationController : MonoBehaviour
             material.SetColor("_BaseColor", color);
 
         return material;
+    }
+
+    private static void ConfigureTransparentMaterial(Material material)
+    {
+        if (material == null)
+            return;
+
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", 0f);
+        material.SetFloat(
+            "_SrcBlend",
+            (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetFloat(
+            "_DstBlend",
+            (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetFloat(
+            "_SrcBlendAlpha",
+            (float)UnityEngine.Rendering.BlendMode.One);
+        material.SetFloat(
+            "_DstBlendAlpha",
+            (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetFloat("_ZWrite", 0f);
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
     }
 
     private static Vector2 GetLayerScrollSpeed(
@@ -423,9 +455,6 @@ public sealed class LevelPresentationController : MonoBehaviour
                 Mathf.Repeat(parallaxOffsets[i].y, 1f));
 
             ApplyTextureOffset(material, parallaxOffsets[i]);
-
-            if (i < parallaxMeshes.Count && parallaxMeshes[i] != null)
-                ApplyMeshUvOffset(parallaxMeshes[i], parallaxOffsets[i]);
         }
     }
 
@@ -494,17 +523,6 @@ public sealed class LevelPresentationController : MonoBehaviour
 
         if (material.HasProperty("_BaseMap"))
             material.SetTextureOffset("_BaseMap", offset);
-    }
-
-    private static void ApplyMeshUvOffset(Mesh mesh, Vector2 offset)
-    {
-        mesh.uv = new[]
-        {
-            new Vector2(offset.x, offset.y),
-            new Vector2(offset.x, offset.y + 1f),
-            new Vector2(offset.x + 1f, offset.y + 1f),
-            new Vector2(offset.x + 1f, offset.y)
-        };
     }
 
     private void OnDestroy()

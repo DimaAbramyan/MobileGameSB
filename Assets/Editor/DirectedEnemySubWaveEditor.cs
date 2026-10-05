@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -2198,7 +2198,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         checkpoint.FindPropertyRelative("motionToNext").enumValueIndex =
             (int)DirectedWaveSegmentMotion.CatmullRom;
         checkpoint.FindPropertyRelative("easeToNext").animationCurveValue =
-            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+            AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
         if (index > 0)
             SyncCheckpointDurationAndSpeed(index - 1, true, false, false);
@@ -3684,10 +3684,6 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         SerializedProperty overrideTint =
             overrideObject.FindProperty("overrideSpriteTint");
         SerializedProperty tint = overrideObject.FindProperty("spriteTint");
-        SerializedProperty overrideAttack =
-            overrideObject.FindProperty("overrideBurstAttackSettings");
-        SerializedProperty attackSettings =
-            overrideObject.FindProperty("burstAttackSettings");
         SerializedProperty overrideRotation =
             overrideObject.FindProperty("overrideFourWayRotation");
         SerializedProperty rotationSettings =
@@ -3706,22 +3702,12 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
         EditorGUILayout.Space(2f);
         EditorGUILayout.PropertyField(
-            overrideAttack,
-            new GUIContent("Override Attack Pattern"));
-        if (overrideAttack.boolValue)
-            EditorGUILayout.PropertyField(
-                attackSettings,
-                new GUIContent("Attack Pattern"),
-                true);
-
-        EditorGUILayout.Space(2f);
-        EditorGUILayout.PropertyField(
             overrideRotation,
-            new GUIContent("Override Four Way Rotation"));
+            new GUIContent("Override Rotation"));
         if (overrideRotation.boolValue)
             EditorGUILayout.PropertyField(
                 rotationSettings,
-                new GUIContent("Four Way Rotation"),
+                new GUIContent("Rotation"),
                 true);
 
         if (!EditorGUI.EndChangeCheck())
@@ -3733,6 +3719,38 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             PrefabUtility.RecordPrefabInstancePropertyModifications(enemyOverride);
 
         InvalidatePreviewSession();
+    }
+
+    private bool TryGetResolvedSlotAttackSettings(
+        Transform point,
+        out EnemyBurstAttackSettings attackSettings)
+    {
+        attackSettings = null;
+        var wave = (DirectedEnemySubWave)target;
+        if (wave == null || point == null)
+            return false;
+
+        int slotIndex = selectedEnemySlotIndex >= 0
+            ? selectedEnemySlotIndex
+            : point.GetSiblingIndex();
+        Enemy enemyPrefab = wave.GetConfiguredEnemyPrefabForSlot(slotIndex);
+        if (enemyPrefab == null)
+            return false;
+
+        MonoBehaviour[] components = enemyPrefab.GetComponents<MonoBehaviour>();
+        for (int i = 0; i < components.Length; i++)
+        {
+            if (components[i] is not IEnemyBurstAttackExecutor executor
+                || executor.BurstAttackSettings == null)
+            {
+                continue;
+            }
+
+            attackSettings = executor.BurstAttackSettings;
+            return true;
+        }
+
+        return false;
     }
 
     private SerializedProperty FindBehaviourProperty(string propertyName)
@@ -6578,6 +6596,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                         position + direction * radius * 4f);
                 }
             }
+            EnemyShootingPreview.DrawWaveSlot(wave, formationIndex, position, enemyTime, elapsed);
             Handles.color = new Color(0.35f, 1f, 0.45f, 0.9f);
         }
 

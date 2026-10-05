@@ -74,11 +74,13 @@ public sealed class EnemyDisintegrationSystem : IInitializable, ITickable, IDisp
 
             if (state.Charge <= EmptyChargeThreshold)
             {
+                enemy.SetQBeamCharge(0f, enemy._currentHealth);
                 RemoveStateAt(index);
                 continue;
             }
 
             states[enemy] = state;
+            enemy.SetQBeamCharge(state.Charge, enemy._currentHealth);
         }
     }
 
@@ -109,6 +111,7 @@ public sealed class EnemyDisintegrationSystem : IInitializable, ITickable, IDisp
         state.LastHitTime = Time.time;
         state.Profile = profile;
         states[enemy] = state;
+        enemy.SetQBeamCharge(state.Charge, enemy._currentHealth);
         return new EnemyDebuffProgress(
             true,
             previousCharge,

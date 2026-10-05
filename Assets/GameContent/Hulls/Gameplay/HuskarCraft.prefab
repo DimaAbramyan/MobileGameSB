@@ -16,9 +16,10 @@ GameObject:
   - component: {fileID: 6427467547313428841}
   - component: {fileID: 1944510079080559571}
   - component: {fileID: 6689641140550846863}
-  - component: {fileID: 7130167820753412502}
   - component: {fileID: 4697166279271204568}
   - component: {fileID: 396255540980650925}
+  - component: {fileID: 4694369724600001182}
+  - component: {fileID: 4871533862976041702}
   m_Layer: 8
   m_Name: HuskarCraft
   m_TagString: Player
@@ -124,6 +125,7 @@ MonoBehaviour:
   ShieldAnchor: {fileID: 4756945734813854271}
   ShipData: {fileID: 11400000, guid: eb1d5e307ce0c974aa413d83d3c4518c, type: 2}
   buffMagnet: {fileID: 4096775222194903361}
+  damageHitboxCollider: {fileID: 4694369724600001182}
   IsVisible: 0
 --- !u!114 &4464506009196274525
 MonoBehaviour:
@@ -201,52 +203,6 @@ MonoBehaviour:
   owner: {fileID: 2510948671603601103}
   healPercent: 0.2
   duration: 6
---- !u!61 &7130167820753412502
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3387013190401639}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: -0.007847026, y: -0.11280072}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.84, y: 0.68}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.48546204, y: 0.43295503}
-  m_EdgeRadius: 0
 --- !u!114 &4697166279271204568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,6 +256,71 @@ MonoBehaviour:
     previewButtonSize: {x: 128, y: 128}
     previewWeaponIconScale: {x: 1, y: 1}
     maxWeaponTierByHullUpgradeLevel: 01000000
+--- !u!58 &4694369724600001182
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.075
+--- !u!114 &4871533862976041702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa09ac06aaf1da143a7b022486e73306, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLocalStatusIndicator
+  showIndicator: 1
+  verticalOffset: 0
+  sideOffset: 0
+  radius: 0.7
+  arcAngle: 150
+  topArcOffset: 0
+  segments: 32
+  thickness: 0.04
+  sortingLayer: Default
+  sortingOrder: 999
+  healthColor: {r: 1, g: 0.25, b: 0.2, a: 0.95}
+  healthAlpha: 1
+  shieldColor: {r: 0.15, g: 0.8, b: 1, a: 0.95}
+  shieldAlpha: 1
+  emptyArcOpacity: 0.2
+  previewHealthFraction: 1
+  previewShieldFraction: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0

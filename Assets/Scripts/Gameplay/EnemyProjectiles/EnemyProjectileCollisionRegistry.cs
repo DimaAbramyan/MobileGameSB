@@ -16,11 +16,17 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
     private readonly Dictionary<ParentShip, int> shipTargetIds = new();
     private readonly Dictionary<ArkanoidBall, int> interceptorTargetIds = new();
     private readonly Dictionary<int, RegisteredTarget> targetsById = new();
+    private readonly Dictionary<EnemyBullet, int> burstProjectileConfigIds = new();
+    private readonly Dictionary<int, EnemyBullet> burstProjectileConfigsById = new();
+    private readonly List<BlackHolePrefab> projectilePurgeFields = new();
+    private readonly List<EnemyProjectileSpawnRequest> burstSpawnRequests = new(32);
 
     private EntityManager entityManager;
     private World entityWorld;
     private Entity registryEntity;
     private int nextTargetId = 1;
+    private int nextBurstProjectileConfigId = 1;
+    private EnemyProjectileEcsSpawner burstProjectileSpawner;
 
     [Inject] private PlayerController playerController;
 
@@ -29,11 +35,21 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         if (ship == null || shipTargetIds.ContainsKey(ship))
             return;
 
+        Collider2D damageHitbox = ship.DamageHitboxCollider;
+        if (damageHitbox == null)
+        {
+            Debug.LogWarning(
+                $"{ship.name} has no Collider2D on its root GameObject. "
+                + "ECS enemy projectile damage is disabled for this ship.",
+                ship);
+            return;
+        }
+
         RegisterTarget(
             ship,
             null,
             EnemyProjectileCollisionTargetKind.PlayerShip,
-            ship.GetComponentsInChildren<Collider2D>(true),
+            new[] { damageHitbox },
             shipTargetIds);
     }
 
@@ -71,28 +87,67 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         RemoveTarget(targetId);
     }
 
+    public void RegisterProjectilePurgeField(BlackHolePrefab field)
+    {
+        if (field != null && !projectilePurgeFields.Contains(field))
+            projectilePurgeFields.Add(field);
+    }
+
+    public void UnregisterProjectilePurgeField(BlackHolePrefab field)
+    {
+        if (field != null)
+            projectilePurgeFields.Remove(field);
+    }
+
+    public void RegisterBurstProjectileSpawner(EnemyProjectileEcsSpawner spawner)
+    {
+        burstProjectileSpawner = spawner;
+    }
+
+    public int GetOrRegisterBurstProjectileConfigId(EnemyBullet projectile)
+    {
+        if (projectile == null)
+            return 0;
+
+        if (burstProjectileConfigIds.TryGetValue(projectile, out int configId))
+            return configId;
+
+        configId = nextBurstProjectileConfigId++;
+        burstProjectileConfigIds.Add(projectile, configId);
+        burstProjectileConfigsById.Add(configId, projectile);
+        return configId;
+    }
+
     private void FixedUpdate()
     {
         if (!EnsureRegistryEntity())
             return;
 
         ResolveEvents();
+        ResolveBurstSpawnRequests();
         UpdateTargetSnapshot();
     }
 
     private void OnDestroy()
     {
-        if (entityWorld != null
-            && entityWorld.IsCreated
-            && entityManager.Exists(registryEntity))
+        if (entityWorld != null && entityWorld.IsCreated)
         {
-            entityManager.DestroyEntity(registryEntity);
+            EntityQuery projectiles = entityManager.CreateEntityQuery(
+                ComponentType.ReadOnly<EnemyProjectileStaticData>());
+            entityManager.DestroyEntity(projectiles);
+
+            if (entityManager.Exists(registryEntity))
+                entityManager.DestroyEntity(registryEntity);
         }
 
         targets.Clear();
         targetsById.Clear();
         shipTargetIds.Clear();
         interceptorTargetIds.Clear();
+        burstProjectileConfigIds.Clear();
+        burstProjectileConfigsById.Clear();
+        projectilePurgeFields.Clear();
+        burstProjectileSpawner = null;
     }
 
     private void RegisterTarget<TKey>(
@@ -150,7 +205,10 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
             registryEntity,
             new EnemyProjectileCollisionRegistryTag());
         entityManager.AddBuffer<EnemyProjectileCollisionTarget>(registryEntity);
+        entityManager.AddBuffer<EnemyProjectileSlowField>(registryEntity);
+        entityManager.AddBuffer<EnemyProjectilePurgeField>(registryEntity);
         entityManager.AddBuffer<EnemyProjectileResolutionEvent>(registryEntity);
+        entityManager.AddBuffer<EnemyProjectileBurstSpawnRequest>(registryEntity);
         return true;
     }
 
@@ -183,11 +241,71 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         events.Clear();
     }
 
+    private void ResolveBurstSpawnRequests()
+    {
+        DynamicBuffer<EnemyProjectileBurstSpawnRequest> requests = entityManager
+            .GetBuffer<EnemyProjectileBurstSpawnRequest>(registryEntity);
+        burstSpawnRequests.Clear();
+        for (int index = 0; index < requests.Length; index++)
+        {
+            EnemyProjectileBurstSpawnRequest request = requests[index];
+            if (burstProjectileSpawner == null
+                || !burstProjectileConfigsById.TryGetValue(
+                    request.BurstProjectileConfigId,
+                    out EnemyBullet projectile))
+            {
+                continue;
+            }
+
+            burstSpawnRequests.Add(new EnemyProjectileSpawnRequest(
+                projectile,
+                new Vector3(request.Position.x, request.Position.y, 0f),
+                new Vector3(request.Direction.x, request.Direction.y, 0f),
+                1f,
+                0f,
+                EnemyProjectileSpeedBehavior.None,
+                0f,
+                null,
+                EnemyProjectileSizeBehavior.Default,
+                0f,
+                1f,
+                null,
+                1f));
+        }
+
+        if (burstSpawnRequests.Count > 0)
+            burstProjectileSpawner.TrySpawnBatch(burstSpawnRequests);
+
+        requests.Clear();
+    }
+
     private void UpdateTargetSnapshot()
     {
         DynamicBuffer<EnemyProjectileCollisionTarget> snapshot = entityManager
             .GetBuffer<EnemyProjectileCollisionTarget>(registryEntity);
         snapshot.Clear();
+        DynamicBuffer<EnemyProjectileSlowField> slowFields = entityManager
+            .GetBuffer<EnemyProjectileSlowField>(registryEntity);
+        slowFields.Clear();
+        DynamicBuffer<EnemyProjectilePurgeField> purgeFields = entityManager
+            .GetBuffer<EnemyProjectilePurgeField>(registryEntity);
+        purgeFields.Clear();
+
+        for (int fieldIndex = projectilePurgeFields.Count - 1;
+             fieldIndex >= 0;
+             fieldIndex--)
+        {
+            BlackHolePrefab field = projectilePurgeFields[fieldIndex];
+            if (field == null
+                || !field.TryGetProjectilePurgeField(
+                    out EnemyProjectilePurgeField purgeField))
+            {
+                projectilePurgeFields.RemoveAt(fieldIndex);
+                continue;
+            }
+
+            purgeFields.Add(purgeField);
+        }
 
         for (int targetIndex = targets.Count - 1; targetIndex >= 0; targetIndex--)
         {
@@ -202,6 +320,13 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
                 && !IsCurrentShip(target.Ship))
             {
                 continue;
+            }
+
+            if (target.Kind == EnemyProjectileCollisionTargetKind.PlayerShip
+                && target.Ship.PassiveAbility is BlackHolePassive blackHole
+                && blackHole.TryGetSlowField(out EnemyProjectileSlowField slowField))
+            {
+                slowFields.Add(slowField);
             }
 
             Collider2D[] colliders = target.Colliders;

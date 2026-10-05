@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public static class ContentRaritySlotPrefabSetup
 {
-    private const string CraftPrefabPath = "Assets/PrefabUI/Buttons/Craft.prefab";
+    private const string CraftPrefabPath = "Assets/Prefub/UI/Common/Buttons/Craft.prefab";
     private const string CommonSlotPath = "Assets/Waves/2/CommonSlot.png";
     private const string RareSlotPath = "Assets/Waves/2/RareSlot.png";
     private const string EpicSlotPath = "Assets/Waves/2/EpicSlot.png";

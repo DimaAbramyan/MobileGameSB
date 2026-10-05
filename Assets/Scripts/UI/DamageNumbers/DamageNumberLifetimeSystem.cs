@@ -2,6 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 [BurstCompile]
+[DisableAutoCreation]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct DamageNumberLifetimeSystem : ISystem
 {

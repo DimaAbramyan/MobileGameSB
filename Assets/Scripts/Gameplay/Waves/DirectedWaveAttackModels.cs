@@ -15,7 +15,9 @@ public enum DirectedWaveAttackFireMode
     Forward,
     None,
     [InspectorName("Forward When Player Ahead")]
-    ForwardWhenPlayerAhead
+    ForwardWhenPlayerAhead,
+    [InspectorName("Default")]
+    Default = 4
 }
 
 public enum DirectedWaveAttackMovementMode
@@ -29,6 +31,51 @@ public enum DirectedWaveDiveSchedulingMode
 {
     WaitForReturn,
     StartNextWhileReturning
+}
+
+public enum DirectedWaveAttackAimMode
+{
+    [InspectorName("Aim On Start")] AimOnStart = 0,
+    [InspectorName("Aim On Burst")] AimOnBurst = 1,
+    [InspectorName("Aim Continuous")] AimContinuous = 2
+}
+
+public struct DirectedWaveAttackAimState
+{
+    private bool hasDirection;
+    public Vector3 Direction { get; private set; }
+
+    public static bool RequiresBurstWarning(DirectedWaveAttackAimMode mode, EnemyBurstAttackSettings profile)
+    {
+        if (mode != DirectedWaveAttackAimMode.AimOnBurst || profile == null)
+            return false;
+        for (int i = 0; i < profile.PatternCount; i++)
+            if (!profile.GetPattern(i).RepeatBurst)
+                return true;
+        return false;
+    }
+
+    public Vector3 ResolveDirection(Vector3 origin, Vector3 target, bool refresh)
+    {
+        if (!hasDirection || refresh)
+        {
+            Direction = target - origin;
+            Direction = Direction.sqrMagnitude < 0.0001f ? Vector3.down : Direction.normalized;
+            hasDirection = true;
+        }
+        return Direction;
+    }
+
+    public bool TryFire(Enemy enemy, IWaveAttackExecutor executor,
+        EnemyBurstAttackSettings pattern, Vector3 target, bool refresh)
+    {
+        Vector3 origin = executor is IEnemyLockedAimAttackExecutor lockedExecutor
+            ? lockedExecutor.GetWaveAimOrigin(pattern) : enemy.transform.position;
+        Vector3 direction = ResolveDirection(origin, target, refresh);
+        return executor is IEnemyLockedAimAttackExecutor aimedExecutor
+            ? aimedExecutor.TryFireInAimedDirection(direction, pattern)
+            : executor.TryFireAt(enemy.transform.position + direction, pattern);
+    }
 }
 
 public enum DirectedWaveFlyThroughReturnMode
@@ -55,6 +102,9 @@ public sealed class DirectedWaveAttackSettings
 {
     private const int CurrentSerializedVersion = 11;
 
+    [System.NonSerialized] private bool hasRuntimeProjectileBaseSpeedOverride;
+    [System.NonSerialized] private float runtimeProjectileBaseSpeedOverride;
+
     // Kept to preserve already serialized wave prefabs. The component's enabled
     // state now determines whether post-formation attacks run.
     [SerializeField, HideInInspector] private bool isEnabled;
@@ -71,6 +121,8 @@ public sealed class DirectedWaveAttackSettings
     [Header("Attack")]
     [SerializeField] private DirectedWaveAttackFireMode fireMode =
         DirectedWaveAttackFireMode.Aimed;
+    [SerializeField, Tooltip("Aim On Start locks direction for the entire attack. Aim On Burst refreshes it at the first shot of each burst. Aim Continuous tracks the player and aims again for every shot.")]
+    private DirectedWaveAttackAimMode aimMode;
     [SerializeField, Range(0f, 180f), Tooltip(
         "Half-angle of the forward sector. The enemy fires only when the player is within this many degrees of transform up.")]
     private float forwardFireHalfAngle = 15f;
@@ -166,6 +218,7 @@ public sealed class DirectedWaveAttackSettings
         ? Mathf.Max(0f, attackStartDelay)
         : 0f;
     public DirectedWaveAttackFireMode FireMode => fireMode;
+    public DirectedWaveAttackAimMode AimMode => aimMode;
     public bool HasFireMode => fireMode != DirectedWaveAttackFireMode.None;
     public DirectedWaveAttackMovementMode MovementMode => movementMode;
     public bool RequiresPlayerTarget =>
@@ -188,6 +241,10 @@ public sealed class DirectedWaveAttackSettings
     public float DelayAfterAttack => Mathf.Max(0f, delayAfterAttack);
     public bool UsesEnemyBurstSettings =>
         burstSettingsSource == DirectedWaveBurstSettingsSource.EnemySettings;
+    public bool HasRuntimeProjectileBaseSpeedOverride =>
+        hasRuntimeProjectileBaseSpeedOverride;
+    public float RuntimeProjectileBaseSpeedOverride =>
+        runtimeProjectileBaseSpeedOverride;
     public float ResolveAttackCooldown(float sourceCooldown)
     {
         return UsesEnemyBurstSettings && overrideEnemyAttackCooldown
@@ -264,12 +321,15 @@ public sealed class DirectedWaveAttackSettings
         if (source == null || ReferenceEquals(source, this))
             return;
 
+        hasRuntimeProjectileBaseSpeedOverride = false;
+        runtimeProjectileBaseSpeedOverride = 0f;
         source.Validate();
         isEnabled = source.isEnabled;
         legacyAttackType = source.legacyAttackType;
         useAttackStartDelay = source.useAttackStartDelay;
         attackStartDelay = source.attackStartDelay;
         fireMode = source.fireMode;
+        aimMode = source.aimMode;
         forwardFireHalfAngle = source.forwardFireHalfAngle;
         movementMode = source.movementMode;
         attacksPerEnemyPerCycle = source.attacksPerEnemyPerCycle;
@@ -314,6 +374,14 @@ public sealed class DirectedWaveAttackSettings
     public void SetAttacksPerSecond(float value)
     {
         attacksPerSecond = Mathf.Max(0.01f, value);
+    }
+
+    // The value belongs to a resolved wave copy and must never be serialized back
+    // into the enemy or projectile prefab.
+    public void SetRuntimeProjectileBaseSpeedOverride(float speed)
+    {
+        hasRuntimeProjectileBaseSpeedOverride = true;
+        runtimeProjectileBaseSpeedOverride = Mathf.Max(0.01f, speed);
     }
 
     public void Validate()

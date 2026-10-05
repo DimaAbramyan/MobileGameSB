@@ -449,7 +449,18 @@ public sealed partial class DirectedEnemySubWave
             int safeCycles = Mathf.Min(
                 completedCycles,
                 maxCompletedCycles);
-            for (int i = 0; i < safeCycles; i++)
+            int firstCycleToApply = 0;
+            if (runtimeContext != null)
+            {
+                positions = runtimeContext.GetCompletedPipelinePositions(
+                    positions,
+                    postCommands,
+                    pipelineDuration,
+                    safeCycles,
+                    out firstCycleToApply);
+            }
+
+            for (int i = firstCycleToApply; i < safeCycles; i++)
             {
                 CollectSimulationBackgroundCommands(
                     postCommands,
@@ -464,6 +475,9 @@ public sealed partial class DirectedEnemySubWave
                     true,
                     runtimeContext,
                     maxCompletedCycles);
+                runtimeContext?.StoreCompletedPipelinePositions(
+                    positions,
+                    i + 1);
             }
 
             if (!postCommandPipelineLoop && completedCycles >= fixedCount)

@@ -31,11 +31,11 @@ MonoBehaviour:
     - rid: 3397718812562292844
       type: {class: ProjectileContactContract, ns: , asm: Assembly-CSharp}
       data:
-        contactMode: 3
+        contactMode: 6
     - rid: 3397718812562292845
       type: {class: ProjectileExplosionContract, ns: , asm: Assembly-CSharp}
       data:
-        explosionPrefab: {fileID: 0}
+        explosionPrefab: {fileID: 5676898141782820409, guid: e5300a10c7f354047a8a476acb44ac55, type: 3}
         explosionRadius: 0
         explodeAtMaximumRange: 0
     - rid: 3397718812562292846
@@ -44,7 +44,7 @@ MonoBehaviour:
         sources:
         - id: explosion
           trigger: 1
-          damage: 30
+          damage: 100
           damageType: 5
           bypassesShield: 0
     - rid: 3397718812562292847

@@ -2,26 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HealBuff : Buff
+public class HealBuff : CollectiblePickup
 {
     [SerializeField, Min(0f)] private float health;
 
-    private bool isCollected;
-
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected override bool TryApplyCollection(ParentShip collectorShip)
     {
-        if (isCollected)
-            return;
-
-        ParentShip colliderShip =
-            collision.GetComponentInParent<ParentShip>();
-        if (colliderShip == null || colliderShip.IsIntangible)
-            return;
-
-        isCollected = true;
-        colliderShip.HealHealth(health);
-        PointsCollector.Bonuses += 1;
-        Destroy(gameObject);
+        collectorShip.HealHealth(health);
+        return true;
     }
 
     public void Init(ParentShip parent, float extraHealth)

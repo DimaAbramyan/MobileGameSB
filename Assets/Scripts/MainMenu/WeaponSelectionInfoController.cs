@@ -24,6 +24,10 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
     [SerializeField] private TMP_Text cooldownText;
     [SerializeField] private TMP_Text rangeText;
 
+    [Header("Additional Stats")]
+    [SerializeField] private TMP_Text platformTierText;
+    [SerializeField] private TMP_Text energyCostInfoText;
+
     [Header("Description")]
     [SerializeField] private TMP_Text descriptionText;
 
@@ -58,6 +62,11 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         }
     }
 
+    public void Show(WeaponContentDefinition weapon)
+    {
+        Refresh(weapon);
+    }
+
     private void RefreshAssignedWeapon(string slotId)
     {
         WeaponContentDefinition weapon = craftCreationFlow != null
@@ -78,6 +87,33 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         }
 
         WeaponData data = weapon.Data;
+        int upgradeLevel = CraftProgressionText.GetUpgradeLevel(
+            weapon,
+            contentProgressService);
+        bool canPreviewUpgrade = craftCreationFlow == null
+            && contentProgressService != null
+            && contentProgressService.GetState(weapon).CanUpgrade;
+        int nextUpgradeLevel = Mathf.Min(
+            upgradeLevel + 1,
+            weapon.MaxUpgradeLevel);
+        WeaponRuntimeStats stats = CraftProgressionText.GetWeaponStatsAtLevel(
+            weapon,
+            upgradeLevel);
+        WeaponRuntimeStats nextStats = CraftProgressionText.GetWeaponStatsAtLevel(
+            weapon,
+            nextUpgradeLevel);
+        bool usesExplosionAsPrimaryDamage = TryGetPrimaryExplosionDamage(
+            data,
+            out ProjectileDamageSource explosionDamageSource);
+        float primaryDamage = usesExplosionAsPrimaryDamage
+            ? explosionDamageSource.Damage
+            : stats.Damage;
+        float nextPrimaryDamage = usesExplosionAsPrimaryDamage
+            ? explosionDamageSource.Damage
+            : nextStats.Damage;
+        EnemyDamageType primaryDamageType = usesExplosionAsPrimaryDamage
+            ? explosionDamageSource.DamageType
+            : data.DamageType;
 
         if (iconImage != null)
         {
@@ -86,25 +122,40 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         }
 
         SetText(weaponNameText, weapon.DisplayName);
-        SetText(tierText, $"Tier {weapon.RequiredPlatformTier}");
-        SetText(energyCostText, data.EnergyCost.ToString());
-        SetText(damageTypeText, $"Type: {data.DamageType}");
+        SetText(
+            tierText,
+            FormatLevel(upgradeLevel, nextUpgradeLevel, canPreviewUpgrade));
+        SetText(energyCostText, $"Rarity: {weapon.Rarity}");
+        SetText(damageTypeText, $"Type: {primaryDamageType}");
         SetText(
             damageText,
-            CraftProgressionText.GetWeaponDamageText(
-                weapon,
-                contentProgressService));
-        SetSecondaryDamageText(GetSecondaryDamageText(data));
+            FormatStat(
+                "Damage",
+                primaryDamage,
+                nextPrimaryDamage,
+                canPreviewUpgrade,
+                "0.#"));
+        SetSecondaryDamageText(
+            GetSecondaryDamageText(data, usesExplosionAsPrimaryDamage));
         SetText(
             cooldownText,
-            CraftProgressionText.GetWeaponCooldownText(
-                weapon,
-                contentProgressService));
+            FormatStat(
+                "Cooldown",
+                stats.ReloadTime,
+                nextStats.ReloadTime,
+                canPreviewUpgrade,
+                "0.##",
+                " s"));
         SetText(
             rangeText,
-            CraftProgressionText.GetWeaponRangeText(
-                weapon,
-                contentProgressService));
+            FormatStat(
+                "Range",
+                stats.Range,
+                nextStats.Range,
+                canPreviewUpgrade,
+                "0.#"));
+        SetText(platformTierText, $"Platform tier: {weapon.RequiredPlatformTier}");
+        SetText(energyCostInfoText, $"Energy cost: {data.EnergyCost}");
         SetText(descriptionText, GetDescription(weapon));
     }
 
@@ -124,6 +175,8 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         SetSecondaryDamageText(string.Empty);
         SetText(cooldownText, string.Empty);
         SetText(rangeText, string.Empty);
+        SetText(platformTierText, string.Empty);
+        SetText(energyCostInfoText, string.Empty);
         SetText(descriptionText, string.Empty);
     }
 
@@ -135,7 +188,31 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         return weapon.PassiveAbilityDescription;
     }
 
-    private static string GetSecondaryDamageText(WeaponData weaponData)
+    private static bool TryGetPrimaryExplosionDamage(
+        WeaponData weaponData,
+        out ProjectileDamageSource explosionDamageSource)
+    {
+        explosionDamageSource = null;
+        if (!weaponData.TryGetPrimaryProjectileData(
+                out _,
+                out ProjectileData projectileData)
+            || projectileData == null
+            || projectileData.Damage > Mathf.Epsilon
+            || !projectileData.TryGetDamageSource(
+                ProjectileDamageTrigger.Explosion,
+                out explosionDamageSource)
+            || explosionDamageSource.Damage <= Mathf.Epsilon)
+        {
+            explosionDamageSource = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string GetSecondaryDamageText(
+        WeaponData weaponData,
+        bool hidePrimaryExplosionDamage)
     {
         if (!weaponData.TryGetPrimaryProjectileData(
                 out _,
@@ -146,7 +223,10 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         }
 
         StringBuilder builder = new();
-        AppendTriggeredDamage(projectileData, builder);
+        AppendTriggeredDamage(
+            projectileData,
+            hidePrimaryExplosionDamage,
+            builder);
         AppendDebuffDamage(projectileData, builder);
         AppendSecondaryProjectileDamage(projectileData, builder);
         return builder.ToString();
@@ -154,6 +234,7 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
 
     private static void AppendTriggeredDamage(
         ProjectileData projectileData,
+        bool hidePrimaryExplosionDamage,
         StringBuilder builder)
     {
         if (!projectileData.TryGetContract(
@@ -166,7 +247,10 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         for (int index = 0; index < damageSources.Sources.Count; index++)
         {
             ProjectileDamageSource source = damageSources.Sources[index];
-            if (source == null || source.Trigger == ProjectileDamageTrigger.Contact)
+            if (source == null
+                || source.Trigger == ProjectileDamageTrigger.Contact
+                || (hidePrimaryExplosionDamage
+                    && source.Trigger == ProjectileDamageTrigger.Explosion))
                 continue;
 
             string label = source.Trigger == ProjectileDamageTrigger.Explosion
@@ -201,11 +285,12 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
                     builder,
                     $"Ignite: {heatDebuff.BurningDamagePerTick:0.#}/"
                     + $"{heatDebuff.BurningDamageInterval:0.##} s");
-                if (heatDebuff.ExplosionDamage > 0f)
+                if (heatDebuff.ExplosionDamagePercent > 0f)
                 {
                     AppendSegment(
                         builder,
-                        $"Overheat explosion: {heatDebuff.ExplosionDamage:0.#}");
+                        "Thermal explosion: "
+                        + $"{heatDebuff.ExplosionDamagePercent:0.#}% max health");
                 }
                 continue;
             }
@@ -256,5 +341,30 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
     {
         if (text != null)
             text.text = value ?? string.Empty;
+    }
+
+    private static string FormatLevel(
+        int currentLevel,
+        int nextLevel,
+        bool canPreviewUpgrade)
+    {
+        return canPreviewUpgrade
+            ? $"Level {currentLevel} → {nextLevel}"
+            : $"Level {currentLevel}";
+    }
+
+    private static string FormatStat(
+        string label,
+        float currentValue,
+        float nextValue,
+        bool canPreviewUpgrade,
+        string numberFormat,
+        string suffix = "")
+    {
+        if (!canPreviewUpgrade || Mathf.Approximately(currentValue, nextValue))
+            return $"{label}: {currentValue.ToString(numberFormat)}{suffix}";
+
+        return $"{label}: {currentValue.ToString(numberFormat)} → "
+            + $"{nextValue.ToString(numberFormat)}{suffix}";
     }
 }

@@ -586,20 +586,26 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
             int maximumY = (int)math.floor(maximum.y / cellSize);
             bool didHit = false;
 
-            for (int gridIndex = 0; gridIndex < grid.Length && !didHit; gridIndex++)
+            for (int cellX = minimumX; cellX <= maximumX && !didHit; cellX++)
             {
-                PlayerProjectileCollisionGridEntry gridEntry = grid[gridIndex];
-                if (gridEntry.CellX < minimumX || gridEntry.CellX > maximumX
-                    || gridEntry.CellY < minimumY || gridEntry.CellY > maximumY)
+                for (int cellY = minimumY; cellY <= maximumY && !didHit; cellY++)
                 {
-                    continue;
-                }
+                    int gridIndex = FindFirstGridEntry(grid, cellX, cellY);
+                    if (gridIndex < 0)
+                        continue;
 
-                for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
-                {
-                    PlayerProjectileCollisionTarget target = targets[targetIndex];
-                    if (target.TargetId != gridEntry.TargetId
-                        || !PlayerProjectileCollisionMath.IntersectsExpandedBounds(
+                    for (; gridIndex < grid.Length && !didHit; gridIndex++)
+                    {
+                        PlayerProjectileCollisionGridEntry gridEntry = grid[gridIndex];
+                        if (gridEntry.CellX != cellX || gridEntry.CellY != cellY)
+                            break;
+
+                        int targetIndex = gridEntry.TargetIndex;
+                        if ((uint)targetIndex >= (uint)targets.Length)
+                            continue;
+
+                        PlayerProjectileCollisionTarget target = targets[targetIndex];
+                        if (!PlayerProjectileCollisionMath.IntersectsExpandedBounds(
                             start,
                             end,
                             target.Min,
@@ -743,10 +749,11 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
                     };
                       didHit = true;
                       break;
-                  }
-              }
+                   }
+               }
+            }
 
-              if (resolution.ValueRO.Kind != PlayerProjectileResolutionKind.None)
+            if (resolution.ValueRO.Kind != PlayerProjectileResolutionKind.None)
                   continue;
 
               for (int gridIndex = 0;
@@ -803,7 +810,37 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
           }
       }
 
-      private static bool TryRegisterBallLightningDirectContact(
+       private static int FindFirstGridEntry(
+           DynamicBuffer<PlayerProjectileCollisionGridEntry> grid,
+           int cellX,
+           int cellY)
+       {
+           int low = 0;
+           int high = grid.Length - 1;
+           while (low <= high)
+           {
+               int middle = low + (high - low) / 2;
+               PlayerProjectileCollisionGridEntry entry = grid[middle];
+               if (entry.CellX < cellX
+                   || entry.CellX == cellX && entry.CellY < cellY)
+               {
+                   low = middle + 1;
+                   continue;
+               }
+
+               high = middle - 1;
+           }
+
+           if (low >= grid.Length)
+               return -1;
+
+           PlayerProjectileCollisionGridEntry firstEntry = grid[low];
+           return firstEntry.CellX == cellX && firstEntry.CellY == cellY
+               ? low
+               : -1;
+       }
+
+       private static bool TryRegisterBallLightningDirectContact(
           DynamicBuffer<PlayerProjectileBallLightningDirectContact> contacts,
           int targetId,
           double currentTime)
@@ -856,7 +893,8 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
           }
 
           PlayerProjectileResonanceSphereState sphereState = sphereStates[sphere];
-          if (sphereState.IsDetonating != 0)
+            if (sphereState.IsDetonating != 0
+                || sphereState.IsFullChargeDetonationPending != 0)
               return false;
 
           switch (staticData.ContactMode)
@@ -897,6 +935,12 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
           sphereState.StoredDamage = math.min(
               sphereData.MaximumStoredDamage,
               sphereState.StoredDamage + damage);
+            if (sphereData.MaximumStoredDamage > 0f
+                && sphereState.StoredDamage >= sphereData.MaximumStoredDamage)
+            {
+                sphereState.IsFullChargeDetonationPending = 1;
+                sphereState.FullChargeDetonationElapsed = 0f;
+            }
           sphereStates[sphere] = sphereState;
 
           if (staticData.ContactMode == ProjectileContactMode.DamageAndDestroy)
@@ -1080,6 +1124,163 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PlayerProjectileEnemyCollisionSystem))]
+[UpdateBefore(typeof(PlayerContactAttackSystem))]
+public partial struct PlayerProjectileExplosionSystem : ISystem
+{
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<PlayerProjectileCollisionRegistryTag>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        DynamicBuffer<PlayerProjectileCollisionTarget> targets = SystemAPI
+            .GetSingletonBuffer<PlayerProjectileCollisionTarget>(true);
+        DynamicBuffer<PlayerProjectileCollisionGridEntry> grid = SystemAPI
+            .GetSingletonBuffer<PlayerProjectileCollisionGridEntry>(true);
+        DynamicBuffer<PlayerProjectileResolutionEvent> events = SystemAPI
+            .GetSingletonBuffer<PlayerProjectileResolutionEvent>();
+        float cellSize = SystemAPI
+            .GetSingleton<PlayerProjectileCollisionGridSettings>()
+            .CellSize;
+        EntityCommandBuffer commandBuffer = SystemAPI
+            .GetSingleton<EndFixedStepSimulationEntityCommandBufferSystem.Singleton>()
+            .CreateCommandBuffer(state.WorldUnmanaged);
+        float deltaTime = SystemAPI.Time.DeltaTime;
+
+        foreach ((RefRO<PlayerProjectileExplosionData> explosion,
+                  RefRW<PlayerProjectileExplosionRemainingLifetime> lifetime,
+                  RefRO<LocalTransform> transform,
+                  DynamicBuffer<PlayerProjectileExplosionHitTarget> hitTargets,
+                  Entity entity)
+                 in SystemAPI.Query<RefRO<PlayerProjectileExplosionData>,
+                     RefRW<PlayerProjectileExplosionRemainingLifetime>,
+                     RefRO<LocalTransform>,
+                     DynamicBuffer<PlayerProjectileExplosionHitTarget>>()
+                     .WithEntityAccess())
+        {
+            float2 position = transform.ValueRO.Position.xy;
+            float radius = explosion.ValueRO.Radius;
+            if (radius > 0f && cellSize > 0f)
+            {
+                int minimumX = (int)math.floor((position.x - radius) / cellSize);
+                int maximumX = (int)math.floor((position.x + radius) / cellSize);
+                int minimumY = (int)math.floor((position.y - radius) / cellSize);
+                int maximumY = (int)math.floor((position.y + radius) / cellSize);
+
+                for (int cellX = minimumX; cellX <= maximumX; cellX++)
+                {
+                    for (int cellY = minimumY; cellY <= maximumY; cellY++)
+                    {
+                        int gridIndex = FindFirstGridEntry(grid, cellX, cellY);
+                        if (gridIndex < 0)
+                            continue;
+
+                        for (; gridIndex < grid.Length; gridIndex++)
+                        {
+                            PlayerProjectileCollisionGridEntry gridEntry = grid[gridIndex];
+                            if (gridEntry.CellX != cellX || gridEntry.CellY != cellY)
+                                break;
+
+                            if ((uint)gridEntry.TargetIndex >= (uint)targets.Length)
+                                continue;
+
+                            PlayerProjectileCollisionTarget target =
+                                targets[gridEntry.TargetIndex];
+                            if (HasHitTarget(hitTargets, target.TargetId)
+                                || !IntersectsCircleBounds(
+                                position,
+                                radius,
+                                target.Min,
+                                target.Max))
+                            {
+                                continue;
+                            }
+
+                            hitTargets.Add(new PlayerProjectileExplosionHitTarget
+                            {
+                                TargetId = target.TargetId
+                            });
+                            events.Add(new PlayerProjectileResolutionEvent
+                            {
+                                TargetId = target.TargetId,
+                                TargetKind = target.Kind,
+                                OwnerId = explosion.ValueRO.OwnerId,
+                                DebuffSetId = 0,
+                                Damage = explosion.ValueRO.Damage,
+                                DamageType = explosion.ValueRO.DamageType,
+                                BypassesEnemyShield = explosion.ValueRO.BypassesEnemyShield,
+                                ImpactPosition = position
+                            });
+                        }
+                    }
+                }
+            }
+
+            lifetime.ValueRW.Value -= deltaTime;
+            if (lifetime.ValueRO.Value <= 0f)
+                commandBuffer.DestroyEntity(entity);
+        }
+    }
+
+    private static bool HasHitTarget(
+        DynamicBuffer<PlayerProjectileExplosionHitTarget> hitTargets,
+        int targetId)
+    {
+        for (int index = 0; index < hitTargets.Length; index++)
+        {
+            if (hitTargets[index].TargetId == targetId)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static int FindFirstGridEntry(
+        DynamicBuffer<PlayerProjectileCollisionGridEntry> grid,
+        int cellX,
+        int cellY)
+    {
+        int low = 0;
+        int high = grid.Length - 1;
+        while (low <= high)
+        {
+            int middle = low + (high - low) / 2;
+            PlayerProjectileCollisionGridEntry entry = grid[middle];
+            if (entry.CellX < cellX
+                || entry.CellX == cellX && entry.CellY < cellY)
+            {
+                low = middle + 1;
+                continue;
+            }
+
+            high = middle - 1;
+        }
+
+        if (low >= grid.Length)
+            return -1;
+
+        PlayerProjectileCollisionGridEntry firstEntry = grid[low];
+        return firstEntry.CellX == cellX && firstEntry.CellY == cellY
+            ? low
+            : -1;
+    }
+
+    private static bool IntersectsCircleBounds(
+        float2 center,
+        float radius,
+        float2 minimum,
+        float2 maximum)
+    {
+        float2 closestPoint = math.clamp(center, minimum, maximum);
+        return math.lengthsq(center - closestPoint) <= radius * radius;
+    }
+}
+
+[BurstCompile]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(PlayerProjectileEnemyCollisionSystem))]
 public partial struct PlayerContactAttackSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
@@ -1130,49 +1331,54 @@ public partial struct PlayerContactAttackSystem : ISystem
                 int minimumY = (int)math.floor(minimum.y / cellSize);
                 int maximumY = (int)math.floor(maximum.y / cellSize);
 
-                for (int gridIndex = 0; gridIndex < grid.Length; gridIndex++)
+                for (int cellX = minimumX; cellX <= maximumX; cellX++)
                 {
-                    PlayerProjectileCollisionGridEntry gridEntry = grid[gridIndex];
-                    if (gridEntry.CellX < minimumX || gridEntry.CellX > maximumX
-                        || gridEntry.CellY < minimumY || gridEntry.CellY > maximumY
-                        || HasHitTarget(hitTargets, gridEntry.TargetId))
+                    for (int cellY = minimumY; cellY <= maximumY; cellY++)
                     {
-                        continue;
-                    }
-
-                    for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
-                    {
-                        PlayerProjectileCollisionTarget target = targets[targetIndex];
-                        if (target.TargetId != gridEntry.TargetId
-                            || target.Kind
-                                != PlayerProjectileCollisionTargetKind.Enemy
-                            || !IntersectsPolygonBounds(
-                                polygonVertices,
-                                position,
-                                cosine,
-                                sine,
-                                target.Min,
-                                target.Max))
-                        {
+                        int gridIndex = FindFirstGridEntry(grid, cellX, cellY);
+                        if (gridIndex < 0)
                             continue;
-                        }
 
-                        hitTargets.Add(new PlayerContactHitTarget
+                        for (; gridIndex < grid.Length; gridIndex++)
                         {
-                            TargetId = target.TargetId
-                        });
-                        events.Add(new PlayerProjectileResolutionEvent
-                        {
-                            TargetId = target.TargetId,
-                            TargetKind = target.Kind,
-                            OwnerId = attack.ValueRO.OwnerId,
-                            DebuffSetId = attack.ValueRO.DebuffSetId,
-                            Damage = attack.ValueRO.Damage,
-                            DamageType = attack.ValueRO.DamageType,
-                            BypassesEnemyShield = attack.ValueRO.BypassesEnemyShield,
-                            ImpactPosition = position
-                        });
-                        break;
+                            PlayerProjectileCollisionGridEntry gridEntry = grid[gridIndex];
+                            if (gridEntry.CellX != cellX || gridEntry.CellY != cellY)
+                                break;
+
+                            if ((uint)gridEntry.TargetIndex >= (uint)targets.Length)
+                                continue;
+
+                            PlayerProjectileCollisionTarget target =
+                                targets[gridEntry.TargetIndex];
+                            if (target.Kind != PlayerProjectileCollisionTargetKind.Enemy
+                                || HasHitTarget(hitTargets, target.TargetId)
+                                || !IntersectsPolygonBounds(
+                                    polygonVertices,
+                                    position,
+                                    cosine,
+                                    sine,
+                                    target.Min,
+                                    target.Max))
+                            {
+                                continue;
+                            }
+
+                            hitTargets.Add(new PlayerContactHitTarget
+                            {
+                                TargetId = target.TargetId
+                            });
+                            events.Add(new PlayerProjectileResolutionEvent
+                            {
+                                TargetId = target.TargetId,
+                                TargetKind = target.Kind,
+                                OwnerId = attack.ValueRO.OwnerId,
+                                DebuffSetId = attack.ValueRO.DebuffSetId,
+                                Damage = attack.ValueRO.Damage,
+                                DamageType = attack.ValueRO.DamageType,
+                                BypassesEnemyShield = attack.ValueRO.BypassesEnemyShield,
+                                ImpactPosition = position
+                            });
+                        }
                     }
                 }
             }
@@ -1192,6 +1398,36 @@ public partial struct PlayerContactAttackSystem : ISystem
         }
 
         return false;
+    }
+
+    private static int FindFirstGridEntry(
+        DynamicBuffer<PlayerProjectileCollisionGridEntry> grid,
+        int cellX,
+        int cellY)
+    {
+        int low = 0;
+        int high = grid.Length - 1;
+        while (low <= high)
+        {
+            int middle = low + (high - low) / 2;
+            PlayerProjectileCollisionGridEntry entry = grid[middle];
+            if (entry.CellX < cellX
+                || entry.CellX == cellX && entry.CellY < cellY)
+            {
+                low = middle + 1;
+                continue;
+            }
+
+            high = middle - 1;
+        }
+
+        if (low >= grid.Length)
+            return -1;
+
+        PlayerProjectileCollisionGridEntry firstEntry = grid[low];
+        return firstEntry.CellX == cellX && firstEntry.CellY == cellY
+            ? low
+            : -1;
     }
 
     private static bool TryGetPolygonBounds(
@@ -1483,7 +1719,8 @@ public partial struct PlayerProjectileLifetimeSystem : ISystem
         foreach ((RefRW<PlayerProjectileRemainingLifetime> lifetime,
                   RefRW<PlayerProjectileResolution> resolution)
                  in SystemAPI.Query<RefRW<PlayerProjectileRemainingLifetime>,
-                     RefRW<PlayerProjectileResolution>>())
+                       RefRW<PlayerProjectileResolution>>()
+                       .WithNone<PlayerProjectileResonanceSphereState>())
         {
             if (resolution.ValueRO.Kind != PlayerProjectileResolutionKind.None)
                 continue;

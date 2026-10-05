@@ -50,6 +50,8 @@ public sealed class WaveEditor : Editor
     private float cameraBoundsAspect;
     private Vector2 cameraBoundsCenter;
     private float previewDuration;
+    private bool hasCachedBaseRouteDuration;
+    private float cachedBaseRouteDuration;
     private readonly List<CuePreviewCache> cuePreviewCaches = new();
     private readonly List<Vector3> warningPreviewPoints = new();
     private readonly List<Vector3[]> warningPreviewPolygonBuffers = new();
@@ -86,18 +88,16 @@ public sealed class WaveEditor : Editor
         }
         else
         {
-            previewDuration = Mathf.Max(
-                DefaultPreviewDuration,
-                GetBaseRouteDuration());
+            previewDuration = DefaultPreviewDuration;
         }
 
-        Undo.undoRedoPerformed += InvalidatePreviewCaches;
+        Undo.undoRedoPerformed += HandleUndoRedo;
     }
 
     private void OnDisable()
     {
         StopPreview();
-        Undo.undoRedoPerformed -= InvalidatePreviewCaches;
+        Undo.undoRedoPerformed -= HandleUndoRedo;
     }
 
     public override void OnInspectorGUI()
@@ -120,7 +120,10 @@ public sealed class WaveEditor : Editor
         DrawPreviewControls();
 
         if (serializedObject.ApplyModifiedProperties())
+        {
             InvalidatePreviewCaches();
+            InvalidateBaseRouteDuration();
+        }
     }
 
     private void DrawLegacyTools()
@@ -157,12 +160,24 @@ public sealed class WaveEditor : Editor
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("Conductor Preview", EditorStyles.boldLabel);
 
-        float baseDuration = GetBaseRouteDuration();
-        EditorGUILayout.LabelField(
-            new GUIContent(
-                "Base Route Duration",
-                "Calculated time for one complete pass of the scheduled subwaves, including the initial danger warning."),
-            $"{baseDuration:0.00}s");
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            EditorGUILayout.LabelField(
+                new GUIContent(
+                    "Base Route Duration",
+                    "Calculated time for one complete pass of the scheduled subwaves, including the initial danger warning."),
+                new GUIContent(
+                    hasCachedBaseRouteDuration
+                        ? $"{cachedBaseRouteDuration:0.00}s"
+                        : "Not calculated"));
+
+            if (GUILayout.Button(
+                    hasCachedBaseRouteDuration ? "Recalculate" : "Calculate",
+                    GUILayout.Width(96f)))
+            {
+                RefreshBaseRouteDuration();
+            }
+        }
 
         EditorGUI.BeginChangeCheck();
         previewDuration = Mathf.Max(
@@ -177,7 +192,9 @@ public sealed class WaveEditor : Editor
 
         if (GUILayout.Button("Use Base Route Duration"))
         {
-            previewDuration = Mathf.Max(0.1f, baseDuration);
+            previewDuration = Mathf.Max(
+                0.1f,
+                GetCachedOrCalculateBaseRouteDuration());
             SavePreviewDuration();
         }
 
@@ -507,6 +524,31 @@ public sealed class WaveEditor : Editor
         }
 
         previewSampleVersion++;
+    }
+
+    private void HandleUndoRedo()
+    {
+        InvalidatePreviewCaches();
+        InvalidateBaseRouteDuration();
+    }
+
+    private void InvalidateBaseRouteDuration()
+    {
+        hasCachedBaseRouteDuration = false;
+    }
+
+    private float GetCachedOrCalculateBaseRouteDuration()
+    {
+        if (!hasCachedBaseRouteDuration)
+            RefreshBaseRouteDuration();
+
+        return cachedBaseRouteDuration;
+    }
+
+    private void RefreshBaseRouteDuration()
+    {
+        cachedBaseRouteDuration = GetBaseRouteDuration();
+        hasCachedBaseRouteDuration = true;
     }
 
     private static bool TryGetReadyCuePreviewTime(

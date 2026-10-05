@@ -4,7 +4,8 @@ using Zenject;
 
 public sealed class LoadLevelConfig : MonoBehaviour
 {
-    [SerializeField] private LevelConfig levelConfig;
+    [SerializeField] private LevelDefinitionConfig levelDefinition;
+    [SerializeField, HideInInspector] private LevelConfig levelConfig;
     [SerializeField] private GameObject lockedWarning;
     [SerializeField] private NewMainMenuLevelSelectionController mainMenuDetailsWindow;
     [SerializeField] private LevelSelectionDetailsWindow detailsWindow;
@@ -12,14 +13,25 @@ public sealed class LoadLevelConfig : MonoBehaviour
     [InjectOptional] private LevelProgressService progressService;
     [InjectOptional] private BattleLaunchService battleLaunchService;
 
-    public LevelConfig LevelConfig => levelConfig;
+    public LevelDefinitionConfig LevelDefinition => levelDefinition;
+    public LevelConfig LevelConfig => levelDefinition != null
+        ? levelDefinition.Normal
+        : levelConfig;
 
     private LevelProgressService Progress =>
         progressService ??= new LevelProgressService();
 
     public bool CanLoad()
     {
-        return Progress.CanStartLevel(levelConfig);
+        return CanLoad(LevelConfig);
+    }
+
+    public bool CanLoad(LevelConfig config)
+    {
+        return (levelDefinition != null
+                ? levelDefinition.Contains(config)
+                : config != null && config == levelConfig)
+            && Progress.CanStartLevel(config);
     }
 
     public void Load()
@@ -32,7 +44,12 @@ public sealed class LoadLevelConfig : MonoBehaviour
 
     public void StartLevel()
     {
-        if (levelConfig == null)
+        StartLevel(LevelConfig);
+    }
+
+    public void StartLevel(LevelConfig config)
+    {
+        if (config == null)
         {
             Debug.LogError(
                 $"{nameof(LoadLevelConfig)} on {name} has no LevelConfig.",
@@ -40,11 +57,11 @@ public sealed class LoadLevelConfig : MonoBehaviour
             return;
         }
 
-        if (!CanLoad())
+        if (!CanLoad(config))
         {
             Debug.LogWarning(
-                $"Level {levelConfig.DisplayName} (ID: {levelConfig.Id}) is locked. "
-                + $"Complete required level {levelConfig.RequiredLevel?.DisplayName} first.",
+                $"Level {config.DisplayName} (ID: {config.Id}) is locked. "
+                + $"Complete required level {config.RequiredLevel?.DisplayName} first.",
                 this);
 
             if (lockedWarning != null)
@@ -56,15 +73,16 @@ public sealed class LoadLevelConfig : MonoBehaviour
         if (!TryPrepareBattle())
             return;
 
-        LevelLoader.SelectLevel(levelConfig);
+        LevelLoader.SelectLevel(config);
         Time.timeScale = 1f;
-        Debug.Log($"Loading level {levelConfig.DisplayName} (ID: {levelConfig.Id})");
+        Debug.Log($"Loading level {config.DisplayName} (ID: {config.Id})");
         SceneManager.LoadScene(LevelLoader.FightingSceneName);
     }
 
     private bool TryShowDetailsWindow()
     {
-        if (levelConfig == null)
+        LevelConfig config = LevelConfig;
+        if (config == null)
             return false;
 
         if (mainMenuDetailsWindow == null)
@@ -73,7 +91,7 @@ public sealed class LoadLevelConfig : MonoBehaviour
 
         if (mainMenuDetailsWindow != null)
         {
-            mainMenuDetailsWindow.Show(levelConfig, this);
+            mainMenuDetailsWindow.Show(config, this);
             return true;
         }
 
@@ -83,7 +101,7 @@ public sealed class LoadLevelConfig : MonoBehaviour
         if (detailsWindow == null)
             return false;
 
-        detailsWindow.Show(levelConfig, this);
+        detailsWindow.Show(config, this);
         return true;
     }
 

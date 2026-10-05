@@ -27,6 +27,8 @@ public class PlayerController : MonoBehaviour
     private float shipSwitchLockedUntil;
     private float metalDropMultiplier = 1f;
     private float metalDropMultiplierUntil;
+    [SerializeField, Range(-1f, 1f), Tooltip("World-space Y offset added to the touch position when moving the player ship.")]
+    private float touchOffsetY;
     [SerializeField] private PlayerEffectController effectController;
     [SerializeField] private TeamBarrierController teamBarrierController;
     ShipSelect shipSelect;
@@ -166,6 +168,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 touchPosition = Camera.main.ScreenToWorldPoint(touch.position);
         touchPosition = new Vector2(touchPosition.x, touchPosition.y);
+        touchPosition.y += touchOffsetY;
 
         if ((touchPosition - _currentPosition).magnitude < 0.25f)
             _currentSpeed = (touchPosition - _currentPosition) * speed;
@@ -174,6 +177,11 @@ public class PlayerController : MonoBehaviour
 
         playerRB.AddForce(_currentSpeed);
         CurrentVelocity = playerRB.linearVelocity;
+    }
+
+    public void SetTouchOffsetY(float value)
+    {
+        touchOffsetY = Mathf.Clamp(value, -1f, 1f);
     }
 
     private void ShipController()
@@ -384,5 +392,10 @@ public class PlayerController : MonoBehaviour
             teamBarrierController = gameObject.AddComponent<TeamBarrierController>();
 
         return teamBarrierController;
+    }
+
+    private void OnValidate()
+    {
+        touchOffsetY = Mathf.Clamp(touchOffsetY, -1f, 1f);
     }
 }

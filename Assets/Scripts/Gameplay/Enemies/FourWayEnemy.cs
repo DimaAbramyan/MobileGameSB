@@ -4,19 +4,22 @@ using Zenject;
 
 public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
     IFormationAttackActivation,
-    IEnemyBurstAttackSettingsOverrideReceiver
+    IEnemyBurstAttackSettingsOverrideReceiver,
+    IEnemyProjectileTypeOverrideReceiver, IEnemyShootingSettingsReceiver,
+    IEnemyAttackSettingsOverrideState, IEnemyAttackPatternSettingsReceiver, IEnemyAttackDirectionProvider,
+    IEnemyAttackAimReceiver, IEnemyAttackSequenceExecutor
 {
     private const int CurrentBurstSettingsVersion = 2;
 
     [Inject] private EnemyProjectileEcsSpawner projectileSpawner;
 
     [Header("Projectile")]
-    [SerializeField] private EnemyBullet projectilePrefab;
-    [SerializeField] private Transform projectileSpawnPoint;
-    [SerializeField] private Vector3 projectileSpawnOffset;
+    [SerializeField, HideInInspector] private EnemyBullet projectilePrefab;
+    [SerializeField, HideInInspector] private Transform projectileSpawnPoint;
+    [SerializeField, HideInInspector] private Vector3 projectileSpawnOffset;
 
     [Header("Attack Pattern")]
-    [SerializeField, InspectorName("Attack Pattern")]
+    [SerializeField, HideInInspector]
     private EnemyBurstAttackSettings burstAttackSettings =
         new EnemyBurstAttackSettings();
     [SerializeField, HideInInspector, FormerlySerializedAs("volleysPerBurst")]
@@ -24,265 +27,70 @@ public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
     [SerializeField, HideInInspector, FormerlySerializedAs("burstsPerSecond")]
     private float legacyBurstsPerSecond = 1f;
     [SerializeField, HideInInspector,
-     FormerlySerializedAs("intervalBetweenVolleys")]
+    FormerlySerializedAs("intervalBetweenVolleys")]
     private float legacyIntervalBetweenVolleys = 0.15f;
     [SerializeField, HideInInspector] private int burstSettingsVersion;
 
-    private int remainingAttackShots;
-    private int remainingBurstShots;
-    private float nextAttackTime;
-    private float nextShotTime;
-    private Transform projectileDirectionTransform;
-    private bool isWaveAttackControlled;
-    private bool isFormationAttackReady = true;
+    [SerializeField, HideInInspector] private bool sharedExecutorMigrated;
+    private SimpleEnemyAttackExecutor executor;
 
-    public bool CanPerformWaveAttack =>
-        isActiveAndEnabled
-        && !isDead
-        && projectilePrefab != null
-        && projectileSpawner != null;
-
-    public EnemyBurstAttackSettings BurstAttackSettings => burstAttackSettings;
-
-    public void ApplyBurstAttackSettingsOverride(EnemyBurstAttackSettings settings)
+    public SimpleEnemyAttackExecutor EnsureExecutorConfigured()
     {
-        if (settings == null)
-            return;
+        if (executor == null)
+            executor = GetComponent<SimpleEnemyAttackExecutor>();
+        if (sharedExecutorMigrated)
+            return executor;
 
-        burstAttackSettings ??= new EnemyBurstAttackSettings();
-        burstAttackSettings.CopyFrom(settings);
-        ResetAttackSchedule();
+        MigrateLegacyBurstSettings();
+        sharedExecutorMigrated = true;
+        if (executor == null)
+            executor = gameObject.AddComponent<SimpleEnemyAttackExecutor>();
+        FourWayEnemyRotationController legacyRotation = GetComponent<FourWayEnemyRotationController>();
+        executor.ConfigureLegacyFourWay(projectilePrefab, projectileSpawnPoint, projectileSpawnOffset,
+            burstAttackSettings, legacyRotation != null ? legacyRotation.LegacyRotationTarget : null,
+            legacyRotation != null ? legacyRotation.CreateLegacySettings() : null,
+            legacyRotation != null && legacyRotation.enabled);
+        executor.SetLegacyProjectileSpawner(projectileSpawner);
+        return executor;
     }
+
+    public bool CanPerformWaveAttack => EnsureExecutorConfigured() is { } shared && shared.CanPerformWaveAttack;
+    public EnemyBurstAttackSettings BurstAttackSettings => EnsureExecutorConfigured().BurstAttackSettings;
+    public bool HasAttackSettingsOverride => EnsureExecutorConfigured().HasAttackSettingsOverride;
+    public Vector3 AttackForward => EnsureExecutorConfigured().AttackForward;
 
     public override void Awake()
     {
         base.Awake();
-        MigrateLegacyBurstSettings();
-        ResetAttackSchedule();
+        EnsureExecutorConfigured()?.SetLegacyProjectileSpawner(projectileSpawner);
     }
 
-    private void OnEnable()
-    {
-        ResetAttackSchedule();
-    }
+    private void OnValidate() => MigrateLegacyBurstSettings();
 
-    private void Update()
-    {
-        if (!isFormationAttackReady
-            || isWaveAttackControlled
-            || !CanPerformWaveAttack)
-            return;
-
-        float currentTime = Time.time;
-        if (remainingAttackShots <= 0)
-        {
-            if (currentTime < nextAttackTime)
-                return;
-
-            remainingAttackShots =
-                burstAttackSettings.GetAttackShotCountForFireRate(
-                    FireRateMultiplier);
-            remainingBurstShots = 0;
-            nextShotTime = currentTime;
-        }
-
-        if (currentTime < nextShotTime)
-            return;
-
-        if (burstAttackSettings.RepeatBurst && remainingBurstShots <= 0)
-            remainingBurstShots = burstAttackSettings.BurstShotCount;
-
-        FireFourWayVolley();
-
-        if (burstAttackSettings.RepeatBurst)
-        {
-            remainingBurstShots--;
-            if (remainingBurstShots > 0)
-            {
-                nextShotTime = currentTime
-                    + burstAttackSettings.BurstShotInterval;
-                return;
-            }
-
-            remainingAttackShots--;
-            if (remainingAttackShots > 0)
-            {
-                nextShotTime = currentTime
-                    + burstAttackSettings.AttackShotInterval;
-                return;
-            }
-
-            nextAttackTime = currentTime
-                + burstAttackSettings.AttackCooldown / FireRateMultiplier;
-            return;
-        }
-
-        remainingAttackShots--;
-        if (remainingAttackShots > 0)
-        {
-            nextShotTime = currentTime
-                + burstAttackSettings.AttackShotInterval / FireRateMultiplier;
-            return;
-        }
-
-        nextAttackTime = currentTime
-            + burstAttackSettings.AttackCooldown / FireRateMultiplier;
-    }
-
-    private void OnValidate()
-    {
-        MigrateLegacyBurstSettings();
-        burstAttackSettings.Validate();
-    }
-
-    private void ResetAttackSchedule()
-    {
-        remainingAttackShots = 0;
-        remainingBurstShots = 0;
-        float attackStartTime = Time.time
-            + burstAttackSettings.AttackStartDelay / FireRateMultiplier;
-        nextAttackTime = attackStartTime;
-        nextShotTime = attackStartTime;
-    }
-
-    private void FireFourWayVolley()
-    {
-        Transform directionTransform = projectileDirectionTransform != null
-            ? projectileDirectionTransform
-            : transform;
-        Vector3 spawnPosition = projectileSpawnPoint != null
-            ? projectileSpawnPoint.position
-            : directionTransform.TransformPoint(projectileSpawnOffset);
-        FireFourWayVolley(
-            spawnPosition,
-            directionTransform.up,
-            burstAttackSettings);
-    }
-
-    public void SetWaveAttackControl(bool isControlled)
-    {
-        if (isWaveAttackControlled == isControlled)
-            return;
-
-        isWaveAttackControlled = isControlled;
-        if (!isWaveAttackControlled)
-            ResetAttackSchedule();
-    }
-
-    public void SetFormationAttackReady(bool isReady)
-    {
-        if (isFormationAttackReady == isReady)
-            return;
-
-        isFormationAttackReady = isReady;
-        ResetAttackSchedule();
-    }
-
-    public bool TryFireAt(
-        Vector3 targetPosition,
-        EnemyBurstAttackSettings attackSettings)
-    {
-        if (!CanPerformWaveAttack)
-            return false;
-
-        Transform directionTransform = projectileDirectionTransform != null
-            ? projectileDirectionTransform
-            : transform;
-        Vector3 spawnPosition = projectileSpawnPoint != null
-            ? projectileSpawnPoint.position
-            : directionTransform.TransformPoint(projectileSpawnOffset);
-        FireFourWayVolley(
-            spawnPosition,
-            directionTransform.up,
-            attackSettings);
-        return true;
-    }
-
-    public bool TryFireInDirection(
-        Vector3 direction,
-        EnemyBurstAttackSettings attackSettings)
-    {
-        if (!CanPerformWaveAttack)
-            return false;
-
-        Transform directionTransform = projectileDirectionTransform != null
-            ? projectileDirectionTransform
-            : transform;
-        Vector3 spawnPosition = projectileSpawnPoint != null
-            ? projectileSpawnPoint.position
-            : directionTransform.TransformPoint(projectileSpawnOffset);
-        FireFourWayVolley(spawnPosition, direction, attackSettings);
-        return true;
-    }
-
-    public void SetProjectileDirectionTransform(Transform value)
-    {
-        projectileDirectionTransform = value;
-    }
-
-    private void SpawnProjectile(Vector3 spawnPosition, Vector3 direction)
-    {
-        projectileSpawner.TrySpawn(
-            projectilePrefab,
-            spawnPosition,
-            direction,
-            DamageMultiplier);
-    }
-
-    private void FireFourWayVolley(
-        Vector3 spawnPosition,
-        Vector3 primaryDirection,
-        EnemyBurstAttackSettings attackSettings)
-    {
-        if (primaryDirection.sqrMagnitude < 0.0001f)
-            primaryDirection = transform.up;
-        else
-            primaryDirection.Normalize();
-
-        Vector3 perpendicularDirection = new Vector3(
-            -primaryDirection.y,
-            primaryDirection.x,
-            0f);
-        SpawnSpreadProjectiles(
-            spawnPosition,
-            primaryDirection,
-            attackSettings);
-        SpawnSpreadProjectiles(
-            spawnPosition,
-            perpendicularDirection,
-            attackSettings);
-        SpawnSpreadProjectiles(
-            spawnPosition,
-            -primaryDirection,
-            attackSettings);
-        SpawnSpreadProjectiles(
-            spawnPosition,
-            -perpendicularDirection,
-            attackSettings);
-    }
-
-    private void SpawnSpreadProjectiles(
-        Vector3 spawnPosition,
-        Vector3 baseDirection,
-        EnemyBurstAttackSettings attackSettings)
-    {
-        EnemyBurstAttackSettings effectiveSettings = attackSettings
-            ?? burstAttackSettings;
-        int projectileCount = effectiveSettings != null
-            ? effectiveSettings.ProjectilesPerShot
-            : 1;
-        for (int projectileIndex = 0;
-             projectileIndex < projectileCount;
-             projectileIndex++)
-        {
-            Vector3 projectileDirection = effectiveSettings != null
-                ? effectiveSettings.GetProjectileDirection(
-                    baseDirection,
-                    projectileIndex)
-                : baseDirection;
-            SpawnProjectile(spawnPosition, projectileDirection);
-        }
-    }
+    public void ApplyBurstAttackSettingsOverride(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().ApplyBurstAttackSettingsOverride(settings);
+    public void ApplyProjectileTypeOverride(EnemyProjectileType type) =>
+        EnsureExecutorConfigured().ApplyProjectileTypeOverride(type);
+    public void SetWaveShootingSettings(EnemyShootingSettings settings) =>
+        EnsureExecutorConfigured().SetWaveShootingSettings(settings);
+    public void SetWaveAttackSettings(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().SetWaveAttackSettings(settings);
+    public void SetWaveAimTarget(IEnemyAttackAimTarget target) =>
+        EnsureExecutorConfigured().SetWaveAimTarget(target);
+    public void SetWaveAttackControl(bool isControlled) =>
+        EnsureExecutorConfigured().SetWaveAttackControl(isControlled);
+    public void SetFormationAttackReady(bool isReady) =>
+        EnsureExecutorConfigured().SetFormationAttackReady(isReady);
+    public bool TryFireAt(Vector3 targetPosition, EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().TryFireAt(targetPosition, settings);
+    public bool TryFireInDirection(Vector3 direction, EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().TryFireInDirection(direction, settings);
+    public void BeginAttackSequence(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().BeginAttackSequence(settings);
+    public void EndAttackSequence(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().EndAttackSequence(settings);
+    public void SetProjectileDirectionTransform(Transform value) =>
+        EnsureExecutorConfigured().SetRotationTarget(value);
 
     private void MigrateLegacyBurstSettings()
     {

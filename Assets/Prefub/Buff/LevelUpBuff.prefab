@@ -209,4 +209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74b023b5387835544866500bdad09ec1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffLevel
-  speed: 1
+  fallSpeed: 1
+  pickupMessage: "Level Up \u2014 \u043F\u043E\u0432\u044B\u0448\u0430\u0435\u0442
+    \u0443\u0440\u043E\u0432\u0435\u043D\u044C \u043E\u0440\u0443\u0436\u0438\u044F
+    \u0432\u0441\u0435\u0439 \u043A\u043E\u043C\u0430\u043D\u0434\u044B."

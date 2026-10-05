@@ -99,7 +99,7 @@ public sealed class FastGameLevelLauncher : MonoBehaviour
         LevelConfig lastAvailableLevel = null;
         for (int i = 0; i < catalog.Levels.Count; i++)
         {
-            LevelConfig level = catalog.Levels[i];
+            LevelConfig level = catalog.Levels[i]?.Normal;
             if (level == null || !progress.CanStartLevel(level))
                 continue;
 

@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010c01b85bf962b42bdee51dbe3236eb, type: 3}
   m_Name: QBeamDisintegrationDebuff
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDisintegrationDebuffConfig
-  thresholdMode: 0
+  thresholdMode: 1
   thresholdPercent: 100
-  thresholdAction: 0
+  thresholdAction: 2
   triggerOncePerEnemy: 1
   chargeDecayDelay: 0.5
   chargeDecayPerSecond: 12

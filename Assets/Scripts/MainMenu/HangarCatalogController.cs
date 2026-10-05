@@ -33,6 +33,10 @@ public sealed class HangarCatalogController : MonoBehaviour
     [SerializeField] private Transform contentRoot;
     [SerializeField] private bool clearExistingContentOnStart = true;
 
+    [Header("Catalog Layout")]
+    [SerializeField, Min(1)] private int hullColumnCount = 3;
+    [SerializeField, Min(1)] private int weaponColumnCount = 4;
+
     [Header("Details")]
     [SerializeField] private GameObject detailsRoot;
     [SerializeField] private Image selectedIcon;
@@ -43,7 +47,12 @@ public sealed class HangarCatalogController : MonoBehaviour
     [SerializeField] private TMP_Text purchasePriceText;
     [SerializeField] private TMP_Text maxUpgradeLevelText;
     [SerializeField] private Button upgradeButton;
+      [SerializeField] private TMP_Text actionButtonLabel;
     [SerializeField] private UnityEvent onUpgradeRequested = new();
+
+      [Header("Content Info Views")]
+      [SerializeField] private HullSelectionInfoController hullInfoView;
+      [SerializeField] private WeaponSelectionInfoController weaponInfoView;
 
     private readonly List<ContentButtonBinding> buttonBindings = new();
     private ContentCatalogService catalogService;
@@ -54,6 +63,9 @@ public sealed class HangarCatalogController : MonoBehaviour
     private bool hasStarted;
     private bool hasClearedExistingContent;
     private bool isProgressSubscribed;
+    private GridLayoutGroup catalogGrid;
+    private bool hasCatalogCellAspect;
+    private float catalogCellAspect = 1f;
 
     public HangarCatalogTab ActiveTab => activeTab;
     public CraftContentDefinition SelectedContent => selectedContent;
@@ -91,6 +103,12 @@ public sealed class HangarCatalogController : MonoBehaviour
             Refresh();
     }
 
+    private void OnRectTransformDimensionsChange()
+    {
+        if (hasStarted)
+            ApplyCatalogGrid();
+    }
+
     private void OnDestroy()
     {
         UnregisterButtons();
@@ -104,6 +122,7 @@ public sealed class HangarCatalogController : MonoBehaviour
         if (!ValidateConfiguration())
             return;
 
+        ApplyCatalogGrid();
         PopulateActiveTab();
         ApplyTabVisuals();
         RestoreSelectionForActiveTab();
@@ -170,6 +189,46 @@ public sealed class HangarCatalogController : MonoBehaviour
         }
 
         Populate(catalogService.Weapons);
+    }
+
+    private void ApplyCatalogGrid()
+    {
+        ApplyCatalogGrid(activeTab);
+    }
+
+    private void ApplyCatalogGrid(HangarCatalogTab tab)
+    {
+        if (contentRoot == null)
+            return;
+
+        catalogGrid ??= contentRoot.GetComponent<GridLayoutGroup>();
+        if (catalogGrid == null || contentRoot is not RectTransform contentRect)
+            return;
+
+        if (!hasCatalogCellAspect)
+        {
+            catalogCellAspect = catalogGrid.cellSize.x > Mathf.Epsilon
+                ? catalogGrid.cellSize.y / catalogGrid.cellSize.x
+                : 1f;
+            hasCatalogCellAspect = true;
+        }
+
+        int columnCount = tab == HangarCatalogTab.Hulls
+            ? Mathf.Max(1, hullColumnCount)
+            : Mathf.Max(1, weaponColumnCount);
+        float availableWidth = contentRect.rect.width
+            - catalogGrid.padding.left
+            - catalogGrid.padding.right
+            - catalogGrid.spacing.x * (columnCount - 1);
+        if (availableWidth <= 0f)
+            return;
+
+        float cellWidth = availableWidth / columnCount;
+        catalogGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        catalogGrid.constraintCount = columnCount;
+        catalogGrid.cellSize = new Vector2(
+            cellWidth,
+            cellWidth * catalogCellAspect);
     }
 
     private void Populate<T>(IReadOnlyList<T> contents)
@@ -249,6 +308,7 @@ public sealed class HangarCatalogController : MonoBehaviour
     {
         bool hasSelection = selectedContent != null;
         SetWindowActive(detailsRoot, hasSelection);
+          SetInfoViewsActive(hasSelection);
         if (!hasSelection)
             return;
 
@@ -278,7 +338,25 @@ public sealed class HangarCatalogController : MonoBehaviour
             upgradeButton.interactable = selectedState.CanPurchase
                 || selectedState.CanUpgrade;
         }
+
+          SetText(actionButtonLabel, GetSelectedActionLabel());
+          if (selectedContent is HullContentDefinition hull)
+          {
+              hullInfoView?.Show(hull);
+              return;
+          }
+
+          if (selectedContent is WeaponContentDefinition weapon)
+              weaponInfoView?.Show(weapon);
     }
+
+      private void SetInfoViewsActive(bool hasSelection)
+      {
+          bool showHullInfo = hasSelection && selectedContent is HullContentDefinition;
+          bool showWeaponInfo = hasSelection && selectedContent is WeaponContentDefinition;
+          SetWindowActive(hullInfoView != null ? hullInfoView.gameObject : null, showHullInfo);
+          SetWindowActive(weaponInfoView != null ? weaponInfoView.gameObject : null, showWeaponInfo);
+      }
 
     private string GetSelectedActionCostText()
     {
@@ -290,6 +368,19 @@ public sealed class HangarCatalogController : MonoBehaviour
 
         return string.Empty;
     }
+
+      private string GetSelectedActionLabel()
+      {
+          if (selectedState.CanPurchase)
+              return "Купить";
+
+          if (selectedState.CanUpgrade)
+              return "Улучшить";
+
+          return selectedState.IsOwned
+              ? "Макс. уровень"
+              : "Недоступно";
+      }
 
     private void ClearSelection()
     {

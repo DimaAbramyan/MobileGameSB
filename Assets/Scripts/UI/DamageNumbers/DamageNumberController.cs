@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -47,19 +46,16 @@ public sealed class DamageNumberController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float minimumScale = 0.9f;
     [SerializeField, Min(0.01f)] private float maximumScale = 1.25f;
 
-    private readonly Dictionary<Entity, DamageNumberView> activeViews = new();
-    private readonly Dictionary<int, Entity> aggregateEntities = new();
-    private readonly Dictionary<Entity, int> aggregateKeys = new();
-    private readonly Dictionary<Entity, Enemy> targetEnemies = new();
+    private readonly Dictionary<int, ActiveDamageNumber> activeNumbers = new();
+    private readonly Dictionary<int, int> aggregateNumberIds = new();
     private readonly Stack<DamageNumberView> inactiveViews = new();
-    private readonly List<Entity> entitiesToRelease = new();
+    private readonly List<int> activeNumberIds = new(64);
+    private readonly List<int> numbersToRelease = new();
 
-    private EntityManager entityManager;
-    private World entityWorld;
     private DealDamageManager dealDamageManager;
+    private int nextActiveNumberId;
     private bool isSubscribed;
     private bool hasLoggedMissingPrefab;
-    private bool hasLoggedMissingWorld;
 
     public DamageNumberView DamageNumberPrefab => damageNumberPrefab;
     public Transform ViewParent => viewParent;
@@ -104,31 +100,39 @@ public sealed class DamageNumberController : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (activeViews.Count == 0 || !EnsureEntityManager())
+        if (activeNumbers.Count == 0)
             return;
 
-        entitiesToRelease.Clear();
-        foreach (KeyValuePair<Entity, DamageNumberView> activeView in activeViews)
+        float deltaTime = Time.deltaTime;
+        activeNumberIds.Clear();
+        numbersToRelease.Clear();
+        foreach (int numberId in activeNumbers.Keys)
+            activeNumberIds.Add(numberId);
+
+        for (int index = 0; index < activeNumberIds.Count; index++)
         {
-            Entity entity = activeView.Key;
-            DamageNumberView view = activeView.Value;
-            if (view == null
-                || !entityManager.Exists(entity)
-                || !entityManager.HasComponent<DamageNumberData>(entity))
+            int numberId = activeNumberIds[index];
+            if (!activeNumbers.TryGetValue(numberId, out ActiveDamageNumber number))
+                continue;
+
+            DamageNumberView view = number.View;
+            if (view == null)
             {
-                entitiesToRelease.Add(entity);
+                numbersToRelease.Add(numberId);
                 continue;
             }
 
-            DamageNumberData data = entityManager.GetComponentData<DamageNumberData>(entity);
+            DamageNumberData data = number.Data;
+            data.Age += deltaTime;
             if (data.Age >= data.Lifetime)
             {
-                entitiesToRelease.Add(entity);
+                numbersToRelease.Add(numberId);
                 continue;
             }
 
-            if (TryUpdateFollowPosition(entity, ref data))
-                entityManager.SetComponentData(entity, data);
+            TryUpdateFollowPosition(number.Target, ref data);
+            number.Data = data;
+            activeNumbers[numberId] = number;
 
             view.SetPresentation(
                 new Vector3(data.Position.x, data.Position.y, data.Position.z),
@@ -136,20 +140,20 @@ public sealed class DamageNumberController : MonoBehaviour
                 GetScale(data.ModifierPercent));
         }
 
-        for (int index = 0; index < entitiesToRelease.Count; index++)
-            Release(entitiesToRelease[index]);
+        for (int index = 0; index < numbersToRelease.Count; index++)
+            Release(numbersToRelease[index]);
     }
 
     private void OnDestroy()
     {
         Unsubscribe();
 
-        entitiesToRelease.Clear();
-        foreach (Entity entity in activeViews.Keys)
-            entitiesToRelease.Add(entity);
+        numbersToRelease.Clear();
+        foreach (int numberId in activeNumbers.Keys)
+            numbersToRelease.Add(numberId);
 
-        for (int index = 0; index < entitiesToRelease.Count; index++)
-            Release(entitiesToRelease[index]);
+        for (int index = 0; index < numbersToRelease.Count; index++)
+            Release(numbersToRelease[index]);
     }
 
     private void Subscribe()
@@ -177,30 +181,16 @@ public sealed class DamageNumberController : MonoBehaviour
             return;
         }
 
-        if (!EnsureEntityManager())
-        {
-            if (!hasLoggedMissingWorld)
-            {
-                Debug.LogError(
-                    $"{nameof(DamageNumberController)} needs an active default ECS World.",
-                    this);
-                hasLoggedMissingWorld = true;
-            }
-
-            return;
-        }
-
         if (TryUpdateAggregate(request))
             return;
 
-        if (activeViews.Count >= maxActiveNumbers)
+        if (activeNumbers.Count >= maxActiveNumbers)
             return;
 
         DamageNumberView view = GetView();
         if (view == null)
             return;
 
-        Entity entity = entityManager.CreateEntity(typeof(DamageNumberData));
         var data = new DamageNumberData
         {
             Position = GetDisplayPosition(request.WorldPosition),
@@ -212,12 +202,13 @@ public sealed class DamageNumberController : MonoBehaviour
             FadeDuration = fadeDuration,
             UpwardSpeed = upwardSpeed
         };
-        entityManager.SetComponentData(entity, data);
-        activeViews.Add(entity, view);
-        aggregateEntities[request.AggregationKey] = entity;
-        aggregateKeys[entity] = request.AggregationKey;
-        if (request.Target != null)
-            targetEnemies[entity] = request.Target;
+        int numberId = nextActiveNumberId++;
+        activeNumbers.Add(numberId, new ActiveDamageNumber(
+            view,
+            data,
+            request.AggregationKey,
+            request.Target));
+        aggregateNumberIds[request.AggregationKey] = numberId;
         view.Show(
             new Vector3(data.Position.x, data.Position.y, data.Position.z),
             data.Damage,
@@ -227,26 +218,29 @@ public sealed class DamageNumberController : MonoBehaviour
 
     private bool TryUpdateAggregate(DamageNumberRequest request)
     {
-        if (!aggregateEntities.TryGetValue(
+        if (!aggregateNumberIds.TryGetValue(
                 request.AggregationKey,
-                out Entity entity))
+                out int numberId))
         {
             return false;
         }
 
-        if (!activeViews.TryGetValue(entity, out DamageNumberView view)
-            || view == null
-            || !entityManager.Exists(entity)
-            || !entityManager.HasComponent<DamageNumberData>(entity))
+        if (!activeNumbers.TryGetValue(numberId, out ActiveDamageNumber number))
         {
-            Release(entity);
+            aggregateNumberIds.Remove(request.AggregationKey);
             return false;
         }
 
-        DamageNumberData data = entityManager.GetComponentData<DamageNumberData>(entity);
+        if (number.View == null)
+        {
+            Release(numberId);
+            return false;
+        }
+
+        DamageNumberData data = number.Data;
         if (data.Age >= data.Lifetime)
         {
-            Release(entity);
+            Release(numberId);
             return false;
         }
 
@@ -263,13 +257,15 @@ public sealed class DamageNumberController : MonoBehaviour
         data.FadeStartDelay = accumulationDuration;
         data.FadeDuration = fadeDuration;
         data.UpwardSpeed = upwardSpeed;
-        entityManager.SetComponentData(entity, data);
+        number.Data = data;
 
         if (request.Target != null)
-            targetEnemies[entity] = request.Target;
+            number.Target = request.Target;
 
-        view.SetAmount(data.Damage);
-        view.SetPresentation(
+        activeNumbers[numberId] = number;
+
+        number.View.SetAmount(data.Damage);
+        number.View.SetPresentation(
             new Vector3(data.Position.x, data.Position.y, data.Position.z),
             GetColor(data.ModifierPercent, 1f),
             GetScale(data.ModifierPercent));
@@ -301,22 +297,14 @@ public sealed class DamageNumberController : MonoBehaviour
         return Instantiate(damageNumberPrefab, viewParent);
     }
 
-    private void Release(Entity entity)
+    private void Release(int numberId)
     {
-        if (!activeViews.Remove(entity, out DamageNumberView view))
-        {
-            RemoveAggregateMapping(entity);
+        if (!activeNumbers.Remove(numberId, out ActiveDamageNumber number))
             return;
-        }
 
-        RemoveAggregateMapping(entity);
-        targetEnemies.Remove(entity);
+        RemoveAggregateMapping(numberId, number.AggregationKey);
 
-        if (entityWorld != null
-            && entityWorld.IsCreated
-            && entityManager.Exists(entity))
-            entityManager.DestroyEntity(entity);
-
+        DamageNumberView view = number.View;
         if (view == null)
             return;
 
@@ -337,20 +325,6 @@ public sealed class DamageNumberController : MonoBehaviour
         }
     }
 
-    private bool EnsureEntityManager()
-    {
-        if (entityWorld != null && entityWorld.IsCreated)
-            return true;
-
-        World world = World.DefaultGameObjectInjectionWorld;
-        if (world == null || !world.IsCreated)
-            return false;
-
-        entityWorld = world;
-        entityManager = entityWorld.EntityManager;
-        return true;
-    }
-
     private float GetEffectiveLifetime()
     {
         return Mathf.Max(0.01f, accumulationDuration + fadeDuration);
@@ -365,15 +339,11 @@ public sealed class DamageNumberController : MonoBehaviour
     }
 
     private bool TryUpdateFollowPosition(
-        Entity entity,
+        Enemy target,
         ref DamageNumberData data)
     {
-        if (!targetEnemies.TryGetValue(entity, out Enemy target)
-            || target == null)
-        {
-            targetEnemies.Remove(entity);
+        if (target == null)
             return false;
-        }
 
         data.Position = GetDisplayPosition(target.DamageNumberCenter);
         data.Position.y += data.UpwardSpeed * Mathf.Max(
@@ -382,15 +352,32 @@ public sealed class DamageNumberController : MonoBehaviour
         return true;
     }
 
-    private void RemoveAggregateMapping(Entity entity)
+    private void RemoveAggregateMapping(int numberId, int aggregationKey)
     {
-        if (!aggregateKeys.Remove(entity, out int key))
-            return;
-
-        if (aggregateEntities.TryGetValue(key, out Entity mappedEntity)
-            && mappedEntity == entity)
+        if (aggregateNumberIds.TryGetValue(aggregationKey, out int mappedNumberId)
+            && mappedNumberId == numberId)
         {
-            aggregateEntities.Remove(key);
+            aggregateNumberIds.Remove(aggregationKey);
+        }
+    }
+
+    private struct ActiveDamageNumber
+    {
+        public readonly DamageNumberView View;
+        public readonly int AggregationKey;
+        public DamageNumberData Data;
+        public Enemy Target;
+
+        public ActiveDamageNumber(
+            DamageNumberView view,
+            DamageNumberData data,
+            int aggregationKey,
+            Enemy target)
+        {
+            View = view;
+            Data = data;
+            AggregationKey = aggregationKey;
+            Target = target;
         }
     }
 

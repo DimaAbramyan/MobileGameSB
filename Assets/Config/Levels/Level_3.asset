@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4772704e5af14f878e9327d364c0ade4, type: 3}
   m_Name: Level_3
   m_EditorClassIdentifier: 
-  id: 3
-  displayName: Level 4
-  requiredLevel: {fileID: 11400000, guid: da01e0dd8b6844a493817563015fb540, type: 2}
+  id: 2
+  displayName: Level 3
+  requiredLevel: {fileID: 11400000, guid: 7856d40f869d419d8a2520e719f42157, type: 2}
   bonusLevel: 0
   goldReward: 0
   coreReward: 0

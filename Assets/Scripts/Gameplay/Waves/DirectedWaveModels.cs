@@ -103,7 +103,7 @@ public sealed class DirectedWavePathCheckpoint
     public DirectedWaveSegmentMotion motionToNext =
         DirectedWaveSegmentMotion.CatmullRom;
     public AnimationCurve easeToNext =
-        AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        AnimationCurve.Linear(0f, 0f, 1f, 1f);
 }
 
 [System.Serializable]

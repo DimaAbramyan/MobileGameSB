@@ -17,8 +17,8 @@ MonoBehaviour:
   damage: 18
   damageType: 3
   projectilePrefab: {fileID: 5124484808078174344, guid: 4fc5484eb9924fc4da9e842f43bd0b97, type: 3}
-  range: 8
-  speed: 4
+  range: 666
+  speed: 3
   contracts:
   - rid: 3397719132644311135
   - rid: 3397719132644311136

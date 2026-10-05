@@ -44,7 +44,7 @@ public sealed class ThermalLaserWeapon : ContinuousBeamWeapon
             && enemyDebuffController != null
             && data.HeatDebuffConfig != null)
         {
-            enemyDebuffController.Apply(
+            enemyDebuffController.ApplyThermal(
                 enemy,
                 data.HeatDebuffConfig,
                 data.GetHeatPerHitPercent(Level),

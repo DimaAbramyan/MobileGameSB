@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -16,6 +16,13 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
     private bool overridePresetAttacksPerSecond;
     [SerializeField, Min(0.01f), InspectorName("Attacks Per Second")]
     private float presetAttacksPerSecond = 1f;
+
+    [Header("Projectile Speed")]
+    [SerializeField, InspectorName("Override Base Projectile Speed"), Tooltip(
+        "Uses this speed only in the runtime copy of each enemy attack pattern. Enemy and projectile prefabs are unchanged.")]
+    private bool overrideBaseProjectileSpeed;
+    [SerializeField, Min(0.01f), InspectorName("Base Projectile Speed")]
+    private float baseProjectileSpeed = 1f;
 
     [Header("Post-Formation Attack Patterns")]
     [SerializeField] private List<DirectedWaveAttackPattern> attackPatterns = new();
@@ -56,6 +63,59 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     public int AttackPatternCount => attackPatterns?.Count ?? 0;
 
+    // Scene preview and per-slot overrides resolve the same preset and slot
+    // selection as runtime controllers.
+    public bool CopyPreviewAttackSettingsTo(int slotIndex, bool entrance, DirectedWaveAttackSettings destination)
+    {
+        return TryCopyResolvedAttackSettingsTo(slotIndex, entrance, destination)
+            && destination.HasFireMode;
+    }
+
+    public bool TryCopyResolvedAttackSettingsTo(
+        int slotIndex,
+        bool entrance,
+        DirectedWaveAttackSettings destination)
+    {
+        if (destination == null)
+            return false;
+
+        if (entrance)
+        {
+            if (!entranceAttackSettings.IsEnabled
+                || useSelectedEnemySlots && !selectedEnemySlots.Contains(slotIndex))
+                return false;
+        }
+        else if (UsesAttackPatterns())
+        {
+            for (int i = 0; i < attackPatterns.Count; i++)
+            {
+                var pattern = attackPatterns[i];
+                if (pattern == null)
+                    continue;
+                var slots = pattern.SelectedEnemySlots;
+                for (int j = 0; j < slots.Count; j++)
+                {
+                    if (slots[j] != slotIndex)
+                        continue;
+                    pattern.CopyResolvedSettingsTo(destination);
+                    return true;
+                }
+            }
+            return false;
+        }
+        else if (useSelectedEnemySlots && !selectedEnemySlots.Contains(slotIndex))
+            return false;
+
+        RefreshResolvedAttackSettings();
+        destination.CopyFrom(resolvedAttackSettings);
+        if (resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride)
+        {
+            destination.SetRuntimeProjectileBaseSpeedOverride(
+                resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride);
+        }
+        return true;
+    }
+
     public void AddAttackPattern()
     {
         attackPatterns ??= new List<DirectedWaveAttackPattern>();
@@ -80,13 +140,21 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
             return;
 
         RefreshResolvedAttackSettings();
-        preset.SetAttackSettings(resolvedAttackSettings);
+        preset.SetAttackSettings(
+            resolvedAttackSettings,
+            resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride,
+            resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride);
     }
 
     public void UsePresetAsLocalSettings()
     {
         RefreshResolvedAttackSettings();
         attackSettings.CopyFrom(resolvedAttackSettings);
+        overrideBaseProjectileSpeed =
+            resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride;
+        baseProjectileSpeed = resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride
+            ? resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride
+            : baseProjectileSpeed;
         attackPreset = null;
         overridePresetAttacksPerSecond = false;
         RefreshResolvedAttackSettings();
@@ -149,6 +217,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
     private void OnValidate()
     {
         entranceAttackSettings ??= new DirectedWaveEntranceAttackSettings();
+        baseProjectileSpeed = Mathf.Max(0.01f, baseProjectileSpeed);
         RefreshResolvedAttackSettings();
         entranceAttackSettings.Validate();
         RebuildSelectedEnemySlotSet();
@@ -486,6 +555,19 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
         {
             resolvedAttackSettings.SetAttacksPerSecond(
                 presetAttacksPerSecond);
+        }
+
+        if (attackPreset != null
+            && attackPreset.OverridesBaseProjectileSpeed)
+        {
+            resolvedAttackSettings.SetRuntimeProjectileBaseSpeedOverride(
+                attackPreset.BaseProjectileSpeed);
+        }
+
+        if (overrideBaseProjectileSpeed)
+        {
+            resolvedAttackSettings.SetRuntimeProjectileBaseSpeedOverride(
+                baseProjectileSpeed);
         }
     }
 }

@@ -41,6 +41,7 @@ public sealed class LevelConfig : ScriptableObject
     [Min(0)]
     [SerializeField] private int id;
     [SerializeField] private string displayName;
+    [SerializeField] private LevelDifficulty difficulty;
 
     [Header("Progression")]
     [SerializeField] private LevelConfig requiredLevel;
@@ -77,6 +78,7 @@ public sealed class LevelConfig : ScriptableObject
     [SerializeField] private GameObject[] waves = Array.Empty<GameObject>();
 
     public int Id => id;
+    public LevelDifficulty Difficulty => difficulty;
     public string DisplayName => displayName;
     public LevelConfig RequiredLevel => requiredLevel;
     public bool BonusLevel => bonusLevel;

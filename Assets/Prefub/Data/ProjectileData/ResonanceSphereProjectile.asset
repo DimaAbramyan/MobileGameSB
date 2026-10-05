@@ -33,7 +33,11 @@ MonoBehaviour:
     - rid: 3397718993801576542
       type: {class: ProjectileResonanceSphereContract, ns: , asm: Assembly-CSharp}
       data:
-        maximumStoredDamage: 1000
+        maximumStoredDamage: 400
         lifetime: 5
         explosionRadius: 5
         waveSpeed: 2
+        slowdownStartY: 3.5
+        detonationY: 4
+        slowdownDuration: 3
+        fullChargeDetonationDelay: 1

@@ -12,6 +12,8 @@ public sealed class DirectedWaveAttackPattern
     [SerializeField] private DirectedWaveAttackPreset attackPreset;
     [SerializeField] private bool overridePresetAttacksPerSecond;
     [SerializeField, Min(0.01f)] private float presetAttacksPerSecond = 1f;
+    [SerializeField] private bool overrideBaseProjectileSpeed;
+    [SerializeField, Min(0.01f)] private float baseProjectileSpeed = 1f;
 
     public IReadOnlyList<int> SelectedEnemySlots => selectedEnemySlots;
 
@@ -29,6 +31,13 @@ public sealed class DirectedWaveAttackPattern
 
         if (attackPreset != null && overridePresetAttacksPerSecond)
             destination.SetAttacksPerSecond(presetAttacksPerSecond);
+
+        if (attackPreset != null && attackPreset.OverridesBaseProjectileSpeed)
+            destination.SetRuntimeProjectileBaseSpeedOverride(
+                attackPreset.BaseProjectileSpeed);
+
+        if (overrideBaseProjectileSpeed)
+            destination.SetRuntimeProjectileBaseSpeedOverride(baseProjectileSpeed);
     }
 
     public void CopyResolvedSettingsTo(DirectedWaveAttackPreset preset)
@@ -38,7 +47,10 @@ public sealed class DirectedWaveAttackPattern
 
         DirectedWaveAttackSettings resolved = new DirectedWaveAttackSettings();
         CopyResolvedSettingsTo(resolved);
-        preset.SetAttackSettings(resolved);
+        preset.SetAttackSettings(
+            resolved,
+            resolved.HasRuntimeProjectileBaseSpeedOverride,
+            resolved.RuntimeProjectileBaseSpeedOverride);
     }
 
     public void UsePresetAsLocalSettings()
@@ -47,6 +59,11 @@ public sealed class DirectedWaveAttackPattern
         CopyResolvedSettingsTo(resolved);
         attackSettings ??= new DirectedWaveAttackSettings();
         attackSettings.CopyFrom(resolved);
+        overrideBaseProjectileSpeed =
+            resolved.HasRuntimeProjectileBaseSpeedOverride;
+        baseProjectileSpeed = resolved.HasRuntimeProjectileBaseSpeedOverride
+            ? resolved.RuntimeProjectileBaseSpeedOverride
+            : baseProjectileSpeed;
         attackPreset = null;
         overridePresetAttacksPerSecond = false;
     }
@@ -56,6 +73,7 @@ public sealed class DirectedWaveAttackPattern
         attackSettings ??= new DirectedWaveAttackSettings();
         attackSettings.Validate();
         presetAttacksPerSecond = Mathf.Max(0.01f, presetAttacksPerSecond);
+        baseProjectileSpeed = Mathf.Max(0.01f, baseProjectileSpeed);
         selectedEnemySlots ??= new List<int>();
 
         HashSet<int> uniqueSlots = new();

@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class BlackHolePassive : PassiveAbility
@@ -7,6 +7,38 @@ public class BlackHolePassive : PassiveAbility
     List<EnemyProjectile> enemyProjectiles;
     float maxLenght = 3;
     private float minimumProjectileSpeedMultiplier = 0.1f;
+
+    public override void Init(ParentShip ship)
+    {
+        owner = ship;
+    }
+
+    public override void On()
+    {
+        if (owner == null)
+            owner = GetComponentInParent<ParentShip>();
+        base.On();
+    }
+
+    public bool TryGetSlowField(out EnemyProjectileSlowField field)
+    {
+        field = default;
+        if (!isActive || !isActiveAndEnabled || owner == null
+            || !owner.isActiveAndEnabled || !owner.IsVisible)
+        {
+            return false;
+        }
+
+        Vector3 center = owner.transform.position;
+        field = new EnemyProjectileSlowField
+        {
+            Center = new float2(center.x, center.y),
+            Radius = Mathf.Max(0.01f, maxLenght),
+            MinimumSpeedMultiplier = Mathf.Clamp(
+                minimumProjectileSpeedMultiplier, 0.01f, 1f)
+        };
+        return true;
+    }
 
     public override void ApplyShipMetaStats(ShipMetaRuntimeStats stats)
     {
@@ -23,19 +55,26 @@ public class BlackHolePassive : PassiveAbility
     }
     public override void Off()
     {
-        isActive = false;
+        base.Off();
         if (enemyProjectiles != null && enemyProjectiles.Count > 0 )
         foreach ( var EnemyProjectile  in enemyProjectiles)
         {
-            EnemyProjectile.SetMultiplier(1);
+            if (EnemyProjectile != null)
+                EnemyProjectile.SetMultiplier(1);
         }
+        enemyProjectiles?.Clear();
+    }
+
+    private void OnDisable()
+    {
+        Off();
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (!isActive)
             return;
         EnemyProjectile enemyProjectile = collision.gameObject.GetComponent<EnemyProjectile>();
-        if (enemyProjectile != null)
+        if (enemyProjectile != null && !enemyProjectiles.Contains(enemyProjectile))
         enemyProjectiles.Add(enemyProjectile);
     }
     private void OnTriggerStay2D(Collider2D collision)

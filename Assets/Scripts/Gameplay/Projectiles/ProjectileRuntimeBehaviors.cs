@@ -51,6 +51,10 @@ public class ProjectileRuntimeConfig
     public float resonanceSphereMaximumStoredDamage = 1000f;
       public float resonanceSphereExplosionRadius = 5f;
       public float resonanceSphereWaveSpeed = 2f;
+    public float resonanceSphereSlowdownStartY = 3.5f;
+    public float resonanceSphereDetonationY = 4f;
+    public float resonanceSphereSlowdownDuration = 3f;
+    public float resonanceSphereFullChargeDetonationDelay = 1f;
       public bool isArcNode;
       public float arcNodesDamagePerArc = 10f;
       public float arcNodesConnectionRange = 4f;

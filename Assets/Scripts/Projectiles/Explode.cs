@@ -20,9 +20,15 @@ public class Explode : MonoBehaviour
     private ParentShip owner;
     private DealDamageManager dealDamageManager;
 
+    /// <summary>
+    /// Read by the Entity explosion spawner. The prefab remains the designer
+    /// configuration and visual source; it is not instantiated for ECS shots.
+    /// </summary>
+    public float ActiveTime => Mathf.Max(0.001f, activeTime);
+
     private void Awake()
     {
-        soundManager.PlaySound(explosionSound, transform.position);
+        soundManager?.PlaySound(explosionSound, transform.position);
         if (explosionCollider == null)
         {
             explosionCollider = GetComponent<Collider2D>();

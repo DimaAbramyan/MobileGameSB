@@ -1,31 +1,54 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "LevelCatalog",
     menuName = "Game/Levels/Level Catalog")]
 public sealed class LevelCatalog : ScriptableObject
 {
-    [SerializeField] private LevelConfig defaultLevel;
-    [SerializeField] private LevelConfig[] levels = Array.Empty<LevelConfig>();
+    [SerializeField] private LevelDefinitionConfig defaultLevelDefinition;
+    [SerializeField, InspectorName("Levels")]
+    private LevelDefinitionConfig[] levelDefinitions = Array.Empty<LevelDefinitionConfig>();
+    [SerializeField, HideInInspector, FormerlySerializedAs("defaultLevel")]
+    private LevelConfig legacyDefaultLevel;
+    [SerializeField, HideInInspector, FormerlySerializedAs("levels")]
+    private LevelConfig[] legacyLevels = Array.Empty<LevelConfig>();
 
-    public IReadOnlyList<LevelConfig> Levels => levels;
+    public IReadOnlyList<LevelDefinitionConfig> Levels => levelDefinitions;
 
     public LevelConfig GetLevel(int id)
     {
-        foreach (LevelConfig level in levels)
+        return GetLevel(id, LevelDifficulty.Normal);
+    }
+
+    public LevelConfig GetLevel(int id, LevelDifficulty difficulty)
+    {
+        LevelDefinitionConfig definition = GetDefinition(id);
+        if (definition == null)
+            return null;
+
+        LevelConfig level = definition.GetDifficulty(difficulty);
+        if (level == null)
+            Debug.LogError($"Level {definition.Id} has no {difficulty} configuration.", definition);
+        return level;
+    }
+
+    public LevelDefinitionConfig GetDefinition(int id)
+    {
+        foreach (LevelDefinitionConfig level in levelDefinitions)
         {
             if (level != null && level.Id == id)
                 return level;
         }
 
-        if (defaultLevel != null)
+        if (defaultLevelDefinition != null)
         {
             Debug.LogWarning(
                 $"Level config with ID {id} was not found. "
-                + $"Using default level {defaultLevel.Id}.");
-            return defaultLevel;
+                + $"Using default level {defaultLevelDefinition.Id}.");
+            return defaultLevelDefinition;
         }
 
         Debug.LogError($"Level config with ID {id} was not found.");
@@ -37,7 +60,7 @@ public sealed class LevelCatalog : ScriptableObject
     {
         var usedIds = new HashSet<int>();
 
-        foreach (LevelConfig level in levels)
+        foreach (LevelDefinitionConfig level in levelDefinitions)
         {
             if (level != null && !usedIds.Add(level.Id))
                 Debug.LogError(

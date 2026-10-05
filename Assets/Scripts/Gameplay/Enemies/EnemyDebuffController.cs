@@ -104,6 +104,34 @@ public sealed class EnemyDebuffController : IInitializable, IDisposable
         return true;
     }
 
+    public bool ApplyThermal(
+        Enemy enemy,
+        EnemyHeatDebuffConfig debuff,
+        float amount,
+        ParentShip owner)
+    {
+        if (enemy == null
+            || enemy.isDead
+            || debuff == null
+            || amount <= 0f
+            || temperatureController == null)
+        {
+            return false;
+        }
+
+        EnemyDebuffProgress progress = temperatureController.ApplyThermal(
+            enemy,
+            debuff,
+            amount,
+            owner);
+        if (!progress.IsValid)
+            return false;
+
+        if (enemy.TemperaturePercent > 0f)
+            TryRaiseThreshold(enemy, debuff, progress);
+        return true;
+    }
+
     private static EnemyDebuffProgress ApplyHullDestruction(
         Enemy enemy,
         float amount,

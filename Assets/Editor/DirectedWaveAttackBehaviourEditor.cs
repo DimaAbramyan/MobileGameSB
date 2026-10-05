@@ -11,11 +11,14 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
     private SerializedProperty attackPreset;
     private SerializedProperty overridePresetAttacksPerSecond;
     private SerializedProperty presetAttacksPerSecond;
+    private SerializedProperty overrideBaseProjectileSpeed;
+    private SerializedProperty baseProjectileSpeed;
     private SerializedProperty attackPatterns;
     private SerializedProperty entranceAttackSettings;
     private SerializedProperty allowAutonomousAttackDuringEntrance;
     private SerializedProperty useSelectedEnemySlots;
     private SerializedProperty selectedEnemySlots;
+    private int selectedLocalOverrideSlot = -1;
 
     private void OnEnable()
     {
@@ -25,6 +28,10 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             "overridePresetAttacksPerSecond");
         presetAttacksPerSecond = serializedObject.FindProperty(
             "presetAttacksPerSecond");
+        overrideBaseProjectileSpeed = serializedObject.FindProperty(
+            "overrideBaseProjectileSpeed");
+        baseProjectileSpeed = serializedObject.FindProperty(
+            "baseProjectileSpeed");
         attackPatterns = serializedObject.FindProperty("attackPatterns");
         entranceAttackSettings = serializedObject.FindProperty(
             "entranceAttackSettings");
@@ -49,6 +56,8 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
                 attackPreset,
                 overridePresetAttacksPerSecond,
                 presetAttacksPerSecond,
+                overrideBaseProjectileSpeed,
+                baseProjectileSpeed,
                 -1);
             EditorGUILayout.Space(6f);
         }
@@ -77,6 +86,8 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
 
         EditorGUILayout.Space(6f);
         DrawAttackPatterns();
+        EditorGUILayout.Space(6f);
+        DrawPerEnemyAttackOverride();
 
         if (serializedObject.ApplyModifiedProperties())
             SceneView.RepaintAll();
@@ -87,6 +98,8 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         SerializedProperty preset,
         SerializedProperty overridePresetRate,
         SerializedProperty presetRate,
+        SerializedProperty overrideProjectileSpeed,
+        SerializedProperty projectileSpeed,
         int patternIndex)
     {
         if (settings == null)
@@ -97,12 +110,25 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             return;
         }
 
+        SerializedProperty selectedSlots = patternIndex >= 0
+            ? attackPatterns.GetArrayElementAtIndex(patternIndex)
+                .FindPropertyRelative("selectedEnemySlots")
+            : useSelectedEnemySlots.boolValue ? selectedEnemySlots : null;
+
         if (DrawAttackPresetSettings(
                 preset,
                 overridePresetRate,
                 presetRate,
                 patternIndex))
+        {
+            DrawAimModeWarnings(((DirectedWaveAttackPreset)preset.objectReferenceValue).AttackSettings,
+                selectedSlots);
+            DrawBaseProjectileSpeedOverride(
+                overrideProjectileSpeed,
+                projectileSpeed,
+                selectedSlots);
             return;
+        }
 
         SerializedProperty useStartDelay = settings.FindPropertyRelative(
             "useAttackStartDelay");
@@ -126,7 +152,9 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         EditorGUILayout.LabelField("Attack", EditorStyles.miniBoldLabel);
         EditorGUILayout.PropertyField(
             fireMode,
-            new GUIContent("Fire Mode"));
+            new GUIContent("Fire Mode", "Default runs the configured Attack Pattern without aiming at the player. None disables wave-controlled shooting."));
+        if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex == DirectedWaveAttackFireMode.Aimed)
+            DrawAimMode(settings.FindPropertyRelative("aimMode"));
         if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex
             == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
         {
@@ -183,11 +211,14 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             {
                 DrawEnemyAttackPatternOverrides(settings);
                 DrawEnemyAttackDurationSummary(
-                    patternIndex >= 0
-                        ? attackPatterns.GetArrayElementAtIndex(patternIndex)
-                            .FindPropertyRelative("selectedEnemySlots")
-                        : null);
+                    selectedSlots);
             }
+
+            DrawBaseProjectileSpeedOverride(
+                overrideProjectileSpeed,
+                projectileSpeed,
+                selectedSlots);
+            DrawAimModeWarnings((DirectedWaveAttackSettings)settings.boxedValue, selectedSlots);
         }
 
         DirectedWaveAttackMovementMode selectedMovementMode =
@@ -439,6 +470,8 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
                 pattern.FindPropertyRelative("attackPreset"),
                 pattern.FindPropertyRelative("overridePresetAttacksPerSecond"),
                 pattern.FindPropertyRelative("presetAttacksPerSecond"),
+                pattern.FindPropertyRelative("overrideBaseProjectileSpeed"),
+                pattern.FindPropertyRelative("baseProjectileSpeed"),
                 i);
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space(4f);
@@ -452,6 +485,408 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
 
         if (GUILayout.Button("Add Attack Pattern"))
             ApplyModifiedPropertiesAndAddAttackPattern();
+    }
+
+    private void DrawPerEnemyAttackOverride()
+    {
+        DirectedEnemySubWave wave = GetWave();
+        if (wave == null)
+            return;
+
+        int slotCount = wave.GetConfiguredEnemySlotCount();
+        EditorGUILayout.LabelField(
+            "Per-Enemy Attack Override",
+            EditorStyles.boldLabel);
+        if (slotCount == 0)
+        {
+            EditorGUILayout.HelpBox(
+                "Create formation slots before configuring a local attack override.",
+                MessageType.Info);
+            return;
+        }
+
+        selectedLocalOverrideSlot = Mathf.Clamp(
+            selectedLocalOverrideSlot < 0 ? 0 : selectedLocalOverrideSlot,
+            0,
+            slotCount - 1);
+        string[] labels = new string[slotCount];
+        for (int i = 0; i < slotCount; i++)
+            labels[i] = $"Slot {i}: {GetEnemyName(wave, i)}";
+        selectedLocalOverrideSlot = EditorGUILayout.Popup(
+            "Selected Enemy",
+            selectedLocalOverrideSlot,
+            labels);
+        EditorGUILayout.HelpBox(
+            "You can also click a slot marker in Scene View. A local override changes only Fire Mode and projectile/attack-pattern settings. Attack cadence, movement and dive settings remain shared.",
+            MessageType.None);
+
+        Transform host = wave.GetConfiguredEnemyOverrideHostForSlot(
+            selectedLocalOverrideSlot);
+        if (host == null)
+        {
+            EditorGUILayout.HelpBox(
+                "Per-enemy attack overrides require Transform Points (or a frozen Transform Point formation), because settings are stored on the selected slot.",
+                MessageType.Info);
+            return;
+        }
+
+        DirectedWaveEnemyOverride enemyOverride =
+            host.GetComponent<DirectedWaveEnemyOverride>();
+        if (enemyOverride == null)
+        {
+            if (GUILayout.Button("Add Local Attack Override"))
+            {
+                Undo.AddComponent<DirectedWaveEnemyOverride>(host.gameObject);
+                SceneView.RepaintAll();
+            }
+
+            return;
+        }
+
+        DrawLocalAttackOverride(wave, enemyOverride);
+    }
+
+    private void DrawLocalAttackOverride(
+        DirectedEnemySubWave wave,
+        DirectedWaveEnemyOverride enemyOverride)
+    {
+        var overrideObject = new SerializedObject(enemyOverride);
+        overrideObject.Update();
+        SerializedProperty enabled = overrideObject.FindProperty(
+            "overrideAttackPattern");
+        bool wasEnabled = enabled.boolValue;
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(
+            enabled,
+            new GUIContent(
+                "Override Attack Pattern",
+                "Copies the resolved Directed Wave Attack Behaviour values when first enabled."));
+        bool changed = EditorGUI.EndChangeCheck();
+        if (overrideObject.ApplyModifiedProperties())
+        {
+            EditorUtility.SetDirty(enemyOverride);
+            SceneView.RepaintAll();
+        }
+
+        if (changed && !wasEnabled && enabled.boolValue)
+        {
+            InitializeLocalAttackOverride(
+                wave,
+                enemyOverride,
+                selectedLocalOverrideSlot);
+            overrideObject.Update();
+        }
+
+        if (!enabled.boolValue)
+            return;
+
+        if (overrideObject.FindProperty("useLegacyFullAttackSettings").boolValue)
+        {
+            EditorGUILayout.HelpBox(
+                "This migrated override keeps its former local cadence to preserve the wave. Reset From Resolved Wave Attack switches it to the shared cadence and keeps only local shooting settings.",
+                MessageType.Info);
+        }
+
+        SerializedProperty inheritFireMode = overrideObject.FindProperty(
+            "inheritWaveFireMode");
+        if (inheritFireMode.boolValue)
+        {
+            EditorGUILayout.PropertyField(
+                inheritFireMode,
+                new GUIContent("Use Shared Fire Mode"));
+            var sharedSettings = new DirectedWaveAttackSettings();
+            ((DirectedWaveAttackBehaviour)target).TryCopyResolvedAttackSettingsTo(
+                selectedLocalOverrideSlot, false, sharedSettings);
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.EnumPopup("Fire Mode", sharedSettings.FireMode);
+                if (sharedSettings.FireMode == DirectedWaveAttackFireMode.Aimed)
+                    EditorGUILayout.EnumPopup("Aim Mode", sharedSettings.AimMode);
+                if (sharedSettings.FireMode == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
+                {
+                    EditorGUILayout.FloatField(
+                        "Forward Fire Angle Offset", sharedSettings.ForwardFireHalfAngle);
+                }
+            }
+        }
+
+        if (!inheritFireMode.boolValue)
+        {
+            SerializedProperty fireMode = overrideObject.FindProperty("fireMode");
+            EditorGUILayout.PropertyField(
+                fireMode,
+                new GUIContent("Fire Mode", "Default runs this slot's configured Attack Pattern without aiming at the player. None disables wave-controlled shooting."));
+            if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex == DirectedWaveAttackFireMode.Aimed)
+                DrawAimMode(overrideObject.FindProperty("aimMode"));
+            if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex
+                == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
+            {
+                EditorGUILayout.PropertyField(
+                    overrideObject.FindProperty("forwardFireHalfAngle"),
+                    new GUIContent("Forward Fire Angle Offset"));
+            }
+        }
+
+        EditorGUILayout.Space(2f);
+        EditorGUILayout.LabelField("Attack Pattern", EditorStyles.miniBoldLabel);
+        DrawLocalShootingPatterns(overrideObject.FindProperty("attackPattern"));
+        DrawLocalAimModeWarning(wave, enemyOverride, overrideObject);
+        EditorGUILayout.PropertyField(
+            overrideObject.FindProperty("overrideProjectileBaseSpeed"),
+            new GUIContent(
+                "Override Base Projectile Speed",
+                "Uses this value only for this enemy slot. The projectile prefab is unchanged."));
+        if (overrideObject.FindProperty("overrideProjectileBaseSpeed").boolValue)
+        {
+            EditorGUILayout.PropertyField(
+                overrideObject.FindProperty("projectileBaseSpeed"),
+                new GUIContent("Base Projectile Speed"));
+        }
+
+        if (GUILayout.Button("Reset From Resolved Wave Attack"))
+        {
+            overrideObject.ApplyModifiedProperties();
+            InitializeLocalAttackOverride(wave, enemyOverride, selectedLocalOverrideSlot);
+            overrideObject.Update();
+        }
+
+        if (overrideObject.ApplyModifiedProperties())
+        {
+            EditorUtility.SetDirty(enemyOverride);
+            SceneView.RepaintAll();
+        }
+    }
+
+    private static void DrawAimMode(SerializedProperty aimMode)
+    {
+        EditorGUILayout.PropertyField(aimMode, new GUIContent("Aim Mode"));
+        EditorGUILayout.HelpBox(
+            "Aim On Start locks direction at the first shot until the attack ends. "
+            + "Aim On Burst refreshes direction at the first shot of each burst and keeps it for the remaining shots. "
+            + "Aim Continuous tracks the player and aims again for every shot, including shots within a burst.",
+            MessageType.None);
+    }
+
+    private static void DrawBurstWarning(DirectedWaveAttackAimMode mode,
+        EnemyBurstAttackSettings profile, string context)
+    {
+        if (DirectedWaveAttackAimState.RequiresBurstWarning(mode, profile))
+            EditorGUILayout.HelpBox(context + ": Aim On Burst is selected, but Burst Attack is disabled "
+                + "in one or more shooting patterns. These patterns keep their aim for the entire attack. "
+                + "Enable Burst Attack or select Aim On Start.", MessageType.Warning);
+    }
+
+    private void DrawAimModeWarnings(DirectedWaveAttackSettings settings, SerializedProperty selectedSlots)
+    {
+        if (settings.FireMode != DirectedWaveAttackFireMode.Aimed
+            || settings.AimMode != DirectedWaveAttackAimMode.AimOnBurst)
+            return;
+        if (!settings.UsesEnemyBurstSettings)
+        {
+            DrawBurstWarning(settings.AimMode, settings.WaveBurstSettings, "Wave Attack Pattern");
+            return;
+        }
+        DirectedEnemySubWave wave = GetWave();
+        if (wave == null) return;
+        HashSet<int> slots = selectedSlots != null
+            ? GetSelectedSlots(selectedSlots, wave.GetConfiguredEnemySlotCount()) : null;
+        for (int i = 0; i < wave.GetConfiguredEnemySlotCount(); i++)
+        {
+            if (slots != null && !slots.Contains(i)) continue;
+            Enemy prefab = wave.GetConfiguredEnemyPrefabForSlot(i);
+            if (prefab == null) continue;
+            DrawBurstWarning(settings.AimMode, GetBurstAttackExecutor(prefab)?.BurstAttackSettings, $"Slot {i}");
+        }
+    }
+
+    private void DrawLocalAimModeWarning(DirectedEnemySubWave wave,
+        DirectedWaveEnemyOverride enemyOverride, SerializedObject overrideObject)
+    {
+        var resolved = new DirectedWaveAttackSettings();
+        ((DirectedWaveAttackBehaviour)target).TryCopyResolvedAttackSettingsTo(
+            selectedLocalOverrideSlot, false, resolved);
+        bool inherits = overrideObject.FindProperty("inheritWaveFireMode").boolValue;
+        DirectedWaveAttackFireMode mode = inherits ? resolved.FireMode
+            : (DirectedWaveAttackFireMode)overrideObject.FindProperty("fireMode").enumValueIndex;
+        if (mode != DirectedWaveAttackFireMode.Aimed) return;
+        DirectedWaveAttackAimMode aim = inherits ? resolved.AimMode
+            : (DirectedWaveAttackAimMode)overrideObject.FindProperty("aimMode").enumValueIndex;
+        var profile = new EnemyBurstAttackSettings();
+        if (!enemyOverride.TryCopyLegacyFullAttackSettings(profile))
+        {
+            Enemy prefab = wave.GetConfiguredEnemyPrefabForSlot(selectedLocalOverrideSlot);
+            profile.CopyFrom(resolved.UsesEnemyBurstSettings && prefab != null
+                ? GetBurstAttackExecutor(prefab)?.BurstAttackSettings : resolved.WaveBurstSettings);
+        }
+        // Local shooting does not change the cadence, but can change the pattern count.
+        profile.ApplyShootingOverrideFrom((EnemyBurstAttackSettings)overrideObject.FindProperty("attackPattern").boxedValue);
+        DrawBurstWarning(aim, profile, $"Slot {selectedLocalOverrideSlot}");
+    }
+
+    private void InitializeLocalAttackOverride(
+        DirectedEnemySubWave wave,
+        DirectedWaveEnemyOverride enemyOverride,
+        int slotIndex)
+    {
+        serializedObject.ApplyModifiedProperties();
+        var resolved = new DirectedWaveAttackSettings();
+        bool hasResolvedSettings = ((DirectedWaveAttackBehaviour)target)
+            .TryCopyResolvedAttackSettingsTo(slotIndex, false, resolved);
+        EnemyBurstAttackSettings source = null;
+        if (hasResolvedSettings && !resolved.UsesEnemyBurstSettings)
+            source = resolved.WaveBurstSettings;
+        else
+        {
+            Enemy enemyPrefab = wave.GetConfiguredEnemyPrefabForSlot(slotIndex);
+            IEnemyBurstAttackExecutor executor = enemyPrefab != null
+                ? GetBurstAttackExecutor(enemyPrefab)
+                : null;
+            source = executor != null ? executor.BurstAttackSettings : null;
+        }
+
+        Undo.RecordObject(
+            enemyOverride,
+            "Initialize Directed Wave Local Attack Override");
+        enemyOverride.InitializeAttackPatternOverride(
+            hasResolvedSettings ? resolved : null,
+            source);
+        EditorUtility.SetDirty(enemyOverride);
+        if (PrefabUtility.IsPartOfPrefabInstance(enemyOverride))
+            PrefabUtility.RecordPrefabInstancePropertyModifications(enemyOverride);
+        if (!hasResolvedSettings)
+        {
+            EditorGUILayout.HelpBox(
+                "This slot is not controlled by a post-formation attack pattern. The local profile was initialized from its enemy prefab and will take effect after the slot is assigned to an attack pattern.",
+                MessageType.Warning);
+        }
+
+        SceneView.RepaintAll();
+    }
+
+    private static void DrawLocalShootingPatterns(
+        SerializedProperty attackPattern)
+    {
+        if (attackPattern == null)
+            return;
+
+        SerializedProperty mode = attackPattern.FindPropertyRelative(
+            "attackPatterns");
+        SerializedProperty patterns = attackPattern.FindPropertyRelative("patterns");
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(mode, new GUIContent("Attack Patterns"));
+        if (EditorGUI.EndChangeCheck()
+            && (EnemyAttackPatternsMode)mode.enumValueIndex
+                == EnemyAttackPatternsMode.Multiple
+            && patterns.arraySize == 0)
+        {
+            EnemyBurstAttackSettingsDrawer.InitializeMultiple(attackPattern);
+        }
+
+        DrawLocalFacingSettings(attackPattern);
+        if ((EnemyAttackPatternsMode)mode.enumValueIndex
+            != EnemyAttackPatternsMode.Multiple)
+        {
+            EditorGUILayout.PropertyField(
+                attackPattern.FindPropertyRelative("shooting"),
+                new GUIContent("Shooting"),
+                true);
+            return;
+        }
+
+        for (int i = 0; i < patterns.arraySize; i++)
+        {
+            SerializedProperty entry = patterns.GetArrayElementAtIndex(i);
+            entry.isExpanded = EditorGUILayout.Foldout(
+                entry.isExpanded,
+                $"Pattern {i + 1}",
+                true);
+            if (!entry.isExpanded)
+                continue;
+
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(
+                entry.FindPropertyRelative("shooting"),
+                new GUIContent("Shooting"),
+                true);
+            bool changedPatterns = false;
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Duplicate"))
+            {
+                EnemyBurstAttackSettingsDrawer.Duplicate(patterns, i);
+                changedPatterns = true;
+            }
+
+            using (new EditorGUI.DisabledScope(patterns.arraySize <= 1))
+            {
+                if (!changedPatterns && GUILayout.Button("Remove"))
+                {
+                    patterns.DeleteArrayElementAtIndex(i);
+                    changedPatterns = true;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUI.indentLevel--;
+            if (changedPatterns)
+                break;
+        }
+
+        if (GUILayout.Button("Add Pattern"))
+        {
+            int index = patterns.arraySize;
+            patterns.arraySize++;
+            patterns.GetArrayElementAtIndex(index).boxedValue =
+                new EnemyAttackPatternSettings();
+            patterns.GetArrayElementAtIndex(index).isExpanded = true;
+        }
+    }
+
+    private static void DrawLocalFacingSettings(SerializedProperty attackPattern)
+    {
+        SerializedProperty facingMode = attackPattern.FindPropertyRelative(
+            "facingMode");
+        EditorGUILayout.PropertyField(facingMode, new GUIContent("Facing Mode"));
+        if ((EnemyFacingMode)facingMode.enumValueIndex
+            != EnemyFacingMode.FollowPattern)
+        {
+            return;
+        }
+
+        SerializedProperty mode = attackPattern.FindPropertyRelative(
+            "attackPatterns");
+        SerializedProperty patterns = attackPattern.FindPropertyRelative("patterns");
+        if ((EnemyAttackPatternsMode)mode.enumValueIndex
+            == EnemyAttackPatternsMode.Multiple
+            && patterns.arraySize > 0)
+        {
+            string[] labels = new string[patterns.arraySize];
+            SerializedProperty selectedId = attackPattern.FindPropertyRelative(
+                "facingPatternId");
+            int selectedIndex = 0;
+            for (int i = 0; i < patterns.arraySize; i++)
+            {
+                SerializedProperty entry = patterns.GetArrayElementAtIndex(i);
+                SerializedProperty shooting = entry.FindPropertyRelative("shooting");
+                SerializedProperty shootingType = shooting.FindPropertyRelative(
+                    "shootingType");
+                labels[i] = $"Pattern {i + 1} ({shootingType.enumDisplayNames[shootingType.enumValueIndex]})";
+                if (selectedId.stringValue == entry.FindPropertyRelative("patternId").stringValue)
+                    selectedIndex = i;
+            }
+
+            int chosen = EditorGUILayout.Popup(
+                "Facing Pattern",
+                selectedIndex,
+                labels);
+            selectedId.stringValue = patterns.GetArrayElementAtIndex(chosen)
+                .FindPropertyRelative("patternId").stringValue;
+        }
+
+        EditorGUILayout.PropertyField(
+            attackPattern.FindPropertyRelative("facingSpeed"),
+            new GUIContent("Facing Speed"));
+        EditorGUILayout.PropertyField(
+            attackPattern.FindPropertyRelative("facingAngleOffset"),
+            new GUIContent("Facing Angle Offset"));
     }
 
     private void ApplyModifiedPropertiesAndAddAttackPattern()
@@ -585,6 +1020,79 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
                 cooldown,
                 new GUIContent("Attack Cooldown"));
         }
+    }
+
+    private void DrawBaseProjectileSpeedOverride(
+        SerializedProperty overrideProjectileSpeed,
+        SerializedProperty projectileSpeed,
+        SerializedProperty selectedSlots)
+    {
+        if (overrideProjectileSpeed == null || projectileSpeed == null)
+            return;
+
+        bool wasEnabled = overrideProjectileSpeed.boolValue;
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(
+            overrideProjectileSpeed,
+            new GUIContent(
+                "Override Base Projectile Speed",
+                "Creates a runtime copy of the attack pattern. The enemy and projectile prefabs are not changed."));
+        bool changed = EditorGUI.EndChangeCheck();
+
+        if (changed && !wasEnabled && overrideProjectileSpeed.boolValue)
+        {
+            if (TryGetBaseProjectileSpeed(selectedSlots, out float baseSpeed))
+                projectileSpeed.floatValue = baseSpeed;
+            else
+            {
+                EditorGUILayout.HelpBox(
+                    "Base speed could not be read from the selected enemy projectile. Enter a value manually.",
+                    MessageType.Warning);
+            }
+        }
+
+        if (overrideProjectileSpeed.boolValue)
+        {
+            EditorGUILayout.PropertyField(
+                projectileSpeed,
+                new GUIContent("Base Projectile Speed"));
+        }
+    }
+
+    private bool TryGetBaseProjectileSpeed(
+        SerializedProperty selectedSlots,
+        out float baseSpeed)
+    {
+        baseSpeed = 0f;
+        DirectedEnemySubWave wave = GetWave();
+        if (wave == null)
+            return false;
+
+        int slotCount = wave.GetConfiguredEnemySlotCount();
+        HashSet<int> selectedSlotSet = selectedSlots != null
+            ? GetSelectedSlots(selectedSlots, slotCount)
+            : null;
+        HashSet<Enemy> processedEnemies = new();
+        for (int slotIndex = 0; slotIndex < slotCount; slotIndex++)
+        {
+            if (selectedSlotSet != null && !selectedSlotSet.Contains(slotIndex))
+                continue;
+
+            Enemy enemyPrefab = wave.GetConfiguredEnemyPrefabForSlot(slotIndex);
+            if (enemyPrefab == null || !processedEnemies.Add(enemyPrefab))
+                continue;
+
+            SimpleEnemyAttackExecutor executor = enemyPrefab.GetComponent<
+                SimpleEnemyAttackExecutor>();
+            if (executor != null && executor.TryGetProjectileBaseSpeed(
+                    executor.BurstAttackSettings,
+                    out baseSpeed))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void DrawEnemyAttackDurationSummary(SerializedProperty selectedSlots)
@@ -968,8 +1476,57 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         if (wave == null)
             return;
 
+        DrawLocalAttackOverrideSlotHandles(wave);
         DrawPostAttackSlotMarkers(wave);
         DrawEntranceAttackMarkers(wave);
+    }
+
+    private void DrawLocalAttackOverrideSlotHandles(DirectedEnemySubWave wave)
+    {
+        int slotCount = wave.GetConfiguredEnemySlotCount();
+        if (slotCount <= 0)
+            return;
+
+        Color previousColor = Handles.color;
+        for (int i = 0; i < slotCount; i++)
+        {
+            Vector3 position = wave.GetConfiguredFormationSlotPosition(i);
+            bool selected = i == selectedLocalOverrideSlot;
+            DirectedWaveEnemyOverride enemyOverride =
+                wave.GetConfiguredEnemyOverrideForSlot(i);
+            bool hasOverride = enemyOverride != null
+                && enemyOverride.HasAttackPatternOverride;
+            Color color = selected
+                ? new Color(1f, 0.62f, 0.1f, 1f)
+                : hasOverride
+                    ? new Color(0.8f, 0.35f, 1f, 0.95f)
+                    : new Color(0.55f, 0.8f, 1f, 0.75f);
+            float size = Mathf.Max(
+                0.08f,
+                HandleUtility.GetHandleSize(position) * 0.075f);
+            Handles.color = color;
+            if (Handles.Button(
+                    position,
+                    Quaternion.identity,
+                    size,
+                    size,
+                    Handles.CircleHandleCap))
+            {
+                selectedLocalOverrideSlot = i;
+                Repaint();
+                SceneView.RepaintAll();
+            }
+
+            if (selected)
+            {
+                Handles.Label(
+                    position + Vector3.up * size * 1.8f,
+                    $"Attack override: slot {i}",
+                    CreateMarkerLabelStyle(color));
+            }
+        }
+
+        Handles.color = previousColor;
     }
 
     private void DrawPostAttackSlotMarkers(DirectedEnemySubWave wave)

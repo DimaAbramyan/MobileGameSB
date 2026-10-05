@@ -9,6 +9,13 @@ using TMPro;
 using static UnityEngine.GraphicsBuffer;
 using Zenject;
 
+public enum EnemyType
+{
+    Default,
+    MiniBoss,
+    Boss
+}
+
 public class Enemy : MonoBehaviour, iDamagable 
 {
     private static readonly int DeathStateHash =
@@ -25,6 +32,10 @@ public class Enemy : MonoBehaviour, iDamagable
     [SerializeField] protected float _fireRate;
     [SerializeField] protected float _damage;
     [SerializeField] protected float _speed;
+    [Header("Classification")]
+    [SerializeField] private EnemyType enemyType = EnemyType.Default;
+    [Header("Q-Beam")]
+    [SerializeField, Min(0f)] private float qBeamChargeMultiplier = 1f;
     [Header("Rewards")]
     [SerializeField, Min(0.01f)] private float metalMultiplier = 1f;
     [Header("Shield")]
@@ -44,6 +55,11 @@ public class Enemy : MonoBehaviour, iDamagable
     public event Action<Enemy> OnDied;
     public event Action<EnemyDebuffThresholdEvent> OnDebuffThresholdReached;
     public event Action<Enemy> OnBurningStarted;
+    public event Action<float, float> OnQBeamChargeChanged;
+
+    public EnemyType Type => enemyType;
+    public bool ShowsQBeamCharge => enemyType != EnemyType.Default;
+    public float QBeamChargeMultiplier => Mathf.Max(0f, qBeamChargeMultiplier);
     public virtual void Awake()
     {
         isBurning = false;
@@ -92,6 +108,7 @@ public class Enemy : MonoBehaviour, iDamagable
         if (isDead) return;
 
         isDead = true;
+        SetQBeamCharge(0f, _currentHealth);
         OnDied?.Invoke(this);
 
         if (GetComponent<IHaveBuff>() != null && Buff != null)
@@ -178,6 +195,7 @@ public class Enemy : MonoBehaviour, iDamagable
         temperaturePercent,
         -100f,
         100f);
+    public float MaximumHealth => Mathf.Max(0f, _maxHealth);
 
     public bool IsBurning => isBurning;
 
@@ -262,6 +280,16 @@ public class Enemy : MonoBehaviour, iDamagable
     public void SetTemperaturePercent(float temperature)
     {
         temperaturePercent = Mathf.Clamp(temperature, -100f, 100f);
+    }
+
+    public void SetQBeamCharge(float charge, float maximumCharge)
+    {
+        if (!ShowsQBeamCharge)
+            return;
+
+        OnQBeamChargeChanged?.Invoke(
+            Mathf.Max(0f, charge),
+            Mathf.Max(0f, maximumCharge));
     }
 
     public void NotifyDebuffThresholdReached(
@@ -364,6 +392,7 @@ public class Enemy : MonoBehaviour, iDamagable
     {
         shieldPoints = Mathf.Max(0f, shieldPoints);
         metalMultiplier = Mathf.Max(0.01f, metalMultiplier);
+        qBeamChargeMultiplier = Mathf.Max(0f, qBeamChargeMultiplier);
     }
     
 }

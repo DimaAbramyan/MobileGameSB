@@ -7,6 +7,11 @@ public sealed class DamageNumberView : MonoBehaviour
 {
     [SerializeField] private TMP_Text amountText;
 
+    private Vector3 lastPosition;
+    private Color lastColor;
+    private float lastScale;
+    private bool hasPresentation;
+
     private void Awake()
     {
         EnsureText();
@@ -34,15 +39,25 @@ public sealed class DamageNumberView : MonoBehaviour
 
     public void SetPresentation(Vector3 position, Color color, float scale)
     {
-        transform.position = position;
-        transform.localScale = Vector3.one * Mathf.Max(0f, scale);
+        float clampedScale = Mathf.Max(0f, scale);
+        if (!hasPresentation || lastPosition != position)
+            transform.position = position;
 
-        if (amountText != null)
+        if (!hasPresentation || !Mathf.Approximately(lastScale, clampedScale))
+            transform.localScale = Vector3.one * clampedScale;
+
+        if (amountText != null && (!hasPresentation || lastColor != color))
             amountText.color = color;
+
+        lastPosition = position;
+        lastColor = color;
+        lastScale = clampedScale;
+        hasPresentation = true;
     }
 
     public void Hide()
     {
+        hasPresentation = false;
         gameObject.SetActive(false);
     }
 

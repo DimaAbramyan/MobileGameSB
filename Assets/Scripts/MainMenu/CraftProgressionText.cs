@@ -23,10 +23,19 @@ public static class CraftProgressionText
         WeaponContentDefinition weapon,
         ContentProgressService contentProgressService)
     {
+        return GetWeaponStatsAtLevel(
+            weapon,
+            GetUpgradeLevel(weapon, contentProgressService));
+    }
+
+    public static WeaponRuntimeStats GetWeaponStatsAtLevel(
+        WeaponContentDefinition weapon,
+        int upgradeLevel)
+    {
         if (weapon == null || weapon.Data == null)
             return default;
 
-        int level = GetUpgradeLevel(weapon, contentProgressService);
+        int level = Mathf.Clamp(upgradeLevel, 0, weapon.MaxUpgradeLevel);
         WeaponData data = weapon.Data;
         if (data.WeaponMetaConfig != null)
             return data.WeaponMetaConfig.GetRuntimeStats(level).WeaponStats;
@@ -38,11 +47,20 @@ public static class CraftProgressionText
         HullContentDefinition hull,
         ContentProgressService contentProgressService)
     {
+        return GetHullStatsAtLevel(
+            hull,
+            GetUpgradeLevel(hull, contentProgressService));
+    }
+
+    public static ShipMetaRuntimeStats GetHullStatsAtLevel(
+        HullContentDefinition hull,
+        int upgradeLevel)
+    {
         if (hull == null || hull.Data == null)
             return default;
 
         return hull.Data.GetMetaRuntimeStats(
-            GetUpgradeLevel(hull, contentProgressService));
+            Mathf.Clamp(upgradeLevel, 0, hull.MaxUpgradeLevel));
     }
 
     public static string GetWeaponDamageText(
