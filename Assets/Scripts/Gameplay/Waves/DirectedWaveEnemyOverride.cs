@@ -4,7 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class DirectedWaveEnemyOverride : MonoBehaviour
 {
-    private const int CurrentAttackOverrideVersion = 2;
+    private const int CurrentAttackOverrideVersion = 4;
 
     [SerializeField] private Enemy enemyPrefabOverride;
 
@@ -26,6 +26,7 @@ public sealed class DirectedWaveEnemyOverride : MonoBehaviour
     [SerializeField, HideInInspector] private bool inheritWaveFireMode;
     [SerializeField, HideInInspector] private DirectedWaveAttackFireMode fireMode =
         DirectedWaveAttackFireMode.Aimed;
+    [SerializeField, HideInInspector] private EnemyStationaryFireSettings stationaryFireSettings = new EnemyStationaryFireSettings();
     [SerializeField, HideInInspector] private DirectedWaveAttackAimMode aimMode;
     [SerializeField, HideInInspector, Range(0f, 180f)] private float forwardFireHalfAngle = 15f;
     [SerializeField, HideInInspector] private EnemyBurstAttackSettings attackPattern =
@@ -70,25 +71,31 @@ public sealed class DirectedWaveEnemyOverride : MonoBehaviour
         EnemyBurstAttackSettings destination,
         float? sharedProjectileBaseSpeed = null)
     {
+        EnsureAttackOverrideMigration();
         if (!overrideAttackPattern || destination == null)
             return;
 
         destination.ApplyShootingOverrideFrom(attackPattern);
+        destination.MaterializePresets();
         if (sharedProjectileBaseSpeed.HasValue)
         {
-            destination.SetRuntimeProjectileBaseSpeedOverrideForAllPatterns(
-                sharedProjectileBaseSpeed.Value);
-        }
-        if (overrideProjectileBaseSpeed)
-        {
-            destination.SetRuntimeProjectileBaseSpeedOverrideForAllPatterns(
-                projectileBaseSpeed);
+            for (int i = 0; i < destination.PatternCount; i++)
+            {
+                var shooting = destination.GetPattern(i).Shooting;
+                if (!shooting.OverridesProjectileBaseSpeed)
+                    shooting.SetRuntimeProjectileBaseSpeedOverride(sharedProjectileBaseSpeed.Value);
+            }
         }
     }
 
     public DirectedWaveAttackAimMode ResolveAimMode(DirectedWaveAttackAimMode waveAimMode)
     {
         return overrideAttackPattern && !inheritWaveFireMode ? aimMode : waveAimMode;
+    }
+
+    public EnemyStationaryFireSettings ResolveStationaryFireSettings(EnemyStationaryFireSettings shared)
+    {
+        return overrideAttackPattern && !inheritWaveFireMode ? stationaryFireSettings : shared;
     }
 
     public bool TryCopyLegacyFullAttackSettings(
@@ -112,18 +119,19 @@ public sealed class DirectedWaveEnemyOverride : MonoBehaviour
         if (waveSettings != null)
         {
             fireMode = waveSettings.FireMode;
+            stationaryFireSettings ??= new EnemyStationaryFireSettings();
+            stationaryFireSettings.CopyFrom(waveSettings.StationaryFireSettings);
             aimMode = waveSettings.AimMode;
             forwardFireHalfAngle = waveSettings.ForwardFireHalfAngle;
-            overrideProjectileBaseSpeed =
-                waveSettings.HasRuntimeProjectileBaseSpeedOverride;
-            projectileBaseSpeed = overrideProjectileBaseSpeed
-                ? waveSettings.RuntimeProjectileBaseSpeedOverride
-                : projectileBaseSpeed;
         }
 
         attackPattern ??= new EnemyBurstAttackSettings();
         if (resolvedAttackPattern != null)
             attackPattern.CopyFrom(resolvedAttackPattern);
+        if (waveSettings != null && waveSettings.HasRuntimeProjectileBaseSpeedOverride)
+            attackPattern.SetProjectileBaseSpeedRangeForAllPatterns(waveSettings.RuntimeProjectileBaseSpeedOverride,
+                waveSettings.RuntimeProjectileBaseSpeedRandom, waveSettings.RuntimeProjectileBaseSpeedRandomizeOn);
+        overrideProjectileBaseSpeed = false;
         attackPattern.Validate();
     }
 
@@ -181,8 +189,11 @@ public sealed class DirectedWaveEnemyOverride : MonoBehaviour
 
     public bool EnsureAttackOverrideMigration()
     {
-        if (attackOverrideVersion >= CurrentAttackOverrideVersion)
+        if (attackOverrideVersion >= CurrentAttackOverrideVersion && !overrideProjectileBaseSpeed)
             return false;
+        stationaryFireSettings ??= new EnemyStationaryFireSettings();
+        if (attackOverrideVersion < 4 && fireMode == DirectedWaveAttackFireMode.Stationary)
+            stationaryFireSettings.PreserveLegacyForward();
 
         if (attackOverrideVersion < 1 && overrideBurstAttackSettings)
         {
@@ -206,6 +217,16 @@ public sealed class DirectedWaveEnemyOverride : MonoBehaviour
             && inheritWaveFireMode)
         {
             useLegacyFullAttackSettings = true;
+        }
+
+        // The former slot-wide override had the highest priority. Copy its
+        // effective value to every stored pattern, including currently inactive
+        // patterns, before retiring the legacy flag.
+        if (overrideProjectileBaseSpeed)
+        {
+            attackPattern ??= new EnemyBurstAttackSettings();
+            attackPattern.SetProjectileBaseSpeedOverrideForAllPatterns(projectileBaseSpeed);
+            overrideProjectileBaseSpeed = false;
         }
 
         attackOverrideVersion = CurrentAttackOverrideVersion;

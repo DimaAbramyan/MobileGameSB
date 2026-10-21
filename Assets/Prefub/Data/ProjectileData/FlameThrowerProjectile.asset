@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
   simulationBackend: 1
-  damage: 3.75
+  damage: 4.5
   damageType: 2
   projectilePrefab: {fileID: 6144194406446952310, guid: b9f84f0e4062f874ab497e4a5b4d14b5, type: 3}
-  range: 3
+  range: 2.25
   speed: 5
   contracts:
   - rid: 3397718808922161235
@@ -31,7 +31,33 @@ MonoBehaviour:
       type: {class: ProjectileFlightContract, ns: , asm: Assembly-CSharp}
       data:
         growDuringFlight: 1
-        scaleGrowthPerSecond: {x: 0.5, y: 0.5}
+        scaleGrowthPerSecond: {x: 3, y: 3}
+        reduceDamageWithGrowth: 1
+        damageGrowthFalloffPower: 3.27
+        damageMultiplierByDistance:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: 0
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 0.35
+            inSlope: -0.049879417
+            outSlope: -0.049879417
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0.19450247
+            outWeight: 0.33333334
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
     - rid: 3397718808922161236
       type: {class: ProjectileContactContract, ns: , asm: Assembly-CSharp}
       data:
@@ -48,4 +74,4 @@ MonoBehaviour:
       data:
         debuffs:
         - debuff: {fileID: 11400000, guid: f4d5bf69e639736418c63855c867f86b, type: 2}
-          amountPerHit: 5
+          amountPerHit: 3

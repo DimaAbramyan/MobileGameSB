@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09b61922df560be44889a4ee360dce56, type: 3}
   m_Name: BladeContent
   m_EditorClassIdentifier: Assembly-CSharp::HullContentDefinition
-  id: 1
+  id: 0
   displayName: Blade
   passiveAbilityDescription: 
   activeAbilityDescription: 
@@ -30,6 +30,7 @@ MonoBehaviour:
   maxUpgradeLevel: 0
   upgradePrices: []
   data: {fileID: 11400000, guid: 60dc0b5f9e0240f419b80d75e876dcd1, type: 2}
+  isAvailableForCrafting: 1
   defaultColorPalette:
     primary: {r: 1, g: 1, b: 1, a: 1}
     secondary: {r: 0.35, g: 0.35, b: 0.35, a: 1}

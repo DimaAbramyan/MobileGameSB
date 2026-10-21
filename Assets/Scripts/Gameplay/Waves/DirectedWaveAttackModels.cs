@@ -12,7 +12,7 @@ public enum DirectedWaveAttackType
 public enum DirectedWaveAttackFireMode
 {
     Aimed,
-    Forward,
+    Stationary = 1,
     None,
     [InspectorName("Forward When Player Ahead")]
     ForwardWhenPlayerAhead,
@@ -69,12 +69,30 @@ public struct DirectedWaveAttackAimState
     public bool TryFire(Enemy enemy, IWaveAttackExecutor executor,
         EnemyBurstAttackSettings pattern, Vector3 target, bool refresh)
     {
+        bool acquire = !hasDirection || refresh;
+        if (UsesEmissionAim(pattern) && executor is IEnemyEmissionAimAttackExecutor emissionExecutor)
+        {
+            hasDirection = true;
+            return emissionExecutor.TryFireWithLockedEmissionAim(target, pattern, acquire);
+        }
         Vector3 origin = executor is IEnemyLockedAimAttackExecutor lockedExecutor
             ? lockedExecutor.GetWaveAimOrigin(pattern) : enemy.transform.position;
         Vector3 direction = ResolveDirection(origin, target, refresh);
         return executor is IEnemyLockedAimAttackExecutor aimedExecutor
             ? aimedExecutor.TryFireInAimedDirection(direction, pattern)
             : executor.TryFireAt(enemy.transform.position + direction, pattern);
+    }
+
+    private static bool UsesEmissionAim(EnemyBurstAttackSettings settings)
+    {
+        if (settings == null) return false;
+        for (int i = 0; i < settings.PatternCount; i++)
+        {
+            var shooting = settings.GetPattern(i).Shooting;
+            if (shooting.EmissionLayout.Type == EnemyEmissionLayoutType.Circle
+                || !shooting.EmissionOrigin.IsDefault) return true;
+        }
+        return false;
     }
 }
 
@@ -98,12 +116,18 @@ public enum DirectedWaveBurstSettingsSource
 }
 
 [System.Serializable]
-public sealed class DirectedWaveAttackSettings
+public sealed partial class DirectedWaveAttackSettings
 {
-    private const int CurrentSerializedVersion = 11;
+    private const int CurrentSerializedVersion = 12;
 
     [System.NonSerialized] private bool hasRuntimeProjectileBaseSpeedOverride;
     [System.NonSerialized] private float runtimeProjectileBaseSpeedOverride;
+    [System.NonSerialized] private float runtimeAttackSpeedMultiplier = 1f;
+    public float RuntimeAttackSpeedMultiplier => runtimeAttackSpeedMultiplier;
+    [System.NonSerialized] private RandomFloatRange runtimeProjectileBaseSpeedRandom;
+    [System.NonSerialized] private EnemySpeedRandomizeOn runtimeProjectileBaseSpeedRandomizeOn = EnemySpeedRandomizeOn.PerProjectile;
+    public RandomFloatRange RuntimeProjectileBaseSpeedRandom => runtimeProjectileBaseSpeedRandom;
+    public EnemySpeedRandomizeOn RuntimeProjectileBaseSpeedRandomizeOn => runtimeProjectileBaseSpeedRandomizeOn;
 
     // Kept to preserve already serialized wave prefabs. The component's enabled
     // state now determines whether post-formation attacks run.
@@ -115,12 +139,14 @@ public sealed class DirectedWaveAttackSettings
     [Header("Attack Start Delay")]
     [SerializeField, InspectorName("Delay Attack Start")]
     private bool useAttackStartDelay;
-    [SerializeField, Min(0f), InspectorName("Attack Start Delay")]
+    [SerializeField, InspectorName("Attack Start Delay")]
+    [Randomizable(nameof(attackStartDelayRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
     private float attackStartDelay = 1f;
 
     [Header("Attack")]
     [SerializeField] private DirectedWaveAttackFireMode fireMode =
         DirectedWaveAttackFireMode.Aimed;
+    [SerializeField] private EnemyStationaryFireSettings stationaryFireSettings = new EnemyStationaryFireSettings();
     [SerializeField, Tooltip("Aim On Start locks direction for the entire attack. Aim On Burst refreshes it at the first shot of each burst. Aim Continuous tracks the player and aims again for every shot.")]
     private DirectedWaveAttackAimMode aimMode;
     [SerializeField, Range(0f, 180f), Tooltip(
@@ -135,13 +161,19 @@ public sealed class DirectedWaveAttackSettings
         CurrentSerializedVersion;
 
     [Header("Scheduling")]
-    [SerializeField, Min(1)] private int attacksPerEnemyPerCycle = 1;
-    [SerializeField, Min(0.01f)] private float attacksPerSecond = 1f;
+    [SerializeField] [Randomizable(nameof(attacksPerEnemyPerCycleRandom), 1f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private int attacksPerEnemyPerCycle = 1;
+    [SerializeField] [Randomizable(nameof(attacksPerSecondRandom), .01f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerShot)]
+    private float attacksPerSecond = 1f;
+    [SerializeField] private DirectedWaveAttackOrderSettings attackOrder = new();
+    public DirectedWaveAttackOrderSettings AttackOrder => attackOrder;
+    public bool UsesAttackOrder => attackOrder != null && attackOrder.enabled;
 
     [Header("Sequential Scheduling")]
     [SerializeField, InspectorName("Wait For Previous Attack")]
     private bool waitForPreviousAttack;
-    [SerializeField, Min(0f), InspectorName("Delay After Attack")]
+    [SerializeField, InspectorName("Delay After Attack")]
+    [Randomizable(nameof(delayAfterAttackRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerShot)]
     private float delayAfterAttack = 1f;
 
     [Header("Attack Pattern")]
@@ -153,9 +185,13 @@ public sealed class DirectedWaveAttackSettings
     [SerializeField, Tooltip(
         "When Enemy Settings is selected, replaces only each enemy's Attack Cooldown. All other attack pattern values remain on the enemy.")]
     private bool overrideEnemyAttackCooldown;
-    [SerializeField, Min(0f), Tooltip(
+    [SerializeField, Randomizable(nameof(enemyAttackCooldownRandom), 0f), Tooltip(
         "Used only when Enemy Settings is selected and Override Enemy Attack Cooldown is enabled.")]
     private float enemyAttackCooldown = 1f;
+    [SerializeField, HideInInspector] private RandomFloatRange enemyAttackCooldownRandom = new();
+    public bool OverridesEnemyAttackCooldown => UsesEnemyBurstSettings && overrideEnemyAttackCooldown;
+    public float EnemyAttackCooldown => enemyAttackCooldown;
+    public RandomFloatRange EnemyAttackCooldownRandom => enemyAttackCooldownRandom ??= new();
     [SerializeField, Tooltip(
         "Used only when Burst Settings Source is Wave Override.")]
     [InspectorName("Wave Attack Pattern")]
@@ -171,6 +207,10 @@ public sealed class DirectedWaveAttackSettings
     [SerializeField, Min(0f)] private float maxDiveDepth = 2.5f;
     [SerializeField, Min(0.01f)] private float minDiveSpeed = 4f;
     [SerializeField, Min(0.01f)] private float maxDiveSpeed = 6f;
+    [SerializeField, Min(0f), Tooltip("Minimum time in game seconds for the Move To Player approach, including movement speed bonuses. Zero disables this limit.")]
+    private float minimumDiveDuration;
+    [SerializeField, Min(0f), Tooltip("Maximum actual Move To Player approach speed in world units per game second, including movement speed bonuses and the movement curve. Zero disables this limit.")]
+    private float maximumDiveSpeed;
     [SerializeField] private AnimationCurve diveSpeedCurve =
         AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
@@ -214,10 +254,23 @@ public sealed class DirectedWaveAttackSettings
         AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
     public bool IsEnabled => true;
+    public void ScaleSequenceScheduling(float multiplier)
+    {
+        multiplier = Mathf.Max(.01f, multiplier);
+        runtimeAttackSpeedMultiplier *= multiplier;
+        attackStartDelay /= multiplier;
+        attacksPerSecond *= multiplier;
+        delayAfterAttack /= multiplier;
+        enemyAttackCooldown /= multiplier;
+        attackStartDelayRandom?.Scale(1f / multiplier); attacksPerSecondRandom?.Scale(multiplier); delayAfterAttackRandom?.Scale(1f / multiplier);
+        EnemyAttackCooldownRandom.Scale(1f / multiplier);
+        if (attackOrder != null) attackOrder.attackIntervalBetweenEnemies /= multiplier;
+    }
     public float AttackStartDelay => useAttackStartDelay
         ? Mathf.Max(0f, attackStartDelay)
         : 0f;
     public DirectedWaveAttackFireMode FireMode => fireMode;
+    public EnemyStationaryFireSettings StationaryFireSettings => stationaryFireSettings;
     public DirectedWaveAttackAimMode AimMode => aimMode;
     public bool HasFireMode => fireMode != DirectedWaveAttackFireMode.None;
     public DirectedWaveAttackMovementMode MovementMode => movementMode;
@@ -237,7 +290,7 @@ public sealed class DirectedWaveAttackSettings
         movementMode != DirectedWaveAttackMovementMode.None;
     public int AttacksPerEnemyPerCycle => Mathf.Max(1, attacksPerEnemyPerCycle);
     public float AttacksPerSecond => Mathf.Max(0.01f, attacksPerSecond);
-    public bool WaitsForPreviousAttack => waitForPreviousAttack;
+    public bool WaitsForPreviousAttack => UsesAttackOrder ? attackOrder.waitForPreviousEnemy : waitForPreviousAttack;
     public float DelayAfterAttack => Mathf.Max(0f, delayAfterAttack);
     public bool UsesEnemyBurstSettings =>
         burstSettingsSource == DirectedWaveBurstSettingsSource.EnemySettings;
@@ -275,6 +328,8 @@ public sealed class DirectedWaveAttackSettings
         divePreparationDuration);
     public AnimationCurve DivePreparationSpeedCurve => divePreparationSpeedCurve;
     public AnimationCurve DiveSpeedCurve => diveSpeedCurve;
+    public float MinimumDiveDuration => Mathf.Max(0f, minimumDiveDuration);
+    public float MaximumDiveSpeed => Mathf.Max(0f, maximumDiveSpeed);
     public AnimationCurve ReturnSpeedCurve => returnSpeedCurve;
     public DirectedWaveDiveTargetMode DiveTargetMode => diveTargetMode;
     public float PlayerStandoffRadius => Mathf.Max(0f, playerStandoffRadius);
@@ -284,7 +339,8 @@ public sealed class DirectedWaveAttackSettings
     public bool IsPlayerInForwardFireSector(
         Vector3 enemyPosition,
         Vector2 forwardDirection,
-        Vector3 playerPosition)
+        Vector3 playerPosition,
+        float? halfAngleOverride = null)
     {
         Vector2 directionToPlayer = new(
             playerPosition.x - enemyPosition.x,
@@ -296,7 +352,7 @@ public sealed class DirectedWaveAttackSettings
             return false;
 
         float minimumDot = Mathf.Cos(
-            ForwardFireHalfAngle * Mathf.Deg2Rad);
+            (halfAngleOverride ?? ForwardFireHalfAngle) * Mathf.Deg2Rad);
         return Vector2.Dot(
             forwardDirection.normalized,
             directionToPlayer.normalized) >= minimumDot;
@@ -321,24 +377,31 @@ public sealed class DirectedWaveAttackSettings
         if (source == null || ReferenceEquals(source, this))
             return;
 
+        CopyNumericFrom(source);
         hasRuntimeProjectileBaseSpeedOverride = false;
-        runtimeProjectileBaseSpeedOverride = 0f;
+        runtimeProjectileBaseSpeedOverride = 0f; runtimeProjectileBaseSpeedRandom = null;
+        runtimeAttackSpeedMultiplier = 1f;
         source.Validate();
         isEnabled = source.isEnabled;
         legacyAttackType = source.legacyAttackType;
         useAttackStartDelay = source.useAttackStartDelay;
         attackStartDelay = source.attackStartDelay;
         fireMode = source.fireMode;
+        stationaryFireSettings ??= new EnemyStationaryFireSettings();
+        stationaryFireSettings.CopyFrom(source.stationaryFireSettings);
         aimMode = source.aimMode;
         forwardFireHalfAngle = source.forwardFireHalfAngle;
         movementMode = source.movementMode;
         attacksPerEnemyPerCycle = source.attacksPerEnemyPerCycle;
         attacksPerSecond = source.attacksPerSecond;
+        attackOrder ??= new DirectedWaveAttackOrderSettings();
+        attackOrder.CopyFrom(source.attackOrder);
         waitForPreviousAttack = source.waitForPreviousAttack;
         delayAfterAttack = source.delayAfterAttack;
         burstSettingsSource = source.burstSettingsSource;
         overrideEnemyAttackCooldown = source.overrideEnemyAttackCooldown;
         enemyAttackCooldown = source.enemyAttackCooldown;
+        EnemyAttackCooldownRandom.CopyFrom(source.EnemyAttackCooldownRandom);
         waveBurstSettings ??= new EnemyBurstAttackSettings();
         if (source.waveBurstSettings != null)
             waveBurstSettings.CopyFrom(source.waveBurstSettings);
@@ -351,6 +414,8 @@ public sealed class DirectedWaveAttackSettings
         maxDiveDepth = source.maxDiveDepth;
         minDiveSpeed = source.minDiveSpeed;
         maxDiveSpeed = source.maxDiveSpeed;
+        minimumDiveDuration = source.minimumDiveDuration;
+        maximumDiveSpeed = source.maximumDiveSpeed;
         diveSpeedCurve = CloneCurve(source.diveSpeedCurve);
         flyThroughApproachSpeed = source.flyThroughApproachSpeed;
         flyThroughExitPadding = source.flyThroughExitPadding;
@@ -374,18 +439,23 @@ public sealed class DirectedWaveAttackSettings
     public void SetAttacksPerSecond(float value)
     {
         attacksPerSecond = Mathf.Max(0.01f, value);
+        if (attacksPerSecondRandom != null) attacksPerSecondRandom.enabled = false;
     }
 
     // The value belongs to a resolved wave copy and must never be serialized back
     // into the enemy or projectile prefab.
-    public void SetRuntimeProjectileBaseSpeedOverride(float speed)
+    public void SetRuntimeProjectileBaseSpeedOverride(float speed, RandomFloatRange random = null,
+        EnemySpeedRandomizeOn randomizeOn = EnemySpeedRandomizeOn.PerProjectile)
     {
         hasRuntimeProjectileBaseSpeedOverride = true;
         runtimeProjectileBaseSpeedOverride = Mathf.Max(0.01f, speed);
+        runtimeProjectileBaseSpeedRandom = random; runtimeProjectileBaseSpeedRandomizeOn = randomizeOn;
     }
 
     public void Validate()
     {
+        attackOrder ??= new DirectedWaveAttackOrderSettings();
+        stationaryFireSettings ??= new EnemyStationaryFireSettings();
         MigrateLegacySettings();
 
         attacksPerEnemyPerCycle = Mathf.Max(1, attacksPerEnemyPerCycle);
@@ -400,6 +470,8 @@ public sealed class DirectedWaveAttackSettings
         maxDiveDepth = Mathf.Max(minDiveDepth, maxDiveDepth);
         minDiveSpeed = Mathf.Max(0.01f, minDiveSpeed);
         maxDiveSpeed = Mathf.Max(minDiveSpeed, maxDiveSpeed);
+        minimumDiveDuration = Mathf.Max(0f, minimumDiveDuration);
+        maximumDiveSpeed = Mathf.Max(0f, maximumDiveSpeed);
         flyThroughApproachSpeed = Mathf.Max(0.01f, flyThroughApproachSpeed);
         flyThroughExitPadding = Mathf.Max(0f, flyThroughExitPadding);
         flyThroughDiveCooldown = Mathf.Max(0f, flyThroughDiveCooldown);
@@ -437,7 +509,7 @@ public sealed class DirectedWaveAttackSettings
                     break;
 
                 case DirectedWaveAttackType.ShootForward:
-                    fireMode = DirectedWaveAttackFireMode.Forward;
+                    fireMode = DirectedWaveAttackFireMode.Stationary;
                     movementMode = DirectedWaveAttackMovementMode.None;
                     break;
 
@@ -467,7 +539,7 @@ public sealed class DirectedWaveAttackSettings
             serializedVersion = 3;
         }
 
-        if (serializedVersion < CurrentSerializedVersion)
+        if (serializedVersion < 11)
         {
             waveBurstSettings.Validate();
             useAttackStartDelay = waveBurstSettings.UsesAttackStartDelay;
@@ -508,6 +580,12 @@ public sealed class DirectedWaveAttackSettings
             }
             if (serializedVersion < 11)
                 forwardFireHalfAngle = 15f;
+            serializedVersion = 11;
+        }
+        if (serializedVersion < 12)
+        {
+            if (fireMode == DirectedWaveAttackFireMode.Stationary)
+                stationaryFireSettings.PreserveLegacyForward();
             serializedVersion = CurrentSerializedVersion;
         }
     }

@@ -41,6 +41,16 @@ public sealed class ContentCatalogService
         return false;
     }
 
+    public bool TryGetHull(string contentId, int savedShipId, out HullContentDefinition hull)
+    {
+        if (TryGetHull(contentId, out hull)
+            && hull.Data != null && hull.Data.shipId == savedShipId) return true;
+        // Recover saved crafts created while two hulls shared one content ID.
+        if (!TryGetHullByShipId(savedShipId, out hull)) return false;
+        Debug.LogWarning($"Saved hull ID '{contentId}' does not match ship ID {savedShipId}. Using '{hull.DisplayName}' ({hull.Id}); save this craft again to update its hull ID.");
+        return true;
+    }
+
     public bool TryGetHullByShipId(int shipId, out HullContentDefinition hull)
     {
         hull = null;

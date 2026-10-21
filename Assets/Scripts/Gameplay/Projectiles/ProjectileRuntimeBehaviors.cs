@@ -9,18 +9,19 @@ public class ProjectileRuntimeConfig
 {
     public ProjectileFlightMode flightMode = ProjectileFlightMode.Straight;
     public ProjectileContactMode contactMode = ProjectileContactMode.DamageAndDestroy;
-    public EnemyDamageType damageType = EnemyDamageType.Kinetic;
+    public EnemyDamageType damageType = EnemyDamageType.Kinetick;
 
     public float homingRotationSpeed = 360f;
     public bool growDuringFlight;
     public Vector2 scaleGrowthPerSecond = Vector2.one * 0.5f;
+    public AnimationCurve damageMultiplierByDistance;
     public float projectileLifetime = 10f;
     public bool disableColliderAfterFirstPhysicsStep;
     public bool fadeDuringLifetime;
     public float fadeDuration = 0.5f;
     public Explode explosionPrefab;
     public float explosionDamage = 30f;
-    public EnemyDamageType explosionDamageType = EnemyDamageType.Explosion;
+    public EnemyDamageType explosionDamageType = EnemyDamageType.Kinetick;
     public bool explosionBypassesEnemyShield;
     public float explosionRadius;
     public bool explodeAtMaximumRange;
@@ -1061,6 +1062,24 @@ public static class ProjectileExplosionSpawner
             owner,
             dealDamageManager);
         explosion.SetRadius(radius);
+    }
+}
+
+public static class ProjectileGrowthDamage
+{
+    // Shared by MonoBehaviour contacts and Burst ECS movement. Always evaluate
+    // from the spawn size/base damage, so the reduction never compounds per tick.
+    public static float EvaluateMultiplier(Unity.Mathematics.float2 currentScale,
+        Unity.Mathematics.float2 initialScale, float power)
+    {
+        if (power <= 0f)
+            return 1f;
+
+        Unity.Mathematics.float2 ratio = Unity.Mathematics.math.abs(currentScale)
+            / Unity.Mathematics.math.max(Unity.Mathematics.math.abs(initialScale),
+                new Unity.Mathematics.float2(0.001f));
+        float relativeSize = Unity.Mathematics.math.max(1f, Unity.Mathematics.math.cmax(ratio));
+        return Unity.Mathematics.math.pow(relativeSize, -power);
     }
 }
 

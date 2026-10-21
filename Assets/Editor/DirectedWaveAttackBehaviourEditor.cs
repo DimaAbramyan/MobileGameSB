@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(DirectedWaveAttackBehaviour))]
-public sealed class DirectedWaveAttackBehaviourEditor : Editor
+public sealed partial class DirectedWaveAttackBehaviourEditor : Editor
 {
     private const string DefaultPresetFolder = "Assets/Config/PatternAttacks";
 
@@ -22,6 +22,8 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
 
     private void OnEnable()
     {
+        executionMode = serializedObject.FindProperty("executionMode");
+        attackSequence = serializedObject.FindProperty("attackSequence");
         attackSettings = serializedObject.FindProperty("attackSettings");
         attackPreset = serializedObject.FindProperty("attackPreset");
         overridePresetAttacksPerSecond = serializedObject.FindProperty(
@@ -44,9 +46,14 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        EnemyShootingPreview.DrawPreviewControls();
         serializedObject.Update();
+        EditorGUILayout.PropertyField(executionMode, new GUIContent("Attack Behaviour Mode"));
+        bool sequence = executionMode.enumValueIndex == (int)DirectedWaveAttackExecutionMode.Sequence;
 
-        if (attackPatterns == null || attackPatterns.arraySize == 0)
+        if (sequence)
+            DrawAttackSequence();
+        else if (attackPatterns == null || attackPatterns.arraySize == 0)
         {
             EditorGUILayout.LabelField(
                 "Post-Formation Attack",
@@ -74,7 +81,7 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         EditorGUILayout.PropertyField(allowAutonomousAttackDuringEntrance);
         EditorGUILayout.Space(6f);
 
-        if (attackPatterns == null || attackPatterns.arraySize == 0)
+        if (sequence || attackPatterns == null || attackPatterns.arraySize == 0)
         {
             EditorGUILayout.LabelField("Eligible Enemies", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(
@@ -85,12 +92,15 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         }
 
         EditorGUILayout.Space(6f);
-        DrawAttackPatterns();
+        if (!sequence) DrawAttackPatterns();
         EditorGUILayout.Space(6f);
         DrawPerEnemyAttackOverride();
 
         if (serializedObject.ApplyModifiedProperties())
+        {
+            ((DirectedWaveAttackBehaviour)target).InvalidateSequenceGuides();
             SceneView.RepaintAll();
+        }
     }
 
     private void DrawPostFormationAttackSettings(
@@ -100,7 +110,9 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         SerializedProperty presetRate,
         SerializedProperty overrideProjectileSpeed,
         SerializedProperty projectileSpeed,
-        int patternIndex)
+        int patternIndex,
+        SerializedProperty sequenceSlots = null,
+        bool sequenceStep = false)
     {
         if (settings == null)
         {
@@ -110,16 +122,28 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             return;
         }
 
-        SerializedProperty selectedSlots = patternIndex >= 0
+        SerializedProperty selectedSlots = sequenceStep ? sequenceSlots : patternIndex >= 0
             ? attackPatterns.GetArrayElementAtIndex(patternIndex)
                 .FindPropertyRelative("selectedEnemySlots")
             : useSelectedEnemySlots.boolValue ? selectedEnemySlots : null;
 
-        if (DrawAttackPresetSettings(
+        bool presetUsed;
+        if (sequenceStep)
+        {
+            EditorGUILayout.PropertyField(preset, new GUIContent("Attack Preset"));
+            presetUsed = preset.objectReferenceValue != null;
+            if (presetUsed)
+            {
+                EditorGUILayout.PropertyField(overridePresetRate);
+                if (overridePresetRate.boolValue) EditorGUILayout.PropertyField(presetRate);
+            }
+        }
+        else presetUsed = DrawAttackPresetSettings(
                 preset,
                 overridePresetRate,
                 presetRate,
-                patternIndex))
+                patternIndex);
+        if (presetUsed)
         {
             DrawAimModeWarnings(((DirectedWaveAttackPreset)preset.objectReferenceValue).AttackSettings,
                 selectedSlots);
@@ -152,7 +176,9 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         EditorGUILayout.LabelField("Attack", EditorStyles.miniBoldLabel);
         EditorGUILayout.PropertyField(
             fireMode,
-            new GUIContent("Fire Mode", "Default runs the configured Attack Pattern without aiming at the player. None disables wave-controlled shooting."));
+            EnemyAttackInspectorHints.FireMode(fireMode));
+        if ((DirectedWaveAttackFireMode)fireMode.intValue == DirectedWaveAttackFireMode.Stationary)
+            EditorGUILayout.PropertyField(settings.FindPropertyRelative("stationaryFireSettings"), true);
         if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex == DirectedWaveAttackFireMode.Aimed)
             DrawAimMode(settings.FindPropertyRelative("aimMode"));
         if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex
@@ -173,6 +199,12 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         EditorGUILayout.PropertyField(
             settings.FindPropertyRelative("attacksPerEnemyPerCycle"),
             new GUIContent("Attacks Per Enemy Per Cycle"));
+        var order = settings.FindPropertyRelative("attackOrder");
+        EditorGUILayout.PropertyField(order, new GUIContent("Attack Order"), true);
+        if (order.FindPropertyRelative("enabled").boolValue)
+            EditorGUILayout.HelpBox("Attack Order controls group dispatch interval, batches and waiting. The legacy scheduling fields below are inactive.", MessageType.None);
+        using (new EditorGUI.DisabledScope(order.FindPropertyRelative("enabled").boolValue))
+        {
         EditorGUILayout.PropertyField(
             settings.FindPropertyRelative("attacksPerSecond"),
             new GUIContent("Attacks Per Second"));
@@ -187,6 +219,7 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             EditorGUILayout.PropertyField(
                 settings.FindPropertyRelative("delayAfterAttack"),
                 new GUIContent("Delay After Attack"));
+        }
         }
 
         if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex
@@ -293,7 +326,10 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             EditorGUILayout.PropertyField(settings.FindPropertyRelative("maxDiveDepth"));
             EditorGUILayout.PropertyField(settings.FindPropertyRelative("minDiveSpeed"));
             EditorGUILayout.PropertyField(settings.FindPropertyRelative("maxDiveSpeed"));
+            EditorGUILayout.PropertyField(settings.FindPropertyRelative("minimumDiveDuration"), new GUIContent("Minimum Dive Duration"));
+            EditorGUILayout.PropertyField(settings.FindPropertyRelative("maximumDiveSpeed"), new GUIContent("Maximum Dive Speed"));
             EditorGUILayout.PropertyField(settings.FindPropertyRelative("diveSpeedCurve"));
+            EditorGUILayout.HelpBox("Minimum Dive Duration and Maximum Dive Speed limit only the approach to the player. Zero disables each limit; the Min/Max Dive Speed range still selects the nominal speed.", MessageType.None);
 
             EditorGUILayout.Space(3f);
             EditorGUILayout.LabelField("Dive Target", EditorStyles.miniBoldLabel);
@@ -552,6 +588,14 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
     {
         var overrideObject = new SerializedObject(enemyOverride);
         overrideObject.Update();
+        if (overrideObject.FindProperty("attackOverrideVersion").intValue < 4
+            || overrideObject.FindProperty("overrideProjectileBaseSpeed").boolValue)
+        {
+            Undo.RecordObject(enemyOverride, "Migrate Local Pattern Speeds");
+            enemyOverride.EnsureAttackOverrideMigration();
+            EditorUtility.SetDirty(enemyOverride);
+            overrideObject.Update();
+        }
         SerializedProperty enabled = overrideObject.FindProperty(
             "overrideAttackPattern");
         bool wasEnabled = enabled.boolValue;
@@ -615,7 +659,9 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             SerializedProperty fireMode = overrideObject.FindProperty("fireMode");
             EditorGUILayout.PropertyField(
                 fireMode,
-                new GUIContent("Fire Mode", "Default runs this slot's configured Attack Pattern without aiming at the player. None disables wave-controlled shooting."));
+                EnemyAttackInspectorHints.FireMode(fireMode));
+            if ((DirectedWaveAttackFireMode)fireMode.intValue == DirectedWaveAttackFireMode.Stationary)
+                EditorGUILayout.PropertyField(overrideObject.FindProperty("stationaryFireSettings"), true);
             if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex == DirectedWaveAttackFireMode.Aimed)
                 DrawAimMode(overrideObject.FindProperty("aimMode"));
             if ((DirectedWaveAttackFireMode)fireMode.enumValueIndex
@@ -627,21 +673,9 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             }
         }
 
-        EditorGUILayout.Space(2f);
         EditorGUILayout.LabelField("Attack Pattern", EditorStyles.miniBoldLabel);
         DrawLocalShootingPatterns(overrideObject.FindProperty("attackPattern"));
         DrawLocalAimModeWarning(wave, enemyOverride, overrideObject);
-        EditorGUILayout.PropertyField(
-            overrideObject.FindProperty("overrideProjectileBaseSpeed"),
-            new GUIContent(
-                "Override Base Projectile Speed",
-                "Uses this value only for this enemy slot. The projectile prefab is unchanged."));
-        if (overrideObject.FindProperty("overrideProjectileBaseSpeed").boolValue)
-        {
-            EditorGUILayout.PropertyField(
-                overrideObject.FindProperty("projectileBaseSpeed"),
-                new GUIContent("Base Projectile Speed"));
-        }
 
         if (GUILayout.Button("Reset From Resolved Wave Attack"))
         {
@@ -659,7 +693,7 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
 
     private static void DrawAimMode(SerializedProperty aimMode)
     {
-        EditorGUILayout.PropertyField(aimMode, new GUIContent("Aim Mode"));
+        EditorGUILayout.PropertyField(aimMode, new GUIContent("Aim Mode", "Aim On Start: захват направления на всю атаку. Aim On Burst: новый захват в начале каждой очереди. Aim Continuous: наведение при каждом выстреле, включая отложенный Sector."));
         EditorGUILayout.HelpBox(
             "Aim On Start locks direction at the first shot until the attack ends. "
             + "Aim On Burst refreshes direction at the first shot of each burst and keeps it for the remaining shots. "
@@ -866,9 +900,8 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             {
                 SerializedProperty entry = patterns.GetArrayElementAtIndex(i);
                 SerializedProperty shooting = entry.FindPropertyRelative("shooting");
-                SerializedProperty shootingType = shooting.FindPropertyRelative(
-                    "shootingType");
-                labels[i] = $"Pattern {i + 1} ({shootingType.enumDisplayNames[shootingType.enumValueIndex]})";
+                SerializedProperty layoutType = shooting.FindPropertyRelative("emissionLayout.type");
+                labels[i] = $"Pattern {i + 1} ({layoutType.enumDisplayNames[layoutType.enumValueIndex]})";
                 if (selectedId.stringValue == entry.FindPropertyRelative("patternId").stringValue)
                     selectedIndex = i;
             }
@@ -1056,6 +1089,12 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             EditorGUILayout.PropertyField(
                 projectileSpeed,
                 new GUIContent("Base Projectile Speed"));
+            string numericPath = projectileSpeed.propertyPath;
+            int lastDot = numericPath.LastIndexOf('.');
+            string prefix = lastDot >= 0 ? numericPath.Substring(0, lastDot + 1) : "";
+            var random = serializedObject.FindProperty(prefix + "baseProjectileSpeedRandom.enabled");
+            if (random != null && random.boolValue)
+                EditorGUILayout.PropertyField(serializedObject.FindProperty(prefix + "baseProjectileSpeedRandomizeOn"), new GUIContent("Randomize On"));
         }
     }
 
@@ -1466,6 +1505,7 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
             (int)DirectedWaveEntranceAttackOrder.Sequential;
     }
 
+    private readonly DirectedWaveAttackOrderScenePreview attackOrderScenePreview = new();
     private void OnSceneGUI()
     {
         serializedObject.Update();
@@ -1479,6 +1519,11 @@ public sealed class DirectedWaveAttackBehaviourEditor : Editor
         DrawLocalAttackOverrideSlotHandles(wave);
         DrawPostAttackSlotMarkers(wave);
         DrawEntranceAttackMarkers(wave);
+        attackOrderScenePreview.Draw(wave, behaviour);
+        var enemyPrefab = wave.GetConfiguredEnemyPrefabForSlot(0);
+        EnemyLaserScenePreview.HandlesFor(serializedObject, wave.GetConfiguredEnemySlotCount() > 0
+            ? wave.GetConfiguredFormationSlotPosition(0) : wave.transform.position,
+            enemyPrefab != null ? enemyPrefab.GetComponent<SimpleEnemyAttackExecutor>() : null);
     }
 
     private void DrawLocalAttackOverrideSlotHandles(DirectedEnemySubWave wave)

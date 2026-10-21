@@ -32,7 +32,7 @@ public class CircleShip : Enemy
     }
     protected void Shoot()
     {
-        Timer -= Time.deltaTime * FireRateMultiplier / Timer;
+        Timer -= Time.deltaTime * FireRateMultiplier * AttackSpeedMultiplier / Timer;
         if (Timer <= 0)
         {
             projectileSpawner?.TrySpawn(

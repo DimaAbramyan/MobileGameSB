@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-public sealed class ArkanoidBall : MonoBehaviour
+public sealed class ArkanoidBall : EnemyProjectileInterceptor
 {
+    private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.FragileOnly;
+    public override EnemyProjectileDestructionPolicy ProjectileDestructionPolicy => projectileDestructionPolicy;
     [Header("References")]
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private CircleCollider2D ballCollider;
@@ -17,8 +19,13 @@ public sealed class ArkanoidBall : MonoBehaviour
     [SerializeField, Min(0f)] private float minimumRespawnForwardOffset = 0.75f;
     [SerializeField, Range(0f, 80f)] private float respawnRandomLaunchAngle = 45f;
 
+    [Header("Paddle Attraction")]
+    [SerializeField, Min(0f)] private float paddleAttractionRadius = 2f;
+    [SerializeField, Min(0f)] private float paddleAttractionForce = 10f;
+
     [Header("Damage")]
     [SerializeField, Min(0f)] private float contactDamage = 10f;
+    [SerializeField] private EnemyDamageType contactDamageType = EnemyDamageType.Default;
     [SerializeField, Min(0f)] private float sameEnemyHitCooldown = 0.15f;
     [SerializeField] private LayerMask contactEnemyLayers = ~0;
 
@@ -26,6 +33,7 @@ public sealed class ArkanoidBall : MonoBehaviour
     [SerializeField, Min(0.05f)] private float stasisDuration = 3f;
     [SerializeField, Min(1f)] private float stasisRadiusMultiplier = 1.6f;
     [SerializeField, Min(0f)] private float stasisDamagePerSecond = 30f;
+    [SerializeField] private EnemyDamageType stasisDamageType = EnemyDamageType.Default;
     [SerializeField, Min(0.02f)] private float stasisTickInterval = 0.1f;
     [SerializeField] private LayerMask stasisEnemyLayers = ~0;
     [SerializeField] private LayerMask stasisProjectileLayers = ~0;
@@ -38,6 +46,12 @@ public sealed class ArkanoidBall : MonoBehaviour
     private ContactFilter2D stasisProjectileFilter;
 
     private ParentShip owner;
+    [Inject] private DealDamageManager damageManager;
+    private bool hasBouncedFromTop;
+    public bool CanBeAttractedToPaddle => hasBouncedFromTop && !isStasisActive && !isRespawning
+        && isActiveAndEnabled && owner != null && owner.IsVisible && !owner.IsDestroyed
+        && paddle != null && paddle.IsActiveForBounce;
+    private readonly HashSet<Enemy> stasisDamagedEnemies = new();
     [InjectOptional] private EnemyProjectileCollisionRegistry enemyProjectileCollisionRegistry;
     private ArkanoidPaddle paddle;
     private Camera mainCamera;
@@ -50,6 +64,10 @@ public sealed class ArkanoidBall : MonoBehaviour
     private float abilityDamageMultiplier = 1f;
     private bool isStasisActive;
     private bool isRespawning;
+    private ArkanoidShipMetaContract bounceSettings;
+    private float bounceBoostElapsed = float.PositiveInfinity;
+    public float CurrentSpeed => speed * (bounceSettings != null
+        ? bounceSettings.EvaluatePaddleBounceSpeedMultiplier(bounceBoostElapsed) : 1f);
 
     private void OnEnable()
     {
@@ -91,7 +109,13 @@ public sealed class ArkanoidBall : MonoBehaviour
             return;
 
         speed = contract.BallSpeed;
+        bounceSettings = contract;
+        paddleAttractionRadius = contract.PaddleAttractionRadius;
+        paddleAttractionForce = contract.PaddleAttractionForce;
+        projectileDestructionPolicy = contract.ProjectileDestructionPolicy;
         contactDamage = contract.BallDamage;
+        contactDamageType = contract.BallDamageType;
+        stasisDamageType = contract.StasisDamageType;
         stasisDuration = contract.StasisDuration;
         stasisRadiusMultiplier = contract.StasisRadiusMultiplier;
         stasisDamagePerSecond = contract.StasisDamagePerSecond;
@@ -107,6 +131,8 @@ public sealed class ArkanoidBall : MonoBehaviour
         Vector3 startPosition,
         Vector2 launchDirection)
     {
+        bounceBoostElapsed = float.PositiveInfinity;
+        hasBouncedFromTop = false;
         EndStasis();
         SetBallVisible(true);
         isRespawning = false;
@@ -118,7 +144,7 @@ public sealed class ArkanoidBall : MonoBehaviour
 
         if (rb != null)
         {
-            rb.linearVelocity = direction * speed;
+            rb.linearVelocity = direction * CurrentSpeed;
             rb.angularVelocity = 0f;
         }
 
@@ -154,6 +180,9 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (bounceSettings != null && bounceBoostElapsed < bounceSettings.PaddleBounceRecoveryDuration)
+            bounceBoostElapsed = Mathf.Min(bounceSettings.PaddleBounceRecoveryDuration,
+                bounceBoostElapsed + Time.fixedDeltaTime);
         if (isRespawning)
         {
             TickRespawn();
@@ -166,6 +195,7 @@ public sealed class ArkanoidBall : MonoBehaviour
             return;
         }
 
+        TryApplyPaddleAttraction(Time.fixedDeltaTime);
         MoveBall();
         TryBounceFromPaddleOverlap();
         DamageEnemiesByOverlap();
@@ -179,9 +209,9 @@ public sealed class ArkanoidBall : MonoBehaviour
             : Vector2.up;
 
         if (rb != null)
-            rb.linearVelocity = direction * speed;
+            rb.linearVelocity = direction * CurrentSpeed;
         else
-            transform.position += (Vector3)(direction * speed * Time.fixedDeltaTime);
+            transform.position += (Vector3)(direction * CurrentSpeed * Time.fixedDeltaTime);
     }
 
     private void BounceFromScreenBounds()
@@ -218,7 +248,11 @@ public sealed class ArkanoidBall : MonoBehaviour
         else if (position.y + radius > max.y - screenPadding)
         {
             position.y = max.y - screenPadding - radius;
-            direction.y = -Mathf.Abs(direction.y);
+            if (direction.y > 0f)
+            {
+                direction.y = -direction.y;
+                hasBouncedFromTop = true;
+            }
             bounced = true;
         }
 
@@ -227,7 +261,7 @@ public sealed class ArkanoidBall : MonoBehaviour
 
         transform.position = position;
         if (rb != null)
-            rb.linearVelocity = direction.normalized * speed;
+            rb.linearVelocity = direction.normalized * CurrentSpeed;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -297,21 +331,10 @@ public sealed class ArkanoidBall : MonoBehaviour
             DealContactDamage(enemy);
     }
 
-    public bool TryDestroyEnemyProjectile(EnemyProjectile projectile)
-    {
-        if (projectile == null)
-            return false;
-
-        Destroy(projectile.gameObject);
-        NotifyEnemyProjectileIntercepted();
-
-        return true;
-    }
-
-    public void NotifyEnemyProjectileIntercepted()
+    public override void NotifyEnemyProjectileIntercepted()
     {
         if (!isStasisActive && !isRespawning && rb != null)
-            rb.linearVelocity = direction.normalized * speed;
+            rb.linearVelocity = direction.normalized * CurrentSpeed;
     }
 
     private bool IsDestroyBoundary(Collider2D other)
@@ -328,6 +351,8 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void BounceFromPaddle(ArkanoidPaddle hitPaddle, bool bounceUp)
     {
+        hasBouncedFromTop = false;
+        bounceBoostElapsed = 0f;
         float halfWidth = hitPaddle.GetHalfWidth();
         float normalizedOffset = Mathf.Clamp(
             (transform.position.x - hitPaddle.transform.position.x) / halfWidth,
@@ -341,7 +366,7 @@ public sealed class ArkanoidBall : MonoBehaviour
         direction.Normalize();
 
         if (rb != null)
-            rb.linearVelocity = direction * speed;
+            rb.linearVelocity = direction * CurrentSpeed;
     }
 
     private void TryBounceFromPaddleOverlap()
@@ -423,8 +448,23 @@ public sealed class ArkanoidBall : MonoBehaviour
 
         nextEnemyHitTimes[enemy] = Time.time + sameEnemyHitCooldown;
         float damage = contactDamage * abilityDamageMultiplier;
-        enemy.TakeDamage(damage);
-        owner?.NotifyDamageDealt(damage);
+        damageManager.DealDamage(enemy, owner, damage, contactDamageType);
+    }
+
+    private void TryApplyPaddleAttraction(float deltaTime)
+    {
+        if (!CanBeAttractedToPaddle || paddleAttractionForce <= 0f || deltaTime <= 0f)
+            return;
+
+        Vector2 offset = (Vector2)paddle.transform.position - (Vector2)transform.position;
+        if (offset.sqrMagnitude > paddleAttractionRadius * paddleAttractionRadius
+            || offset.sqrMagnitude < 1e-8f)
+            return;
+
+        float angle = Vector2.SignedAngle(direction, offset);
+        float maximumTurn = paddleAttractionForce / Mathf.Max(.01f, CurrentSpeed) * Mathf.Rad2Deg * deltaTime;
+        float turn = Mathf.Clamp(angle, -maximumTurn, maximumTurn);
+        direction = ((Vector2)(Quaternion.Euler(0f, 0f, turn) * direction)).normalized;
     }
 
     private void TickStasis()
@@ -448,6 +488,7 @@ public sealed class ArkanoidBall : MonoBehaviour
 
     private void DamageEnemiesInStasis()
     {
+        stasisDamagedEnemies.Clear();
         int count = Physics2D.OverlapCircle(
             transform.position,
             GetWorldRadius(),
@@ -463,11 +504,10 @@ public sealed class ArkanoidBall : MonoBehaviour
                 ? stasisHits[i].GetComponentInParent<Enemy>()
                 : null;
 
-            if (enemy == null || enemy.isDead)
+            if (enemy == null || enemy.isDead || !stasisDamagedEnemies.Add(enemy))
                 continue;
 
-            enemy.TakeDamage(damage);
-            owner?.NotifyDamageDealt(damage);
+            damageManager.DealDamage(enemy, owner, damage, stasisDamageType);
         }
     }
 
@@ -486,7 +526,7 @@ public sealed class ArkanoidBall : MonoBehaviour
                 : null;
 
             if (projectile != null)
-                Destroy(projectile.gameObject);
+                TryDestroyEnemyProjectile(projectile);
         }
     }
 
@@ -498,12 +538,13 @@ public sealed class ArkanoidBall : MonoBehaviour
             ballCollider.radius = baseColliderRadius;
 
         if (gameObject.activeInHierarchy && !isRespawning && rb != null)
-            rb.linearVelocity = direction.normalized * speed;
+            rb.linearVelocity = direction.normalized * CurrentSpeed;
     }
 
     private void LoseBall()
     {
         EndStasis();
+        hasBouncedFromTop = false;
         isRespawning = true;
         respawnTimer = respawnDelay;
 

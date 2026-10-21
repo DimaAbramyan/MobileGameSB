@@ -13,9 +13,14 @@ public sealed class DirectedWaveAttackPattern
     [SerializeField] private bool overridePresetAttacksPerSecond;
     [SerializeField, Min(0.01f)] private float presetAttacksPerSecond = 1f;
     [SerializeField] private bool overrideBaseProjectileSpeed;
-    [SerializeField, Min(0.01f)] private float baseProjectileSpeed = 1f;
+    [SerializeField, Randomizable(nameof(baseProjectileSpeedRandom), .01f)] private float baseProjectileSpeed = 1f;
+    [SerializeField, HideInInspector] private RandomFloatRange baseProjectileSpeedRandom = new();
+    [SerializeField] private EnemySpeedRandomizeOn baseProjectileSpeedRandomizeOn = EnemySpeedRandomizeOn.PerProjectile;
+    public RandomFloatRange BaseProjectileSpeedRandom => baseProjectileSpeedRandom ??= new();
+    public EnemySpeedRandomizeOn BaseProjectileSpeedRandomizeOn => baseProjectileSpeedRandomizeOn;
 
     public IReadOnlyList<int> SelectedEnemySlots => selectedEnemySlots;
+    public DirectedWaveAttackPreset Preset => attackPreset;
 
     public void CopyResolvedSettingsTo(DirectedWaveAttackSettings destination)
     {
@@ -28,16 +33,17 @@ public sealed class DirectedWaveAttackPattern
             ? attackPreset.AttackSettings
             : attackSettings;
         destination.CopyFrom(source);
+        EnemySectorLaunchOrderRegistry.BindSource(destination.WaveBurstSettings, this);
 
         if (attackPreset != null && overridePresetAttacksPerSecond)
             destination.SetAttacksPerSecond(presetAttacksPerSecond);
 
         if (attackPreset != null && attackPreset.OverridesBaseProjectileSpeed)
             destination.SetRuntimeProjectileBaseSpeedOverride(
-                attackPreset.BaseProjectileSpeed);
+                attackPreset.BaseProjectileSpeed, attackPreset.BaseProjectileSpeedRandom, attackPreset.BaseProjectileSpeedRandomizeOn);
 
         if (overrideBaseProjectileSpeed)
-            destination.SetRuntimeProjectileBaseSpeedOverride(baseProjectileSpeed);
+            destination.SetRuntimeProjectileBaseSpeedOverride(baseProjectileSpeed, BaseProjectileSpeedRandom, baseProjectileSpeedRandomizeOn);
     }
 
     public void CopyResolvedSettingsTo(DirectedWaveAttackPreset preset)
@@ -50,7 +56,7 @@ public sealed class DirectedWaveAttackPattern
         preset.SetAttackSettings(
             resolved,
             resolved.HasRuntimeProjectileBaseSpeedOverride,
-            resolved.RuntimeProjectileBaseSpeedOverride);
+            resolved.RuntimeProjectileBaseSpeedOverride, resolved.RuntimeProjectileBaseSpeedRandom, resolved.RuntimeProjectileBaseSpeedRandomizeOn);
     }
 
     public void UsePresetAsLocalSettings()
@@ -64,6 +70,8 @@ public sealed class DirectedWaveAttackPattern
         baseProjectileSpeed = resolved.HasRuntimeProjectileBaseSpeedOverride
             ? resolved.RuntimeProjectileBaseSpeedOverride
             : baseProjectileSpeed;
+        BaseProjectileSpeedRandom.CopyFrom(resolved.RuntimeProjectileBaseSpeedRandom);
+        baseProjectileSpeedRandomizeOn = resolved.RuntimeProjectileBaseSpeedRandomizeOn;
         attackPreset = null;
         overridePresetAttacksPerSecond = false;
     }

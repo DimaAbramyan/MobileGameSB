@@ -3,15 +3,15 @@ using UnityEngine;
 
 public class Magnite : MonoBehaviour
 {
-    [SerializeField] private Vector2 targetOffset = new Vector2(0f, 0.3f);
+    [SerializeField] private Vector2 targetOffset = new Vector2(0f, 0.15f);
     [SerializeField, Min(0f)] private float pickupSnapDistance = 0.08f;
     [SerializeField] private LayerMask affectedLayers = ~0;
     [SerializeField, Min(0f), InspectorName("Absorption Radius"), Tooltip(
         "Radius in world units in which metal is absorbed and collected.")]
-    private float magnetRadius = 1f;
+    private float magnetRadius = 0.2f;
     [SerializeField, Min(0f), InspectorName("Attraction Radius"), Tooltip(
         "Radius in world units in which pickups begin moving toward the magnet. Must be at least Absorption Radius.")]
-    private float attractionRadius = 3f;
+    private float attractionRadius = 2f;
     public float forceAmount = 10f;
 
     private readonly Collider2D[] hits = new Collider2D[32];
@@ -26,7 +26,7 @@ public class Magnite : MonoBehaviour
 
     private void Awake()
     {
-        magnetZone = GetComponent<CircleCollider2D>();
+        CacheMagnetZone();
         ownerShip = GetComponentInParent<ParentShip>();
         SyncMagnetZoneRadius();
         ConfigureContactFilter();
@@ -85,7 +85,7 @@ public class Magnite : MonoBehaviour
         magnetRadius = Mathf.Max(0f, magnetRadius);
         attractionRadius = Mathf.Max(magnetRadius, attractionRadius);
         forceAmount = Mathf.Max(0f, forceAmount);
-        magnetZone = GetComponent<CircleCollider2D>();
+        CacheMagnetZone();
         SyncMagnetZoneRadius();
         ConfigureContactFilter();
     }
@@ -195,11 +195,20 @@ public class Magnite : MonoBehaviour
         return MagnetRadius;
     }
 
+    private void CacheMagnetZone()
+    {
+        // A legacy root-level magnet must never resize the ship's damage hitbox.
+        magnetZone = GetComponent<ParentShip>() == null
+            ? GetComponent<CircleCollider2D>()
+            : null;
+    }
+
     private void SyncMagnetZoneRadius()
     {
         if (magnetZone == null)
             return;
 
+        magnetZone.isTrigger = true;
         magnetZone.offset = targetOffset;
         magnetZone.radius = MagnetRadius;
     }

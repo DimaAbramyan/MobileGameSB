@@ -160,6 +160,9 @@ public sealed class ProjectileDataEditor : Editor
                         "scaleGrowthPerSecond",
                         "Scale Growth Per Second");
                 }
+                DrawField(contract, "reduceDamageWithGrowth", "Scale Damage And Heat By Distance");
+                if (contract.FindPropertyRelative("reduceDamageWithGrowth").boolValue)
+                    DrawField(contract, "damageMultiplierByDistance", "Damage / Heat By Normalized Distance");
                 break;
             case ProjectileResonanceSphereContract:
                 DrawField(
@@ -408,6 +411,6 @@ public sealed class ProjectileDataEditor : Editor
     {
         SerializedProperty property = parent.FindPropertyRelative(name);
         if (property != null)
-            EditorGUILayout.PropertyField(property, new GUIContent(label));
+            EditorGUILayout.PropertyField(property, new GUIContent(label, property.tooltip));
     }
 }

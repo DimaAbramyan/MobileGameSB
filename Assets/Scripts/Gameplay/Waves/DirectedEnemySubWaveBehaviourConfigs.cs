@@ -22,6 +22,13 @@ public sealed class DirectedWaveFormationConfiguration
         DirectedWaveCoordinateSpace.LocalToSubWave;
     [SerializeField] internal Vector3 formationCenter = new(0f, 2.5f, 0f);
     [SerializeField] internal Vector2 spacing = new(0.75f, 0.75f);
+    [Tooltip("Additional X/Y offset per slot, added to the original formation in its coordinate space. Zero keeps the original layout.")]
+    [SerializeField] internal Vector2 formationOffsetStep;
+    [Tooltip("The first or last slot stays fixed. Middle uses the center index; with an even count it lies between the two middle slots.")]
+    [SerializeField] internal DirectedWaveFormationOffsetOrigin formationOffsetOrigin =
+        DirectedWaveFormationOffsetOrigin.Middle;
+    [Tooltip("Linear: -2, -1, 0, 1, 2. Symmetric: 2, 1, 0, 1, 2. Applies when the origin is Middle.")]
+    [SerializeField] internal DirectedWaveFormationCenterOffsetMode formationCenterOffsetMode;
     [SerializeField, Min(1)] internal int columns = 6;
     [SerializeField, Min(1)] internal int rows = 2;
     [SerializeField] internal bool[] gridMatrixCells;

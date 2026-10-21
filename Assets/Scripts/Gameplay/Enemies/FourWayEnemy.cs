@@ -7,7 +7,9 @@ public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
     IEnemyBurstAttackSettingsOverrideReceiver,
     IEnemyProjectileTypeOverrideReceiver, IEnemyShootingSettingsReceiver,
     IEnemyAttackSettingsOverrideState, IEnemyAttackPatternSettingsReceiver, IEnemyAttackDirectionProvider,
-    IEnemyAttackAimReceiver, IEnemyAttackSequenceExecutor
+    IEnemyAttackAimReceiver, IEnemyAttackSequenceExecutor, IEnemyLockedAimAttackExecutor,
+    IEnemyEmissionAimAttackExecutor, IEnemyPendingEmissionExecutor, IEnemyStationaryAttackExecutor, IEnemyEmissionOriginReceiver,
+    IEnemyAttackCompletionReceiver, IEnemyAttackNumericSource, IEnemySectorLaunchOrderSource
 {
     private const int CurrentBurstSettingsVersion = 2;
 
@@ -79,16 +81,36 @@ public sealed class FourWayEnemy : Enemy, IEnemyBurstAttackExecutor,
         EnsureExecutorConfigured().SetWaveAimTarget(target);
     public void SetWaveAttackControl(bool isControlled) =>
         EnsureExecutorConfigured().SetWaveAttackControl(isControlled);
+    public EnemyAttackNumericRegistry NumericRegistry => EnsureExecutorConfigured().NumericRegistry;
+    public void SetNumericOwner(int slot) => EnsureExecutorConfigured().SetNumericOwner(slot);
+    public void SetAttackCompletionTracker(EnemyAttackCompletionTracker tracker) =>
+        EnsureExecutorConfigured().SetAttackCompletionTracker(tracker);
     public void SetFormationAttackReady(bool isReady) =>
         EnsureExecutorConfigured().SetFormationAttackReady(isReady);
     public bool TryFireAt(Vector3 targetPosition, EnemyBurstAttackSettings settings) =>
         EnsureExecutorConfigured().TryFireAt(targetPosition, settings);
     public bool TryFireInDirection(Vector3 direction, EnemyBurstAttackSettings settings) =>
         EnsureExecutorConfigured().TryFireInDirection(direction, settings);
+    public bool TryFireStationary(Vector3 directionOrPoint, bool worldPoint, EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().TryFireStationary(directionOrPoint, worldPoint, settings);
+    public Vector3 GetWaveAimOrigin(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().GetWaveAimOrigin(settings);
+    public bool TryFireInAimedDirection(Vector3 direction, EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().TryFireInAimedDirection(direction, settings);
+    public bool TryFireWithLockedEmissionAim(Vector3 target, EnemyBurstAttackSettings settings, bool refresh) =>
+        EnsureExecutorConfigured().TryFireWithLockedEmissionAim(target, settings, refresh);
+    public void BeginEmissionOriginAttack(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().BeginEmissionOriginAttack(settings);
+    public bool PrepareEmissionOriginShot(EnemyBurstAttackSettings settings, bool burstStart, Vector3? capturedPlayer = null, Vector2? capturedOffsets = null, EnemyAttackNumericState numericOverride = null) =>
+        EnsureExecutorConfigured().PrepareEmissionOriginShot(settings, burstStart, capturedPlayer, capturedOffsets, numericOverride);
     public void BeginAttackSequence(EnemyBurstAttackSettings settings) =>
         EnsureExecutorConfigured().BeginAttackSequence(settings);
+    public void BeginSectorLaunchOrder(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().BeginSectorLaunchOrder(settings);
     public void EndAttackSequence(EnemyBurstAttackSettings settings) =>
         EnsureExecutorConfigured().EndAttackSequence(settings);
+    public bool HasPendingEmissions(EnemyBurstAttackSettings settings) =>
+        EnsureExecutorConfigured().HasPendingEmissions(settings);
     public void SetProjectileDirectionTransform(Transform value) =>
         EnsureExecutorConfigured().SetRotationTarget(value);
 

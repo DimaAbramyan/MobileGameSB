@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -15,7 +15,9 @@ using Zenject;
 /// </summary>
 public sealed class EnemyProjectileEcsSpawner : IDisposable
 {
-    private const int ProjectileRenderQueue = 3100;
+    // Entities Graphics has no SpriteRenderer sortingOrder. Draw enemy bullets
+    // after ordinary transparent sprites, with the requested priority of 99.
+    private const int ProjectileRenderQueue = (int)RenderQueue.Overlay + 99;
     private const int CustomSpeedCurveSampleCount = 32;
 
     private readonly Dictionary<EnemyProjectileAuthoring, RuntimeVisual>
@@ -30,8 +32,72 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
 
     [Inject] private EnemyProjectileCollisionRegistry collisionRegistry;
 
+    private EnemyChildAttackRunner childAttacks;
+    private EnemyLaserRuntime lasers;
+    private Entity laserOwner;
+    public int ActiveLasers => lasers?.Count ?? 0;
+    public void UpdateLasers(float time, Camera camera = null) => lasers?.Tick(time, camera);
+    public void DrawLaserPreview(Camera camera) => lasers?.DrawPreview(camera);
+    private Entity childAttackOwner;
+    public long OmittedChildProjectiles => childAttacks?.Omitted ?? 0;
+    public int ActiveChildAttackParents => childAttacks?.ActiveParents ?? 0;
+    public void UpdateChildAttacks(float time, float delta, Vector3? target = null, int maximumLive = EnemyChildAttackSettings.MaximumLiveProjectiles, Camera gameplayCamera = null)
+        => childAttacks?.Tick(time, delta, target, maximumLive, gameplayCamera);
+
     private EntityManager entityManager;
     private World entityWorld;
+
+#if UNITY_EDITOR
+    private Dictionary<int, EnemyBullet> previewBurstPrefabs;
+
+    // Snapshot hosts stay stable; only their managed state and native projectile data rewind.
+    public void PrepareEditorPreviewSnapshots()
+    {
+        if (previewBurstPrefabs == null) throw new InvalidOperationException("Snapshots require an Editor preview spawner.");
+        if (lasers == null)
+        {
+            lasers = new EnemyLaserRuntime(entityManager);
+            laserOwner = entityManager.CreateEntity();
+            entityManager.AddComponentObject(laserOwner, new EnemyLaserSimulation { Runtime = lasers });
+        }
+        if (childAttacks == null)
+        {
+            childAttacks = new EnemyChildAttackRunner(entityManager, this);
+            childAttackOwner = entityManager.CreateEntity();
+            entityManager.AddComponentObject(childAttackOwner, new EnemyChildAttackSimulation { Runner = childAttacks });
+        }
+    }
+
+    // A private world keeps Scene View simulation out of the running game's ECS world.
+    public static EnemyProjectileEcsSpawner CreateEditorPreview(World world)
+    {
+        if (world == null || !world.IsCreated)
+            throw new ArgumentException("Preview needs a live ECS world.", nameof(world));
+        return new EnemyProjectileEcsSpawner { entityWorld = world, entityManager = world.EntityManager,
+            previewBurstPrefabs = new Dictionary<int, EnemyBullet>() };
+    }
+
+    public bool TrySpawnEditorPreviewBurst(EnemyProjectileBurstSpawnRequest request)
+    {
+        if (previewBurstPrefabs == null
+            || !previewBurstPrefabs.TryGetValue(request.BurstProjectileConfigId, out var prefab))
+            return false;
+        singleSpawnRequestBuffer.Clear();
+        if (!AppendBurstSpawnRequest(singleSpawnRequestBuffer, request, prefab)) return false;
+        return TrySpawnBatch(singleSpawnRequestBuffer);
+    }
+#endif
+
+    public bool AppendBurstSpawnRequest(List<EnemyProjectileSpawnRequest> destination, EnemyProjectileBurstSpawnRequest request, EnemyBullet prefab)
+    {
+        if (request.HasChildLineage != 0)
+            return childAttacks != null && childAttacks.AppendBurstRequest(destination, request, prefab);
+        destination.Add(new EnemyProjectileSpawnRequest(prefab,
+            new Vector3(request.Position.x, request.Position.y), new Vector3(request.Direction.x, request.Direction.y), 1f, 0f,
+            EnemyProjectileSpeedBehavior.None, 0f, null, EnemyProjectileSizeBehavior.Default, 0f, 1f, null, 1f,
+            true, request.Characteristic));
+        return true;
+    }
 
     public bool TrySpawn(
         EnemyBullet legacyPrefab,
@@ -160,6 +226,17 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         out PreparedProjectileSpawn prepared)
     {
         prepared = default;
+        if (request.Laser != null)
+        {
+            if (lasers == null)
+            {
+                lasers = new EnemyLaserRuntime(entityManager);
+                laserOwner = entityManager.CreateEntity();
+                entityManager.AddComponentObject(laserOwner, new EnemyLaserSimulation { Runtime = lasers });
+            }
+            prepared = new PreparedProjectileSpawn { Template = lasers.Template, Request = request };
+            return true;
+        }
         if (!TryGetConfiguration(request.LegacyPrefab, out EnemyProjectileAuthoring configuration)
             || !TryGetVisual(configuration, out RuntimeVisual visual))
         {
@@ -167,6 +244,13 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         }
 
         EnemyProjectileSpawnSettings spawnSettings = configuration.CreateSpawnSettings();
+#if UNITY_EDITOR
+        if (previewBurstPrefabs != null)
+        {
+            spawnSettings.BurstProjectilesPerWave = Mathf.Min(256, spawnSettings.BurstProjectilesPerWave);
+            spawnSettings.BurstWaveCount = Mathf.Min(256, spawnSettings.BurstWaveCount);
+        }
+#endif
         if (!TryGetBurstProjectileConfigId(
                 configuration,
                 request.LegacyPrefab,
@@ -203,8 +287,9 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             Configuration = configuration,
             SpawnSettings = spawnSettings,
             Direction = direction,
-            EffectiveDamage = configuration.BaseDamage
-                * Mathf.Max(0.01f, request.DamageMultiplier),
+            EffectiveDamage = ParentShip.EnemyHitDamage,
+            EffectiveCharacteristic = request.OverwritesCharacteristic
+                ? request.Characteristic : configuration.Characteristic,
             EffectiveLifetime = request.OverridesLifetime
                 ? Mathf.Max(0.01f, request.Lifetime)
                 : Mathf.Max(0.01f, configuration.BaseLifetime),
@@ -228,6 +313,16 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             return true;
 
         EnemyBullet projectileToBurst = configuration.GetBurstProjectilePrefab(legacyPrefab);
+#if UNITY_EDITOR
+        if (previewBurstPrefabs != null && projectileToBurst != null)
+        {
+            foreach (var entry in previewBurstPrefabs)
+                if (entry.Value == projectileToBurst) { burstProjectileConfigId = entry.Key; return true; }
+            burstProjectileConfigId = previewBurstPrefabs.Count + 1;
+            previewBurstPrefabs.Add(burstProjectileConfigId, projectileToBurst);
+            return true;
+        }
+#endif
         if (collisionRegistry == null || projectileToBurst == null)
         {
             Debug.LogError(
@@ -287,7 +382,8 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         Entity template = entityManager.CreateEntity();
         entityManager.AddComponentData(template, new EnemyProjectileStaticData
         {
-            BaseDamage = configuration.BaseDamage,
+            Characteristic = configuration.Characteristic,
+            BaseDamage = ParentShip.EnemyHitDamage,
             Radius = configuration.EffectiveRadius,
             BaseLifetime = configuration.BaseLifetime,
             BaseSpeed = configuration.BaseSpeed
@@ -344,6 +440,16 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             visual.Description,
             visual.RenderMeshArray,
             MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
+        Color baseColour = configuration.Characteristic == EnemyProjectileCharacteristic.Fragile
+            ? EnemyProjectileCharacteristics.FragileColour : configuration.VisualRenderer.color;
+        entityManager.AddComponentData(template, new URPMaterialPropertyBaseColor
+        {
+            Value = EnemyProjectileCharacteristics.ToRenderColour(baseColour)
+        });
+        entityManager.AddComponent<EnemyChildAttackLifetimeHold>(template);
+        entityManager.SetComponentEnabled<EnemyChildAttackLifetimeHold>(template, false);
+        entityManager.AddComponent<EnemyChildAttackLineage>(template);
+        entityManager.SetComponentEnabled<EnemyChildAttackLineage>(template, false);
         entityManager.AddComponent<Prefab>(template);
         return template;
     }
@@ -360,6 +466,17 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
                 ConfigureSpawnedEntity(
                     entities[index],
                     preparedSpawns[rangeStart + index]);
+                var request = preparedSpawns[rangeStart + index].Request;
+                if (request.ChildAttack != null || request.ChildBudget != null)
+                {
+                    if (childAttacks == null)
+                    {
+                        childAttacks = new EnemyChildAttackRunner(entityManager, this);
+                        childAttackOwner = entityManager.CreateEntity();
+                        entityManager.AddComponentObject(childAttackOwner, new EnemyChildAttackSimulation { Runner = childAttacks });
+                    }
+                    childAttacks.Register(entities[index], request, (float)entityWorld.Time.ElapsedTime);
+                }
             }
         }
         finally
@@ -370,6 +487,27 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
 
     private void ConfigureSpawnedEntity(Entity entity, PreparedProjectileSpawn prepared)
     {
+        if (prepared.Request.Laser != null)
+        {
+            lasers.Register(entity, prepared.Request, (float)entityWorld.Time.ElapsedTime);
+            return;
+        }
+        var staticData = entityManager.GetComponentData<EnemyProjectileStaticData>(entity);
+        staticData.Characteristic = prepared.EffectiveCharacteristic;
+        entityManager.SetComponentData(entity, staticData);
+        if (prepared.Request.OverwritesBaseColour
+            || prepared.EffectiveCharacteristic == EnemyProjectileCharacteristic.Fragile
+            || prepared.Request.OverwritesCharacteristic)
+        {
+            Color colour = prepared.EffectiveCharacteristic == EnemyProjectileCharacteristic.Fragile
+                ? EnemyProjectileCharacteristics.FragileColour
+                : prepared.Request.OverwritesBaseColour ? prepared.Request.ProjectileColour
+                : prepared.Configuration.VisualRenderer.color;
+            entityManager.SetComponentData(entity, new URPMaterialPropertyBaseColor
+            {
+                Value = EnemyProjectileCharacteristics.ToRenderColour(colour)
+            });
+        }
         EnemyProjectileMovement movement = CreateMovement(
             prepared,
             out Vector3 spawnPosition);
@@ -396,6 +534,9 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         {
             entityManager.SetComponentData(entity, new EnemyProjectileCustomSpeed
             {
+                CurveTarget = prepared.Request.MovementPattern == EnemyProjectileMovementPattern.Orbit
+                    ? prepared.Request.SpeedCurveTarget : EnemyProjectileSpeedCurveTarget.BaseSpeed,
+                SpeedMultiplier = 1f,
                 InitialSpeed = prepared.EffectiveSpeed,
                 SpeedChangeY = prepared.Request.SpeedChangeY,
                 DistanceSinceSpeedChange = 0f,
@@ -476,6 +617,8 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
     {
         EnemyProjectileSpawnRequest request = prepared.Request;
         float2 requestedPosition = new(request.Position.x, request.Position.y);
+        bool dna = request.MovementPattern == EnemyProjectileMovementPattern.Orbit
+            && request.OrbitCenterMode == EnemyProjectileOrbitCenterMode.DnaLike;
         float2 orbitCenter = request.OrbitCenterMode
             == EnemyProjectileOrbitCenterMode.FixedWorldPoint
                 ? new float2(
@@ -492,6 +635,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             prepared.Direction);
         float2 resolvedPosition = requestedPosition;
         if (request.MovementPattern == EnemyProjectileMovementPattern.Orbit
+            && !dna
             && request.OrbitRadius > 0f)
         {
             resolvedPosition = orbitCenter + radialDirection * orbitRadius;
@@ -504,17 +648,30 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         float referenceSpeed = prepared.Configuration.BaseSpeed > 0.0001f
             ? prepared.Configuration.BaseSpeed
             : prepared.EffectiveSpeed;
+        float2 median = prepared.Direction;
+        float dnaAngle = 0f;
+        if (dna)
+        {
+            median = math.normalizesafe(new float2(request.DnaMedianDirection.x, request.DnaMedianDirection.y), prepared.Direction);
+            dnaAngle = math.clamp(math.atan2(median.x * prepared.Direction.y - median.y * prepared.Direction.x,
+                math.dot(median, prepared.Direction)), -math.radians(EnemyProjectileDnaMotion.MaximumHalfAngleDegrees),
+                math.radians(EnemyProjectileDnaMotion.MaximumHalfAngleDegrees));
+        }
         return new EnemyProjectileMovement
         {
             Pattern = request.MovementPattern,
             ForwardDirection = prepared.Direction,
-            ReferenceSpeed = Mathf.Max(0.0001f, referenceSpeed),
-            AngularSpeedDegreesPerSecond = request.AngularSpeed,
+            ReferenceSpeed = Mathf.Max(0.0001f, dna ? prepared.EffectiveSpeed : referenceSpeed),
+            AngularSpeedDegreesPerSecond = dna && request.DnaHalfCycleDuration > 0f
+                ? math.degrees(2f * dnaAngle / request.DnaHalfCycleDuration) : request.AngularSpeed,
             LateralSpeed = request.LateralSpeed,
-            OrbitCenter = orbitCenter,
+            OrbitCenter = dna ? requestedPosition : orbitCenter,
             OrbitRadius = Mathf.Max(0f, orbitRadius),
-            OrbitAngleRadians = math.atan2(radialDirection.y, radialDirection.x),
-            OrbitRadialSpeed = request.OrbitRadialSpeed
+            OrbitAngleRadians = dna ? dnaAngle : math.atan2(radialDirection.y, radialDirection.x),
+            OrbitRadialSpeed = request.OrbitRadialSpeed,
+            OrbitCenterMode = request.OrbitCenterMode,
+            DnaMedianDirection = median,
+            DnaHalfCycleDuration = request.DnaHalfCycleDuration
         };
     }
 
@@ -582,6 +739,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
 
     private struct PreparedProjectileSpawn
     {
+        public EnemyProjectileCharacteristic EffectiveCharacteristic;
         public Entity Template;
         public EnemyProjectileSpawnRequest Request;
         public EnemyProjectileAuthoring Configuration;
@@ -693,15 +851,21 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
 
     public void Dispose()
     {
+        if (entityWorld != null && entityWorld.IsCreated)
+        {
+            childAttacks?.Dispose();
+            if (entityManager.Exists(childAttackOwner)) entityManager.DestroyEntity(childAttackOwner);
+            lasers?.Dispose();
+            if (entityManager.Exists(laserOwner)) entityManager.DestroyEntity(laserOwner);
+        }
+        lasers = null;
+        childAttacks = null;
         DestroySpawnedEntities();
 
         foreach (RuntimeVisual visual in visualsByConfiguration.Values)
         {
-            if (visual.Material != null)
-                UnityEngine.Object.Destroy(visual.Material);
-
-            if (visual.Mesh != null)
-                UnityEngine.Object.Destroy(visual.Mesh);
+            DestroyVisual(visual.Material);
+            DestroyVisual(visual.Mesh);
         }
 
         visualsByConfiguration.Clear();
@@ -709,6 +873,15 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         templatesByKey.Clear();
         invalidConfigurationsLogged.Clear();
         entityWorld = null;
+    }
+
+    private static void DestroyVisual(UnityEngine.Object visual)
+    {
+        if (visual == null) return;
+#if UNITY_EDITOR
+        if (!Application.isPlaying) { UnityEngine.Object.DestroyImmediate(visual); return; }
+#endif
+        UnityEngine.Object.Destroy(visual);
     }
 
     private void DestroySpawnedEntities()
@@ -933,6 +1106,14 @@ public struct EnemyProjectileSpawnSettings
 /// </summary>
 public readonly struct EnemyProjectileSpawnRequest
 {
+    public readonly EnemyLaserSettings Laser;
+    public readonly EnemyLaserOrigin LaserOrigin;
+    public readonly EnemyAttackCompletionTracker CompletionTracker;
+    public readonly uint NumericSeedKey;
+    public readonly EnemyChildAttackSettings ChildAttack;
+    public readonly EnemyProjectilePrefabSet ChildPrefabs;
+    public readonly int ChildGeneration;
+    public readonly EnemyChildAttackBudget ChildBudget;
     public readonly EnemyBullet LegacyPrefab;
     public readonly Vector3 Position;
     public readonly Vector3 Direction;
@@ -943,6 +1124,7 @@ public readonly struct EnemyProjectileSpawnRequest
     public readonly EnemyProjectileSpeedBehavior SpeedBehavior;
     public readonly float SpeedChangeY;
     public readonly AnimationCurve SpeedByDistance;
+    public readonly EnemyProjectileSpeedCurveTarget SpeedCurveTarget;
     public readonly EnemyProjectileSizeBehavior SizeBehavior;
     public readonly float SizeChangeY;
     public readonly float SizeChangeSpeed;
@@ -956,6 +1138,12 @@ public readonly struct EnemyProjectileSpawnRequest
     public readonly Vector2 OrbitFixedWorldCenter;
     public readonly float OrbitRadius;
     public readonly float OrbitRadialSpeed;
+    public readonly Vector3 DnaMedianDirection;
+    public readonly float DnaHalfCycleDuration;
+    public readonly bool OverwritesBaseColour;
+    public readonly Color ProjectileColour;
+    public readonly bool OverwritesCharacteristic;
+    public readonly EnemyProjectileCharacteristic Characteristic;
 
     public EnemyProjectileSpawnRequest(
         EnemyBullet legacyPrefab,
@@ -970,7 +1158,14 @@ public readonly struct EnemyProjectileSpawnRequest
         float sizeChangeY,
         float sizeChangeSpeed,
         AnimationCurve sizeChangeCurve,
-        float finalSize)
+        float finalSize,
+        bool overwritesCharacteristic = false,
+        EnemyProjectileCharacteristic characteristic = EnemyProjectileCharacteristic.Normal,
+        EnemyChildAttackSettings childAttack = null, EnemyProjectilePrefabSet childPrefabs = default,
+        int childGeneration = 0, EnemyChildAttackBudget childBudget = null,
+        EnemyProjectileSpeedCurveTarget speedCurveTarget = EnemyProjectileSpeedCurveTarget.Both,
+        EnemyAttackCompletionTracker completionTracker = null, uint numericSeedKey = 0,
+        EnemyLaserSettings laser = null, EnemyLaserOrigin laserOrigin = default)
         : this(
             legacyPrefab,
             position,
@@ -994,7 +1189,11 @@ public readonly struct EnemyProjectileSpawnRequest
             0f,
             0f,
             false,
-            0f)
+            0f,
+            overwritesCharacteristic: overwritesCharacteristic,
+            characteristic: characteristic, childAttack: childAttack, childPrefabs: childPrefabs,
+            childGeneration: childGeneration, childBudget: childBudget, speedCurveTarget: speedCurveTarget,
+            completionTracker: completionTracker, numericSeedKey: numericSeedKey, laser: laser, laserOrigin: laserOrigin)
     {
     }
 
@@ -1021,8 +1220,22 @@ public readonly struct EnemyProjectileSpawnRequest
         float orbitRadius,
         float orbitRadialSpeed,
         bool overridesLifetime,
-        float lifetime)
+        float lifetime,
+        Vector3 dnaMedianDirection = default,
+        float dnaHalfCycleDuration = 0f,
+        bool overwritesBaseColour = false,
+        Color projectileColour = default,
+        bool overwritesCharacteristic = false,
+        EnemyProjectileCharacteristic characteristic = EnemyProjectileCharacteristic.Normal,
+        EnemyChildAttackSettings childAttack = null, EnemyProjectilePrefabSet childPrefabs = default,
+        int childGeneration = 0, EnemyChildAttackBudget childBudget = null,
+        EnemyProjectileSpeedCurveTarget speedCurveTarget = EnemyProjectileSpeedCurveTarget.Both,
+        EnemyAttackCompletionTracker completionTracker = null, uint numericSeedKey = 0,
+        EnemyLaserSettings laser = null, EnemyLaserOrigin laserOrigin = default)
     {
+        Laser = laser; LaserOrigin = laserOrigin;
+        CompletionTracker = completionTracker; NumericSeedKey = numericSeedKey;
+        ChildAttack = childAttack; ChildPrefabs = childPrefabs; ChildGeneration = childGeneration; ChildBudget = childBudget;
         LegacyPrefab = legacyPrefab;
         Position = position;
         Direction = direction;
@@ -1033,6 +1246,7 @@ public readonly struct EnemyProjectileSpawnRequest
         SpeedBehavior = speedBehavior;
         SpeedChangeY = speedChangeY;
         SpeedByDistance = speedByDistance;
+        SpeedCurveTarget = speedCurveTarget;
         SizeBehavior = sizeBehavior;
         SizeChangeY = sizeChangeY;
         SizeChangeSpeed = sizeChangeSpeed;
@@ -1046,5 +1260,11 @@ public readonly struct EnemyProjectileSpawnRequest
         OrbitFixedWorldCenter = orbitFixedWorldCenter;
         OrbitRadius = Mathf.Max(0f, orbitRadius);
         OrbitRadialSpeed = orbitRadialSpeed;
+        DnaMedianDirection = dnaMedianDirection;
+        DnaHalfCycleDuration = dnaHalfCycleDuration;
+        OverwritesBaseColour = overwritesBaseColour;
+        ProjectileColour = projectileColour;
+        OverwritesCharacteristic = overwritesCharacteristic;
+        Characteristic = characteristic;
     }
 }

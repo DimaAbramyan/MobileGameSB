@@ -3,8 +3,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewShipData", menuName = "Game/Ship Data")]
 public class ShipData : ScriptableObject
 {
-    public const float DefaultHealthRegenCooldown = 20f;
-    public const float DefaultShieldRegenCooldown = 10f;
+    public const float DefaultHealthRegenCooldown = 60f;
+    public const float DefaultShieldRegenCooldown = 30f;
     public const float DefaultRegenRatePercent = 10f;
 
     [Header("Controllability")]
@@ -126,6 +126,8 @@ public class ShipData : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
+        maximumHealthPoints = Mathf.Round(Mathf.Max(0f, maximumHealthPoints));
+        maximumShieldPoints = Mathf.Round(Mathf.Max(0f, maximumShieldPoints));
         healthRegenCooldown = Mathf.Max(0f, healthRegenCooldown);
         shieldRegenCooldown = Mathf.Max(0f, shieldRegenCooldown);
         healthRegenRate = Mathf.Max(0f, healthRegenRate);

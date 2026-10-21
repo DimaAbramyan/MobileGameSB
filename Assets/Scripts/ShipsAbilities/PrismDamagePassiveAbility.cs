@@ -4,7 +4,6 @@ public sealed class PrismDamagePassiveAbility : PassiveAbility,
     IOutgoingDamageModifier
 {
     private float plasmaDamageBonusPercent = 15f;
-    private float electricDamageBonusPercent = 10f;
 
     public override void Init(ParentShip ship)
     {
@@ -17,7 +16,6 @@ public sealed class PrismDamagePassiveAbility : PassiveAbility,
             return;
 
         plasmaDamageBonusPercent = contract.PlasmaDamageBonusPercent;
-        electricDamageBonusPercent = contract.ElectricDamageBonusPercent;
     }
 
     public float ModifyOutgoingDamage(EnemyDamageType damageType, float damage)
@@ -25,12 +23,8 @@ public sealed class PrismDamagePassiveAbility : PassiveAbility,
         if (!isActive || damage <= 0f)
             return damage;
 
-        float bonusPercent = damageType switch
-        {
-            EnemyDamageType.Plasma => plasmaDamageBonusPercent,
-            EnemyDamageType.Electric => electricDamageBonusPercent,
-            _ => 0f
-        };
+        float bonusPercent = damageType == EnemyDamageType.Plazma
+            ? plasmaDamageBonusPercent : 0f;
 
         return damage * (1f + Mathf.Max(0f, bonusPercent) / 100f);
     }

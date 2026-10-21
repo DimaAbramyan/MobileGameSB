@@ -21,6 +21,7 @@ public sealed class WaveEditor : Editor
         "WaveEditor.DirectedPostPreviewDuration";
     private const float DefaultPreviewDuration = 4f;
     private const double PreviewFrameInterval = 1d / 30d;
+    private const string ShowAttackPatternsKey = "WaveEditor.ShowAttackPatterns";
 
     private sealed class CuePreviewCache
     {
@@ -43,6 +44,7 @@ public sealed class WaveEditor : Editor
     private bool previewPlaying;
     private double previewStartTime;
     private double nextPreviewFrameTime;
+    private double nextPreviewInspectorTime;
     private float previewSampleElapsed;
     private int previewSampleVersion;
     private bool showCameraBounds;
@@ -50,6 +52,10 @@ public sealed class WaveEditor : Editor
     private float cameraBoundsAspect;
     private Vector2 cameraBoundsCenter;
     private float previewDuration;
+    private bool showAttackPatterns;
+    private Vector3 previewPlayerPosition = new(0f, -3f, 0f);
+    private Sprite previewPlayerSprite;
+    private WaveConductorShootingPreview shootingPreview;
     private bool hasCachedBaseRouteDuration;
     private float cachedBaseRouteDuration;
     private readonly List<CuePreviewCache> cuePreviewCaches = new();
@@ -63,6 +69,7 @@ public sealed class WaveEditor : Editor
         scheduledSubWaves = serializedObject.FindProperty("scheduledSubWaves");
         legacySubWaves = serializedObject.FindProperty("SubWavesToCreate");
         enableDebugLogs = serializedObject.FindProperty("enableDebugLogs");
+        showAttackPatterns = SessionState.GetBool(ShowAttackPatternsKey, false);
 
         showCameraBounds = EditorPrefs.GetBool(ShowCameraBoundsKey, true);
         cameraBoundsOrthoSize = EditorPrefs.GetFloat(
@@ -92,13 +99,18 @@ public sealed class WaveEditor : Editor
         }
 
         Undo.undoRedoPerformed += HandleUndoRedo;
+        EditorApplication.playModeStateChanged += OnPreviewPlayModeChanged;
     }
 
     private void OnDisable()
     {
         StopPreview();
         Undo.undoRedoPerformed -= HandleUndoRedo;
+        EditorApplication.playModeStateChanged -= OnPreviewPlayModeChanged;
     }
+
+    private void OnPreviewPlayModeChanged(PlayModeStateChange state)
+    { if (state == PlayModeStateChange.ExitingEditMode) StopPreview(); }
 
     public override void OnInspectorGUI()
     {
@@ -159,6 +171,37 @@ public sealed class WaveEditor : Editor
     {
         EditorGUILayout.Space(8f);
         EditorGUILayout.LabelField("Conductor Preview", EditorStyles.boldLabel);
+        using (new EditorGUI.DisabledScope(Application.isPlaying))
+            if (GUILayout.Button("Open Wave Preview Player"))
+            { StopPreview(); WavePreviewPlayerWindow.Open((Wave)target); }
+
+        if (Application.isPlaying)
+        {
+            EditorGUILayout.HelpBox("Conductor Preview is available in Edit Mode.", MessageType.Info);
+            return;
+        }
+
+        EditorGUI.BeginChangeCheck();
+        showAttackPatterns = EditorGUILayout.Toggle(new GUIContent("Show Attack Patterns",
+            "Show actual projectiles from all assigned directed subwaves during Preview Wave Schedule, using their start delays, movement and attack settings."), showAttackPatterns);
+        if (EditorGUI.EndChangeCheck())
+        {
+            SessionState.SetBool(ShowAttackPatternsKey, showAttackPatterns);
+            DisposeShootingPreview();
+            if (showAttackPatterns) EnemyShootingPreview.ShowFormationVolley = true;
+            SceneView.RepaintAll();
+        }
+        if (showAttackPatterns)
+        {
+            EditorGUI.BeginChangeCheck();
+            previewPlayerSprite = (Sprite)EditorGUILayout.ObjectField(new GUIContent("Preview Player Sprite",
+                "Optional player sprite for the shared movable aiming target."), previewPlayerSprite, typeof(Sprite), false);
+            if (EditorGUI.EndChangeCheck()) DisposeShootingPreview();
+            EditorGUI.BeginChangeCheck();
+            previewPlayerPosition = EditorGUILayout.Vector3Field(new GUIContent("Preview Player Position",
+                "World position of the player target shared by all subwaves. You can also drag its handle in Scene View."), previewPlayerPosition);
+            if (EditorGUI.EndChangeCheck() && shootingPreview != null) shootingPreview.TargetPosition = previewPlayerPosition;
+        }
 
         using (new EditorGUILayout.HorizontalScope())
         {
@@ -202,7 +245,7 @@ public sealed class WaveEditor : Editor
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            GUI.enabled = !previewPlaying && scheduledSubWaves.arraySize > 0;
+            GUI.enabled = !previewPlaying && GetPreviewCueCount() > 0;
             if (GUILayout.Button("Preview Wave Schedule"))
                 StartPreview();
 
@@ -218,6 +261,15 @@ public sealed class WaveEditor : Editor
             EditorGUILayout.HelpBox(
                 $"Previewing conductor: {GetPreviewElapsed():0.00}s / {totalDuration:0.00}s",
                 MessageType.Info);
+            if (showAttackPatterns && shootingPreview != null)
+            {
+                EditorGUILayout.LabelField($"Shooting: {shootingPreview.ActiveCueCount}/{shootingPreview.CueCount} subwaves · "
+                    + $"{shootingPreview.EnemyCount} enemies · {shootingPreview.ProjectileCount} projectiles");
+                if (!string.IsNullOrEmpty(shootingPreview.Warning))
+                    EditorGUILayout.HelpBox(shootingPreview.Warning, MessageType.Warning);
+                if (shootingPreview.Omitted > 0)
+                    EditorGUILayout.HelpBox("Dense attacks are sampled; at most 2048 projectiles are simulated across the entire wave.", MessageType.Info);
+            }
         }
 
         DrawCameraBoundsControls();
@@ -225,10 +277,16 @@ public sealed class WaveEditor : Editor
 
     private void StartPreview()
     {
+        if (Application.isPlaying) return;
         InvalidatePreviewCaches();
         previewPlaying = true;
+        if (showAttackPatterns)
+        {
+            EnemyShootingPreview.ShowFormationVolley = true;
+            EnsureShootingPreview();
+        }
         previewStartTime = EditorApplication.timeSinceStartup;
-        nextPreviewFrameTime = previewStartTime;
+        nextPreviewFrameTime = nextPreviewInspectorTime = previewStartTime;
         previewSampleElapsed = 0f;
         previewSampleVersion++;
         SceneView.duringSceneGui -= DrawPreviewInScene;
@@ -240,9 +298,6 @@ public sealed class WaveEditor : Editor
 
     private void StopPreview()
     {
-        if (!previewPlaying)
-            return;
-
         previewPlaying = false;
         SceneView.duringSceneGui -= DrawPreviewInScene;
         EditorApplication.update -= UpdatePreview;
@@ -253,33 +308,78 @@ public sealed class WaveEditor : Editor
 
     private void UpdatePreview()
     {
-        if (!previewPlaying)
+        if (!previewPlaying || Application.isPlaying || target == null)
             return;
 
         double now = EditorApplication.timeSinceStartup;
         float elapsed = Mathf.Max(0f, (float)(now - previewStartTime));
-        if (elapsed >= GetTotalPreviewDuration())
+        float duration = GetTotalPreviewDuration();
+        if (elapsed >= duration && (!showAttackPatterns
+            || shootingPreview != null && shootingPreview.Time >= duration - WaveShootingPreviewSession.StepInterval))
         {
             StopPreview();
             return;
         }
+        elapsed = Mathf.Min(elapsed, duration);
 
-        if (now < nextPreviewFrameTime)
+        if (now < nextPreviewFrameTime && elapsed - previewSampleElapsed < 2f * WaveShootingPreviewSession.StepInterval)
             return;
 
-        previewSampleElapsed = elapsed;
+        if (showAttackPatterns)
+        {
+            EnsureShootingPreview();
+            shootingPreview?.AdvanceTo(elapsed);
+            previewSampleElapsed = shootingPreview != null ? shootingPreview.Time : elapsed;
+        }
+        else previewSampleElapsed = elapsed;
         previewSampleVersion++;
-        nextPreviewFrameTime = now + PreviewFrameInterval;
+        if (now >= nextPreviewFrameTime)
+            nextPreviewFrameTime += (System.Math.Floor((now - nextPreviewFrameTime) / PreviewFrameInterval) + 1d) * PreviewFrameInterval;
         SceneView.RepaintAll();
-        Repaint();
+        if (now >= nextPreviewInspectorTime)
+        {
+            nextPreviewInspectorTime = now + .1d;
+            Repaint();
+        }
     }
+
+    private void EnsureShootingPreview()
+    {
+        if (shootingPreview != null && !shootingPreview.IsConfigurationCurrent) DisposeShootingPreview();
+        if (!showAttackPatterns || shootingPreview != null || !(target is Wave wave)) return;
+        shootingPreview = new WaveConductorShootingPreview(wave, previewPlayerPosition, previewPlayerSprite);
+    }
+
+    private void DisposeShootingPreview()
+    {
+        if (shootingPreview == null) return;
+        previewPlayerPosition = shootingPreview.TargetPosition;
+        shootingPreview.Dispose();
+        shootingPreview = null;
+    }
+
+    private int GetPreviewCueCount()
+        => scheduledSubWaves.arraySize > 0 ? scheduledSubWaves.arraySize : legacySubWaves?.arraySize ?? 0;
+
+    private GameObject GetPreviewCuePrefab(int index)
+        => scheduledSubWaves.arraySize > 0
+            ? scheduledSubWaves.GetArrayElementAtIndex(index).FindPropertyRelative("subWavePrefab").objectReferenceValue as GameObject
+            : legacySubWaves.GetArrayElementAtIndex(index).objectReferenceValue as GameObject;
+
+    private float GetPreviewCueStartDelay(int index)
+        => scheduledSubWaves.arraySize > 0 ? GetCueStartDelay(scheduledSubWaves.GetArrayElementAtIndex(index)) : 0f;
 
     private void DrawPreviewInScene(SceneView sceneView)
     {
-        if (!previewPlaying
-            || target == null
-            || Event.current.type != EventType.Repaint)
+        if (!previewPlaying || target == null)
             return;
+
+        if (showAttackPatterns && shootingPreview != null)
+        {
+            shootingPreview.Draw(sceneView);
+            previewPlayerPosition = shootingPreview.TargetPosition;
+        }
+        if (Event.current.type != EventType.Repaint) return;
 
         serializedObject.Update();
 
@@ -297,11 +397,11 @@ public sealed class WaveEditor : Editor
         DrawCameraBoundsPreview();
         DrawDangerWarningPreview(wave, dangerWarning, elapsed);
 
-        for (int i = 0; i < scheduledSubWaves.arraySize; i++)
+        int cueCount = GetPreviewCueCount();
+        for (int i = 0; i < cueCount; i++)
         {
-            SerializedProperty cue = scheduledSubWaves.GetArrayElementAtIndex(i);
-            GameObject prefab = cue.FindPropertyRelative("subWavePrefab").objectReferenceValue as GameObject;
-            float startDelay = GetCueStartDelay(cue) + warningDuration;
+            GameObject prefab = GetPreviewCuePrefab(i);
+            float startDelay = GetPreviewCueStartDelay(i) + warningDuration;
 
             if (prefab == null)
                 continue;
@@ -321,7 +421,7 @@ public sealed class WaveEditor : Editor
             wave.transform.position + Vector3.up * 5f,
             $"Wave Conductor Preview\n"
             + $"Time: {elapsed:0.00}s / {GetTotalPreviewDuration():0.00}s\n"
-            + $"Active scheduled subwaves: {visibleSubWaves}/{scheduledSubWaves.arraySize}");
+            + $"Active scheduled subwaves: {visibleSubWaves}/{cueCount}");
     }
 
     private void DrawSubWavePreview(
@@ -396,7 +496,8 @@ public sealed class WaveEditor : Editor
                 wave.transform);
             Handles.DrawAAPolyLine(2f, spawnPosition, position);
             Handles.color = new Color(color.r, color.g, color.b, 0.9f);
-            Handles.DrawSolidDisc(position, Vector3.forward, radius * 1.5f);
+            if (showAttackPatterns) Handles.DrawWireDisc(position, Vector3.forward, radius * 1.5f);
+            else Handles.DrawSolidDisc(position, Vector3.forward, radius * 1.5f);
             Handles.color = Color.black;
             Handles.DrawWireDisc(position, Vector3.forward, radius * 1.8f);
             Handles.color = Color.white;
@@ -459,11 +560,13 @@ public sealed class WaveEditor : Editor
         bool configurationChanged = cache.dirtyCount != dirtyCount
             || cache.spawnOrder == null
             || cache.spawnOrder.Length != count;
+        int[] shootingOrder = shootingPreview?.GetSpawnOrder(cueIndex);
+        if (shootingOrder != null && !ReferenceEquals(cache.spawnOrder, shootingOrder)) configurationChanged = true;
 
         if (configurationChanged)
         {
             directed.InvalidateSimulationPreviewCache();
-            cache.spawnOrder = directed.GetSimulationSpawnOrder();
+            cache.spawnOrder = shootingOrder ?? directed.GetSimulationSpawnOrder();
             cache.enemyLabels = BuildEnemyLabels(
                 cueIndex,
                 cache.spawnOrder);
@@ -479,6 +582,7 @@ public sealed class WaveEditor : Editor
             return;
         }
 
+        // Shooting samples a bounded number of attackers; formation geometry must include every slot.
         directed.EvaluateSimulationPreviewNonAlloc(
             cueTime,
             wave.transform,
@@ -512,6 +616,7 @@ public sealed class WaveEditor : Editor
 
     private void InvalidatePreviewCaches()
     {
+        DisposeShootingPreview();
         for (int i = 0; i < cuePreviewCaches.Count; i++)
         {
             CuePreviewCache cache = cuePreviewCaches[i];
@@ -901,11 +1006,10 @@ public sealed class WaveEditor : Editor
             : 0f;
         float duration = 0f;
 
-        for (int i = 0; i < scheduledSubWaves.arraySize; i++)
+        for (int i = 0; i < GetPreviewCueCount(); i++)
         {
-            SerializedProperty cue = scheduledSubWaves.GetArrayElementAtIndex(i);
-            GameObject prefab = cue.FindPropertyRelative("subWavePrefab").objectReferenceValue as GameObject;
-            float startDelay = GetCueStartDelay(cue);
+            GameObject prefab = GetPreviewCuePrefab(i);
+            float startDelay = GetPreviewCueStartDelay(i);
             duration = Mathf.Max(
                 duration,
                 warningDuration

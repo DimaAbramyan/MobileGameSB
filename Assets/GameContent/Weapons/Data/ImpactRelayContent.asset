@@ -18,7 +18,7 @@ MonoBehaviour:
   activeAbilityDescription: 
   icon: {fileID: 21300000, guid: 48a0279687ba6764f84b94784c732d37, type: 3}
   prefab: {fileID: 3783366818579219487, guid: 34ec5eacb1c28f34386db3828cd7902b, type: 3}
-  rarity: 0
+  rarity: 1
   purchasePrice: 0
   purchaseCoresPrice: 0
   unlockRequirement:

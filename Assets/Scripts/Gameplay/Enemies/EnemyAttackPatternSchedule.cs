@@ -7,35 +7,38 @@ public struct EnemyAttackPatternSchedule
     private int remainingBurstShots;
     private int burstShotCount;
     private float nextShotTime;
+    private EnemyAttackNumericState numeric;
 
     public bool IsComplete => remainingAttackShots <= 0;
     public bool IsBurstStart => remainingBurstShots == burstShotCount;
+    public bool IsLastShot => remainingAttackShots == 1 && remainingBurstShots == 1;
     public float NextAttackTime { get; private set; }
 
-    public void Begin(EnemyBurstAttackSettings settings, float time, float fireRate, bool initialDelay)
+    public void Begin(EnemyBurstAttackSettings settings, float time, float fireRate, bool initialDelay, EnemyAttackNumericState numeric = null)
     {
-        remainingAttackShots = settings.GetAttackShotCountForFireRate(fireRate);
-        remainingBurstShots = settings.RepeatBurst ? settings.BurstShotCount : 1;
+        this.numeric = numeric;
+        remainingAttackShots = settings.GetAttackShotCountForFireRate(fireRate, numeric);
+        remainingBurstShots = settings.RepeatBurst ? settings.SampleBurstCount(numeric) : 1;
         burstShotCount = remainingBurstShots;
-        nextShotTime = time + (initialDelay ? settings.AttackStartDelay / Mathf.Max(0.01f, fireRate) : 0f);
+        nextShotTime = time + (initialDelay || settings.AttackStartDelayRandom.enabled ? settings.SampleStartDelay(numeric) / Mathf.Max(0.01f, fireRate) : 0f);
         NextAttackTime = nextShotTime;
     }
 
     public bool IsDue(float time) => !IsComplete && time >= nextShotTime;
 
-    public void Advance(EnemyBurstAttackSettings settings, float time, float fireRate)
+    public void Advance(EnemyBurstAttackSettings settings, float time, float fireRate, float? cooldown = null)
     {
         if (--remainingBurstShots > 0)
         {
-            nextShotTime = time + settings.BurstShotInterval;
+            nextShotTime = time + settings.SampleBurstInterval(numeric);
             return;
         }
         if (--remainingAttackShots > 0)
         {
-            remainingBurstShots = settings.RepeatBurst ? settings.BurstShotCount : 1;
-            nextShotTime = time + settings.AttackShotInterval / (settings.RepeatBurst ? 1f : Mathf.Max(0.01f, fireRate));
+            remainingBurstShots = burstShotCount;
+            nextShotTime = time + settings.SampleShotInterval(numeric) / (settings.RepeatBurst ? 1f : Mathf.Max(0.01f, fireRate));
             return;
         }
-        NextAttackTime = time + settings.AttackCooldown / Mathf.Max(0.01f, fireRate);
+        NextAttackTime = time + (cooldown ?? settings.AttackCooldown) / Mathf.Max(0.01f, fireRate);
     }
 }

@@ -76,7 +76,7 @@ public sealed class ResonanceSphereProjectile : MonoBehaviour,
             && !isDetonating
             && incomingProjectile != null
             && incomingProjectile.Owner != null
-            && incomingProjectile.DamageType != EnemyDamageType.Resonance;
+            && incomingProjectile.DamageType != EnemyDamageType.Default;
     }
 
     public void ReceiveProjectileDamage(
@@ -96,7 +96,7 @@ public sealed class ResonanceSphereProjectile : MonoBehaviour,
         return isConfigured
             && !isDetonating
             && owner != null
-            && damageType != EnemyDamageType.Resonance;
+            && damageType != EnemyDamageType.Default;
     }
 
     public void ReceiveEntityProjectileDamage(
@@ -209,7 +209,7 @@ public sealed class ResonanceSphereProjectile : MonoBehaviour,
                 enemy,
                 projectile.Owner,
                 storedDamage,
-                EnemyDamageType.Resonance);
+                EnemyDamageType.Default);
         }
     }
 }

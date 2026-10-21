@@ -5,6 +5,7 @@ using UnityEngine;
 [CustomPropertyDrawer(typeof(EnemyRotationSettings), true)]
 public sealed class EnemyRotationSettingsDrawer : PropertyDrawer
 {
+    private static bool UsesLayoutRandom(SerializedProperty property) => property.name == "rotation";
     private static IEnumerable<string> Fields(SerializedProperty property)
     {
         yield return "direction";
@@ -23,7 +24,11 @@ public sealed class EnemyRotationSettingsDrawer : PropertyDrawer
     {
         float height = EditorGUIUtility.singleLineHeight + 2f;
         foreach (string field in Fields(property))
-            height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true) + 2f;
+        {
+            var child = property.FindPropertyRelative(field);
+            height += (!UsesLayoutRandom(property) && child.propertyType == SerializedPropertyType.Float
+                ? EditorGUIUtility.singleLineHeight : EditorGUI.GetPropertyHeight(child, true)) + 2f;
+        }
         return height;
     }
 
@@ -38,15 +43,25 @@ public sealed class EnemyRotationSettingsDrawer : PropertyDrawer
             position.y += position.height + 2f;
             var child = property.FindPropertyRelative(field);
             position.height = EditorGUI.GetPropertyHeight(child, true);
+            if (!UsesLayoutRandom(property) && child.propertyType == SerializedPropertyType.Float) position.height = EditorGUIUtility.singleLineHeight;
             GUIContent fieldLabel = field switch
             {
-                "rotationSpeedDegreesPerSecond" => new GUIContent("Rotation Speed (deg/s)"),
-                "rotationFromAngle" => new GUIContent("From Angle"),
-                "rotationAngle" => new GUIContent("To Angle"),
+                "direction" => new GUIContent("Direction", "Clockwise — по часовой стрелке. Counterclockwise — против часовой стрелки."),
+                "rotationMode" => new GUIContent("Rotation Mode", "Continuous — постоянное вращение. By Angle — поворот до To Angle. Ping Pong By Angle — повторяющийся проход между From Angle и To Angle."),
+                "rotationSpeedDegreesPerSecond" => new GUIContent("Rotation Speed (deg/s)", "Скорость поворота в градусах в секунду; длительность прохода зависит от углового диапазона."),
+                "rotationFromAngle" => new GUIContent("From Angle", "Начальный угол каждого прохода Ping Pong относительно исходного layout."),
+                "rotationAngle" => new GUIContent("To Angle", "Конечный угол прохода By Angle или Ping Pong относительно исходного layout."),
+                "resetRotationOnEnable" => new GUIContent("Reset Rotation On Enable", "Начать вращение с исходного угла при повторном включении."),
                 "rotationProgressCurve" => new GUIContent("Rotation Progress Curve", "X: normalized pass time. Y: completed turn progress (0 to 1)."),
                 _ => new GUIContent(child.displayName)
             };
-            EditorGUI.PropertyField(position, child, fieldLabel, true);
+            if (!UsesLayoutRandom(property) && child.propertyType == SerializedPropertyType.Float)
+            {
+                EditorGUI.BeginProperty(position, fieldLabel, child);
+                child.floatValue = EditorGUI.FloatField(position, fieldLabel, child.floatValue);
+                EditorGUI.EndProperty();
+            }
+            else EditorGUI.PropertyField(position, child, fieldLabel, true);
         }
         EditorGUI.indentLevel--;
         EditorGUI.EndProperty();

@@ -22,6 +22,15 @@ public class Enemy : MonoBehaviour, iDamagable
         Animator.StringToHash("Base Layer.Death");
 
     [Inject] EnemyManager enemyManager;
+    [InjectOptional] private DealDamageManager damageNumberManager;
+    [InjectOptional] private EnemyProjectileCollisionRegistry projectileCollisionRegistry;
+    private EnemyAttackClock attackClock;
+    public WaveAttackPermissions AttackPermissions { get; internal set; }
+    public float AttackSpeedMultiplier => projectileCollisionRegistry != null
+        ? projectileCollisionRegistry.EvaluateActiveSpeedMultiplier(transform.position, true) : 1f;
+    public float AttackTime => attackClock.Tick(Time.time,
+        AttackPermissions != null && AttackPermissions.Interrupted ? 0f : AttackSpeedMultiplier);
+    protected virtual void LateUpdate() { _ = AttackTime; }
     [SerializeField] private bool DoHaveBuff = true;
     public bool isDead = false;
     [SerializeField] TextMeshPro DamageShowing;
@@ -43,8 +52,9 @@ public class Enemy : MonoBehaviour, iDamagable
     private SpriteRenderer spriteRenderer;
     private EnemyShieldModifier shieldModifier;
     private bool bypassShieldForNextDamage;
+    private bool forceShieldFirstForNextDamage;
     private bool hasDamageTypeForNextDamage;
-    private EnemyDamageType damageTypeForNextDamage = EnemyDamageType.Resonance;
+    private EnemyDamageType damageTypeForNextDamage = EnemyDamageType.Default;
     private float damageMultiplier = 1f;
     private float fireRateMultiplier = 1f;
     private float movementSlowPercent;
@@ -80,20 +90,26 @@ public class Enemy : MonoBehaviour, iDamagable
         if (isDead)
             return;
 
+        float healthBeforeDamage = _currentHealth;
+        float shieldBeforeDamage = shieldModifier != null ? shieldModifier.CurrentShieldPoints : 0f;
         GameObject ShowIcon = null;
         EnemyDamageProfile profile = EnemyDamageProfiles.Get(
             hasDamageTypeForNextDamage
                 ? damageTypeForNextDamage
-                : EnemyDamageType.Resonance);
+                : EnemyDamageType.Default);
         float hullDamage = CalculateHullDamage(t, profile);
         if (Mathf.Approximately(hullDamage, 0f))
+        {
+            ReportDirectDamage(t, healthBeforeDamage, shieldBeforeDamage);
             return;
+        }
 
         _currentHealth -= hullDamage;
         if (healthBar != null)
         {
             healthBar.SetHealth(_currentHealth / (_maxHealth / 100));
         }
+        ReportDirectDamage(t, healthBeforeDamage, shieldBeforeDamage);
         if (_currentHealth <= 0)
         {
             Dying();
@@ -102,6 +118,15 @@ public class Enemy : MonoBehaviour, iDamagable
         {
             ShowIcon.GetComponent<RectTransform>().position = Camera.main.WorldToScreenPoint(this.transform.position);
         }
+    }
+
+    private void ReportDirectDamage(float incomingDamage, float healthBefore, float shieldBefore)
+    {
+        // Typed/managed hits publish once after their complete virtual damage call.
+        if (hasDamageTypeForNextDamage) return;
+        damageNumberManager?.NotifyDamageApplied(this, new EnemyDamageResult(
+            healthBefore - _currentHealth,
+            shieldBefore - (shieldModifier != null ? shieldModifier.CurrentShieldPoints : 0f)), incomingDamage);
     }
     public virtual void Dying()
     {
@@ -161,7 +186,7 @@ public class Enemy : MonoBehaviour, iDamagable
 
     public void TakeDamageIgnoringShield(float damage)
     {
-        TakeDamageWithType(damage, EnemyDamageType.Resonance, true);
+        TakeDamageWithType(damage, EnemyDamageType.Default, true);
     }
 
     public void MultiplyHealth(float multiplier)
@@ -322,10 +347,28 @@ public class Enemy : MonoBehaviour, iDamagable
         EnemyDamageType damageType,
         bool bypassesShield = false)
     {
+        return TakeDamageWithType(damage, damageType, bypassesShield, false);
+    }
+
+    public EnemyDamageResult TakeDamageWithType(
+        float damage,
+        EnemyDamageType damageType,
+        bool bypassesShield,
+        bool forceShieldFirst)
+    {
+        return ApplyManagedDamage(damage, damageType, bypassesShield, forceShieldFirst,
+            damageNumberManager, damage);
+    }
+
+    internal EnemyDamageResult ApplyManagedDamage(float damage, EnemyDamageType damageType,
+        bool bypassesShield, bool forceShieldFirst, DealDamageManager reporter, float originalDamage)
+    {
         bool previousBypassShield = bypassShieldForNextDamage;
+        bool previousForceShieldFirst = forceShieldFirstForNextDamage;
         bool previousHasDamageType = hasDamageTypeForNextDamage;
         EnemyDamageType previousDamageType = damageTypeForNextDamage;
         bypassShieldForNextDamage = bypassesShield;
+        forceShieldFirstForNextDamage = forceShieldFirst;
           hasDamageTypeForNextDamage = true;
           damageTypeForNextDamage = damageType;
           float healthBeforeDamage = _currentHealth;
@@ -339,15 +382,18 @@ public class Enemy : MonoBehaviour, iDamagable
         finally
         {
             bypassShieldForNextDamage = previousBypassShield;
+            forceShieldFirstForNextDamage = previousForceShieldFirst;
             hasDamageTypeForNextDamage = previousHasDamageType;
             damageTypeForNextDamage = previousDamageType;
         }
 
-          return new EnemyDamageResult(
+          var result = new EnemyDamageResult(
               healthBeforeDamage - _currentHealth,
               shieldBeforeDamage - (shieldModifier != null
                   ? shieldModifier.CurrentShieldPoints
                   : 0f));
+          reporter?.NotifyDamageApplied(this, result, originalDamage);
+          return result;
       }
 
     private float CalculateHullDamage(
@@ -358,14 +404,14 @@ public class Enemy : MonoBehaviour, iDamagable
             return ApplyHullDamageVulnerability(
                 incomingDamage * profile.HullMultiplier);
 
-        float shieldInput = incomingDamage
-            * (1f - profile.ShieldBypassFraction);
+        float bypassFraction = forceShieldFirstForNextDamage ? 0f : profile.ShieldBypassFraction;
+        float shieldInput = incomingDamage * (1f - bypassFraction);
         float shieldOverflow = shieldModifier == null
             ? shieldInput
             : shieldModifier.AbsorbDamage(
                 shieldInput,
                 profile.ShieldMultiplier);
-        float hullInput = incomingDamage * profile.ShieldBypassFraction
+        float hullInput = incomingDamage * bypassFraction
             + shieldOverflow;
         return ApplyHullDamageVulnerability(hullInput * profile.HullMultiplier);
     }

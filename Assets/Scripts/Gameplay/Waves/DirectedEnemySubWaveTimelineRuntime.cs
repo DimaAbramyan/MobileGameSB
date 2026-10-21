@@ -8,6 +8,7 @@ public sealed partial class DirectedEnemySubWave
 
     private Dictionary<int, Vector3> runtimeTimelineFrame;
     private bool runtimeTimelineRunning;
+    internal bool IsPostTimelineRunning => runtimeTimelineRunning;
 
     private IEnumerator RunUnifiedTimeline()
     {

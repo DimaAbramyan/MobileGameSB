@@ -20,6 +20,8 @@ GameObject:
   - component: {fileID: -2396254891306158425}
   - component: {fileID: 4091572042789331613}
   - component: {fileID: 5265933111187938778}
+  - component: {fileID: 926442529693766613}
+  - component: {fileID: 6148463096577620321}
   m_Layer: 8
   m_Name: Arkanoid
   m_TagString: Player
@@ -43,8 +45,6 @@ Transform:
   - {fileID: 3268154708046901353}
   - {fileID: 4756945734813854271}
   - {fileID: 871234567890123401}
-  - {fileID: 871234567890123403}
-  - {fileID: 871234567890123405}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7510122182290028595
@@ -125,6 +125,7 @@ MonoBehaviour:
   ShipData: {fileID: 11400000, guid: cccc20a4d1f5efb43bc5cfb6413f771d, type: 2}
   buffMagnet: {fileID: 4096775222194903361}
   damageHitboxCollider: {fileID: 4091572042789331613}
+  healthDamageProjectileClearRadius: 1.75
   IsVisible: 0
 --- !u!114 &4464506009196274525
 MonoBehaviour:
@@ -250,18 +251,6 @@ MonoBehaviour:
     previewButtonSize: {x: 128, y: 128}
     previewWeaponIconScale: {x: 1, y: 1}
     maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 2
-    weaponMount: {fileID: 871234567890123403}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 128, y: 128}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 3
-    weaponMount: {fileID: 871234567890123405}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 128, y: 128}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
 --- !u!58 &4091572042789331613
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -297,7 +286,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.075
+  m_Radius: 0.05
 --- !u!114 &5265933111187938778
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -327,6 +316,34 @@ MonoBehaviour:
   emptyArcOpacity: 1
   previewHealthFraction: 1
   previewShieldFraction: 1
+--- !u!114 &926442529693766613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c485ff1ed87904b9a5e5729584641a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHitboxIndicator
+  visualRadius: 0.075
+  color: {r: 0.1, g: 1, b: 0.7, a: 0.95}
+--- !u!114 &6148463096577620321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b880daa3862fe2a4aabd2de5127763de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExtraHealthPassive
+  owner: {fileID: 0}
+  MaximumExtraHealth: 1
 --- !u!1 &871234567890123400
 GameObject:
   m_ObjectHideFlags: 0
@@ -353,68 +370,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.09487699, y: 0.080315, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3384991692524799735}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &871234567890123402
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 871234567890123403}
-  m_Layer: 8
-  m_Name: WeaponMount_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &871234567890123403
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 871234567890123402}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.15, y: -0.210789, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3384991692524799735}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &871234567890123404
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 871234567890123405}
-  m_Layer: 8
-  m_Name: WeaponMount_3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &871234567890123405
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 871234567890123404}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.15, y: -0.210789, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

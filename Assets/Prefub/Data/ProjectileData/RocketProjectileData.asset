@@ -17,7 +17,7 @@ MonoBehaviour:
   damage: 0
   damageType: 0
   projectilePrefab: {fileID: 5419238205650719777, guid: 24946ad4dab5aa841badfc3509ecaaea, type: 3}
-  range: 8
+  range: 25
   speed: 9
   contracts:
   - rid: 3397718812562292844
@@ -44,8 +44,8 @@ MonoBehaviour:
         sources:
         - id: explosion
           trigger: 1
-          damage: 100
-          damageType: 5
+          damage: 37.5
+          damageType: 0
           bypassesShield: 0
     - rid: 3397718812562292847
       type: {class: ProjectileLifetimeContract, ns: , asm: Assembly-CSharp}

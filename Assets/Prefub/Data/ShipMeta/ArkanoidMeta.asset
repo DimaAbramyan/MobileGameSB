@@ -17,8 +17,8 @@ MonoBehaviour:
   maxLevels: 1
   levels:
   - basicStats:
-      maximumHealthPoints: 50
-      maximumShieldPoints: 50
+      maximumHealthPoints: 3
+      maximumShieldPoints: 3
       healthRegenRatePercent: 10
       shieldRegenRatePercent: 10
       speed: 300
@@ -42,8 +42,35 @@ MonoBehaviour:
     - rid: 3397718787192520805
       type: {class: ArkanoidShipMetaContract, ns: , asm: Assembly-CSharp}
       data:
+        projectileDestructionPolicy: 1
         paddleFollowSpeed: 50
-        ballSpeed: 5
+        ballSpeed: 3
+        paddleBounceSpeedMultiplier: 2
+        paddleBounceRecoveryDuration: 0.65
+        paddleBounceRecoveryCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 1
+            inSlope: -2.140157
+            outSlope: -2.140157
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0.047011416
+          - serializedVersion: 3
+            time: 1
+            value: 0
+            inSlope: -0.25868422
+            outSlope: -0.25868422
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0.060443282
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
         ballDamage: 10
         stasisDuration: 3
         stasisRadiusMultiplier: 1.6

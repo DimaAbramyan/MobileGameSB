@@ -19,16 +19,20 @@ public partial struct ProjectileCustomSpeedSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
         ComponentLookup<EnemyProjectileBurstAtPoint> burstProjectiles =
             SystemAPI.GetComponentLookup<EnemyProjectileBurstAtPoint>(true);
+        var customScales = SystemAPI.GetComponentLookup<EnemyProjectileCustomScale>(true);
         SystemAPI.TryGetSingletonBuffer<EnemyProjectileSlowField>(out var slowFields, true);
+        SystemAPI.TryGetSingletonBuffer<EnemyProjectileRegionSpeedField>(out var regionFields, true);
         foreach ((RefRO<LocalTransform> transform,
                   RefRW<EnemyProjectileVelocity> velocity,
                   RefRW<EnemyProjectileCustomSpeed> customSpeed,
+                  RefRO<EnemyProjectileStaticData> staticData,
                   RefRO<EnemyProjectileResolution> resolution,
                   DynamicBuffer<EnemyProjectileSpeedCurveSample> curveSamples,
                   Entity entity)
                  in SystemAPI.Query<RefRO<LocalTransform>,
                      RefRW<EnemyProjectileVelocity>,
                      RefRW<EnemyProjectileCustomSpeed>,
+                     RefRO<EnemyProjectileStaticData>,
                      RefRO<EnemyProjectileResolution>,
                      DynamicBuffer<EnemyProjectileSpeedCurveSample>>()
                      .WithEntityAccess())
@@ -59,16 +63,21 @@ public partial struct ProjectileCustomSpeedSystem : ISystem
             {
                 customSpeed.ValueRW.DistanceSinceSpeedChange += math.length(
                     velocity.ValueRO.Value) * deltaTime
-                    * EnemyProjectileSlowField.EvaluateMultiplier(
-                        transform.ValueRO.Position.xy, slowFields);
+                    * EnemyProjectileSpeedModifiers.EvaluateMultiplier(
+                        transform.ValueRO.Position.xy, slowFields, regionFields,
+                        staticData.ValueRO.Radius * (customScales.HasComponent(entity)
+                            ? transform.ValueRO.Scale : 1f));
             }
 
-            float speedMultiplier = EvaluateSpeedMultiplier(
+            float speedMultiplier = math.max(0f, EvaluateSpeedMultiplier(
                 curveSamples,
-                customSpeed.ValueRO.DistanceSinceSpeedChange);
+                customSpeed.ValueRO.DistanceSinceSpeedChange));
+            customSpeed.ValueRW.SpeedMultiplier = speedMultiplier;
+            if (customSpeed.ValueRO.CurveTarget == EnemyProjectileSpeedCurveTarget.Radial)
+                speedMultiplier = 1f;
             velocity.ValueRW.Value = customSpeed.ValueRO.Direction
                 * (customSpeed.ValueRO.InitialSpeed
-                    * math.max(0f, speedMultiplier));
+                    * speedMultiplier);
         }
     }
 
@@ -142,15 +151,18 @@ public partial struct ProjectileCustomScaleSystem : ISystem
         ComponentLookup<EnemyProjectileBurstAtPoint> burstProjectiles = SystemAPI
             .GetComponentLookup<EnemyProjectileBurstAtPoint>(true);
         SystemAPI.TryGetSingletonBuffer<EnemyProjectileSlowField>(out var slowFields, true);
+        SystemAPI.TryGetSingletonBuffer<EnemyProjectileRegionSpeedField>(out var regionFields, true);
         foreach ((RefRW<LocalTransform> transform,
                   RefRO<EnemyProjectileVelocity> velocity,
                   RefRW<EnemyProjectileCustomScale> customScale,
+                  RefRO<EnemyProjectileStaticData> staticData,
                   RefRO<EnemyProjectileResolution> resolution,
                   DynamicBuffer<EnemyProjectileScaleCurveSample> curveSamples,
                   Entity entity)
                  in SystemAPI.Query<RefRW<LocalTransform>,
                      RefRO<EnemyProjectileVelocity>,
                      RefRW<EnemyProjectileCustomScale>,
+                     RefRO<EnemyProjectileStaticData>,
                      RefRO<EnemyProjectileResolution>,
                      DynamicBuffer<EnemyProjectileScaleCurveSample>>()
                      .WithEntityAccess())
@@ -183,8 +195,9 @@ public partial struct ProjectileCustomScaleSystem : ISystem
                     customScale.ValueRO.ProgressMode == EnemyProjectileScaleProgressMode.Time
                         ? customScale.ValueRO.ProgressSpeed * deltaTime
                         : math.length(velocity.ValueRO.Value) * deltaTime
-                          * EnemyProjectileSlowField.EvaluateMultiplier(
-                              transform.ValueRO.Position.xy, slowFields);
+                          * EnemyProjectileSpeedModifiers.EvaluateMultiplier(
+                              transform.ValueRO.Position.xy, slowFields, regionFields,
+                              staticData.ValueRO.Radius * transform.ValueRO.Scale);
             }
 
             transform.ValueRW.Scale = math.max(
@@ -266,9 +279,10 @@ public partial struct ProjectilePurgeFieldSystem : ISystem
             return;
 
         foreach ((RefRO<LocalTransform> transform,
+                  RefRO<EnemyProjectileStaticData> staticData,
                   RefRW<EnemyProjectileResolution> resolution)
-                 in SystemAPI.Query<RefRO<LocalTransform>,
-                     RefRW<EnemyProjectileResolution>>())
+                 in SystemAPI.Query<RefRO<LocalTransform>, RefRO<EnemyProjectileStaticData>,
+                     RefRW<EnemyProjectileResolution>>().WithNone<EnemyLaserState>())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -278,6 +292,9 @@ public partial struct ProjectilePurgeFieldSystem : ISystem
                  fieldIndex++)
             {
                 EnemyProjectilePurgeField field = purgeFields[fieldIndex];
+                if (!EnemyProjectileCharacteristics.CanBeDestroyed(staticData.ValueRO.Characteristic,
+                    field.DestructionPolicy == EnemyProjectileDestructionPolicy.NormalAndFragile))
+                    continue;
                 if (field.Radius <= 0f
                     || math.distancesq(
                         transform.ValueRO.Position.xy,
@@ -426,16 +443,21 @@ public partial struct ProjectileBurstAtPointSystem : ISystem
             .GetComponentLookup<EnemyProjectileCustomSpeed>(false);
 
         SystemAPI.TryGetSingletonBuffer<EnemyProjectileSlowField>(out var slowFields, true);
+        SystemAPI.TryGetSingletonBuffer<EnemyProjectileRegionSpeedField>(out var regionFields, true);
+        var customScales = SystemAPI.GetComponentLookup<EnemyProjectileCustomScale>(true);
+        var childLineages = SystemAPI.GetComponentLookup<EnemyChildAttackLineage>(true);
         foreach ((RefRW<LocalTransform> transform,
                   RefRW<EnemyProjectilePreviousPosition> previousPosition,
                   RefRW<EnemyProjectileVelocity> velocity,
                   RefRW<EnemyProjectileBurstAtPoint> burst,
+                  RefRO<EnemyProjectileStaticData> staticData,
                   RefRW<EnemyProjectileResolution> resolution,
                   Entity entity)
                  in SystemAPI.Query<RefRW<LocalTransform>,
                      RefRW<EnemyProjectilePreviousPosition>,
                      RefRW<EnemyProjectileVelocity>,
                      RefRW<EnemyProjectileBurstAtPoint>,
+                     RefRO<EnemyProjectileStaticData>,
                      RefRW<EnemyProjectileResolution>>()
                      .WithEntityAccess())
         {
@@ -451,7 +473,9 @@ public partial struct ProjectileBurstAtPointSystem : ISystem
                 float reachDistance = math.max(
                     burstData.DetonationRadius,
                     math.length(velocity.ValueRO.Value) * deltaTime
-                        * EnemyProjectileSlowField.EvaluateMultiplier(position, slowFields));
+                        * EnemyProjectileSpeedModifiers.EvaluateMultiplier(position, slowFields, regionFields,
+                            staticData.ValueRO.Radius * (customScales.HasComponent(entity)
+                                ? transform.ValueRO.Scale : 1f)));
                 if (distance > reachDistance)
                 {
                     float2 direction = toTarget / math.max(distance, 0.0001f);
@@ -482,15 +506,21 @@ public partial struct ProjectileBurstAtPointSystem : ISystem
             if (currentTime + 0.0001d < burstData.NextWaveTime)
                 continue;
 
+            bool childOwned = childLineages.HasComponent(entity) && childLineages.IsComponentEnabled(entity);
+            int count = childOwned ? math.min(burstData.ProjectilesPerWave, EnemyChildAttackSettings.MaximumPerStep) : burstData.ProjectilesPerWave;
             for (int projectileIndex = 0;
-                 projectileIndex < burstData.ProjectilesPerWave;
+                 projectileIndex < count;
                  projectileIndex++)
             {
+                if (childOwned && requests.Length >= EnemyChildAttackSettings.MaximumPerStep) break;
                 float angleRadians = math.radians(
                     burstData.StartAngleDegrees
                     + projectileIndex * burstData.AngleStepDegrees);
                 requests.Add(new EnemyProjectileBurstSpawnRequest
                 {
+                    SourceProjectile = entity,
+                    HasChildLineage = (byte)(childOwned ? 1 : 0),
+                    Characteristic = staticData.ValueRO.Characteristic,
                     BurstProjectileConfigId = burstData.BurstProjectileConfigId,
                     Position = burstData.TargetPosition,
                     Direction = new float2(
@@ -531,20 +561,24 @@ public partial struct ProjectileMovementSystem : ISystem
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         SystemAPI.TryGetSingletonBuffer<EnemyProjectileSlowField>(out var slowFields, true);
+        SystemAPI.TryGetSingletonBuffer<EnemyProjectileRegionSpeedField>(out var regionFields, true);
         ComponentLookup<EnemyProjectileCustomSpeed> customSpeeds = SystemAPI
             .GetComponentLookup<EnemyProjectileCustomSpeed>(false);
+        var customScales = SystemAPI.GetComponentLookup<EnemyProjectileCustomScale>(true);
         foreach ((RefRW<LocalTransform> transform,
                   RefRW<EnemyProjectilePreviousPosition> previousPosition,
                   RefRW<EnemyProjectileVelocity> velocity,
                   RefRW<EnemyProjectileMovement> movement,
+                  RefRO<EnemyProjectileStaticData> staticData,
                   RefRO<EnemyProjectileResolution> resolution,
                   Entity entity)
                  in SystemAPI.Query<RefRW<LocalTransform>,
                      RefRW<EnemyProjectilePreviousPosition>,
                      RefRW<EnemyProjectileVelocity>,
                      RefRW<EnemyProjectileMovement>,
+                     RefRO<EnemyProjectileStaticData>,
                      RefRO<EnemyProjectileResolution>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyLaserState>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -552,9 +586,11 @@ public partial struct ProjectileMovementSystem : ISystem
             float2 currentPosition = transform.ValueRO.Position.xy;
             previousPosition.ValueRW.Value = currentPosition;
 
-            float slowMultiplier = EnemyProjectileSlowField.EvaluateMultiplier(
+            float slowMultiplier = EnemyProjectileSpeedModifiers.EvaluateMultiplier(
                 currentPosition,
-                slowFields);
+                slowFields, regionFields,
+                staticData.ValueRO.Radius * (customScales.HasComponent(entity)
+                    ? transform.ValueRO.Scale : 1f));
             float2 authoredVelocity = velocity.ValueRO.Value;
             if (movement.ValueRO.Pattern == EnemyProjectileMovementPattern.Default)
             {
@@ -614,10 +650,34 @@ public partial struct ProjectileMovementSystem : ISystem
                 }
                 case EnemyProjectileMovementPattern.Orbit:
                 {
+                    if (movement.ValueRO.OrbitCenterMode == EnemyProjectileOrbitCenterMode.DnaLike)
+                    {
+                        movement.ValueRW.DnaElapsedTime += deltaTime * speedRatio * slowMultiplier;
+                        EnemyProjectileDnaMotion.Evaluate(movement.ValueRO.DnaMedianDirection,
+                            movement.ValueRO.OrbitAngleRadians, movement.ValueRO.DnaHalfCycleDuration,
+                            movement.ValueRO.DnaElapsedTime, movement.ValueRO.ReferenceSpeed,
+                            out float2 offset, out forward, out float angularSpeed);
+                        nextPosition = movement.ValueRO.OrbitCenter + offset;
+                        movement.ValueRW.AngularSpeedDegreesPerSecond = angularSpeed;
+                        movement.ValueRW.ForwardDirection = forward;
+                        velocity.ValueRW.Value = forward * authoredSpeed;
+                        UpdateCustomSpeedDirection(entity, forward, ref customSpeeds);
+                        facingVelocity = forward * authoredSpeed * slowMultiplier;
+                        break;
+                    }
+                    float radialMultiplier = 1f;
+                    if (customSpeeds.HasComponent(entity))
+                    {
+                        var customSpeed = customSpeeds[entity];
+                        if (customSpeed.HasReachedSpeedChangeY != 0
+                            && customSpeed.CurveTarget != EnemyProjectileSpeedCurveTarget.BaseSpeed)
+                            radialMultiplier = customSpeed.SpeedMultiplier;
+                    }
                     float orbitRadius = math.max(
                         0f,
                         movement.ValueRO.OrbitRadius
                         + movement.ValueRO.OrbitRadialSpeed
+                        * radialMultiplier
                         * slowMultiplier
                         * deltaTime);
                     float orbitAngle = movement.ValueRO.OrbitAngleRadians
@@ -718,7 +778,7 @@ public partial struct ProjectileInterceptorSystem : ISystem
                      RefRO<EnemyProjectilePreviousPosition>,
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<LocalTransform>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyLaserState>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -734,17 +794,29 @@ public partial struct ProjectileInterceptorSystem : ISystem
                 EnemyProjectileCollisionTarget target = targets[index];
                 if (target.Kind != EnemyProjectileCollisionTargetKind.Interceptor)
                     continue;
+                if (!EnemyProjectileCharacteristics.CanBeDestroyed(
+                    staticData.ValueRO.Characteristic, target.DestroysNormal != 0))
+                    continue;
 
                 float projectileRadius = staticData.ValueRO.Radius;
                 if (customScales.HasComponent(entity))
                     projectileRadius *= transform.ValueRO.Scale;
 
-                if (!IntersectsExpandedBounds(
-                        previousPosition.ValueRO.Value,
-                        transform.ValueRO.Position.xy,
-                        target.Min,
-                        target.Max,
-                        projectileRadius))
+                bool intersects = target.IsBox != 0
+                    ? IntersectsMovingBox(previousPosition.ValueRO.Value, transform.ValueRO.Position.xy,
+                        target.PreviousCenter, target.Center, target.BoxHalfSize, target.BoxRight, projectileRadius)
+                    : target.IsSegment != 0
+                    ? IntersectsSegment(previousPosition.ValueRO.Value + target.SegmentDisplacement,
+                        transform.ValueRO.Position.xy, target.SegmentStart, target.SegmentEnd,
+                        target.Radius + projectileRadius)
+                    : target.IsCircle != 0
+                    ? IntersectsMovingCircle(previousPosition.ValueRO.Value,
+                        transform.ValueRO.Position.xy, target.PreviousCenter,
+                        target.Center, target.Radius + projectileRadius)
+                    : IntersectsExpandedBounds(previousPosition.ValueRO.Value,
+                        transform.ValueRO.Position.xy, target.Min, target.Max,
+                        projectileRadius);
+                if (!intersects)
                     continue;
 
                 resolution.ValueRW = new EnemyProjectileResolution
@@ -755,6 +827,65 @@ public partial struct ProjectileInterceptorSystem : ISystem
                 break;
             }
         }
+    }
+
+    public static bool IntersectsMovingBox(float2 start, float2 end, float2 previousCenter,
+        float2 center, float2 halfSize, float2 right, float radius)
+    {
+        float2 up = new float2(-right.y, right.x);
+        float2 from = start - previousCenter;
+        float2 to = end - center;
+        from = new float2(math.dot(from, right), math.dot(from, up));
+        to = new float2(math.dot(to, right), math.dot(to, up));
+        if (radius <= 0f) return IntersectsExpandedBounds(from, to, -halfSize, halfSize, 0f);
+        if (IntersectsExpandedBounds(from, to, -halfSize - new float2(radius, 0f), halfSize + new float2(radius, 0f), 0f)
+            || IntersectsExpandedBounds(from, to, -halfSize - new float2(0f, radius), halfSize + new float2(0f, radius), 0f))
+            return true;
+        for (int i = 0; i < 4; i++)
+        {
+            float2 corner = halfSize * new float2((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f);
+            if (IntersectsMovingCircle(from, to, corner, corner, radius)) return true;
+        }
+        return false;
+    }
+
+    public static bool IntersectsSegment(float2 start, float2 end, float2 a, float2 b, float radius)
+    {
+        float2 movement = end - start;
+        float2 edge = b - a;
+        float denominator = movement.x * edge.y - movement.y * edge.x;
+        float2 offset = a - start;
+        if (math.abs(denominator) > 0.000001f)
+        {
+            float t = (offset.x * edge.y - offset.y * edge.x) / denominator;
+            float u = (offset.x * movement.y - offset.y * movement.x) / denominator;
+            if (t >= 0f && t <= 1f && u >= 0f && u <= 1f) return true;
+        }
+        float radiusSq = radius * radius;
+        return DistanceToSegmentSq(start, a, b) <= radiusSq
+            || DistanceToSegmentSq(end, a, b) <= radiusSq
+            || DistanceToSegmentSq(a, start, end) <= radiusSq
+            || DistanceToSegmentSq(b, start, end) <= radiusSq;
+    }
+
+    private static float DistanceToSegmentSq(float2 point, float2 a, float2 b)
+    {
+        float2 edge = b - a;
+        float lengthSq = math.lengthsq(edge);
+        float t = lengthSq > 0.000001f ? math.saturate(math.dot(point - a, edge) / lengthSq) : 0f;
+        return math.lengthsq(point - (a + t * edge));
+    }
+
+    public static bool IntersectsMovingCircle(
+        float2 start, float2 end, float2 previousCenter, float2 center, float radius)
+    {
+        float2 relativeStart = start - previousCenter;
+        float2 relativeEnd = end - center;
+        float2 segment = relativeEnd - relativeStart;
+        float lengthSq = math.lengthsq(segment);
+        float time = lengthSq > 0.0000001f
+            ? math.saturate(-math.dot(relativeStart, segment) / lengthSq) : 0f;
+        return math.lengthsq(relativeStart + segment * time) <= radius * radius;
     }
 
     internal static bool IntersectsExpandedBounds(
@@ -844,7 +975,7 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
                      RefRO<EnemyProjectilePreviousPosition>,
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<LocalTransform>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyLaserState>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -865,12 +996,14 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
                 if (customScales.HasComponent(entity))
                     projectileRadius *= transform.ValueRO.Scale;
 
-                if (!ProjectileInterceptorSystem.IntersectsExpandedBounds(
-                        previousPosition.ValueRO.Value,
-                        transform.ValueRO.Position.xy,
-                        target.Min,
-                        target.Max,
-                        projectileRadius))
+                bool intersects = target.IsCircle != 0
+                    ? ProjectileInterceptorSystem.IntersectsMovingCircle(
+                        previousPosition.ValueRO.Value, transform.ValueRO.Position.xy,
+                        target.PreviousCenter, target.Center, target.Radius + projectileRadius)
+                    : ProjectileInterceptorSystem.IntersectsExpandedBounds(
+                        previousPosition.ValueRO.Value, transform.ValueRO.Position.xy,
+                        target.Min, target.Max, projectileRadius);
+                if (!intersects)
                     continue;
 
                 resolution.ValueRW = new EnemyProjectileResolution
@@ -900,12 +1033,13 @@ public partial struct ProjectileLifetimeSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
         ComponentLookup<EnemyProjectileBurstAtPoint> burstProjectiles = SystemAPI
             .GetComponentLookup<EnemyProjectileBurstAtPoint>(true);
+        var childLifetimeHolds = SystemAPI.GetComponentLookup<EnemyChildAttackLifetimeHold>(true);
         foreach ((RefRW<EnemyProjectileRemainingLifetime> lifetime,
                   RefRW<EnemyProjectileResolution> resolution,
                   Entity entity)
                  in SystemAPI.Query<RefRW<EnemyProjectileRemainingLifetime>,
                      RefRW<EnemyProjectileResolution>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyLaserState>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -916,11 +1050,14 @@ public partial struct ProjectileLifetimeSystem : ISystem
                 continue;
             }
 
+            if (childLifetimeHolds.HasComponent(entity) && childLifetimeHolds.IsComponentEnabled(entity)) continue;
+
             lifetime.ValueRW.Value -= deltaTime;
             if (lifetime.ValueRW.Value <= 0f)
             {
                 resolution.ValueRW = new EnemyProjectileResolution
                 {
+                    LifetimeExpired = 1,
                     Kind = EnemyProjectileResolutionKind.Expired,
                     TargetId = 0
                 };

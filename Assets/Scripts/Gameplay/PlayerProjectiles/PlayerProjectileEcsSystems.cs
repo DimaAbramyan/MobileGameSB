@@ -115,18 +115,23 @@ public partial struct PlayerProjectileMovementSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
+        var distanceCurves = SystemAPI.GetComponentLookup<PlayerProjectileDistanceDamageCurve>(true);
         foreach ((RefRW<LocalTransform> transform,
                   RefRW<PlayerProjectilePreviousPosition> previousPosition,
                   RefRO<PlayerProjectileVelocity> velocity,
                   RefRO<PlayerProjectileResolution> resolution,
                   RefRW<PostTransformMatrix> postTransformMatrix,
-                  RefRW<PlayerProjectileScaleState> scaleState)
+                  RefRW<PlayerProjectileScaleState> scaleState,
+                  RefRW<PlayerProjectileDamage> damage,
+                  Entity entity)
                  in SystemAPI.Query<RefRW<LocalTransform>,
                      RefRW<PlayerProjectilePreviousPosition>,
                      RefRO<PlayerProjectileVelocity>,
                      RefRO<PlayerProjectileResolution>,
                      RefRW<PostTransformMatrix>,
-                     RefRW<PlayerProjectileScaleState>>())
+                     RefRW<PlayerProjectileScaleState>,
+                     RefRW<PlayerProjectileDamage>>()
+                     .WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != PlayerProjectileResolutionKind.None)
                 continue;
@@ -152,6 +157,16 @@ public partial struct PlayerProjectileMovementSystem : ISystem
                 scaleState.ValueRO.RootScale
                 + scaleState.ValueRO.GrowthPerSecond * deltaTime);
             scaleState.ValueRW.RootScale = rootScale;
+            if (distanceCurves.HasComponent(entity))
+            {
+                scaleState.ValueRW.TraveledDistance += math.distance(currentPosition, transform.ValueRO.Position.xy);
+                float progress = scaleState.ValueRO.InitialRange > 0f
+                    ? scaleState.ValueRO.TraveledDistance / scaleState.ValueRO.InitialRange : 0f;
+                float multiplier = distanceCurves[entity].Evaluate(progress);
+                damage.ValueRW.Value = scaleState.ValueRO.InitialDamage
+                    * multiplier;
+                damage.ValueRW.HeatMultiplierDelta = multiplier - 1f;
+            }
             float2 visualScale = scaleState.ValueRO.VisualScalePerRootUnit
                 * rootScale;
             postTransformMatrix.ValueRW.Value = float4x4.Scale(new float3(
@@ -639,7 +654,8 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
                             ownerLookup[entity].Id,
                             staticData.ValueRO,
                             damageLookup[entity].Value,
-                            end);
+                            end,
+                            damageLookup[entity].HeatMultiplierDelta);
                         continue;
                     }
 
@@ -661,7 +677,8 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
                             ownerLookup[entity].Id,
                             staticData.ValueRO,
                             damageLookup[entity].Value,
-                            end);
+                            end,
+                            damageLookup[entity].HeatMultiplierDelta);
                           continue;
                       }
 
@@ -683,7 +700,8 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
                               ownerLookup[entity].Id,
                               staticData.ValueRO,
                               damageLookup[entity].Value,
-                              end);
+                              end,
+                              damageLookup[entity].HeatMultiplierDelta);
                           continue;
                       }
 
@@ -884,7 +902,7 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
           ComponentLookup<PlayerProjectileResonanceSphereState> sphereStates,
           ref PlayerProjectileResolution resolution)
       {
-          if (staticData.DamageType == EnemyDamageType.Resonance
+          if (staticData.DamageType == EnemyDamageType.Default
               || staticData.ContactMode == ProjectileContactMode.CircularChain
               || staticData.ContactMode == ProjectileContactMode.BallLightning
               || damage <= 0f)
@@ -1097,7 +1115,8 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
         int ownerId,
         PlayerProjectileStaticData staticData,
         float damage,
-        float2 impactPosition)
+        float2 impactPosition,
+        float heatMultiplierDelta = 0f)
     {
         events.Add(new PlayerProjectileResolutionEvent
         {
@@ -1106,6 +1125,7 @@ public partial struct PlayerProjectileEnemyCollisionSystem : ISystem
             OwnerId = ownerId,
             DebuffSetId = staticData.DebuffSetId,
             Damage = damage,
+            HeatMultiplierDelta = heatMultiplierDelta,
             DamageType = staticData.DamageType,
             BypassesEnemyShield = staticData.BypassesEnemyShield,
             ImpactPosition = impactPosition
@@ -1794,6 +1814,7 @@ public partial struct PlayerProjectileCleanupSystem : ISystem
                         OwnerId = owner.ValueRO.Id,
                         DebuffSetId = staticData.ValueRO.DebuffSetId,
                         Damage = damage.ValueRO.Value,
+                        HeatMultiplierDelta = damage.ValueRO.HeatMultiplierDelta,
                         DamageType = staticData.ValueRO.DamageType,
                         BypassesEnemyShield = staticData.ValueRO.BypassesEnemyShield,
                         ImpactPosition = transform.ValueRO.Position.xy

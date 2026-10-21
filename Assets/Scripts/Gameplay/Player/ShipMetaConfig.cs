@@ -166,18 +166,57 @@ public sealed class AbilityRecoveryShipMetaContract : ShipMetaContract
 }
 
 [Serializable]
-public sealed class BlackHoleShipMetaContract : ShipMetaContract
+public sealed class BlackHoleShipMetaContract : ShipMetaContract, IEnemyProjectileDestructionAbility
 {
+    [SerializeField, Min(0.01f)] private float activeDuration = 5f;
+    [SerializeField, Min(0f)] private float activeCooldown = 5f;
+    [SerializeField, Range(0.01f, 1f)] private float frontSpeedMultiplier = 0.2f;
+    [SerializeField, Min(1f)] private float rearSpeedMultiplier = 2.5f;
+    [SerializeField] private bool rewriteAttackSpeed = true;
+    [SerializeField] private bool enablePassiveAbility = true;
+    public float ActiveDuration => Mathf.Max(0.01f, activeDuration);
+    public float ActiveCooldown => Mathf.Max(0f, activeCooldown);
+    public float FrontSpeedMultiplier => Mathf.Clamp(frontSpeedMultiplier, 0.01f, 1f);
+    public float RearSpeedMultiplier => Mathf.Max(1f, rearSpeedMultiplier);
+    public bool RewriteAttackSpeed => rewriteAttackSpeed;
+    public bool EnablePassiveAbility => enablePassiveAbility;
+
+    public void ConfigureActive(float duration, float cooldown, float front, float rear, bool rewriteAttack, bool enablePassive)
+    {
+        activeDuration = Mathf.Max(0.01f, duration);
+        activeCooldown = Mathf.Max(0f, cooldown);
+        frontSpeedMultiplier = Mathf.Clamp(front, 0.01f, 1f);
+        rearSpeedMultiplier = Mathf.Max(1f, rear);
+        rewriteAttackSpeed = rewriteAttack;
+        enablePassiveAbility = enablePassive;
+    }
+
+    [SerializeField] private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.NormalAndFragile;
+    public EnemyProjectileDestructionPolicy ProjectileDestructionPolicy => projectileDestructionPolicy;
     [SerializeField, Min(0.01f)] private float duration = 3f;
     [SerializeField, Min(0f)] private float damage = 50f;
+    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Default;
     [SerializeField, Min(0.01f)] private float projectileSlowRadius = 3f;
     [SerializeField, Range(0.01f, 1f)]
     private float minimumProjectileSpeedMultiplier = 0.1f;
+    [SerializeField, Range(0f, 170f)] private float frontFullEffectAngle = 30f;
+    [SerializeField, Range(0.01f, 90f)] private float frontTransitionAngle = 30f;
+    [SerializeField, Range(0f, 170f)] private float backFullEffectAngle = 30f;
+    [SerializeField, Range(0.01f, 90f)] private float backTransitionAngle = 30f;
+    [SerializeField, Min(1f)] private float maximumProjectileSpeedMultiplier = 1.35f;
+    [SerializeField, Min(0.01f)] private float distanceFalloff = 1f;
 
     public override string DisplayName => "Black Hole";
     public float Duration => Mathf.Max(0.01f, duration);
     public float Damage => Mathf.Max(0f, damage);
+    public EnemyDamageType DamageType => damageType;
     public float ProjectileSlowRadius => Mathf.Max(0.01f, projectileSlowRadius);
+    public float FrontFullEffectAngle => Mathf.Clamp(frontFullEffectAngle, 0f, 170f);
+    public float FrontTransitionAngle => Mathf.Clamp(frontTransitionAngle, 0.01f, 90f - FrontFullEffectAngle * 0.5f);
+    public float BackFullEffectAngle => Mathf.Clamp(backFullEffectAngle, 0f, 170f);
+    public float BackTransitionAngle => Mathf.Clamp(backTransitionAngle, 0.01f, 90f - BackFullEffectAngle * 0.5f);
+    public float MaximumProjectileSpeedMultiplier => Mathf.Max(1f, maximumProjectileSpeedMultiplier);
+    public float DistanceFalloff => Mathf.Max(0.01f, distanceFalloff);
     public float MinimumProjectileSpeedMultiplier => Mathf.Clamp(
         minimumProjectileSpeedMultiplier,
         0.01f,
@@ -198,20 +237,60 @@ public sealed class BlackHoleShipMetaContract : ShipMetaContract
     public override ShipMetaContract Clone()
     {
         var clone = new BlackHoleShipMetaContract();
+        clone.ConfigureActive(ActiveDuration, ActiveCooldown, FrontSpeedMultiplier, RearSpeedMultiplier,
+            RewriteAttackSpeed, EnablePassiveAbility);
+        clone.projectileDestructionPolicy = projectileDestructionPolicy;
+        clone.damageType = damageType;
         clone.Configure(Duration, Damage, ProjectileSlowRadius,
             MinimumProjectileSpeedMultiplier);
+        clone.ConfigureFieldShape(FrontFullEffectAngle, FrontTransitionAngle,
+            BackFullEffectAngle, BackTransitionAngle,
+            MaximumProjectileSpeedMultiplier, DistanceFalloff);
         return clone;
+    }
+
+    public void ConfigureFieldShape(float frontFullAngle, float frontTransition,
+        float backFullAngle, float backTransition, float maximumSpeedMultiplier,
+        float falloff)
+    {
+        frontFullEffectAngle = Mathf.Clamp(frontFullAngle, 0f, 170f);
+        frontTransitionAngle = Mathf.Clamp(frontTransition, 0.01f, 90f - frontFullEffectAngle * 0.5f);
+        backFullEffectAngle = Mathf.Clamp(backFullAngle, 0f, 170f);
+        backTransitionAngle = Mathf.Clamp(backTransition, 0.01f, 90f - backFullEffectAngle * 0.5f);
+        maximumProjectileSpeedMultiplier = Mathf.Max(1f, maximumSpeedMultiplier);
+        distanceFalloff = Mathf.Max(0.01f, falloff);
+    }
+
+    public EnemyProjectileSlowField CreateProjectileField(
+        Unity.Mathematics.float2 center, Unity.Mathematics.float2 forward)
+    {
+        return new EnemyProjectileSlowField
+        {
+            Center = center,
+            Forward = Unity.Mathematics.math.normalizesafe(forward, new Unity.Mathematics.float2(0f, 1f)),
+            Radius = ProjectileSlowRadius,
+            MinimumSpeedMultiplier = MinimumProjectileSpeedMultiplier,
+            MaximumSpeedMultiplier = MaximumProjectileSpeedMultiplier,
+            FrontFullEffectCos = Mathf.Cos(FrontFullEffectAngle * 0.5f * Mathf.Deg2Rad),
+            FrontOuterCos = Mathf.Cos((FrontFullEffectAngle * 0.5f + FrontTransitionAngle) * Mathf.Deg2Rad),
+            BackFullEffectCos = Mathf.Cos(BackFullEffectAngle * 0.5f * Mathf.Deg2Rad),
+            BackOuterCos = Mathf.Cos((BackFullEffectAngle * 0.5f + BackTransitionAngle) * Mathf.Deg2Rad),
+            DistanceFalloff = DistanceFalloff
+        };
     }
 }
 
 [Serializable]
-public sealed class BladeShipMetaContract : ShipMetaContract
+public sealed class BladeShipMetaContract : ShipMetaContract, IEnemyProjectileDestructionAbility
 {
+    [SerializeField] private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.NormalAndFragile;
+    public EnemyProjectileDestructionPolicy ProjectileDestructionPolicy => projectileDestructionPolicy;
     [SerializeField, Min(0.05f)] private float recordingDuration = 1f;
     [SerializeField, Min(0.01f)] private float sampleInterval = 0.1f;
     [SerializeField, Min(0.01f)] private float width = 0.45f;
     [SerializeField, Min(0.01f)] private float speed = 12f;
     [SerializeField, Min(0f)] private float damage = 50f;
+    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Default;
     [SerializeField, Min(0.01f)] private float lifetime = 4f;
     [SerializeField, Min(0.01f)] private float passiveSpeedDivisor = 40f;
     [SerializeField, Min(0f)] private float passiveSpeedMultiplier = 1.2f;
@@ -224,6 +303,7 @@ public sealed class BladeShipMetaContract : ShipMetaContract
     public float Width => Mathf.Max(0.01f, width);
     public float Speed => Mathf.Max(0.01f, speed);
     public float Damage => Mathf.Max(0f, damage);
+    public EnemyDamageType DamageType => damageType;
     public float Lifetime => Mathf.Max(0.01f, lifetime);
     public float PassiveSpeedDivisor => Mathf.Max(0.01f, passiveSpeedDivisor);
     public float PassiveSpeedMultiplier => Mathf.Max(0f, passiveSpeedMultiplier);
@@ -251,6 +331,8 @@ public sealed class BladeShipMetaContract : ShipMetaContract
     public override ShipMetaContract Clone()
     {
         var clone = new BladeShipMetaContract();
+        clone.projectileDestructionPolicy = projectileDestructionPolicy;
+        clone.damageType = damageType;
         clone.Configure(RecordingDuration, SampleInterval, Width, Speed,
             Damage, Lifetime, PassiveSpeedDivisor, PassiveSpeedMultiplier,
             MaximumReloadMultiplier, MinimumReloadMultiplier);
@@ -261,10 +343,12 @@ public sealed class BladeShipMetaContract : ShipMetaContract
 [Serializable]
 public sealed class HeavyShieldShipMetaContract : ShipMetaContract
 {
-    [SerializeField, Min(0f)] private float shieldHealthMultiplier = 1f;
+    [SerializeField, HideInInspector, Min(0f)] private float shieldHealthMultiplier = 1f;
+    [SerializeField, Min(0f)] private float extraHealthAmount = 1f;
 
-    public override string DisplayName => "Heavy Shield";
+    public override string DisplayName => "Heavy Extra Health";
     public float ShieldHealthMultiplier => Mathf.Max(0f, shieldHealthMultiplier);
+    public float ExtraHealthAmount => Mathf.Max(0f, extraHealthAmount);
 
     public void Configure(float multiplier)
     {
@@ -275,25 +359,50 @@ public sealed class HeavyShieldShipMetaContract : ShipMetaContract
     {
         var clone = new HeavyShieldShipMetaContract();
         clone.Configure(ShieldHealthMultiplier);
+        clone.extraHealthAmount = ExtraHealthAmount;
         return clone;
     }
 }
 
 [Serializable]
-public sealed class ArkanoidShipMetaContract : ShipMetaContract
+public sealed class ArkanoidShipMetaContract : ShipMetaContract, IEnemyProjectileDestructionAbility
 {
+    [SerializeField] private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.FragileOnly;
+    public EnemyProjectileDestructionPolicy ProjectileDestructionPolicy => projectileDestructionPolicy;
     [SerializeField, Min(0.01f)] private float paddleFollowSpeed = 30f;
+    [SerializeField, Min(0f)] private float paddleAttractionRadius = 2f;
+    [SerializeField, Min(0f)] private float paddleAttractionForce = 10f;
     [SerializeField, Min(0.01f)] private float ballSpeed = 5f;
+    [SerializeField, Min(1f)] private float paddleBounceSpeedMultiplier = 1.5f;
+    [SerializeField, Min(0.01f)] private float paddleBounceRecoveryDuration = 1f;
+    [SerializeField] private AnimationCurve paddleBounceRecoveryCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
     [SerializeField, Min(0f)] private float ballDamage = 10f;
+    [SerializeField] private EnemyDamageType ballDamageType = EnemyDamageType.Default;
     [SerializeField, Min(0.05f)] private float stasisDuration = 3f;
     [SerializeField, Min(1f)] private float stasisRadiusMultiplier = 1.6f;
     [SerializeField, Min(0f)] private float stasisDamagePerSecond = 30f;
+    [SerializeField] private EnemyDamageType stasisDamageType = EnemyDamageType.Default;
     [SerializeField, Min(0.02f)] private float stasisTickInterval = 0.1f;
 
     public override string DisplayName => "Arkanoid Ball and Stasis";
     public float PaddleFollowSpeed => Mathf.Max(0.01f, paddleFollowSpeed);
+    public float PaddleAttractionRadius => Mathf.Max(0f, paddleAttractionRadius);
+    public float PaddleAttractionForce => Mathf.Max(0f, paddleAttractionForce);
     public float BallSpeed => Mathf.Max(0.01f, ballSpeed);
+    public float PaddleBounceSpeedMultiplier => Mathf.Max(1f, paddleBounceSpeedMultiplier);
+    public float PaddleBounceRecoveryDuration => Mathf.Max(0.01f, paddleBounceRecoveryDuration);
+    public float EvaluatePaddleBounceSpeedMultiplier(float elapsed)
+    {
+        if (elapsed >= PaddleBounceRecoveryDuration) return 1f;
+        if (elapsed <= 0f) return PaddleBounceSpeedMultiplier;
+        float progress = Mathf.Clamp01(elapsed / PaddleBounceRecoveryDuration);
+        float remaining = paddleBounceRecoveryCurve != null && paddleBounceRecoveryCurve.length > 0
+            ? Mathf.Clamp01(paddleBounceRecoveryCurve.Evaluate(progress)) : 1f - progress;
+        return 1f + (PaddleBounceSpeedMultiplier - 1f) * remaining;
+    }
     public float BallDamage => Mathf.Max(0f, ballDamage);
+    public EnemyDamageType BallDamageType => ballDamageType;
+    public EnemyDamageType StasisDamageType => stasisDamageType;
     public float StasisDuration => Mathf.Max(0.05f, stasisDuration);
     public float StasisRadiusMultiplier => Mathf.Max(1f, stasisRadiusMultiplier);
     public float StasisDamagePerSecond => Mathf.Max(0f, stasisDamagePerSecond);
@@ -316,6 +425,19 @@ public sealed class ArkanoidShipMetaContract : ShipMetaContract
     public override ShipMetaContract Clone()
     {
         var clone = new ArkanoidShipMetaContract();
+        clone.paddleAttractionRadius = paddleAttractionRadius;
+        clone.paddleAttractionForce = paddleAttractionForce;
+        clone.projectileDestructionPolicy = projectileDestructionPolicy;
+        clone.ballDamageType = ballDamageType;
+        clone.stasisDamageType = stasisDamageType;
+        clone.paddleBounceSpeedMultiplier = paddleBounceSpeedMultiplier;
+        clone.paddleBounceRecoveryDuration = paddleBounceRecoveryDuration;
+        clone.paddleBounceRecoveryCurve = paddleBounceRecoveryCurve == null ? null
+            : new AnimationCurve(paddleBounceRecoveryCurve.keys)
+            {
+                preWrapMode = paddleBounceRecoveryCurve.preWrapMode,
+                postWrapMode = paddleBounceRecoveryCurve.postWrapMode
+            };
         clone.Configure(PaddleFollowSpeed, BallSpeed, BallDamage,
             StasisDuration, StasisRadiusMultiplier, StasisDamagePerSecond,
             StasisTickInterval);
@@ -364,7 +486,7 @@ public sealed class DictatorShipMetaContract : ShipMetaContract
     [SerializeField, Min(0.05f)] private float turretLifetime = 8f;
     [SerializeField] private Projectile turretProjectilePrefab;
     [SerializeField] private EnemyDamageType turretDamageType =
-        EnemyDamageType.Kinetic;
+        EnemyDamageType.Kinetick;
     [SerializeField, Min(0f)] private float turretProjectileDamage = 10f;
     [SerializeField, Min(0.01f)] private float turretReloadTime = 0.5f;
     [SerializeField, Min(0.01f)] private float turretProjectileSpeed = 8f;
@@ -378,7 +500,7 @@ public sealed class DictatorShipMetaContract : ShipMetaContract
 
     [Header("Passive Damage Bonus")]
     [SerializeField, Min(0f)] private float kineticDamageBonusPercent = 15f;
-    [SerializeField, Min(0f)] private float explosionDamageBonusPercent = 10f;
+    [SerializeField, HideInInspector, Min(0f)] private float explosionDamageBonusPercent;
 
     public override string DisplayName => "Dictator Turrets and Damage Passive";
     public float TurretLifetime => Mathf.Max(0.05f, turretLifetime);
@@ -391,7 +513,7 @@ public sealed class DictatorShipMetaContract : ShipMetaContract
     public IReadOnlyList<DictatorTurretSpawnGroup> TurretSpawnGroups =>
         turretSpawnGroups;
     public float KineticDamageBonusPercent =>
-        Mathf.Max(0f, kineticDamageBonusPercent);
+        Mathf.Max(0f, Mathf.Max(kineticDamageBonusPercent, explosionDamageBonusPercent));
     public float ExplosionDamageBonusPercent =>
         Mathf.Max(0f, explosionDamageBonusPercent);
 
@@ -448,8 +570,18 @@ public sealed class DictatorShipMetaContract : ShipMetaContract
 }
 
 [Serializable]
-public sealed class PrismShipMetaContract : ShipMetaContract
+public sealed class PrismShipMetaContract : ShipMetaContract, IEnemyProjectileDestructionAbility
 {
+    [Header("Active Energy Wave")]
+    [SerializeField] private GameObject wavePrefab;
+    [SerializeField, Min(0f)] private float spawnOffset = 1f;
+    [SerializeField, Min(0.01f)] private float waveWidth = 4f;
+    [SerializeField, Min(0.01f)] private float waveThickness = .3f;
+    [SerializeField, Min(0.01f)] private float waveSpeed = 1.5f;
+    [SerializeField, Min(0.01f)] private float maxDistance = 15f;
+    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Plazma;
+    [SerializeField] private bool destroyProjectiles;
+    [SerializeField] private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.FragileOnly;
     [Header("Active Plasma")]
     [FormerlySerializedAs("beamDamage")]
     [SerializeField, Min(0f)] private float plasmaDamage = 150f;
@@ -458,14 +590,34 @@ public sealed class PrismShipMetaContract : ShipMetaContract
     [FormerlySerializedAs("beamDamageBonusPercent")]
     [SerializeField, Min(0f)] private float plasmaDamageBonusPercent = 15f;
     [FormerlySerializedAs("energyDamageBonusPercent")]
-    [SerializeField, Min(0f)] private float electricDamageBonusPercent = 10f;
+    [SerializeField, HideInInspector, Min(0f)] private float electricDamageBonusPercent;
 
-    public override string DisplayName => "Prism Plasma and Damage Passive";
+    public override string DisplayName => "Prism Energy Wave and Damage Passive";
+    public GameObject WavePrefab => wavePrefab;
+    public float SpawnOffset => Mathf.Max(0f, spawnOffset);
+    public float WaveWidth => Mathf.Max(.01f, waveWidth);
+    public float WaveThickness => Mathf.Max(.01f, waveThickness);
+    public float WaveSpeed => Mathf.Max(.01f, waveSpeed);
+    public float MaxDistance => Mathf.Max(.01f, maxDistance);
+    public float Damage => PlasmaDamage;
+    public EnemyDamageType DamageType => damageType;
+    public bool DestroyProjectiles => destroyProjectiles;
+    public EnemyProjectileDestructionPolicy ProjectileDestructionPolicy => projectileDestructionPolicy;
     public float PlasmaDamage => Mathf.Max(0f, plasmaDamage);
     public float PlasmaDamageBonusPercent =>
-        Mathf.Max(0f, plasmaDamageBonusPercent);
+        Mathf.Max(0f, Mathf.Max(plasmaDamageBonusPercent, electricDamageBonusPercent));
     public float ElectricDamageBonusPercent =>
         Mathf.Max(0f, electricDamageBonusPercent);
+
+    public void ConfigureWave(GameObject prefab, float offset, float width, float thickness,
+        float speed, float distance, EnemyDamageType type, bool destroy,
+        EnemyProjectileDestructionPolicy policy = EnemyProjectileDestructionPolicy.FragileOnly)
+    {
+        wavePrefab = prefab; spawnOffset = Mathf.Max(0f, offset);
+        waveWidth = Mathf.Max(.01f, width); waveThickness = Mathf.Max(.01f, thickness);
+        waveSpeed = Mathf.Max(.01f, speed); maxDistance = Mathf.Max(.01f, distance);
+        damageType = type; destroyProjectiles = destroy; projectileDestructionPolicy = policy;
+    }
 
     public void Configure(
         float activePlasmaDamage,
@@ -484,6 +636,8 @@ public sealed class PrismShipMetaContract : ShipMetaContract
             PlasmaDamage,
             PlasmaDamageBonusPercent,
             ElectricDamageBonusPercent);
+        clone.ConfigureWave(WavePrefab, SpawnOffset, WaveWidth, WaveThickness,
+            WaveSpeed, MaxDistance, DamageType, DestroyProjectiles, ProjectileDestructionPolicy);
         return clone;
     }
 }
@@ -739,6 +893,9 @@ public sealed class ShipMetaConfig : ScriptableObject
             types.Add(typeof(ArkanoidShipMetaContract));
         }
 
+        if (sourceHullPrefab.PassiveAbility is OrbitPassiveAbility)
+            types.Add(typeof(OrbitShipMetaContract));
+
         if (sourceHullPrefab.ActiveAbility is DictatorTurretActiveAbility
             || sourceHullPrefab.PassiveAbility is DictatorDamagePassiveAbility)
         {
@@ -819,6 +976,8 @@ public sealed class ShipMetaConfig : ScriptableObject
             return new HeavyShieldShipMetaContract();
         if (contractType == typeof(ArkanoidShipMetaContract))
             return new ArkanoidShipMetaContract();
+        if (contractType == typeof(OrbitShipMetaContract))
+            return new OrbitShipMetaContract();
         if (contractType == typeof(DictatorShipMetaContract))
         {
             if (sourceHullPrefab?.ActiveAbility

@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 
 [CustomEditor(typeof(DirectedEnemySubWave))]
-public sealed class DirectedEnemySubWaveEditor : Editor
+public sealed partial class DirectedEnemySubWaveEditor : Editor
 {
     private const string ShowMobileBoundsKey =
         "DirectedEnemySubWaveEditor.ShowMobileBounds";
@@ -94,6 +94,9 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private SerializedProperty formationFrozen;
     private SerializedProperty formationCoordinateSpace;
     private SerializedProperty formationCenter;
+    private SerializedProperty formationOffsetStep;
+    private SerializedProperty formationOffsetOrigin;
+    private SerializedProperty formationCenterOffsetMode;
     private SerializedProperty spacing;
     private SerializedProperty columns;
     private SerializedProperty rows;
@@ -149,8 +152,19 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private bool completionFoldout = true;
     private bool previewFoldout = true;
     private bool previewPlaying;
+    private bool previewVisible;
+    private bool previewFormationOnly;
+    private bool simulateShooting = true;
+    private bool previewAllEnemies;
+    private float previewRequestedTime;
+    private Vector3 previewPlayerPosition = new Vector3(0f, -3f, 0f);
+    private Sprite previewPlayerSprite;
+    private WaveShootingPreviewSession shootingSession;
+    private int shootingSessionVersion = -1;
+    private int shootingSessionSlot = -1;
     private double previewStartTime;
     private double nextPreviewFrameTime;
+    private double nextPreviewInspectorTime;
     private float previewSampleElapsed;
     private bool showMobileBounds;
     private float mobileBoundsOrthoSize;
@@ -282,6 +296,9 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         formationCoordinateSpace =
             FindBehaviourProperty("formationCoordinateSpace");
         formationCenter = FindBehaviourProperty("formationCenter");
+        formationOffsetStep = FindBehaviourProperty("formationOffsetStep");
+        formationOffsetOrigin = FindBehaviourProperty("formationOffsetOrigin");
+        formationCenterOffsetMode = FindBehaviourProperty("formationCenterOffsetMode");
         spacing = FindBehaviourProperty("spacing");
         columns = FindBehaviourProperty("columns");
         rows = FindBehaviourProperty("rows");
@@ -354,6 +371,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             EditorPrefs.GetFloat(MobileBoundsCenterYKey, 0f));
         LoadPreviewDuration();
         Undo.undoRedoPerformed += InvalidatePreviewSession;
+        EditorApplication.playModeStateChanged += OnPreviewPlayModeChanged;
         InvalidatePreviewSession();
     }
 
@@ -363,6 +381,12 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         CancelPathCheckpointDrag();
         StopPreview();
         Undo.undoRedoPerformed -= InvalidatePreviewSession;
+        EditorApplication.playModeStateChanged -= OnPreviewPlayModeChanged;
+    }
+
+    private void OnPreviewPlayModeChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingEditMode) StopPreview();
     }
 
     private void RebindBehaviourPropertySources()
@@ -542,6 +566,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             previewConfigurationVersion++;
             patrolGeometryVersion++;
         }
+        DisposeShootingSession();
 
         cachedCommandPreviewVersion = -1;
         cachedCommandPreviewIndex = -1;
@@ -1893,6 +1918,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                     EditorGUILayout.PropertyField(
                         motionToNext,
                         new GUIContent("Motion To Next"));
+                    DrawSegmentCurveInspector(pathCheckpoints, i, false);
                     EditorGUILayout.PropertyField(
                         easeToNext,
                         new GUIContent("Ease To Next"));
@@ -1924,6 +1950,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                         EditorGUILayout.PropertyField(
                             motionToNext,
                             new GUIContent("Motion To Loop Start"));
+                        DrawSegmentCurveInspector(pathCheckpoints, i, false);
                         EditorGUILayout.PropertyField(
                             easeToNext,
                             new GUIContent("Ease To Loop Start"));
@@ -2267,6 +2294,14 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                 DrawFormationLayoutField();
                 EditorGUILayout.PropertyField(formationCoordinateSpace);
                 EditorGUILayout.PropertyField(formationCenter);
+                EditorGUILayout.PropertyField(formationOffsetStep, new GUIContent("Per-Enemy Offset",
+                    "Additional X/Y offset per slot, added to the original formation. Zero disables the offset."));
+                EditorGUILayout.PropertyField(formationOffsetOrigin, new GUIContent("Offset Origin",
+                    "First/Last keeps that slot fixed and accumulates toward the other end. Middle counts from the center index."));
+                if ((DirectedWaveFormationOffsetOrigin)formationOffsetOrigin.enumValueIndex
+                    == DirectedWaveFormationOffsetOrigin.Middle)
+                    EditorGUILayout.PropertyField(formationCenterOffsetMode, new GUIContent("Center Offset Mode",
+                        "Linear: -2, -1, 0, 1, 2. Symmetric: 2, 1, 0, 1, 2. With an even count the origin is between the middle slots."));
 
                 DirectedWaveFormationLayout layout =
                     (DirectedWaveFormationLayout)formationLayout.enumValueIndex;
@@ -3618,8 +3653,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(point, "Move Final Formation Point");
-                point.position = worldPosition;
+                SetFormationPointWorldPosition(point, worldPosition, "Move Final Formation Point");
             }
 
             DrawTransformPointEnemyOverride(point);
@@ -3701,14 +3735,19 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             EditorGUILayout.PropertyField(tint, new GUIContent("Sprite Tint"));
 
         EditorGUILayout.Space(2f);
-        EditorGUILayout.PropertyField(
-            overrideRotation,
-            new GUIContent("Override Rotation"));
-        if (overrideRotation.boolValue)
+        string legacyRotationKey = "DirectedWaveLegacyRotation." + enemyOverride.GetInstanceID();
+        bool legacyRotationExpanded = EditorGUILayout.Foldout(SessionState.GetBool(legacyRotationKey, false),
+            overrideRotation.boolValue ? "Legacy Rotation Override (active)" : "Legacy Rotation Override", true);
+        SessionState.SetBool(legacyRotationKey, legacyRotationExpanded);
+        if (legacyRotationExpanded)
+        {
+            EditorGUILayout.HelpBox("Legacy override changes the enemy's own Layout Rotation. A shared Wave Attack Pattern can replace it. Configure new layouts in Attack Pattern → Shooting Behaviour → Layout Rotation.", MessageType.Info);
             EditorGUILayout.PropertyField(
-                rotationSettings,
-                new GUIContent("Rotation"),
-                true);
+                overrideRotation,
+                new GUIContent("Use Legacy Rotation Override"));
+            if (overrideRotation.boolValue)
+                EditorGUILayout.PropertyField(rotationSettings, new GUIContent("Legacy Layout Rotation"), true);
+        }
 
         if (!EditorGUI.EndChangeCheck())
             return;
@@ -3755,6 +3794,12 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private SerializedProperty FindBehaviourProperty(string propertyName)
     {
+        // New additive fields have no legacy counterpart; old waves can use them
+        // without migrating their existing formation configuration.
+        if (IsUsingLegacyConfigurationCompatibility()
+            && propertyName is "formationOffsetStep" or "formationOffsetOrigin" or "formationCenterOffsetMode")
+            return serializedObject.FindProperty($"formation.{propertyName}");
+
         if (IsUsingLegacyConfigurationCompatibility())
         {
             return serializedObject.FindProperty(
@@ -3798,6 +3843,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                 or "spawnOrderStartAngle" or "parentEnemiesToSubWave"
                 or "formationLayout" or "formationFrozen"
                 or "formationCoordinateSpace" or "formationCenter" or "spacing"
+                or "formationOffsetStep" or "formationOffsetOrigin" or "formationCenterOffsetMode"
                 or "columns" or "rows" or "gridMatrixCells" or "arcRadius"
                 or "arcDegrees" or "shapePointCount" or "shapeRadius"
                 or "shapeFlattening" or "customFormationPoints"
@@ -4003,8 +4049,8 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         for (int i = 0; i < count; i++)
         {
             Transform child = root.GetChild(i);
-            Undo.RecordObject(child, $"Apply {preset} Formation Preset");
-            child.position = ToWorld(wave, localPositions[i], coordinateSpace);
+            SetFormationPointWorldPosition(child, ToWorld(wave, localPositions[i], coordinateSpace),
+                $"Apply {preset} Formation Preset");
         }
 
         formationLayout.enumValueIndex =
@@ -4278,13 +4324,14 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         for (int i = 0; i < count; i++)
         {
             Transform child = root.GetChild(i);
-            Undo.RecordObject(child, "Preserve Formation Slot Position");
-            child.position = worldPositions[i];
+            SetFormationPointWorldPosition(child, worldPositions[i], "Preserve Formation Slot Position");
             SetTransformPointEnemyOverride(
                 child,
                 enemyOverrides[i],
                 "Preserve Formation Slot Enemy Override");
         }
+        // The points already contain the offset; applying it again would move them twice.
+        formationOffsetStep.vector2Value = Vector2.zero;
     }
 
     private void DrawPostBehavior()
@@ -5753,6 +5800,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                     EditorGUILayout.PropertyField(
                         motionToNext,
                         new GUIContent("Motion To Next"));
+                    DrawSegmentCurveInspector(patrolPoints, i, true);
                     EditorGUILayout.PropertyField(
                         easeToNext,
                         new GUIContent("Ease To Next"));
@@ -5985,6 +6033,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void DrawPreviewHelp()
     {
+        EnemyShootingPreview.DrawPreviewControls();
         previewFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
             previewFoldout,
             "Scene View Editing");
@@ -6017,6 +6066,11 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void DrawPreviewControls()
     {
+        if (Application.isPlaying)
+        {
+            EditorGUILayout.HelpBox("Scene simulation preview is available in Edit Mode.", MessageType.Info);
+            return;
+        }
         float baseDuration = GetPreviewBaseRouteDuration();
         if (!previewDurationOverridden)
             previewDuration = Mathf.Max(0.1f, baseDuration);
@@ -6057,13 +6111,35 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         int previewCount = GetEditorEffectiveEnemyCount();
         EditorGUILayout.LabelField("Preview Enemy Count", previewCount.ToString());
 
+        EditorGUI.BeginChangeCheck();
+        simulateShooting = EditorGUILayout.Toggle(new GUIContent("Simulate Shooting",
+            "Проигрывать реальные ECS-снаряды во временном мире Editor. Расчёт — 30 Гц; максимум 2048 снарядов."), simulateShooting);
+        previewAllEnemies = EditorGUILayout.Toggle(new GUIContent("All Enemies Shooting",
+            "По умолчанию стреляет выбранный слот (или первый). При включении участвуют все враги; ограничения Preview применяются к снарядам."), previewAllEnemies);
+        previewPlayerSprite = EditorGUILayout.ObjectField(new GUIContent("Preview Player Sprite",
+            "Необязательный визуал временной мишени. Без спрайта показывается корабль-маркер."), previewPlayerSprite, typeof(Sprite), false) as Sprite;
+        if (EditorGUI.EndChangeCheck()) RestartShootingSession();
+        Vector3 editedTarget = EditorGUILayout.Vector3Field(new GUIContent("Preview Player Position",
+            "Мировая позиция мишени. Её также можно перемещать ручкой в Scene View. Уже захваченное Aimed-направление сохраняется."),
+            shootingSession != null ? shootingSession.TargetPosition : previewPlayerPosition);
+        if (editedTarget != previewPlayerPosition)
+        {
+            editedTarget.z = 0f; previewPlayerPosition = editedTarget;
+            if (shootingSession != null) shootingSession.TargetPosition = editedTarget;
+            RepaintPreviewSceneView();
+        }
+
         using (new EditorGUILayout.HorizontalScope())
         {
             GUI.enabled = !previewPlaying && previewCount > 0 && totalDuration > 0f;
-            if (GUILayout.Button("Preview Wave"))
+            if (GUILayout.Button(previewVisible ? "Resume Preview" : "Preview Wave"))
                 StartPreview();
 
             GUI.enabled = previewPlaying;
+            if (GUILayout.Button("Pause"))
+            { previewPlaying = false; Repaint(); }
+
+            GUI.enabled = previewVisible;
             if (GUILayout.Button("Stop Preview"))
                 StopPreview();
 
@@ -6071,6 +6147,44 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
             if (GUILayout.Button("Frame Preview"))
                 FramePreviewArea();
+        }
+
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button(new GUIContent("In Formation",
+                "Сразу разместить временных врагов в финальной формации и начать предпросмотр атак с этого положения.")))
+            {
+                previewFormationOnly = true;
+                DisposeShootingSession();
+                SeekPreview(0f);
+            }
+            if (GUILayout.Button(new GUIContent("From Entrance", "Вернуть вход по маршруту и перейти к началу волны.")))
+            {
+                previewFormationOnly = false;
+                DisposeShootingSession();
+                SeekPreview(0f);
+            }
+        }
+        EditorGUI.BeginChangeCheck();
+        float requested = EditorGUILayout.Slider(new GUIContent("Preview Time", "Переход к времени с пересчётом истории выстрелов; большие скачки считаются постепенно."),
+            previewRequestedTime, 0f, totalDuration);
+        if (EditorGUI.EndChangeCheck()) SeekPreview(requested);
+        if (previewVisible)
+        {
+            bool catchingUp = previewRequestedTime - previewSampleElapsed > WaveShootingPreviewSession.StepInterval;
+            EditorGUILayout.LabelField(catchingUp ? "Calculating" : previewPlaying ? "Playing" : "Paused",
+                $"{previewSampleElapsed:0.00} / {previewRequestedTime:0.00} s · {(previewFormationOnly ? "Formation" : "Timeline")}");
+            if (shootingSession != null)
+            {
+                EditorGUILayout.LabelField("Shooting Preview", $"{shootingSession.EnemyCount} enemies · {shootingSession.ProjectileCount}/2048 projectiles");
+                if (shootingSession.SequenceStatus != null)
+                    EditorGUILayout.LabelField("Attack Sequence", shootingSession.SequenceStatus);
+                if (shootingSession.SequenceChildWaitTimeouts > 0)
+                    EditorGUILayout.HelpBox($"Child wait limit reached {shootingSession.SequenceChildWaitTimeouts} time(s); Sequence continued.", MessageType.Info);
+                if (shootingSession.Omitted > 0)
+                    EditorGUILayout.HelpBox("Preview limit reached: some enemies/directions/projectiles are sampled or omitted. Runtime settings are unchanged.", MessageType.Info);
+                if (!string.IsNullOrEmpty(shootingSession.Warning)) EditorGUILayout.HelpBox(shootingSession.Warning, MessageType.Warning);
+            }
         }
 
         if (previewCount <= 0)
@@ -6169,12 +6283,14 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         if (GetEditorEffectiveEnemyCount() <= 0 || GetPreviewTotalDuration() <= 0f)
             return;
 
-        InvalidatePreviewSession();
+        if (!previewVisible) InvalidatePreviewSession();
+        if (simulateShooting) EnemyShootingPreview.ShowFormationVolley = true;
         FramePreviewArea();
+        previewVisible = true;
         previewPlaying = true;
-        previewStartTime = EditorApplication.timeSinceStartup;
-        nextPreviewFrameTime = previewStartTime;
-        previewSampleElapsed = 0f;
+        double now = EditorApplication.timeSinceStartup;
+        previewStartTime = now - previewSampleElapsed;
+        nextPreviewFrameTime = nextPreviewInspectorTime = now;
         EditorApplication.update -= UpdatePreview;
         EditorApplication.update += UpdatePreview;
         RepaintPreviewSceneView();
@@ -6193,18 +6309,68 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         sceneView.Repaint();
     }
 
+    private void SeekPreview(float time)
+    {
+        if (simulateShooting) EnemyShootingPreview.ShowFormationVolley = true;
+        previewVisible = true;
+        previewPlaying = false;
+        previewRequestedTime = Mathf.Clamp(time, 0f, GetPreviewTotalDuration());
+        // Backward scrubbing rebuilds deterministic shooting history; forward scrubbing reuses it.
+        if (shootingSession == null || previewRequestedTime < previewSampleElapsed)
+            DisposeShootingSession();
+        cachedWavePreviewElapsed = float.NaN;
+        EditorApplication.update -= UpdatePreview;
+        EditorApplication.update += UpdatePreview;
+        EnsureShootingSession();
+        RepaintPreviewSceneView(); Repaint();
+    }
+
+    private void EnsureShootingSession()
+    {
+        if (!simulateShooting || !previewVisible || !(target is DirectedEnemySubWave wave)) return;
+        int slot = Mathf.Max(0, selectedEnemySlotIndex);
+        if (shootingSession != null && shootingSessionVersion == previewConfigurationVersion && shootingSessionSlot == slot) return;
+        DisposeShootingSession();
+        shootingSession = new WaveShootingPreviewSession(wave, previewFormationOnly, previewAllEnemies,
+            slot, previewPlayerPosition, previewPlayerSprite, cachedWavePreviewSpawnOrder);
+        cachedWavePreviewSpawnOrder = shootingSession.SpawnOrder;
+        cachedWavePreviewLabels = BuildWavePreviewLabels(cachedWavePreviewSpawnOrder);
+        shootingSessionVersion = previewConfigurationVersion;
+        shootingSessionSlot = slot;
+        previewSampleElapsed = 0f;
+    }
+
+    private void RestartShootingSession()
+    {
+        DisposeShootingSession();
+        cachedWavePreviewElapsed = float.NaN;
+        if (previewVisible) EnsureShootingSession();
+    }
+
+    private void DisposeShootingSession()
+    {
+        if (shootingSession != null)
+        {
+            previewPlayerPosition = shootingSession.TargetPosition;
+            shootingSession.Dispose();
+            shootingSession = null;
+        }
+        shootingSessionVersion = -1;
+    }
+
     private Bounds GetPreviewBounds(DirectedEnemySubWave wave)
     {
         Vector3 center = wave != null ? wave.transform.position : Vector3.zero;
         Bounds bounds = new Bounds(center, Vector3.one);
 
-        EditorPathCheckpoint[] checkpoints = GetWorldPathCheckpoints(wave);
+        DirectedWaveRuntimeCheckpoint[] checkpoints = GetWorldPathCheckpoints(wave);
         for (int i = 0; i < checkpoints.Length; i++)
             bounds.Encapsulate(checkpoints[i].position);
 
         int count = Mathf.Max(1, GetEditorEffectiveEnemyCount());
-        for (int i = 0; i < count; i++)
-            bounds.Encapsulate(GetFormationWorldPosition(i, wave));
+        int samples = Mathf.Min(64, count);
+        for (int i = 0; i < samples; i++)
+            bounds.Encapsulate(GetFormationWorldPosition(WaveShootingPreviewSession.SampleIndex(i, samples, count), wave));
 
         bounds.Expand(1.5f);
         return bounds;
@@ -6212,10 +6378,13 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void StopPreview()
     {
-        if (!previewPlaying)
+        if (!previewVisible && shootingSession == null)
             return;
 
         previewPlaying = false;
+        previewVisible = false;
+        previewSampleElapsed = previewRequestedTime = 0f;
+        DisposeShootingSession();
         cachedWavePreviewVersion = -1;
         cachedWavePreviewElapsed = float.NaN;
         cachedWavePreviewPositions?.Clear();
@@ -6228,24 +6397,53 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void UpdatePreview()
     {
-        if (!previewPlaying)
+        if (!previewVisible || Application.isPlaying || target == null)
             return;
+        if (shootingSession != null && !shootingSession.IsConfigurationCurrent)
+            RestartShootingSession();
 
         double now = EditorApplication.timeSinceStartup;
-        float elapsed = Mathf.Max(0f, (float)(now - previewStartTime));
-        if (elapsed >= GetPreviewTotalDuration())
+        if (simulateShooting && !EnemyShootingPreview.ShowFormationVolley)
         {
-            StopPreview();
+            shootingSession?.SetVisible(false);
+            previewStartTime = now - previewSampleElapsed;
             return;
         }
+        if (previewPlaying)
+        {
+            previewRequestedTime = Mathf.Min(GetPreviewTotalDuration(), Mathf.Max(0f, (float)(now - previewStartTime)));
+            if (previewRequestedTime >= GetPreviewTotalDuration()) previewPlaying = false;
+        }
 
-        if (now < nextPreviewFrameTime)
+        // A seek or a delayed Editor tick can need multiple bounded catch-up updates.
+        if (now < nextPreviewFrameTime
+            && previewRequestedTime - previewSampleElapsed < 2f * WaveShootingPreviewSession.StepInterval)
             return;
 
-        previewSampleElapsed = elapsed;
-        nextPreviewFrameTime = now + PreviewFrameInterval;
+        if (!previewPlaying && Mathf.Abs(previewRequestedTime - previewSampleElapsed) < WaveShootingPreviewSession.StepInterval
+            && (!simulateShooting || shootingSessionVersion == previewConfigurationVersion
+                && shootingSessionSlot == Mathf.Max(0, selectedEnemySlotIndex)))
+            return;
+
+        if (simulateShooting)
+        {
+            EnsureShootingSession();
+            if (shootingSession != null && previewRequestedTime - shootingSession.Time >= WaveShootingPreviewSession.StepInterval)
+                shootingSession.AdvanceTo(previewRequestedTime);
+            if (shootingSession != null) previewSampleElapsed = shootingSession.Time;
+        }
+        else previewSampleElapsed = previewRequestedTime;
+        // Keep the deadline on its original clock grid. Resetting it to now + interval
+        // turns a 30 Hz preview into ~20 Hz when Editor updates arrive every 16 ms.
+        if (now >= nextPreviewFrameTime)
+            nextPreviewFrameTime += (System.Math.Floor((now - nextPreviewFrameTime) / PreviewFrameInterval) + 1d) * PreviewFrameInterval;
         RepaintPreviewSceneView();
-        Repaint();
+        // The complete wave inspector is expensive; only its time/count labels animate.
+        if (!previewPlaying || now >= nextPreviewInspectorTime)
+        {
+            nextPreviewInspectorTime = now + .1d;
+            Repaint();
+        }
     }
 
     private void RepaintPreviewSceneView()
@@ -6345,11 +6543,10 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         for (int i = 0; i < count; i++)
         {
             Transform child = root.GetChild(i);
-            Undo.RecordObject(child, "Move Formation Slot");
-            child.position = ToWorld(
+            SetFormationPointWorldPosition(child, ToWorld(
                 wave,
                 GetHorizontalLineLocalPosition(i),
-                (DirectedWaveCoordinateSpace)formationCoordinateSpace.enumValueIndex);
+                (DirectedWaveCoordinateSpace)formationCoordinateSpace.enumValueIndex), "Move Formation Slot");
         }
     }
 
@@ -6378,6 +6575,12 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         if (wave.HasPostBehaviour)
             DrawActivePostCommandPreview(wave);
         DrawWavePreview(wave);
+        if (!previewVisible) EnemyShootingPreview.DrawFormationVolley(wave);
+        if (previewVisible && shootingSession != null)
+        {
+            shootingSession.Draw(SceneView.currentDrawingSceneView);
+            previewPlayerPosition = shootingSession.TargetPosition;
+        }
 
         if (patrolSceneCommitThisEvent)
         {
@@ -6524,7 +6727,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private void DrawWavePreview(DirectedEnemySubWave wave)
     {
-        if (!previewPlaying || Event.current.type != EventType.Repaint)
+        if (!previewVisible || Event.current.type != EventType.Repaint)
             return;
 
         float elapsed = previewSampleElapsed;
@@ -6548,10 +6751,15 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             ? Mathf.Min(count, previewSpawnOrder.Length)
             : 0;
         float safeSpawnInterval = Mathf.Max(0f, spawnInterval.floatValue);
-        for (int i = 0; i < orderedCount; i++)
+        EnemyShootingPreview.BeginWavePreview(wave, elapsed, previewPositions, previewSpawnOrder);
+        try
+        {
+          for (int i = 0; i < orderedCount; i++)
         {
             int formationIndex = previewSpawnOrder[i];
-            float enemyTime = elapsed - i * safeSpawnInterval;
+              if (!EnemyShootingPreview.IsOverviewSlot(i, orderedCount)
+                  && formationIndex != Mathf.Max(0, selectedEnemySlotIndex)) continue;
+              float enemyTime = previewFormationOnly ? elapsed : elapsed - i * safeSpawnInterval;
             if (enemyTime < 0f
                 || !previewPositions.TryGetValue(
                     formationIndex,
@@ -6572,7 +6780,8 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                 3f,
                 previewLinePoints);
             Handles.color = new Color(0.35f, 1f, 0.45f, 0.9f);
-            Handles.DrawSolidDisc(position, Vector3.forward, radius * 1.6f);
+              if (!simulateShooting || shootingSession == null)
+                  Handles.DrawSolidDisc(position, Vector3.forward, radius * 1.6f);
             Handles.color = Color.black;
             Handles.DrawWireDisc(position, Vector3.forward, radius * 1.9f);
             Handles.color = Color.white;
@@ -6596,9 +6805,16 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                         position + direction * radius * 4f);
                 }
             }
-            EnemyShootingPreview.DrawWaveSlot(wave, formationIndex, position, enemyTime, elapsed);
+              // Animated sprites/bullets carry the live view. Detailed guides are useful while paused,
+              // but resolving/drawing every volley each playing repaint defeats the simulation budget.
+              if (!simulateShooting || !previewPlaying && formationIndex == Mathf.Max(0, selectedEnemySlotIndex))
+                  EnemyShootingPreview.DrawWaveSlot(wave, formationIndex, position, enemyTime, elapsed,
+                      staticPreview: previewFormationOnly, detailed: false, rayBudget: EnemyShootingPreview.GetOverviewRayBudget(orderedCount),
+                      previewTarget: shootingSession != null ? shootingSession.TargetPosition : (Vector3?)null);
             Handles.color = new Color(0.35f, 1f, 0.45f, 0.9f);
         }
+        }
+        finally { EnemyShootingPreview.EndWavePreview(); }
 
         Vector3 labelPosition = wave.transform.position + Vector3.up * 4.5f;
         Handles.color = Color.white;
@@ -6628,7 +6844,8 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         if (configurationChanged || cachedWavePreviewSpawnOrder == null)
         {
             wave.InvalidateSimulationPreviewCache();
-            cachedWavePreviewSpawnOrder = wave.GetSimulationSpawnOrder();
+            cachedWavePreviewSpawnOrder = shootingSession != null && shootingSessionVersion == previewConfigurationVersion
+                ? shootingSession.SpawnOrder : wave.GetSimulationSpawnOrder();
             cachedWavePreviewLabels = BuildWavePreviewLabels(
                 cachedWavePreviewSpawnOrder);
         }
@@ -6637,6 +6854,25 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             Mathf.Max(1, wave.GetSimulationEnemyCount()));
         cachedWavePreviewPreviousPositions ??= new Dictionary<int, Vector3>(
             Mathf.Max(1, wave.GetSimulationEnemyCount()));
+        if (previewFormationOnly)
+        {
+            int count = wave.GetSimulationEnemyCount();
+            if (configurationChanged || cachedWavePreviewPositions.Count != count)
+            {
+                cachedWavePreviewPositions.Clear();
+                cachedWavePreviewPreviousPositions.Clear();
+                for (int i = 0; i < count; i++)
+                {
+                    Vector3 position = wave.GetConfiguredFormationSlotPosition(i);
+                    cachedWavePreviewPositions[i] = position;
+                    cachedWavePreviewPreviousPositions[i] = position;
+                }
+            }
+            cachedWavePreviewPhaseName = "Formation (skip entrance)";
+            cachedWavePreviewVersion = previewConfigurationVersion;
+            cachedWavePreviewElapsed = elapsed;
+            return;
+        }
         wave.EvaluateSimulationPreviewNonAlloc(
             elapsed,
             null,
@@ -6715,6 +6951,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             return;
 
         DrawCheckpointSceneHandles(wave);
+        DrawCurveSceneHandles(wave, pathCheckpoints, false);
     }
 
     private void DrawIndividualEntrancePointSceneHandles(
@@ -6885,6 +7122,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         }
 
         DrawPatrolRoute(centerWorld);
+        DrawCurveSceneHandles(wave, patrolPoints, true);
 
         Handles.color = new Color(0.35f, 1f, 0.9f, 1f);
         for (int i = 0; i < patrolPoints.arraySize; i++)
@@ -7402,7 +7640,8 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             if (point == null)
                 return false;
 
-            worldPosition = point.position;
+            worldPosition = formationFrozen.boolValue
+                ? point.position : GetFormationWorldPosition(index, (DirectedEnemySubWave)target);
             return true;
         }
 
@@ -7587,14 +7826,22 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(child, "Move Formation Transform Slot");
-                child.position = changedWorld;
+                SetFormationPointWorldPosition(child, changedWorld, "Move Formation Transform Slot");
                 activeTransformFormationPoint = child;
                 SceneView.RepaintAll();
             }
         }
 
         DrawSelectedTransformSpawnOrderHighlight();
+    }
+
+    private static void SetFormationPointWorldPosition(Transform point, Vector3 position, string undoName)
+    {
+        Undo.RecordObject(point, undoName);
+        point.position = position;
+        if (PrefabUtility.IsPartOfPrefabInstance(point))
+            PrefabUtility.RecordPrefabInstancePropertyModifications(point);
+        EditorUtility.SetDirty(point);
     }
 
     private void DrawSelectedCustomSpawnOrderHighlight(
@@ -7680,10 +7927,13 @@ public sealed class DirectedEnemySubWaveEditor : Editor
         int index,
         DirectedEnemySubWave wave)
     {
+        if (formationFrozen.boolValue)
+            return GetTransformPointPosition(index, wave);
+
         DirectedWaveFormationLayout layout =
             (DirectedWaveFormationLayout)formationLayout.enumValueIndex;
 
-        return layout switch
+        Vector3 position = layout switch
         {
             DirectedWaveFormationLayout.VerticalLine =>
                 GetVerticalLineLocalPosition(index),
@@ -7707,6 +7957,10 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                 GetTransformPointPosition(index, wave),
             _ => GetHorizontalLineLocalPosition(index)
         };
+        return position + DirectedWaveFormationOffset.Evaluate(index,
+            GetEditorEffectiveEnemyCount(), formationOffsetStep.vector2Value,
+            (DirectedWaveFormationOffsetOrigin)formationOffsetOrigin.enumValueIndex,
+            (DirectedWaveFormationCenterOffsetMode)formationCenterOffsetMode.enumValueIndex);
     }
 
     private Vector3 GetVerticalLineLocalPosition(int index)
@@ -7925,14 +8179,12 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private float GetPreviewElapsed()
     {
-        return Mathf.Max(
-            0f,
-            (float)(EditorApplication.timeSinceStartup - previewStartTime));
+        return previewSampleElapsed;
     }
 
     private Vector3 GetEditorSpawnPosition(DirectedEnemySubWave wave)
     {
-        EditorPathCheckpoint[] checkpoints = GetWorldPathCheckpoints(wave);
+        DirectedWaveRuntimeCheckpoint[] checkpoints = GetWorldPathCheckpoints(wave);
         if (checkpoints.Length > 0)
             return checkpoints[0].position;
 
@@ -8130,7 +8382,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     }
 
     private static float GetCheckpointPathDuration(
-        EditorPathCheckpoint[] checkpoints)
+        DirectedWaveRuntimeCheckpoint[] checkpoints)
     {
         float total = 0f;
         for (int i = 0; i < checkpoints.Length - 1; i++)
@@ -8141,7 +8393,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private float GetCheckpointSegmentLength(int segmentIndex)
     {
-        EditorPathCheckpoint[] checkpoints =
+        DirectedWaveRuntimeCheckpoint[] checkpoints =
             GetWorldPathCheckpoints((DirectedEnemySubWave)target);
 
         if (checkpoints.Length < 2
@@ -8310,64 +8562,17 @@ public sealed class DirectedEnemySubWaveEditor : Editor
 
     private Vector3 EvaluatePatrolSegment(int segmentIndex, float time)
     {
-        if (patrolPoints == null || patrolPoints.arraySize == 0)
-            return Vector3.zero;
-
-        SerializedProperty point = patrolPoints.GetArrayElementAtIndex(segmentIndex);
-        DirectedWaveSegmentMotion motion =
-            (DirectedWaveSegmentMotion)point
-                .FindPropertyRelative("motionToNext")
-                .enumValueIndex;
-
-        return motion switch
-        {
-            DirectedWaveSegmentMotion.Bezier =>
-                EvaluatePatrolBezierSegment(segmentIndex, time),
-            DirectedWaveSegmentMotion.CatmullRom =>
-                EvaluatePatrolCatmullRomSegment(segmentIndex, time),
-            _ => Vector3.LerpUnclamped(
-                GetPatrolPointPosition(segmentIndex),
-                GetPatrolPointPosition(GetNextPatrolPointIndex(segmentIndex)),
-                time)
-        };
-    }
-
-    private Vector3 EvaluatePatrolBezierSegment(int segmentIndex, float time)
-    {
-        Vector3 p0 = GetPatrolPointPosition(segmentIndex);
-        Vector3 p3 = GetPatrolPointPosition(GetNextPatrolPointIndex(segmentIndex));
-        Vector3 previous = GetPatrolPointPosition(GetPreviousPatrolPointIndex(segmentIndex));
-        Vector3 following = GetPatrolPointPosition(
-            GetNextPatrolPointIndex(GetNextPatrolPointIndex(segmentIndex)));
-
-        Vector3 p1 = p0 + (p3 - previous) / 6f;
-        Vector3 p2 = p3 - (following - p0) / 6f;
-        float t = Mathf.Clamp01(time);
-        float oneMinusT = 1f - t;
-
-        return oneMinusT * oneMinusT * oneMinusT * p0
-            + 3f * oneMinusT * oneMinusT * t * p1
-            + 3f * oneMinusT * t * t * p2
-            + t * t * t * p3;
-    }
-
-    private Vector3 EvaluatePatrolCatmullRomSegment(int segmentIndex, float time)
-    {
-        int p1 = segmentIndex;
-        int p0 = GetPreviousPatrolPointIndex(p1);
-        int p2 = GetNextPatrolPointIndex(p1);
-        int p3 = GetNextPatrolPointIndex(p2);
-        float t = Mathf.Clamp01(time);
-
-        return 0.5f * (
-            2f * GetPatrolPointPosition(p1)
-            + (-GetPatrolPointPosition(p0) + GetPatrolPointPosition(p2)) * t
-            + (2f * GetPatrolPointPosition(p0) - 5f * GetPatrolPointPosition(p1)
-                + 4f * GetPatrolPointPosition(p2) - GetPatrolPointPosition(p3))
-            * t * t
-            + (-GetPatrolPointPosition(p0) + 3f * GetPatrolPointPosition(p1)
-                - 3f * GetPatrolPointPosition(p2) + GetPatrolPointPosition(p3))
-            * t * t * t);
+        if (patrolPoints == null || patrolPoints.arraySize == 0) return Vector3.zero;
+        int next = GetNextPatrolPointIndex(segmentIndex);
+        var wave = target as DirectedEnemySubWave;
+        var space = (DirectedWaveCoordinateSpace)patrolCoordinateSpace.enumValueIndex;
+        return DirectedWavePathEvaluator.EvaluateSegment(
+            GetPatrolPointPosition(GetPreviousPatrolPointIndex(segmentIndex)),
+            GetPatrolPointPosition(segmentIndex), GetPatrolPointPosition(next),
+            GetPatrolPointPosition(GetNextPatrolPointIndex(next)),
+            (DirectedWaveSegmentMotion)patrolPoints.GetArrayElementAtIndex(segmentIndex).FindPropertyRelative("motionToNext").enumValueIndex,
+            time, ReadWorldCurveSettings(patrolPoints.GetArrayElementAtIndex(segmentIndex), wave, space),
+            ReadWorldCurveSettings(patrolPoints.GetArrayElementAtIndex(next), wave, space));
     }
 
     private int GetPreviousPatrolPointIndex(int index)
@@ -8415,22 +8620,22 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             (DirectedWaveCoordinateSpace)patrolCoordinateSpace.enumValueIndex);
     }
 
-    private EditorPathCheckpoint[] GetWorldPathCheckpoints(
+    private DirectedWaveRuntimeCheckpoint[] GetWorldPathCheckpoints(
         DirectedEnemySubWave wave)
     {
         if (pathCheckpoints == null || pathCheckpoints.arraySize == 0)
-            return System.Array.Empty<EditorPathCheckpoint>();
+            return System.Array.Empty<DirectedWaveRuntimeCheckpoint>();
 
         DirectedWaveCoordinateSpace coordinateSpace =
             (DirectedWaveCoordinateSpace)pathCoordinateSpace.enumValueIndex;
-        EditorPathCheckpoint[] checkpoints =
-            new EditorPathCheckpoint[pathCheckpoints.arraySize];
+        DirectedWaveRuntimeCheckpoint[] checkpoints =
+            new DirectedWaveRuntimeCheckpoint[pathCheckpoints.arraySize];
 
         for (int i = 0; i < pathCheckpoints.arraySize; i++)
         {
             SerializedProperty checkpoint =
                 pathCheckpoints.GetArrayElementAtIndex(i);
-            checkpoints[i] = new EditorPathCheckpoint
+            checkpoints[i] = new DirectedWaveRuntimeCheckpoint
             {
                 position = ToWorld(
                     wave,
@@ -8445,7 +8650,8 @@ public sealed class DirectedEnemySubWaveEditor : Editor
                         .enumValueIndex,
                 easeToNext = checkpoint
                     .FindPropertyRelative("easeToNext")
-                    .animationCurveValue
+                    .animationCurveValue,
+                curveSettings = ReadWorldCurveSettings(checkpoint, wave, coordinateSpace)
             };
         }
 
@@ -8465,7 +8671,7 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     }
 
     private static Vector3 EvaluateCheckpointPath(
-        EditorPathCheckpoint[] checkpoints,
+        DirectedWaveRuntimeCheckpoint[] checkpoints,
         float elapsed)
     {
         if (checkpoints == null || checkpoints.Length == 0)
@@ -8482,7 +8688,8 @@ public sealed class DirectedEnemySubWaveEditor : Editor
             {
                 float time = Mathf.Clamp01(remaining / duration);
                 float curved = EvaluateCurve(checkpoints[i].easeToNext, time);
-                return EvaluateCheckpointSegment(checkpoints, i, curved);
+                float pathTime = DirectedWavePathEvaluator.GetParameterAtNormalizedDistance(checkpoints, i, curved);
+                return EvaluateCheckpointSegment(checkpoints, i, pathTime);
             }
 
             remaining -= duration;
@@ -8492,69 +8699,9 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     }
 
     private static Vector3 EvaluateCheckpointSegment(
-        EditorPathCheckpoint[] checkpoints,
-        int segmentIndex,
-        float time)
+        DirectedWaveRuntimeCheckpoint[] checkpoints, int segmentIndex, float time)
     {
-        EditorPathCheckpoint current = checkpoints[segmentIndex];
-        EditorPathCheckpoint next = checkpoints[segmentIndex + 1];
-
-        return current.motionToNext switch
-        {
-            DirectedWaveSegmentMotion.Bezier =>
-                EvaluateBezierSegment(checkpoints, segmentIndex, time),
-            DirectedWaveSegmentMotion.CatmullRom =>
-                EvaluateCatmullRomSegment(checkpoints, segmentIndex, time),
-            _ => Vector3.LerpUnclamped(current.position, next.position, time)
-        };
-    }
-
-    private static Vector3 EvaluateBezierSegment(
-        EditorPathCheckpoint[] checkpoints,
-        int segmentIndex,
-        float time)
-    {
-        Vector3 p0 = checkpoints[segmentIndex].position;
-        Vector3 p3 = checkpoints[segmentIndex + 1].position;
-
-        Vector3 previous = segmentIndex > 0
-            ? checkpoints[segmentIndex - 1].position
-            : p0;
-        Vector3 following = segmentIndex + 2 < checkpoints.Length
-            ? checkpoints[segmentIndex + 2].position
-            : p3;
-
-        Vector3 p1 = p0 + (p3 - previous) / 6f;
-        Vector3 p2 = p3 - (following - p0) / 6f;
-        float t = Mathf.Clamp01(time);
-        float oneMinusT = 1f - t;
-
-        return oneMinusT * oneMinusT * oneMinusT * p0
-            + 3f * oneMinusT * oneMinusT * t * p1
-            + 3f * oneMinusT * t * t * p2
-            + t * t * t * p3;
-    }
-
-    private static Vector3 EvaluateCatmullRomSegment(
-        EditorPathCheckpoint[] checkpoints,
-        int segmentIndex,
-        float time)
-    {
-        int p1 = segmentIndex;
-        int p0 = Mathf.Max(p1 - 1, 0);
-        int p2 = Mathf.Min(p1 + 1, checkpoints.Length - 1);
-        int p3 = Mathf.Min(p1 + 2, checkpoints.Length - 1);
-        float t = Mathf.Clamp01(time);
-
-        return 0.5f * (
-            2f * checkpoints[p1].position
-            + (-checkpoints[p0].position + checkpoints[p2].position) * t
-            + (2f * checkpoints[p0].position - 5f * checkpoints[p1].position
-                + 4f * checkpoints[p2].position - checkpoints[p3].position)
-            * t * t
-            + (-checkpoints[p0].position + 3f * checkpoints[p1].position
-                - 3f * checkpoints[p2].position + checkpoints[p3].position)
-            * t * t * t);
+        return DirectedWavePathEvaluator.EvaluateSegment(checkpoints, segmentIndex, time);
     }
 
     private static float EvaluateCurve(AnimationCurve curve, float time)
@@ -8621,14 +8768,6 @@ public sealed class DirectedEnemySubWaveEditor : Editor
     private static Transform GetSpawnPoint(DirectedEnemySubWave wave)
     {
         return wave != null ? wave.PhaseEntrySpawnPoint : null;
-    }
-
-    private struct EditorPathCheckpoint
-    {
-        public Vector3 position;
-        public float durationToNext;
-        public DirectedWaveSegmentMotion motionToNext;
-        public AnimationCurve easeToNext;
     }
 
     private struct CustomFinalPointOrderEntry

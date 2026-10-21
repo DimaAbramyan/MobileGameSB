@@ -15,16 +15,16 @@ MonoBehaviour:
   speed: 500
   mass: 4.5
   drag: 12
-  maximumHealthPoints: 60
+  maximumHealthPoints: 6
   overrideHealthRegeneration: 0
-  healthRegenCooldown: 20
+  healthRegenCooldown: 60
   healthRegenRate: 10
-  maximumShieldPoints: 50
+  maximumShieldPoints: 5
   overrideShieldRegeneration: 0
-  shieldRegenCooldown: 10
+  shieldRegenCooldown: 30
   shieldRegenRate: 10
   maximumEnergy: 10
-  maximumWeaponCount: 3
+  maximumWeaponCount: 2
   currentLvl: 0
   abilityDamageProgression:
     damageBonusPercentByLevel:

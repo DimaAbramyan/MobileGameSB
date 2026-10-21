@@ -9,8 +9,10 @@ public sealed class WaveEnemyDifficultyModifier : MonoBehaviour
     [SerializeField, Min(0.01f)] private float hullHealthMultiplier = 1f;
     [SerializeField, Min(0.01f)] private float shieldHealthMultiplier = 1f;
 
-    [Header("Damage Multipliers")]
-    [SerializeField, Min(0.01f)] private float damageMultiplier = 1f;
+    // Preserve the serialized key and public API for older wave presets.
+#pragma warning disable CS0414 // Legacy serialized data is intentionally no longer read.
+    [SerializeField, HideInInspector] private float damageMultiplier = 1f;
+#pragma warning restore CS0414
 
     [Header("Fire Rate Multiplier")]
     [SerializeField, Min(0.01f)] private float fireRateMultiplier = 1f;
@@ -18,22 +20,21 @@ public sealed class WaveEnemyDifficultyModifier : MonoBehaviour
     private readonly List<InfoAboutSubWave> subscribedSubWaves = new();
     private float levelHullHealthMultiplier = 1f;
     private float levelShieldHealthMultiplier = 1f;
-    private float levelDamageMultiplier = 1f;
     private float levelFireRateMultiplier = 1f;
 
     public float HullHealthMultiplier => hullHealthMultiplier;
     public float ShieldHealthMultiplier => shieldHealthMultiplier;
-    public float DamageMultiplier => damageMultiplier;
+    public float DamageMultiplier => 1f;
     public float FireRateMultiplier => fireRateMultiplier;
     public float LevelHullHealthMultiplier => levelHullHealthMultiplier;
     public float LevelShieldHealthMultiplier => levelShieldHealthMultiplier;
-    public float LevelDamageMultiplier => levelDamageMultiplier;
+    public float LevelDamageMultiplier => 1f;
     public float LevelFireRateMultiplier => levelFireRateMultiplier;
     public float TotalHullHealthMultiplier =>
         hullHealthMultiplier * levelHullHealthMultiplier;
     public float TotalShieldHealthMultiplier =>
         shieldHealthMultiplier * levelShieldHealthMultiplier;
-    public float TotalDamageMultiplier => damageMultiplier * levelDamageMultiplier;
+    public float TotalDamageMultiplier => 1f;
     public float TotalFireRateMultiplier =>
         fireRateMultiplier * levelFireRateMultiplier;
 
@@ -44,9 +45,6 @@ public sealed class WaveEnemyDifficultyModifier : MonoBehaviour
             : 1f;
         levelShieldHealthMultiplier = levelConfig != null
             ? levelConfig.EnemyShieldHealthMultiplier
-            : 1f;
-        levelDamageMultiplier = levelConfig != null
-            ? levelConfig.EnemyDamageMultiplier
             : 1f;
         levelFireRateMultiplier = levelConfig != null
             ? levelConfig.EnemyFireRateMultiplier
@@ -85,7 +83,6 @@ public sealed class WaveEnemyDifficultyModifier : MonoBehaviour
             return;
 
         enemy.MultiplyHealth(TotalHullHealthMultiplier);
-        enemy.MultiplyDamage(TotalDamageMultiplier);
         enemy.MultiplyFireRate(TotalFireRateMultiplier);
 
         EnemyShieldModifier shieldModifier =
@@ -110,7 +107,7 @@ public sealed class WaveEnemyDifficultyModifier : MonoBehaviour
     {
         hullHealthMultiplier = Mathf.Max(0.01f, hullHealthMultiplier);
         shieldHealthMultiplier = Mathf.Max(0.01f, shieldHealthMultiplier);
-        damageMultiplier = Mathf.Max(0.01f, damageMultiplier);
+        damageMultiplier = 1f;
         fireRateMultiplier = Mathf.Max(0.01f, fireRateMultiplier);
     }
 }

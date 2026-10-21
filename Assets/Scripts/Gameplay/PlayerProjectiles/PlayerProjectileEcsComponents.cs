@@ -92,6 +92,30 @@ public struct PlayerProjectileRemainingLifetime : IComponentData
 public struct PlayerProjectileDamage : IComponentData
 {
     public float Value;
+    // Delta keeps zero-initialized damage/events equivalent to multiplier 1.
+    public float HeatMultiplierDelta;
+}
+
+public struct PlayerProjectileDistanceDamageCurveData
+{
+    public BlobArray<float> Samples;
+}
+
+public struct PlayerProjectileDistanceDamageCurve : IComponentData
+{
+    public BlobAssetReference<PlayerProjectileDistanceDamageCurveData> Data;
+
+    public float Evaluate(float progress)
+    {
+        if (!Data.IsCreated)
+            return 1f;
+        ref BlobArray<float> samples = ref Data.Value.Samples;
+        float index = Unity.Mathematics.math.saturate(progress) * (samples.Length - 1);
+        int lower = (int)index;
+        int upper = Unity.Mathematics.math.min(lower + 1, samples.Length - 1);
+        return Unity.Mathematics.math.max(0f, Unity.Mathematics.math.lerp(
+            samples[lower], samples[upper], index - lower));
+    }
 }
 
 public struct PlayerProjectileOwner : IComponentData
@@ -105,6 +129,9 @@ public struct PlayerProjectileOwner : IComponentData
 /// </summary>
 public struct PlayerProjectileScaleState : IComponentData
 {
+    public float TraveledDistance;
+    public float InitialRange;
+    public float InitialDamage;
     public float2 RootScale;
     public float2 InitialRootScale;
     public float2 VisualScalePerRootUnit;
@@ -367,6 +394,7 @@ public struct PlayerProjectileResolutionEvent : IBufferElementData
     public int OwnerId;
     public int DebuffSetId;
     public float Damage;
+    public float HeatMultiplierDelta;
     public EnemyDamageType DamageType;
     public byte BypassesEnemyShield;
     public float2 ImpactPosition;

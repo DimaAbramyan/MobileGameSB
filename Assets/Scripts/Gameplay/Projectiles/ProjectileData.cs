@@ -28,7 +28,7 @@ public sealed class ProjectileDamageSource
     [SerializeField] private string id = "source";
     [SerializeField] private ProjectileDamageTrigger trigger;
     [SerializeField, Min(0f)] private float damage;
-    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Kinetic;
+    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Kinetick;
     [SerializeField] private bool bypassesShield;
 
     public string Id => id;
@@ -55,10 +55,19 @@ public sealed class ProjectileFlightContract : ProjectileDataContract
 {
     [SerializeField] private bool growDuringFlight;
     [SerializeField] private Vector2 scaleGrowthPerSecond = Vector2.one * 0.5f;
+    [Tooltip("Apply the normalized travel-distance curve to hit damage and temperature accumulation. This does not change size growth.")]
+    [SerializeField] private bool reduceDamageWithGrowth;
+    // Retained only to preserve legacy serialized data during migration.
+    [SerializeField, HideInInspector, Min(0f)] private float damageGrowthFalloffPower = 1f;
+    [Tooltip("X: traveled path / maximum range (0..1). Y: multiplier for hit damage and temperature accumulation. Size growth is configured separately. Negative multipliers are clamped to zero.")]
+    [SerializeField] private AnimationCurve damageMultiplierByDistance = AnimationCurve.Linear(0f, 1f, 1f, 0f);
 
     public override string DisplayName => "Flight";
     public bool GrowDuringFlight => growDuringFlight;
     public Vector2 ScaleGrowthPerSecond => scaleGrowthPerSecond;
+    public float DamageGrowthFalloffPower => growDuringFlight && reduceDamageWithGrowth
+        ? Mathf.Max(0f, damageGrowthFalloffPower) : 0f;
+    public AnimationCurve DamageMultiplierByDistance => reduceDamageWithGrowth ? damageMultiplierByDistance : null;
 }
 
 [Serializable]
@@ -329,7 +338,7 @@ public sealed class ProjectileData : ScriptableObject
 
     [Header("Direct Damage")]
     [SerializeField, Min(0f)] private float damage = 1f;
-    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Kinetic;
+    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Kinetick;
 
     [Header("Physical Projectile")]
     [SerializeField] private Projectile projectilePrefab;
@@ -381,6 +390,7 @@ public sealed class ProjectileData : ScriptableObject
         {
             runtimeConfig.growDuringFlight = flight.GrowDuringFlight;
             runtimeConfig.scaleGrowthPerSecond = flight.ScaleGrowthPerSecond;
+                runtimeConfig.damageMultiplierByDistance = flight.DamageMultiplierByDistance;
         }
 
         if (TryGetContract(out ProjectileHomingContract homing))
@@ -421,7 +431,7 @@ public sealed class ProjectileData : ScriptableObject
           {
               runtimeConfig.isArcNode = true;
               runtimeConfig.contactMode = ProjectileContactMode.Ignore;
-              runtimeConfig.damageType = EnemyDamageType.Electric;
+              runtimeConfig.damageType = EnemyDamageType.Plazma;
               runtimeConfig.arcNodesDamagePerArc = arcNodes.DamagePerArc;
               runtimeConfig.arcNodesConnectionRange = arcNodes.ConnectionRange;
               runtimeConfig.arcNodesPulseInterval = arcNodes.PulseInterval;

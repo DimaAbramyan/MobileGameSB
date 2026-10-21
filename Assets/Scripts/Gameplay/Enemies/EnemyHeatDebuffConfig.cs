@@ -5,6 +5,12 @@ using UnityEngine;
     menuName = "Game/Enemy Debuffs/Heat")]
 public sealed class EnemyHeatDebuffConfig : EnemyDebuffConfig
 {
+    [Header("Урон дебаффа")]
+    [SerializeField, InspectorName("Сначала урон щиту"), Tooltip(
+        "Выключено: горение и температурные взрывы наносят урон сразу корпусу. Включено: сначала щиту, затем остаток корпусу.")]
+    private bool damageShieldFirst;
+    public bool DamageShieldFirst => damageShieldFirst;
+
     [Header("Temperature Normalization")]
     [SerializeField, Min(0f)] private float coolingDelay = 0.5f;
     [SerializeField, Range(0f, 100f)] private float coolingPercentPerSecond = 25f;

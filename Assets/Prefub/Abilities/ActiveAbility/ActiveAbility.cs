@@ -254,6 +254,41 @@ public abstract class ActiveAbility : MonoBehaviour
         return true;
     }
 
+    /// <summary>Advances current recovery in seconds, including the Toggle reserve and its recharge delay.</summary>
+    public bool ReduceCooldown(float seconds)
+    {
+        if (!(seconds > 0f))
+            return false;
+
+        bool hadCooldown = cooldownTimer > 0f;
+        cooldownTimer = Mathf.Max(0f, cooldownTimer - seconds);
+        if (abilityMode == UltimateAbilityMode.Toggle && toggleTimeRemaining < toggleMaximumTime)
+        {
+            UpdateToggleRecharge(seconds);
+            return true;
+        }
+        if (abilityMode == UltimateAbilityMode.Charges && hadCooldown && cooldownTimer <= 0f)
+        {
+            currentCharges = Mathf.Min(maxCharges, currentCharges + 1);
+            if (currentCharges < maxCharges)
+                StartCooldown();
+        }
+        return hadCooldown;
+    }
+
+    public void RestartRecovery()
+    {
+        TryRelease(owner);
+        if (abilityMode == UltimateAbilityMode.Charges)
+            currentCharges = 0;
+        if (abilityMode == UltimateAbilityMode.Toggle)
+        {
+            toggleTimeRemaining = 0f;
+            toggleRechargeElapsed = 0f;
+        }
+        StartCooldown();
+    }
+
     protected void StartCooldown()
     {
         cooldownTimer = Mathf.Max(0f, cooldown);

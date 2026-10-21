@@ -4,6 +4,9 @@ using UnityEngine;
 public sealed class HullContentDefinition : CraftContentDefinition
 {
     [SerializeField] private ShipData data;
+    [SerializeField, Tooltip("Whether this hull can be selected for a new craft. Existing saved ships remain loadable.")]
+    private bool isAvailableForCrafting = true;
+    public bool IsAvailableForCrafting => isAvailableForCrafting;
     [SerializeField] private ShipColorPalette defaultColorPalette = new ShipColorPalette();
     [Header("Gameplay")]
     [SerializeField] private GameObject gameplayPrefab;

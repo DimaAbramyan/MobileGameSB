@@ -173,7 +173,7 @@ public partial struct PlayerProjectileArcNodesSystem : ISystem
                 OwnerId = source.OwnerId,
                 DebuffSetId = 0,
                 Damage = source.Data.DamagePerArc,
-                DamageType = EnemyDamageType.Electric,
+                DamageType = EnemyDamageType.Plazma,
                 BypassesEnemyShield = 0,
                 ImpactPosition = (target.Min + target.Max) * 0.5f
             });

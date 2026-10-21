@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "command": "command run_script",
+  "data": {
+    "command": "run_script",
+    "parameters": {
+      "file": "AgentScripts/ProfileWaveFastSeek.cs",
+      "entry": "ProfileWaveFastSeek.Run",
+      "args": "[3,\"off\",2]",
+      "timeout_ms": "240000"
+    },
+    "result": {
+      "diagnostics": [],
+      "compileMs": 100,
+      "executeMs": 42030,
+      "assemblyName": "PipelineRunScript_ProfileWaveFastSeek_89ba37e2a2bb406f8d16720143f414ec",
+      "success": true,
+      "result": {
+        "wave": "2_3_extrime",
+        "variant": "off",
+        "repeat": 2,
+        "wallSeconds": 41.9119677,
+        "activeMilliseconds": 41444.041099999944,
+        "waitingMilliseconds": 467.9266000000571,
+        "stepsPerUpdate": 1.7408123791102514,
+        "stepMs": null,
+        "gc0": 44,
+        "snapshotEstimateBytes": 132147232,
+        "worldCleanup": true,
+        "output": "AgentArtifacts/fast-seek-profile-3-off-2.json"
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

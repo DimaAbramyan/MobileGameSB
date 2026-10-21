@@ -1,14 +1,17 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [System.Serializable]
-public class EnemyRotationSettings
+public partial class EnemyRotationSettings
 {
     [SerializeField] private FourWayEnemyRotationDirection direction = FourWayEnemyRotationDirection.Clockwise;
     [SerializeField] private FourWayEnemyRotationMode rotationMode = FourWayEnemyRotationMode.Continuous;
-    [SerializeField, Min(0.01f)] private float rotationSpeedDegreesPerSecond = 90f;
+    [SerializeField] [Randomizable(nameof(rotationSpeedDegreesPerSecondRandom), .01f, EnemyNumericScopes.Volley, EnemyNumericRandomizeOn.PerAttack)]
+    private float rotationSpeedDegreesPerSecond = 90f;
     [SerializeField] private AnimationCurve rotationProgressCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
-    [SerializeField] private float rotationAngle = 360f;
-    [SerializeField] private float rotationFromAngle;
+    [SerializeField] [Randomizable(nameof(rotationAngleRandom), float.MinValue, EnemyNumericScopes.Volley, EnemyNumericRandomizeOn.PerAttack)]
+    private float rotationAngle = 360f;
+    [SerializeField] [Randomizable(nameof(rotationFromAngleRandom), float.MinValue, EnemyNumericScopes.Volley, EnemyNumericRandomizeOn.PerAttack)]
+    private float rotationFromAngle;
     [SerializeField] private bool resetRotationOnEnable = true;
 
     public FourWayEnemyRotationDirection Direction => direction;
@@ -17,6 +20,8 @@ public class EnemyRotationSettings
     public float RotationAngle => rotationAngle;
     public float RotationFromAngle => rotationFromAngle;
     public bool ResetRotationOnEnable => resetRotationOnEnable;
+    public void ScaleAttackTiming(float multiplier)
+    { multiplier = Mathf.Max(.01f, multiplier); rotationSpeedDegreesPerSecond *= multiplier; rotationSpeedDegreesPerSecondRandom?.Scale(multiplier); }
     public float Duration => Mathf.Abs(rotationAngle) / RotationSpeedDegreesPerSecond;
     public bool HasMotion => rotationMode switch
     {
@@ -89,6 +94,7 @@ public class EnemyRotationSettings
         if (source == null || ReferenceEquals(this, source))
             return;
         source.Validate();
+        CopyNumericFrom(source);
         Configure(source.direction, source.rotationMode, source.rotationSpeedDegreesPerSecond,
             source.CreateRotationProgressCurve(), source.rotationAngle, source.rotationFromAngle, source.resetRotationOnEnable);
     }

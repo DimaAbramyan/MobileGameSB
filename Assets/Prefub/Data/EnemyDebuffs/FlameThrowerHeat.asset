@@ -16,8 +16,9 @@ MonoBehaviour:
   thresholdPercent: 100
   thresholdAction: 1
   triggerOncePerEnemy: 1
-  coolingDelay: 0.5
-  coolingPercentPerSecond: 25
+  damageShieldFirst: 0
+  coolingDelay: 6
+  coolingPercentPerSecond: 10
   affectedLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -25,6 +26,6 @@ MonoBehaviour:
   explosionDamage: 0
   transferredHeatPercent: 0
   explosionPrefab: {fileID: 0}
-  burningDuration: 3
-  burningDamagePerTick: 5
+  burningDuration: 6
+  burningDamagePerTick: 50
   burningDamageInterval: 0.5

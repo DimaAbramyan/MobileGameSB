@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "command": "command eval",
+  "data": {
+    "command": "eval",
+    "parameters": {
+      "code": "return new { version = UnityEngine.Application.unityVersion, compiling = UnityEditor.EditorApplication.isCompiling, updating = UnityEditor.EditorApplication.isUpdating, profilingOff = WavePreviewProfiler.Current == null, isolationOff = !WavePreviewProfiler.SkipNewSnapshots && !WavePreviewProfiler.IntermediateVisuals && WavePreviewProfiler.ProjectileLimit == -1, worlds = Unity.Entities.World.All.Count };"
+    },
+    "result": {
+      "output": null,
+      "diagnostics": [],
+      "success": true,
+      "result": {
+        "version": "6000.3.2f1",
+        "compiling": false,
+        "updating": false,
+        "profilingOff": true,
+        "isolationOff": true,
+        "worlds": 0
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

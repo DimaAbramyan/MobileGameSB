@@ -108,7 +108,7 @@ public class CreatePlayerShips : MonoBehaviour
         HullContentDefinition hull;
         if (!string.IsNullOrWhiteSpace(shipData.hullContentId))
         {
-            if (!contentCatalog.TryGetHull(shipData.hullContentId, out hull)
+            if (!contentCatalog.TryGetHull(shipData.hullContentId, shipData.shipId, out hull)
                 || hull.GameplayPrefab == null)
             {
                 Debug.LogError(

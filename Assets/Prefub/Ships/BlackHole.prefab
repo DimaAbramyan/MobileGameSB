@@ -15,8 +15,9 @@ GameObject:
   - component: {fileID: 5531666038293898980}
   - component: {fileID: 1747187658099963067}
   - component: {fileID: 6427467547313428841}
-  - component: {fileID: 7130167820753412502}
   - component: {fileID: 2925347647228451948}
+  - component: {fileID: 4007933651484545385}
+  - component: {fileID: 1680093751202888047}
   m_Layer: 8
   m_Name: BlackHole
   m_TagString: Player
@@ -119,7 +120,8 @@ MonoBehaviour:
   ShieldAnchor: {fileID: 3268154708046901353}
   ShipData: {fileID: 11400000, guid: 4f8412e53075b104ebf23726690ca4ff, type: 2}
   buffMagnet: {fileID: 4096775222194903361}
-  damageHitboxCollider: {fileID: 7130167820753412502}
+  damageHitboxCollider: {fileID: 4007933651484545385}
+  healthDamageProjectileClearRadius: 1.75
   IsVisible: 0
 --- !u!114 &4464506009196274525
 MonoBehaviour:
@@ -183,8 +185,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83c7c3671496a2043b5b210ab35ea20b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!61 &7130167820753412502
-BoxCollider2D:
+--- !u!114 &2925347647228451948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
+  hitboxColliders: []
+  autoCollectRootColliders: 1
+  autoCollectChildColliders: 1
+--- !u!58 &4007933651484545385
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -217,19 +234,9 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.11280072}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.84, y: 0.68}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 0.05, y: 0.05}
-  m_EdgeRadius: 0
---- !u!114 &2925347647228451948
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.05
+--- !u!114 &1680093751202888047
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -238,12 +245,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 3387013190401639}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ae5a7050d114f2a83ebec96be4422c3, type: 3}
+  m_Script: {fileID: 11500000, guid: 88c485ff1ed87904b9a5e5729584641a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipIntangibleState
-  hitboxColliders: []
-  autoCollectRootColliders: 1
-  autoCollectChildColliders: 1
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHitboxIndicator
+  visualRadius: 0.075
+  color: {r: 0.1, g: 1, b: 0.7, a: 0.95}
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0

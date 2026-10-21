@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-internal sealed class DirectedWaveAttackController
+internal sealed partial class DirectedWaveAttackController
 {
+    private static readonly WaitForFixedUpdate DiveFixedStep = new();
     private readonly DirectedEnemySubWave wave;
     private readonly DirectedWaveAttackSettings settings;
     private readonly System.Func<Enemy, bool> isEnemyAllowed;
@@ -28,7 +29,61 @@ internal sealed class DirectedWaveAttackController
         public DirectedWaveAttackAimState Aim;
     }
     private float nextAttackTime;
+    private Enemy dispatchClockOwner, pendingReadyEnemy;
+    private bool waitingForReady;
+    private float DispatchTime => dispatchClockOwner != null ? dispatchClockOwner.AttackTime : Time.time;
     private bool isRunning;
+    private bool singleCycle, cyclePrepared;
+    private float sequenceSpeed = 1f;
+    private EnemyAttackCompletionTracker completionTracker;
+    private int completedCycles, cycleLimit = int.MaxValue;
+    private bool cycleCounted;
+    private float permissionTick = -1f;
+    public int CompletedCycles { get { CountCompletedCycle(); return completedCycles; } }
+    public bool IsIdle => activeMovementEnemies.Count == 0 && activeFormationBurstEnemies.Count == 0;
+    public void SetCycleLimit(int limit) => cycleLimit = limit < 0 ? int.MaxValue : limit;
+    public Dictionary<Enemy, float> CaptureAttackCooldowns()
+    {
+        if (nextAttackReadyTimes.Count == 0) return null;
+        var cooldowns = new Dictionary<Enemy, float>(nextAttackReadyTimes.Count);
+        foreach (var entry in nextAttackReadyTimes)
+            if (entry.Key != null && !entry.Key.isDead) cooldowns.Add(entry.Key, entry.Value);
+        return cooldowns;
+    }
+    public void RestoreAttackCooldowns(Dictionary<Enemy, float> cooldowns)
+    {
+        if (cooldowns == null) return;
+        foreach (var entry in cooldowns)
+            if (entry.Key != null && !entry.Key.isDead) nextAttackReadyTimes[entry.Key] = entry.Value;
+    }
+    private void CountCompletedCycle()
+    {
+        if (cycleLimit == int.MaxValue && !singleCycle) return;
+        if (cycleCounted || !CycleWorkComplete) return;
+        cycleCounted = true; completedCycles++;
+    }
+
+    public bool HasCompletedSingleCycle
+        => singleCycle && CycleWorkComplete;
+    private bool CycleWorkComplete
+    {
+        get
+        {
+            if (!cyclePrepared
+                || (settings.UsesAttackOrder ? !orderPlan.Exhausted
+                    : nextQueueIndex < attackQueue.Count || deferredAttackQueue.Count > 0)
+                || activeMovementEnemies.Count > 0
+                || activeFormationBurstEnemies.Count > 0) return false;
+            foreach (var ready in nextAttackReadyTimes)
+                if (ready.Key != null && !ready.Key.isDead && ready.Key.isActiveAndEnabled && ready.Key.AttackTime < ready.Value) return false;
+            return true;
+        }
+    }
+
+    public void BeginSingleCycle(float speed, EnemyAttackCompletionTracker tracker)
+    {
+        Begin(); singleCycle = true; sequenceSpeed = Mathf.Max(.01f, speed); completionTracker = tracker;
+    }
 
     public DirectedWaveAttackController(
         DirectedEnemySubWave wave,
@@ -38,6 +93,7 @@ internal sealed class DirectedWaveAttackController
         this.wave = wave;
         this.settings = settings;
         this.isEnemyAllowed = isEnemyAllowed;
+        schedulingNumeric = settings?.CreateSchedulingNumeric();
     }
 
     public void Begin()
@@ -47,18 +103,23 @@ internal sealed class DirectedWaveAttackController
             return;
 
         isRunning = true;
-        nextAttackTime = Time.time + settings.AttackStartDelay;
+        nextAttackTime = Time.time + settings.SampleStartDelay(schedulingNumeric);
     }
 
     public void Stop()
     {
+        completedCycles = 0; cycleLimit = int.MaxValue; cycleCounted = false; permissionTick = -1f;
         isRunning = false;
+        singleCycle = cyclePrepared = false; sequenceSpeed = 1f; completionTracker = null;
         attackQueue.Clear();
         deferredAttackQueue.Clear();
-        nextAttackReadyTimes.Clear();
+        nextAttackReadyTimes.Clear(); numericFallback.Clear();
         projectileBaseSpeedOverrideSettings.Clear();
         nextQueueIndex = 0;
         nextAttackTime = 0f;
+        dispatchClockOwner = pendingReadyEnemy = null;
+        waitingForReady = false;
+        ResetAttackOrder();
 
         foreach (Coroutine routine in movementRoutines.Values)
         {
@@ -89,6 +150,8 @@ internal sealed class DirectedWaveAttackController
             if (!IsAliveExecutor(executor))
                 continue;
 
+            if (executor is IEnemyAttackCompletionReceiver completionReceiver)
+                completionReceiver.SetAttackCompletionTracker(null);
             executor.SetWaveAttackControl(false);
         }
 
@@ -99,6 +162,12 @@ internal sealed class DirectedWaveAttackController
 
     public void NotifyEnemyDestroyed(Enemy enemy)
     {
+        if (ReferenceEquals(dispatchClockOwner, enemy))
+        {
+            dispatchClockOwner = null;
+            waitingForReady = false;
+            nextAttackTime = Time.time;
+        }
         if (enemy == null)
             return;
 
@@ -128,10 +197,22 @@ internal sealed class DirectedWaveAttackController
 
     public void Tick()
     {
+        var permissions = wave.AttackPatternBehaviour?.AttackPermissions;
+        float now = Time.time;
+        if (permissions != null && permissions.Interrupted && permissionTick >= 0f && dispatchClockOwner == null)
+            nextAttackTime += Mathf.Max(0f, now - permissionTick);
+        permissionTick = now;
+        CountCompletedCycle();
+        if (permissions != null && !permissions.AllowNewAttacks || completedCycles >= cycleLimit) return;
+        if (cycleLimit != int.MaxValue && cyclePrepared && !cycleCounted
+            && (settings.UsesAttackOrder ? orderPlan.Exhausted : nextQueueIndex >= attackQueue.Count && deferredAttackQueue.Count == 0)) return;
+        if (HasCompletedSingleCycle) return;
+        if (settings != null && settings.UsesAttackOrder) { TickOrderedAttacks(); return; }
+        if (waitingForReady) RefreshReadyDispatch();
         if (!isRunning
             || settings == null
             || !settings.IsEnabled
-            || Time.time < nextAttackTime)
+            || DispatchTime < nextAttackTime)
         {
             return;
         }
@@ -165,6 +246,14 @@ internal sealed class DirectedWaveAttackController
             return;
         }
 
+        StartEnemyAttack(enemy, executor);
+    }
+
+    private void StartEnemyAttack(Enemy enemy, IWaveAttackExecutor executor)
+    {
+        if (executor is IEnemyEmissionOriginReceiver originReceiver)
+            originReceiver.BeginEmissionOriginAttack(GetBurstSettings(enemy, executor));
+
         if (settings.UsesDiveMovement)
         {
             activeMovementEnemies.Add(enemy);
@@ -177,7 +266,7 @@ internal sealed class DirectedWaveAttackController
             if (activeMovementEnemies.Contains(enemy))
                 movementRoutines[enemy] = movementRoutine;
 
-            if (!settings.WaitsForPreviousAttack)
+            if (!settings.UsesAttackOrder && !settings.WaitsForPreviousAttack)
                 ScheduleNextAttack(enemy);
             return;
         }
@@ -190,7 +279,7 @@ internal sealed class DirectedWaveAttackController
         if (activeFormationBurstEnemies.Contains(enemy))
             formationBurstRoutines[enemy] = formationRoutine;
 
-        if (!settings.WaitsForPreviousAttack)
+        if (!settings.UsesAttackOrder && !settings.WaitsForPreviousAttack)
             ScheduleNextAttack(enemy);
     }
 
@@ -202,6 +291,7 @@ internal sealed class DirectedWaveAttackController
         enemy = null;
         executor = null;
         nextAttackReadyTime = float.PositiveInfinity;
+        pendingReadyEnemy = null;
 
         PrunePendingQueueEntries();
         PruneDeferredAttackQueueEntries();
@@ -226,9 +316,10 @@ internal sealed class DirectedWaveAttackController
             if (!IsAttackReady(candidate))
             {
                 deferredAttackQueue.Add(candidate);
-                nextAttackReadyTime = Mathf.Min(
-                    nextAttackReadyTime,
-                    GetAttackReadyTime(candidate));
+                float predicted = Time.time + Mathf.Max(0f, GetAttackReadyTime(candidate) - candidate.AttackTime)
+                    / Mathf.Max(0.01f, candidate.AttackSpeedMultiplier);
+                if (predicted < nextAttackReadyTime)
+                { nextAttackReadyTime = predicted; pendingReadyEnemy = candidate; }
                 continue;
             }
 
@@ -255,6 +346,9 @@ internal sealed class DirectedWaveAttackController
 
     private bool BuildAttackCycle()
     {
+        if (singleCycle && cyclePrepared || completedCycles >= cycleLimit) return false;
+        cycleCounted = false;
+        cyclePrepared = true;
         attackQueue.Clear();
         nextQueueIndex = 0;
         wave.GetWaveAttackCandidates(candidates);
@@ -275,7 +369,8 @@ internal sealed class DirectedWaveAttackController
         if (eligibleCount == 0)
             return false;
 
-        for (int round = 0; round < settings.AttacksPerEnemyPerCycle; round++)
+        int rounds = settings.SampleAttacksPerCycle(schedulingNumeric);
+        for (int round = 0; round < rounds; round++)
         {
             int roundStart = attackQueue.Count;
             for (int i = 0; i < eligibleCount; i++)
@@ -372,13 +467,15 @@ internal sealed class DirectedWaveAttackController
                 : null);
 
         if (executor is IEnemyAttackAimReceiver aimReceiver)
-            aimReceiver.SetWaveAimTarget(GetFireMode(enemy) == DirectedWaveAttackFireMode.Aimed
-                && GetAimMode(enemy) == DirectedWaveAttackAimMode.AimContinuous ? wave : null);
+            aimReceiver.SetWaveAimTarget(wave);
 
         if (!executor.CanPerformWaveAttack)
             return false;
 
+        if (executor is IEnemyAttackNumericSource numeric && wave.TryGetFormationIndex(enemy, out int numericSlot)) numeric.SetNumericOwner(numericSlot);
         executor.SetWaveAttackControl(true);
+        if (executor is IEnemyAttackCompletionReceiver completionReceiver)
+            completionReceiver.SetAttackCompletionTracker(completionTracker);
         return true;
     }
 
@@ -463,7 +560,8 @@ internal sealed class DirectedWaveAttackController
             settings.DiveSpeedCurve,
             false,
             stopsAtPlayerRadius,
-            targetPosition);
+            targetPosition,
+            true);
 
         if (HasFireMode(enemy) && CanFire(enemy, executor))
         {
@@ -692,64 +790,28 @@ internal sealed class DirectedWaveAttackController
                 yield return FireMultiplePatterns(enemy, executor, attackSettings);
                 yield break;
             }
-            int attackShotCount = attackSettings.GetAttackShotCountForFireRate(
-                GetFireRateMultiplier(enemy));
-            for (int attackShotIndex = 0;
-                 attackShotIndex < attackShotCount;
-                 attackShotIndex++)
+            var numeric = GetNumericRegistry(enemy).Get(attackSettings);
+            var schedule = new EnemyAttackPatternSchedule();
+            schedule.Begin(attackSettings, enemy.AttackTime, GetFireRateMultiplier(enemy),
+                attackSettings.AttackStartDelayRandom.enabled, numeric);
+            int events = 0;
+            while (!schedule.IsComplete)
             {
-                if (attackShotIndex > 0)
-                {
-                    float nextAttackShotTime = Time.time
-                        + (attackSettings.RepeatBurst
-                            ? attackSettings.AttackShotInterval
-                            : attackSettings.AttackShotInterval
-                                / GetFireRateMultiplier(enemy));
-                    while (Time.time < nextAttackShotTime)
-                    {
-                        if (!CanFire(enemy, executor))
-                            yield break;
-
-                        yield return null;
-                    }
-                }
-
-                if (!attackSettings.RepeatBurst)
-                {
-                    if (!CanFire(enemy, executor)
-                        || !TryFireSequenceShot(enemy, executor, attackSettings, ref aim, false))
-                    {
-                        yield break;
-                    }
-
-                    continue;
-                }
-
-                for (int burstShotIndex = 0;
-                     burstShotIndex < attackSettings.BurstShotCount;
-                     burstShotIndex++)
-                {
-                    if (burstShotIndex > 0)
-                    {
-                        float nextBurstShotTime = Time.time
-                            + attackSettings.BurstShotInterval;
-                        while (Time.time < nextBurstShotTime)
-                        {
-                            if (!CanFire(enemy, executor))
-                                yield break;
-
-                            yield return null;
-                        }
-                    }
-
-                    if (!CanFire(enemy, executor)
-                        || !TryFireSequenceShot(enemy, executor, attackSettings, ref aim, burstShotIndex == 0))
-                    {
-                        yield break;
-                    }
-                }
+                if (attackSettings.UsesRandomTiming && ++events > 128) { events = 0; yield return null; }
+                while (CanFire(enemy, executor) && enemy.AttackPermissions != null && enemy.AttackPermissions.Interrupted)
+                    yield return null;
+                if (!CanFire(enemy, executor)) yield break;
+                if (!schedule.IsDue(enemy.AttackTime)) { yield return null; continue; }
+                if (!TryFireSequenceShot(enemy, executor, attackSettings, ref aim,
+                    attackSettings.RepeatBurst && schedule.IsBurstStart)) yield break;
+                schedule.Advance(attackSettings, enemy.AttackTime, GetFireRateMultiplier(enemy), 0f);
             }
 
+            while (executor is IEnemyPendingEmissionExecutor pending && pending.HasPendingEmissions(attackSettings))
+            {
+                if (!CanFire(enemy, executor)) yield break;
+                yield return null;
+            }
             RegisterAttackCooldown(enemy, attackSettings);
         }
         finally
@@ -764,28 +826,32 @@ internal sealed class DirectedWaveAttackController
         var schedules = new PatternAttackState[attackSettings.PatternCount];
         DirectedWaveAttackAimState attackAim = default;
         for (int i = 0; i < schedules.Length; i++)
-            schedules[i].Schedule.Begin(attackSettings.GetPattern(i), Time.time, GetFireRateMultiplier(enemy), true);
+            schedules[i].Schedule.Begin(attackSettings.GetPattern(i), enemy.AttackTime, GetFireRateMultiplier(enemy), true, GetNumericRegistry(enemy).Get(attackSettings.GetPattern(i)));
         bool pending;
         do
         {
+            while (CanFire(enemy, executor) && enemy.AttackPermissions != null && enemy.AttackPermissions.Interrupted)
+                yield return null;
             if (!CanFire(enemy, executor))
                 yield break;
             pending = false;
             for (int i = 0; i < schedules.Length; i++)
             {
                 EnemyBurstAttackSettings pattern = attackSettings.GetPattern(i);
-                while (schedules[i].Schedule.IsDue(Time.time))
+                while (schedules[i].Schedule.IsDue(enemy.AttackTime))
                 {
                     bool fired = GetAimMode(enemy) == DirectedWaveAttackAimMode.AimOnStart
-                        ? TryFireSequenceShot(enemy, executor, pattern, ref attackAim, false)
+                        ? TryFireSequenceShotWithOriginBurst(enemy, executor, pattern, ref attackAim, false,
+                            schedules[i].Schedule.IsBurstStart)
                         : TryFireSequenceShot(enemy, executor, pattern, ref schedules[i].Aim,
                             schedules[i].Schedule.IsBurstStart);
                     if (!fired)
                         yield break;
-                    schedules[i].Schedule.Advance(pattern, Time.time, GetFireRateMultiplier(enemy));
+                    schedules[i].Schedule.Advance(pattern, enemy.AttackTime, GetFireRateMultiplier(enemy));
                 }
                 pending |= !schedules[i].Schedule.IsComplete;
             }
+            pending |= executor is IEnemyPendingEmissionExecutor emissions && emissions.HasPendingEmissions(attackSettings);
             if (pending)
                 yield return null;
         } while (pending);
@@ -800,12 +866,19 @@ internal sealed class DirectedWaveAttackController
         AnimationCurve speedCurve,
         bool trackTimelineTarget,
         bool keepPlayerStandoff,
-        Vector3 playerStandoffCenter)
+        Vector3 playerStandoffCenter,
+        bool applyDiveLimits = false)
     {
+        bool limited = applyDiveLimits && settings.MovesToPlayer
+            && (settings.MinimumDiveDuration > 0f || settings.MaximumDiveSpeed > 0f);
         float distance = Vector3.Distance(from, initialTarget);
+        var diveProgress = limited
+            ? new DirectedWaveDiveMotionProgress(from, distance, speed, settings.MinimumDiveDuration)
+            : default;
         float duration = distance <= 0.0001f
             ? 0f
             : distance / Mathf.Max(0.01f, speed);
+        if (limited) duration = diveProgress.Duration;
         if (duration <= 0f)
         {
             if (enemy != null && !enemy.isDead)
@@ -828,11 +901,22 @@ internal sealed class DirectedWaveAttackController
             yield break;
         }
 
+        bool fixedStep = limited && wave.UsesFixedAttackMovement(enemy);
+        if (fixedStep) yield return DiveFixedStep;
         float elapsed = 0f;
-        while (elapsed < duration && enemy != null && !enemy.isDead)
+        while ((limited ? !diveProgress.IsComplete : elapsed < duration) && enemy != null && !enemy.isDead)
         {
-            elapsed += Time.deltaTime * enemy.MovementSpeedMultiplier;
-            float normalized = Mathf.Clamp01(elapsed / duration);
+            float deltaTime = fixedStep ? Time.fixedDeltaTime : Time.deltaTime;
+            if (limited && (deltaTime <= 0f || enemy.MovementSpeedMultiplier <= 0f))
+            { yield return fixedStep ? DiveFixedStep : null; continue; }
+            float normalized;
+            if (limited)
+                normalized = diveProgress.PrepareStep(deltaTime, enemy.MovementSpeedMultiplier);
+            else
+            {
+                elapsed += Time.deltaTime * enemy.MovementSpeedMultiplier;
+                normalized = Mathf.Clamp01(elapsed / duration);
+            }
             float curved = EvaluateCurve(speedCurve, normalized);
             Vector3 target = GetMoveTarget(
                 enemy,
@@ -846,11 +930,13 @@ internal sealed class DirectedWaveAttackController
                     target,
                     playerStandoffCenter);
             }
+            if (limited)
+                nextPosition = diveProgress.ApplyStep(nextPosition, deltaTime, settings.MaximumDiveSpeed);
 
             wave.MoveAttackEnemy(
                 enemy,
                 nextPosition);
-            yield return null;
+            yield return fixedStep ? DiveFixedStep : null;
         }
 
         if (enemy != null && !enemy.isDead)
@@ -867,7 +953,21 @@ internal sealed class DirectedWaveAttackController
                     playerStandoffCenter);
             }
 
-            wave.MoveAttackEnemy(enemy, target);
+            if (limited)
+            {
+                // Nonstandard curves may end before 1. Finish along the same
+                // segment without bypassing the speed limit at the stage boundary.
+                while (!diveProgress.Position.Equals(target) && enemy != null && !enemy.isDead)
+                {
+                    float tailSpeed = Mathf.Max(.01f, speed) * enemy.MovementSpeedMultiplier;
+                    if (settings.MaximumDiveSpeed > 0f) tailSpeed = Mathf.Min(tailSpeed, settings.MaximumDiveSpeed);
+                    float deltaTime = fixedStep ? Time.fixedDeltaTime : Time.deltaTime;
+                    if (deltaTime > 0f && tailSpeed > 0f && enemy.MovementSpeedMultiplier > 0f)
+                        wave.MoveAttackEnemy(enemy, diveProgress.MovePosition(target, deltaTime, tailSpeed));
+                    yield return fixedStep ? DiveFixedStep : null;
+                }
+            }
+            else wave.MoveAttackEnemy(enemy, target);
         }
     }
 
@@ -1013,14 +1113,18 @@ internal sealed class DirectedWaveAttackController
     {
         if (ReferenceEquals(enemy, null)
             || !activeSequentialAttackEnemies.Remove(enemy)
-            || !settings.WaitsForPreviousAttack)
+            || !settings.WaitsForPreviousAttack || settings.UsesAttackOrder)
         {
             return;
         }
 
+        float pendingWorldTime = Time.time + Mathf.Max(0f, nextAttackTime - DispatchTime)
+            / (dispatchClockOwner != null ? Mathf.Max(0.01f, dispatchClockOwner.AttackSpeedMultiplier) : 1f);
+        dispatchClockOwner = null;
+        waitingForReady = false;
         nextAttackTime = Mathf.Max(
-            nextAttackTime,
-            Time.time + settings.DelayAfterAttack
+            pendingWorldTime,
+            Time.time + settings.SampleDelayAfterAttack(schedulingNumeric)
                 / GetFireRateMultiplier(enemy));
     }
 
@@ -1048,14 +1152,14 @@ internal sealed class DirectedWaveAttackController
     private bool IsAttackReady(Enemy enemy)
     {
         return !nextAttackReadyTimes.TryGetValue(enemy, out float readyTime)
-            || Time.time >= readyTime;
+            || enemy.AttackTime >= readyTime;
     }
 
     private float GetAttackReadyTime(Enemy enemy)
     {
         return nextAttackReadyTimes.TryGetValue(enemy, out float readyTime)
             ? readyTime
-            : Time.time;
+            : enemy.AttackTime;
     }
 
     private EnemyBurstAttackSettings GetBurstSettings(
@@ -1069,8 +1173,8 @@ internal sealed class DirectedWaveAttackController
         Enemy enemy,
         EnemyBurstAttackSettings attackSettings)
     {
-        nextAttackReadyTimes[enemy] = Time.time
-            + settings.ResolveAttackCooldown(attackSettings.MaxAttackCooldown)
+        nextAttackReadyTimes[enemy] = enemy.AttackTime
+            + SampleNumericCooldown(enemy, attackSettings)
                 / GetFireRateMultiplier(enemy);
     }
 
@@ -1079,7 +1183,7 @@ internal sealed class DirectedWaveAttackController
         if (enemy == null || enemy.isDead)
             return;
 
-        float diveReadyTime = Time.time
+        float diveReadyTime = enemy.AttackTime
             + settings.FlyThroughDiveCooldown / GetFireRateMultiplier(enemy);
         float attackReadyTime = GetAttackReadyTime(enemy);
         nextAttackReadyTimes[enemy] = Mathf.Max(diveReadyTime, attackReadyTime);
@@ -1094,7 +1198,10 @@ internal sealed class DirectedWaveAttackController
             return;
         }
 
-        nextAttackTime = Mathf.Max(Time.time, nextAttackReadyTime);
+        waitingForReady = true;
+        dispatchClockOwner = pendingReadyEnemy;
+        nextAttackTime = pendingReadyEnemy != null ? GetAttackReadyTime(pendingReadyEnemy)
+            : Mathf.Max(Time.time, nextAttackReadyTime);
     }
 
     private static bool CanFire(
@@ -1112,7 +1219,7 @@ internal sealed class DirectedWaveAttackController
         IWaveAttackExecutor executor,
         EnemyBurstAttackSettings attackSettings)
     {
-        DirectedWaveAttackFireMode fireMode = GetFireMode(enemy);
+        DirectedWaveAttackFireMode fireMode = GetFireMode(enemy, attackSettings);
         if (fireMode == DirectedWaveAttackFireMode.None)
             return false;
 
@@ -1125,13 +1232,20 @@ internal sealed class DirectedWaveAttackController
                     enemy,
                     enemy.transform.position,
                     forward,
-                    wave.GetPlayerTargetPosition())))
+                    wave.GetPlayerTargetPosition(), attackSettings)))
         {
             return false;
         }
 
+        if (fireMode == DirectedWaveAttackFireMode.Stationary)
+        {
+            var local = GetAttackOverride(enemy);
+            var firing = attackSettings?.Shooting.PresetFiring;
+            var fallback = firing != null && firing.enabled ? firing.stationaryFireSettings : settings.StationaryFireSettings;
+            var stationary = local != null ? local.ResolveStationaryFireSettings(fallback) : fallback;
+            return stationary.TryFire(executor, attackSettings, forward);
+        }
         if (fireMode == DirectedWaveAttackFireMode.Default
-            || fireMode == DirectedWaveAttackFireMode.Forward
             || fireMode
                 == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
         {
@@ -1145,20 +1259,28 @@ internal sealed class DirectedWaveAttackController
             attackSettings);
     }
 
-    private DirectedWaveAttackAimMode GetAimMode(Enemy enemy)
+    private DirectedWaveAttackAimMode GetAimMode(Enemy enemy, EnemyBurstAttackSettings profile = null)
     {
         DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
-        return enemyOverride != null ? enemyOverride.ResolveAimMode(settings.AimMode) : settings.AimMode;
+        var firing = profile?.Shooting.PresetFiring;
+        var fallback = firing != null && firing.enabled ? firing.aimMode : settings.AimMode;
+        return enemyOverride != null ? enemyOverride.ResolveAimMode(fallback) : fallback;
     }
 
     private bool TryFireSequenceShot(Enemy enemy, IWaveAttackExecutor executor,
         EnemyBurstAttackSettings pattern, ref DirectedWaveAttackAimState aim, bool burstStart)
+        => TryFireSequenceShotWithOriginBurst(enemy, executor, pattern, ref aim, burstStart, burstStart);
+
+    private bool TryFireSequenceShotWithOriginBurst(Enemy enemy, IWaveAttackExecutor executor,
+        EnemyBurstAttackSettings pattern, ref DirectedWaveAttackAimState aim, bool burstStart, bool originBurstStart)
     {
-        if (GetFireMode(enemy) != DirectedWaveAttackFireMode.Aimed)
+        if (executor is IEnemyEmissionOriginReceiver originReceiver
+            && !originReceiver.PrepareEmissionOriginShot(pattern, originBurstStart)) return false;
+        if (GetFireMode(enemy, pattern) != DirectedWaveAttackFireMode.Aimed)
             return TryFireShot(enemy, executor, pattern);
         if (!wave.HasAttackTarget)
             return false;
-        DirectedWaveAttackAimMode mode = GetAimMode(enemy);
+        DirectedWaveAttackAimMode mode = GetAimMode(enemy, pattern);
         if (mode == DirectedWaveAttackAimMode.AimContinuous)
             return executor.TryFireAt(wave.GetPlayerTargetPosition(), pattern);
         bool refresh = mode == DirectedWaveAttackAimMode.AimOnBurst
@@ -1174,12 +1296,12 @@ internal sealed class DirectedWaveAttackController
             : null;
     }
 
-    private DirectedWaveAttackFireMode GetFireMode(Enemy enemy)
+    private DirectedWaveAttackFireMode GetFireMode(Enemy enemy, EnemyBurstAttackSettings profile = null)
     {
         DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
-        return enemyOverride != null
-            ? enemyOverride.ResolveFireMode(settings.FireMode)
-            : settings.FireMode;
+        var firing = profile?.Shooting.PresetFiring;
+        var fallback = firing != null && firing.enabled ? firing.fireMode : settings.FireMode;
+        return enemyOverride != null ? enemyOverride.ResolveFireMode(fallback) : fallback;
     }
 
     private bool HasFireMode(Enemy enemy)
@@ -1191,13 +1313,16 @@ internal sealed class DirectedWaveAttackController
         Enemy enemy,
         Vector3 enemyPosition,
         Vector2 forwardDirection,
-        Vector3 playerPosition)
+        Vector3 playerPosition,
+        EnemyBurstAttackSettings profile = null)
     {
         DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
+        var firing = profile?.Shooting.PresetFiring;
+        float fallback = firing != null && firing.enabled ? firing.forwardFireHalfAngle : settings.ForwardFireHalfAngle;
         float halfAngle = enemyOverride != null
             ? enemyOverride.ResolveForwardFireHalfAngle(
-                settings.ForwardFireHalfAngle)
-            : settings.ForwardFireHalfAngle;
+                fallback)
+            : fallback;
         Vector2 directionToPlayer = new(
             playerPosition.x - enemyPosition.x,
             playerPosition.y - enemyPosition.y);
@@ -1218,55 +1343,9 @@ internal sealed class DirectedWaveAttackController
         IWaveAttackExecutor executor,
         out bool setWaveAttackSettings)
     {
-        bool usesEnemySettings = EnemyAttackSettingsResolver.UsesEnemySettings(
-            executor,
-            settings.UsesEnemyBurstSettings);
-        EnemyBurstAttackSettings source = EnemyAttackSettingsResolver.Resolve(
-            executor,
-            settings.UsesEnemyBurstSettings,
-            settings.WaveBurstSettings);
-        DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
-        bool hasLocalOverride = enemyOverride != null
-            && enemyOverride.HasAttackPatternOverride;
-        bool usesLegacyFullSettings = enemyOverride != null
-            && enemyOverride.UsesLegacyFullAttackSettings;
-        bool needsRuntimeCopy = hasLocalOverride
-            || settings.HasRuntimeProjectileBaseSpeedOverride;
-        if (!needsRuntimeCopy
-            || enemy == null
-            || source == null && !usesLegacyFullSettings)
-        {
-            setWaveAttackSettings = !usesEnemySettings;
-            return source;
-        }
-
-        if (!projectileBaseSpeedOverrideSettings.TryGetValue(
-                enemy,
-                out EnemyBurstAttackSettings runtimeCopy))
-        {
-            runtimeCopy = new EnemyBurstAttackSettings();
-            if (enemyOverride == null
-                || !enemyOverride.TryCopyLegacyFullAttackSettings(runtimeCopy))
-                runtimeCopy.CopyFrom(source);
-            if (hasLocalOverride)
-            {
-                enemyOverride.ApplyAttackPatternOverride(
-                    runtimeCopy,
-                    settings.HasRuntimeProjectileBaseSpeedOverride
-                        ? settings.RuntimeProjectileBaseSpeedOverride
-                        : (float?)null);
-            }
-            else if (settings.HasRuntimeProjectileBaseSpeedOverride)
-            {
-                runtimeCopy.SetRuntimeProjectileBaseSpeedOverrideForAllPatterns(
-                    settings.RuntimeProjectileBaseSpeedOverride);
-            }
-
-            projectileBaseSpeedOverrideSettings.Add(enemy, runtimeCopy);
-        }
-
-        setWaveAttackSettings = !usesEnemySettings || needsRuntimeCopy;
-        return runtimeCopy;
+        return EnemyAttackSettingsResolver.ResolveForWave(
+            enemy, executor, settings, GetAttackOverride(enemy),
+            projectileBaseSpeedOverrideSettings, out setWaveAttackSettings, sequenceSpeed);
     }
 
     private static void BeginAttackSequence(
@@ -1287,8 +1366,29 @@ internal sealed class DirectedWaveAttackController
 
     private void ScheduleNextAttack(Enemy enemy)
     {
-        nextAttackTime = Time.time + 1f / (
-            settings.AttacksPerSecond * GetFireRateMultiplier(enemy));
+        waitingForReady = false;
+        dispatchClockOwner = enemy;
+        nextAttackTime = DispatchTime + 1f / (
+            settings.SampleAttacksPerSecond(schedulingNumeric) * GetFireRateMultiplier(enemy));
+    }
+
+    private void RefreshReadyDispatch()
+    {
+        float earliest = float.PositiveInfinity;
+        Enemy selected = null;
+        foreach (var entry in nextAttackReadyTimes)
+        {
+            Enemy enemy = entry.Key;
+            if (enemy == null || enemy.isDead || IsAttackInProgress(enemy)) continue;
+            float remaining = Mathf.Max(0f, entry.Value - enemy.AttackTime)
+                / Mathf.Max(0.01f, enemy.AttackSpeedMultiplier);
+            if (remaining >= earliest) continue;
+            earliest = remaining;
+            selected = enemy;
+        }
+        if (selected == null) return;
+        dispatchClockOwner = selected;
+        nextAttackTime = GetAttackReadyTime(selected);
     }
 
     private static float GetFireRateMultiplier(Enemy enemy)

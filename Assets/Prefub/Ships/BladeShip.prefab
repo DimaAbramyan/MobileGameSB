@@ -21,6 +21,8 @@ GameObject:
   - component: {fileID: 4703700213981132910}
   - component: {fileID: 960937076010264167}
   - component: {fileID: 680329869663594212}
+  - component: {fileID: 5623239972495408906}
+  - component: {fileID: 3944119968968744109}
   m_Layer: 8
   m_Name: BladeShip
   m_TagString: Player
@@ -45,7 +47,6 @@ Transform:
   - {fileID: 4756945734813854271}
   - {fileID: 4400399263801377108}
   - {fileID: 6581337462970941074}
-  - {fileID: 139859716377850345}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7510122182290028595
@@ -126,6 +127,7 @@ MonoBehaviour:
   ShipData: {fileID: 11400000, guid: 60dc0b5f9e0240f419b80d75e876dcd1, type: 2}
   buffMagnet: {fileID: 4096775222194903361}
   damageHitboxCollider: {fileID: 960937076010264167}
+  healthDamageProjectileClearRadius: 1.75
   IsVisible: 0
 --- !u!114 &8398465633140859630
 MonoBehaviour:
@@ -279,12 +281,6 @@ MonoBehaviour:
     previewButtonSize: {x: 64, y: 64}
     previewWeaponIconScale: {x: 1, y: 1}
     maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 2
-    weaponMount: {fileID: 139859716377850345}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 64, y: 64}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
 --- !u!58 &960937076010264167
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -320,7 +316,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.075
+  m_Radius: 0.05
 --- !u!114 &680329869663594212
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -350,6 +346,34 @@ MonoBehaviour:
   emptyArcOpacity: 0.2
   previewHealthFraction: 1
   previewShieldFraction: 1
+--- !u!114 &5623239972495408906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c485ff1ed87904b9a5e5729584641a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHitboxIndicator
+  visualRadius: 0.075
+  color: {r: 0.1, g: 1, b: 0.7, a: 0.95}
+--- !u!114 &3944119968968744109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b880daa3862fe2a4aabd2de5127763de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExtraHealthPassive
+  owner: {fileID: 0}
+  MaximumExtraHealth: 1
 --- !u!1 &1511328392057889096
 GameObject:
   m_ObjectHideFlags: 0
@@ -375,7 +399,7 @@ Transform:
   m_GameObject: {fileID: 1511328392057889096}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.14999995, z: 0}
+  m_LocalPosition: {x: -0.30000004, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -427,13 +451,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetOffset: {x: 0, y: 0.3}
+  targetOffset: {x: 0, y: 0.15}
   pickupSnapDistance: 0.08
   affectedLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  magnetRadius: 1
-  attractionRadius: 3
+  magnetRadius: 0.2
+  attractionRadius: 2
   forceAmount: 10
 --- !u!58 &1740260436722428528
 CircleCollider2D:
@@ -469,8 +493,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.3}
-  m_Radius: 1
+  m_Offset: {x: 0, y: 0.15}
+  m_Radius: 0.2
 --- !u!50 &8533276931526591285
 Rigidbody2D:
   serializedVersion: 5
@@ -523,7 +547,7 @@ Transform:
   m_GameObject: {fileID: 3669287899639939603}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.30000004, y: 0, z: 0}
+  m_LocalPosition: {x: 0.3, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -555,37 +579,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.4, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3384991692524799735}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &8517218164852823300
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 139859716377850345}
-  m_Layer: 0
-  m_Name: WeaponMount_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &139859716377850345
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8517218164852823300}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

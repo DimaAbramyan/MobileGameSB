@@ -9,14 +9,16 @@ public enum EnemyBurstAttackMode : byte
 }
 
 [System.Serializable]
-public sealed class EnemyBurstAttackSettings
+public sealed partial class EnemyBurstAttackSettings
 {
     private const int CurrentSerializedVersion = 2;
 
     [SerializeField] private EnemyAttackPatternsMode attackPatterns;
     [SerializeField] private List<EnemyAttackPatternSettings> patterns = new();
-    [SerializeField, Tooltip("Default preserves legacy Single rotation and keeps Multiple fixed. Fixed rotates only firing directions. Follow Pattern also turns the selected visual target.")]
+    [SerializeField, Tooltip("Default and Fixed keep the visual pose. Follow Pattern explicitly follows one attack. Rotation turns the visual target with its own independent settings.")]
     private EnemyFacingMode facingMode;
+    [SerializeField] private EnemyRotationSettings facingRotation = new EnemyRotationSettings();
+    [SerializeField, HideInInspector] private int facingLayoutVersion;
     [SerializeField, HideInInspector] private string facingPatternId;
     [SerializeField, Min(0f), Tooltip("Visual turn speed in degrees per second. Zero follows immediately.")]
     private float facingSpeed = 360f;
@@ -24,6 +26,7 @@ public sealed class EnemyBurstAttackSettings
     private float facingAngleOffset;
 
     public EnemyFacingMode FacingMode => facingMode;
+    public EnemyRotationSettings FacingRotation => facingRotation;
     public float FacingSpeed => Mathf.Max(0f, facingSpeed);
     public float FacingAngleOffset => facingAngleOffset;
     public int FacingPatternIndex
@@ -108,14 +111,48 @@ public sealed class EnemyBurstAttackSettings
 
     public void SetRuntimeProjectileBaseSpeedOverrideForAllPatterns(float speed)
     {
-        shooting.SetRuntimeProjectileBaseSpeedOverride(speed);
+        Shooting.SetRuntimeProjectileBaseSpeedOverride(speed);
         for (int i = 0; i < patterns.Count; i++)
             patterns[i].SetRuntimeProjectileBaseSpeedOverride(speed);
     }
 
+    public void ScaleAttackTiming(float multiplier)
+    {
+        var effective = ResolvePresets();
+        if (!ReferenceEquals(effective, this)) { effective.ScaleAttackTiming(multiplier); return; }
+        multiplier = Mathf.Max(.01f, multiplier);
+        attackStartDelay /= multiplier; attackShotInterval /= multiplier;
+        burstShotInterval /= multiplier; attackCooldown /= multiplier;
+        AttackCooldownRandom.Scale(1f / multiplier);
+        AttackStartDelayRandom?.Scale(1f / multiplier); AttackShotIntervalRandom?.Scale(1f / multiplier);
+        BurstShotIntervalRandom?.Scale(1f / multiplier);
+        Shooting.ScaleAttackTiming(multiplier);
+        facingRotation.ScaleAttackTiming(multiplier);
+        for (int i = 0; i < patterns.Count; i++) patterns[i].ScaleAttackTiming(multiplier);
+    }
+
+    public void SetProjectileBaseSpeedOverrideForAllPatterns(float speed)
+    {
+        shooting.SetProjectileBaseSpeedOverride(true, speed);
+        for (int i = 0; i < patterns.Count; i++)
+        {
+            patterns[i].Shooting.SetProjectileBaseSpeedOverride(true, speed);
+            patterns[i].Validate();
+        }
+    }
+
+    public void SetProjectileBaseSpeedRangeForAllPatterns(float speed, RandomFloatRange range, EnemySpeedRandomizeOn mode)
+    {
+        SetProjectileBaseSpeedOverrideForAllPatterns(speed);
+        shooting.SetProjectileBaseSpeedRange(range, mode);
+        for (int i = 0; i < patterns.Count; i++)
+        { patterns[i].Shooting.SetProjectileBaseSpeedRange(range, mode); patterns[i].Validate(); }
+    }
+
     internal void CopySinglePatternFrom(EnemyAttackPatternSettings source)
     {
-        shooting.CopyFrom(source.Shooting);
+        CopyNumericTimingFrom(source);
+        shooting.CopyFrom(source.AuthoredShooting);
         shootingSettingsVersion = 1;
         useAttackStartDelay = source.UsesAttackStartDelay;
         attackStartDelay = source.AttackStartDelay;
@@ -123,9 +160,12 @@ public sealed class EnemyBurstAttackSettings
         attackShotCount = source.AttackShotCount;
         attackShotInterval = source.AttackShotInterval;
         attackCooldown = source.AttackCooldown;
+        attackCooldownRandom ??= new();
+        attackCooldownRandom.CopyFrom(source.AttackCooldownRandom);
         burstShotCount = source.BurstShotCount;
         burstShotInterval = source.BurstShotInterval;
         serializedVersion = CurrentSerializedVersion;
+        facingLayoutVersion = 1;
         Validate();
     }
 
@@ -135,7 +175,8 @@ public sealed class EnemyBurstAttackSettings
     [SerializeField] private EnemyBurstAttackMode burstAttack;
 
     [SerializeField] private bool useAttackStartDelay;
-    [SerializeField, Min(0f)] private float attackStartDelay = 1f;
+    [SerializeField] [Randomizable(nameof(attackStartDelayRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private float attackStartDelay = 1f;
 
     [SerializeField] private EnemyShootingSettings shooting = new EnemyShootingSettings();
     [SerializeField, HideInInspector] private int shootingSettingsVersion;
@@ -145,13 +186,19 @@ public sealed class EnemyBurstAttackSettings
     [SerializeField, HideInInspector] private float areaAttackMinAngle = -45f;
     [SerializeField, HideInInspector] private float areaAttackMaxAngle = 45f;
 
-    [SerializeField, Min(1)] private int attackShotCount = 1;
-    [SerializeField, Min(0f)] private float attackShotInterval = 0.15f;
-    [SerializeField, Min(0f), FormerlySerializedAs("burstCooldown")]
+    [SerializeField] [Randomizable(nameof(attackShotCountRandom), 1f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private int attackShotCount = 1;
+    [SerializeField] [Randomizable(nameof(attackShotIntervalRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerShot)]
+    private float attackShotInterval = 0.15f;
+    [SerializeField, Randomizable(nameof(attackCooldownRandom), 0f), FormerlySerializedAs("burstCooldown")]
     private float attackCooldown = 1f;
+    [SerializeField, HideInInspector] private RandomFloatRange attackCooldownRandom = new();
+    public RandomFloatRange AttackCooldownRandom => ResolvePresets().attackCooldownRandom ??= new();
 
-    [SerializeField, Min(1)] private int burstShotCount = 1;
-    [SerializeField, Min(0f)] private float burstShotInterval = 0.15f;
+    [SerializeField] [Randomizable(nameof(burstShotCountRandom), 1f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private int burstShotCount = 1;
+    [SerializeField] [Randomizable(nameof(burstShotIntervalRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerShot)]
+    private float burstShotInterval = 0.15f;
 
     [SerializeField, HideInInspector, FormerlySerializedAs("shotsPerBurst")]
     private int legacyShotsPerBurst = 1;
@@ -159,33 +206,34 @@ public sealed class EnemyBurstAttackSettings
     private float legacyShotInterval = 0.15f;
     [SerializeField, HideInInspector] private int serializedVersion;
 
-    public bool RepeatBurst => burstAttack == EnemyBurstAttackMode.Enabled;
-    public EnemyBurstAttackMode BurstAttack => burstAttack;
-    public bool UsesAttackStartDelay => useAttackStartDelay;
-    public float AttackStartDelay => useAttackStartDelay
-        ? Mathf.Max(0f, attackStartDelay)
+    public bool RepeatBurst => ResolvePresets().burstAttack == EnemyBurstAttackMode.Enabled;
+    public EnemyBurstAttackMode BurstAttack => ResolvePresets().burstAttack;
+    public bool UsesAttackStartDelay => ResolvePresets().useAttackStartDelay;
+    public float AttackStartDelay => ResolvePresets().useAttackStartDelay
+        ? Mathf.Max(0f, ResolvePresets().attackStartDelay)
         : 0f;
-    public EnemyShootingSettings Shooting => shooting;
-    public int ProjectilesPerShot => shooting.ProjectilesPerVolley;
+    public EnemyShootingSettings Shooting => ResolvePresets().shooting;
+    public int ProjectilesPerShot => Shooting.ProjectilesPerVolley;
     public bool UsesAreaAttack => useAreaAttack;
     public int AreaAttackProjectileCount => Mathf.Max(1, areaAttackProjectileCount);
     public float AreaAttackMinAngle => areaAttackMinAngle;
     public float AreaAttackMaxAngle => areaAttackMaxAngle;
-    public int AttackShotCount => Mathf.Max(1, attackShotCount);
-    public float AttackShotInterval => Mathf.Max(0f, attackShotInterval);
-    public float AttackCooldown => Mathf.Max(0f, attackCooldown);
-    public int BurstShotCount => Mathf.Max(1, burstShotCount);
-    public float BurstShotInterval => Mathf.Max(0f, burstShotInterval);
+    public int AttackShotCount => Mathf.Max(1, ResolvePresets().attackShotCount);
+    public float AttackShotInterval => Mathf.Max(0f, ResolvePresets().attackShotInterval);
+    public float AttackCooldown => Mathf.Max(0f, ResolvePresets().attackCooldown);
+    public int BurstShotCount => Mathf.Max(1, ResolvePresets().burstShotCount);
+    public float BurstShotInterval => Mathf.Max(0f, ResolvePresets().burstShotInterval);
 
-    public int GetAttackShotCountForFireRate(float fireRateMultiplier)
+    public int GetAttackShotCountForFireRate(float fireRateMultiplier, EnemyAttackNumericState numeric = null)
     {
+        int count = numeric?.SampleTiming(AttackShotCount, AttackShotCountRandom, 502u) ?? AttackShotCount;
         if (!RepeatBurst)
-            return AttackShotCount;
+            return count;
 
         return Mathf.Max(
             1,
             Mathf.CeilToInt(
-                AttackShotCount * Mathf.Max(0.01f, fireRateMultiplier)));
+                count * Mathf.Max(0.01f, fireRateMultiplier)));
     }
     public int ShotEventsPerAttack => AttackShotCount
         * (RepeatBurst ? BurstShotCount : 1);
@@ -195,7 +243,7 @@ public sealed class EnemyBurstAttackSettings
         AttackShotCount,
         AttackShotInterval,
         BurstShotCount,
-        BurstShotInterval);
+        BurstShotInterval) + Shooting.EmissionLayout.LaunchDuration;
     public float AttackCycleDuration => AttackDuration + AttackCooldown;
 
     public static float CalculateAttackDuration(
@@ -257,6 +305,7 @@ public sealed class EnemyBurstAttackSettings
 
         source.Validate();
         shooting ??= new EnemyShootingSettings();
+        CopyNumericTimingFrom(source);
         shooting.CopyFrom(source.shooting);
         shootingSettingsVersion = 1;
         burstAttack = source.burstAttack;
@@ -270,10 +319,14 @@ public sealed class EnemyBurstAttackSettings
         attackShotCount = source.attackShotCount;
         attackShotInterval = source.attackShotInterval;
         attackCooldown = source.attackCooldown;
+        attackCooldownRandom ??= new();
+        attackCooldownRandom.CopyFrom(source.attackCooldownRandom);
         burstShotCount = source.burstShotCount;
         burstShotInterval = source.burstShotInterval;
         attackPatterns = source.attackPatterns;
         facingMode = source.facingMode;
+        facingRotation.CopyFrom(source.facingRotation);
+        facingLayoutVersion = source.facingLayoutVersion;
         facingPatternId = source.facingPatternId;
         facingSpeed = source.facingSpeed;
         facingAngleOffset = source.facingAngleOffset;
@@ -296,10 +349,13 @@ public sealed class EnemyBurstAttackSettings
         if (source == null || ReferenceEquals(this, source))
             return;
 
+        source = source.ResolveAllPresets();
         source.Validate();
         shooting ??= new EnemyShootingSettings();
         attackPatterns = source.attackPatterns;
         facingMode = source.facingMode;
+        facingRotation.CopyFrom(source.facingRotation);
+        facingLayoutVersion = source.facingLayoutVersion;
         facingSpeed = source.facingSpeed;
         facingAngleOffset = source.facingAngleOffset;
 
@@ -342,6 +398,8 @@ public sealed class EnemyBurstAttackSettings
 
     public void Validate()
     {
+        presetResolved = null;
+        resolvedPatterns = null;
         patterns ??= new List<EnemyAttackPatternSettings>();
         for (int i = 0; i < patterns.Count; i++)
         {
@@ -361,6 +419,20 @@ public sealed class EnemyBurstAttackSettings
             shootingSettingsVersion = 1;
         }
         shooting.Validate();
+        facingRotation ??= new EnemyRotationSettings();
+        if (facingLayoutVersion < 1)
+        {
+            if (!HasMultiplePatterns && facingMode == EnemyFacingMode.Default && shooting.HadLegacyRotation)
+            {
+                // Old Single Rotation turned a Transform. Preserve that visual
+                // motion as an explicit, independent facing configuration.
+                facingMode = EnemyFacingMode.Rotation;
+                facingRotation.CopyFrom(shooting.Rotation);
+                shooting.EmissionLayout.SetRotateShootingPointOffset(true);
+            }
+            facingLayoutVersion = 1;
+        }
+        facingRotation.Validate();
 
         attackShotCount = Mathf.Max(1, attackShotCount);
         attackStartDelay = Mathf.Max(0f, attackStartDelay);
@@ -401,7 +473,7 @@ public sealed class EnemyBurstAttackSettings
             serializedVersion = 2;
         }
 
-        repeatBurst = RepeatBurst;
+        repeatBurst = burstAttack == EnemyBurstAttackMode.Enabled;
     }
 
     public Vector3 GetProjectileDirection(

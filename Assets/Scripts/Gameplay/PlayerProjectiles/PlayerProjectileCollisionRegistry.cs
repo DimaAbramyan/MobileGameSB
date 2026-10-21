@@ -387,7 +387,8 @@ public sealed class PlayerProjectileCollisionRegistry : MonoBehaviour
                     resolutionEvent.ImpactPosition.x,
                     resolutionEvent.ImpactPosition.y,
                     target.Enemy.transform.position.z),
-                debuffs);
+                debuffs,
+                1f + resolutionEvent.HeatMultiplierDelta);
         }
 
           events.Clear();

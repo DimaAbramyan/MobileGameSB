@@ -59,7 +59,10 @@ public sealed class LevelConfig : ScriptableObject
     [Header("Enemy Difficulty Multipliers")]
     [SerializeField, Min(0.01f)] private float enemyHullHealthMultiplier = 1f;
     [SerializeField, Min(0.01f)] private float enemyShieldHealthMultiplier = 1f;
-    [SerializeField, Min(0.01f)] private float enemyDamageMultiplier = 1f;
+    // Old assets keep their serialized key; damage scaling is no longer used.
+#pragma warning disable CS0414 // Legacy serialized data is intentionally no longer read.
+    [SerializeField, HideInInspector] private float enemyDamageMultiplier = 1f;
+#pragma warning restore CS0414
     [SerializeField, Min(0.01f)] private float enemyFireRateMultiplier = 1f;
 
     [Header("Music")]
@@ -92,7 +95,7 @@ public sealed class LevelConfig : ScriptableObject
     public int TotalMetalMaximum => MetalDropMaximum;
     public float EnemyHullHealthMultiplier => enemyHullHealthMultiplier;
     public float EnemyShieldHealthMultiplier => enemyShieldHealthMultiplier;
-    public float EnemyDamageMultiplier => enemyDamageMultiplier;
+    public float EnemyDamageMultiplier => 1f;
     public float EnemyFireRateMultiplier => enemyFireRateMultiplier;
     public bool IsStartLevel => requiredLevel == null;
     public EventReference Music => music;
@@ -156,7 +159,7 @@ public sealed class LevelConfig : ScriptableObject
         EnsureWaveMetalDropSettings();
         enemyHullHealthMultiplier = Mathf.Max(0.01f, enemyHullHealthMultiplier);
         enemyShieldHealthMultiplier = Mathf.Max(0.01f, enemyShieldHealthMultiplier);
-        enemyDamageMultiplier = Mathf.Max(0.01f, enemyDamageMultiplier);
+        enemyDamageMultiplier = 1f;
         enemyFireRateMultiplier = Mathf.Max(0.01f, enemyFireRateMultiplier);
 
         if (requiredLevel == this)

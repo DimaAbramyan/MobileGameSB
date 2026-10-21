@@ -78,6 +78,9 @@ public sealed partial class DirectedEnemySubWave
 
         public void BeginFrame(float elapsed)
         {
+            // A seek must not restore background commands from the discarded future.
+            if (Mathf.Max(0f, elapsed) < frameElapsed)
+                persistentBackgrounds.Clear();
             positionBufferCursor = 0;
             backgrounds.Clear();
             activeBackgrounds.Clear();

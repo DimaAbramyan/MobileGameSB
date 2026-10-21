@@ -45,6 +45,7 @@ public readonly struct BossProjectileLaunchData
 public sealed class BossProjectile : MonoBehaviour
 {
     [Inject] private GameSettings gameSettings;
+    [InjectOptional] private EnemyProjectileCollisionRegistry projectileCollisionRegistry;
 
     private BossProjectilePool pool;
     private Rigidbody2D body;
@@ -125,7 +126,8 @@ public sealed class BossProjectile : MonoBehaviour
             0f,
             (initialSpeed + acceleration * elapsed) * speedMultiplier);
         Vector2 nextPosition = (Vector2)transform.position
-            + direction * speed * deltaTime;
+            + direction * speed * deltaTime * (projectileCollisionRegistry != null
+                ? projectileCollisionRegistry.EvaluateActiveSpeedMultiplier(transform.position) : 1f);
 
         if (body != null && body.simulated)
             body.MovePosition(nextPosition);

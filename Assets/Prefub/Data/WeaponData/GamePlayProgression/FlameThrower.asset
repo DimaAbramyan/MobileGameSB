@@ -24,6 +24,7 @@ MonoBehaviour:
   - 0
   - 0
   - 0
+  initialDirectionAngleByLevel: []
   damageByLevel:
   - 10
   - 10
@@ -45,6 +46,7 @@ MonoBehaviour:
   levelConfigs:
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 3.75
     range: 3
     speed: 5
@@ -56,6 +58,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 4.3
     range: 3.5
     speed: 5
@@ -67,6 +70,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 4.5
     range: 4
     speed: 5
@@ -78,6 +82,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 5
     range: 4.5
     speed: 5
@@ -89,6 +94,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 5.5
     range: 5
     speed: 5
@@ -100,6 +106,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 5.6
     range: 5
     speed: 5
@@ -111,6 +118,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 6
     range: 5
     speed: 5
@@ -122,6 +130,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 6
     range: 5
     speed: 5
@@ -133,6 +142,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 6.5
     range: 5
     speed: 5
@@ -144,6 +154,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 7
     range: 5
     speed: 5
@@ -155,6 +166,7 @@ MonoBehaviour:
     targetSearchRadius: 10
   - reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 8
     range: 5
     speed: 5
@@ -168,6 +180,7 @@ MonoBehaviour:
   manualBaseStats:
     reloadTime: 0.05
     angle: 0
+    initialDirectionAngle: 0
     damage: 3.75
     range: 3
     speed: 5
@@ -202,7 +215,7 @@ MonoBehaviour:
     projectileBonuses:
     - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
       damagePercent: 14.666672
-      rangePercent: 16.666666
+      rangePercent: 0
       speedPercent: 0
     volleysPerActivationPercent: 0
     projectilesPerVolleyPercent: 0
@@ -218,7 +231,7 @@ MonoBehaviour:
     projectileBonuses:
     - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
       damagePercent: 5.3333282
-      rangePercent: 16.666666
+      rangePercent: 0
       speedPercent: 0
     volleysPerActivationPercent: 0
     projectilesPerVolleyPercent: 0
@@ -234,7 +247,7 @@ MonoBehaviour:
     projectileBonuses:
     - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
       damagePercent: 13.333332
-      rangePercent: 16.666668
+      rangePercent: 0
       speedPercent: 0
     volleysPerActivationPercent: 0
     projectilesPerVolleyPercent: 0
@@ -250,7 +263,7 @@ MonoBehaviour:
     projectileBonuses:
     - projectileSlotId: 932ebeb08038431e90ee0367c7bd1a0f
       damagePercent: 13.333336
-      rangePercent: 16.666664
+      rangePercent: 0
       speedPercent: 0
     volleysPerActivationPercent: 0
     projectilesPerVolleyPercent: 0

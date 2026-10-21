@@ -4,7 +4,50 @@ public enum DirectedWaveSegmentMotion
 {
     Linear,
     Bezier,
-    CatmullRom
+    CatmullRom,
+    Arc
+}
+
+public enum DirectedWaveBezierHandleMode { Auto, Free, Aligned, Mirrored }
+public enum DirectedWaveCurveParameterization { Uniform, Centripetal, Chordal }
+
+[System.Serializable]
+public struct DirectedWaveCurveSettings
+{
+    public DirectedWaveBezierHandleMode handleMode;
+    public Vector3 inHandle;
+    public Vector3 outHandle;
+    [HideInInspector] public bool handlesInitialized;
+    [Range(0f, 1f)] public float tension;
+    public DirectedWaveCurveParameterization parameterization;
+    [Range(-1f, 1f), Tooltip("Signed sagitta divided by half the chord for the short arc. Positive bends left of the segment. Zero is straight.")]
+    public float bulge;
+    public bool longArc;
+
+    public DirectedWaveCurveSettings TransformHandles(Matrix4x4 matrix)
+    {
+        var result = this;
+        result.inHandle = matrix.MultiplyVector(inHandle);
+        result.outHandle = matrix.MultiplyVector(outHandle);
+        return result;
+    }
+
+    public void SetHandle(bool incoming, Vector3 value)
+    {
+        if (incoming) inHandle = value;
+        else outHandle = value;
+        if (handleMode == DirectedWaveBezierHandleMode.Mirrored)
+        {
+            if (incoming) outHandle = -value;
+            else inHandle = -value;
+        }
+        else if (handleMode == DirectedWaveBezierHandleMode.Aligned && value.sqrMagnitude > 0f)
+        {
+            if (incoming) outHandle = -value.normalized * outHandle.magnitude;
+            else inHandle = -value.normalized * inHandle.magnitude;
+        }
+        handlesInitialized = true;
+    }
 }
 
 public enum DirectedWaveCoordinateSpace
@@ -39,6 +82,42 @@ public enum DirectedWaveFormationLayout
     Diamond,
     CustomPoints,
     TransformPoints
+}
+
+public enum DirectedWaveFormationOffsetOrigin
+{
+    FirstEnemy,
+    LastEnemy,
+    Middle
+}
+
+public enum DirectedWaveFormationCenterOffsetMode
+{
+    Linear,
+    Symmetric
+}
+
+public static class DirectedWaveFormationOffset
+{
+    public static Vector3 Evaluate(int index, int count, Vector2 step,
+        DirectedWaveFormationOffsetOrigin origin,
+        DirectedWaveFormationCenterOffsetMode centerMode)
+    {
+        if (count <= 1)
+            return Vector3.zero;
+
+        float distance = origin switch
+        {
+            DirectedWaveFormationOffsetOrigin.LastEnemy => count - 1 - index,
+            DirectedWaveFormationOffsetOrigin.Middle => index - (count - 1) * 0.5f,
+            _ => index
+        };
+        if (origin == DirectedWaveFormationOffsetOrigin.Middle
+            && centerMode == DirectedWaveFormationCenterOffsetMode.Symmetric)
+            distance = Mathf.Abs(distance);
+
+        return new Vector3(step.x * distance, step.y * distance, 0f);
+    }
 }
 
 public enum DirectedWaveWobblePhaseMode
@@ -98,6 +177,7 @@ public enum DirectedWaveSpawnOrderMode
 public sealed class DirectedWavePathCheckpoint
 {
     public Vector3 position;
+    public DirectedWaveCurveSettings curveSettings;
     [Min(0.01f)] public float durationToNext = 0.5f;
     [Min(0.01f)] public float speedToNext = 1f;
     public DirectedWaveSegmentMotion motionToNext =
@@ -116,6 +196,7 @@ public sealed class DirectedWaveIndividualEntrancePoint
 public sealed class DirectedWavePatrolPoint
 {
     public Vector3 offset;
+    public DirectedWaveCurveSettings curveSettings;
     [Min(0f)] public float wait;
     [Min(0.01f)] public float durationToNext = 0.5f;
     [Min(0.01f)] public float speedToNext = 1f;

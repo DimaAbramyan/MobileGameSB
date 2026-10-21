@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,38 +7,56 @@ using UnityEngine;
 public sealed class SimpleEnemyAttackExecutorEditor : Editor
 {
     private float previewTime;
-    private readonly Dictionary<string, bool> projectileBaseSpeedOverrideStates = new();
-    private readonly Dictionary<string, bool> projectileLifetimeOverrideStates = new();
+    private Vector2 childPreviewTarget = new(0f, -3f);
+    private EnemyChildAttackScenePreview childPreview;
+
+    private void OnDisable() { childPreview?.Dispose(); childPreview = null; }
+    private static bool HasChildren(EnemyBurstAttackSettings settings)
+    {
+        for (int i = 0; i < settings.PatternCount; i++)
+            if (settings.GetPattern(i).Shooting.ChildAttack != null || settings.GetPattern(i).Shooting.ProjectileType == EnemyProjectileType.Laser) return true;
+        return false;
+    }
+    private readonly Dictionary<string, bool> projectileOverrideStates = new();
 
     private void OnEnable()
     {
         serializedObject.Update();
-        RememberProjectileBaseSpeedOverrideStates(
-            serializedObject.FindProperty("burstAttackSettings"));
-        RememberProjectileLifetimeOverrideStates(
-            serializedObject.FindProperty("burstAttackSettings"));
+        RememberProjectileOverrides(serializedObject.FindProperty("burstAttackSettings"));
     }
 
     public override void OnInspectorGUI()
     {
+        EnemyShootingPreview.DrawPreviewControls();
+        childPreview?.SetVisible(EnemyShootingPreview.ShowFormationVolley && !Application.isPlaying);
         serializedObject.Update();
-        EditorGUILayout.LabelField("Projectile References", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultProjectilePrefab"), new GUIContent("Default Projectile"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("homingProjectilePrefab"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("burstAtPointProjectilePrefab"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("projectileSpawnPoint"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("projectileSpawnOffset"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("autonomousAttack"));
         var pattern = serializedObject.FindProperty("burstAttackSettings");
         var shooting = pattern.FindPropertyRelative("shooting");
         bool multiple = pattern.FindPropertyRelative("attackPatterns").enumValueIndex == (int)EnemyAttackPatternsMode.Multiple;
-        if (multiple || shooting.FindPropertyRelative("shootingType").enumValueIndex == (int)EnemyShootingType.Rotation)
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("rotationTarget"));
+        string referencesKey = "EnemyShootingReferences." + target.GetInstanceID();
+        bool references = EditorGUILayout.Foldout(SessionState.GetBool(referencesKey, false), "References & Emitter Binding", true);
+        SessionState.SetBool(referencesKey, references);
+        if (references)
+        {
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultProjectilePrefab"), new GUIContent("Default Projectile"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("homingProjectilePrefab"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("burstAtPointProjectilePrefab"));
+            var point = serializedObject.FindProperty("projectileSpawnPoint");
+            EditorGUILayout.PropertyField(point, new GUIContent("Shooting Point"));
+            if (point.objectReferenceValue == null || point.hasMultipleDifferentValues)
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("projectileSpawnOffset"),
+                    new GUIContent("Fallback Spawn Offset", "Used only when Shooting Point is empty. Position Offset on the layout is added to the resulting point."));
+            if (multiple || shooting.FindPropertyRelative("emissionLayout.type").enumValueIndex != (int)EnemyEmissionLayoutType.Point)
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("rotationTarget"), new GUIContent("Layout Basis"));
+            EditorGUI.indentLevel--;
+        }
         EditorGUILayout.Space();
         EditorGUILayout.PropertyField(pattern, new GUIContent("Attack Pattern"), true);
-        InitializeJustEnabledProjectileBaseSpeedOverrides(pattern);
-        InitializeJustEnabledProjectileLifetimeOverrides(pattern);
-        if (pattern.FindPropertyRelative("facingMode").enumValueIndex == (int)EnemyFacingMode.FollowPattern)
+        InitializeJustEnabledProjectileOverrides(pattern);
+        if (pattern.FindPropertyRelative("facingMode").enumValueIndex == (int)EnemyFacingMode.FollowPattern
+            || pattern.FindPropertyRelative("facingMode").enumValueIndex == (int)EnemyFacingMode.Rotation)
         {
             var facingTarget = serializedObject.FindProperty("facingTarget");
             EditorGUILayout.PropertyField(facingTarget, new GUIContent("Facing Target"));
@@ -46,7 +64,7 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
             var executor = (SimpleEnemyAttackExecutor)target;
             if (selectedTarget != null && selectedTarget != executor.transform && !selectedTarget.IsChildOf(executor.transform))
                 EditorGUILayout.HelpBox("Facing Target must be the enemy or one of its children.", MessageType.Warning);
-            EditorGUILayout.HelpBox("Empty Facing Target turns the enemy. Assign a visible child to keep the root and hitbox fixed. Radial attacks face the center of arm 1.", MessageType.Info);
+            EditorGUILayout.HelpBox("Empty Facing Target turns the enemy. Assign a visible child to keep the root and hitbox fixed. Facing never changes emission positions or directions.", MessageType.Info);
         }
         if (multiple)
         {
@@ -60,205 +78,74 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
         if (!Application.isPlaying)
         {
             EditorGUI.BeginChangeCheck();
-            previewTime = EditorGUILayout.Slider("Rotation Preview Time", previewTime, 0f, 20f);
+            previewTime = EditorGUILayout.Slider("Layout Preview Time", previewTime, 0f, 20f);
+            if (HasChildren(((SimpleEnemyAttackExecutor)target).BurstAttackSettings))
+            {
+                childPreviewTarget = EditorGUILayout.Vector2Field("Child Preview Target", childPreviewTarget);
+                EditorGUILayout.HelpBox("Layout Preview Time simulates one initial volley and its child attacks. Preview Wave simulates the full wave, including Burst and entrance attacks.", MessageType.Info);
+            }
             if (EditorGUI.EndChangeCheck())
                 SceneView.RepaintAll();
+            EditorGUILayout.HelpBox("Preview: cyan = emitters, blue = base directions, pink = Sector, yellow = Fan, orange = final projectiles, green = Enemy Facing and turn direction. ×N marks overlapping Stack members.", MessageType.None);
         }
     }
 
-    private void InitializeJustEnabledProjectileBaseSpeedOverrides(
-        SerializedProperty pattern)
+    private static IEnumerable<SerializedProperty> ShootingProperties(SerializedProperty profile)
     {
-        if (pattern == null)
-            return;
-
-        var executor = (SimpleEnemyAttackExecutor)target;
-        bool multiple = pattern.FindPropertyRelative("attackPatterns").enumValueIndex
-            == (int)EnemyAttackPatternsMode.Multiple;
-        if (multiple)
+        if (profile == null) yield break;
+        if (profile.FindPropertyRelative("attackPatterns").enumValueIndex != (int)EnemyAttackPatternsMode.Multiple)
         {
-            SerializedProperty patterns = pattern.FindPropertyRelative("patterns");
-            for (int i = 0; i < patterns.arraySize; i++)
-            {
-                InitializeProjectileBaseSpeedOverride(
-                    executor,
-                    patterns.GetArrayElementAtIndex(i).FindPropertyRelative("shooting"));
-            }
-            return;
+            yield return profile.FindPropertyRelative("shooting");
+            yield break;
         }
-
-        InitializeProjectileBaseSpeedOverride(
-            executor,
-            pattern.FindPropertyRelative("shooting"));
+        var patterns = profile.FindPropertyRelative("patterns");
+        for (int i = 0; i < patterns.arraySize; i++)
+            yield return patterns.GetArrayElementAtIndex(i).FindPropertyRelative("shooting");
     }
 
-    private void InitializeProjectileBaseSpeedOverride(
-        SimpleEnemyAttackExecutor executor,
-        SerializedProperty shooting)
+    private void RememberProjectileOverrides(SerializedProperty profile)
     {
-        if (shooting == null)
-            return;
-
-        SerializedProperty overrideSpeed = shooting.FindPropertyRelative(
-            "overrideProjectileBaseSpeed");
-        SerializedProperty speed = shooting.FindPropertyRelative(
-            "projectileBaseSpeed");
-        if (overrideSpeed == null || speed == null)
-            return;
-
-        bool enabled = overrideSpeed.boolValue;
-        bool wasEnabled = projectileBaseSpeedOverrideStates.TryGetValue(
-            shooting.propertyPath,
-            out bool remembered)
-            ? remembered
-            : enabled;
-        if (enabled && !wasEnabled
-            && executor.TryGetProjectileBaseSpeed(
-                (EnemyProjectileType)shooting.FindPropertyRelative(
-                    "projectileType").enumValueIndex,
-                out float baseSpeed))
+        foreach (var shooting in ShootingProperties(profile))
         {
-            speed.floatValue = baseSpeed;
+            RememberOverride(shooting, "overrideProjectileBaseSpeed");
+            RememberOverride(shooting, "overrideProjectileLifetime");
         }
-
-        projectileBaseSpeedOverrideStates[shooting.propertyPath] = enabled;
     }
 
-    private void InitializeJustEnabledProjectileLifetimeOverrides(
-        SerializedProperty pattern)
+    private void RememberOverride(SerializedProperty shooting, string field)
     {
-        if (pattern == null)
-            return;
+        var property = shooting.FindPropertyRelative(field);
+        projectileOverrideStates[property.propertyPath] = property.boolValue;
+    }
 
-        var executor = (SimpleEnemyAttackExecutor)target;
-        bool multiple = pattern.FindPropertyRelative("attackPatterns").enumValueIndex
-            == (int)EnemyAttackPatternsMode.Multiple;
-        if (multiple)
+    private void InitializeJustEnabledProjectileOverrides(SerializedProperty profile)
+    {
+        foreach (var shooting in ShootingProperties(profile))
         {
-            SerializedProperty patterns = pattern.FindPropertyRelative("patterns");
-            for (int i = 0; i < patterns.arraySize; i++)
-            {
-                InitializeProjectileLifetimeOverride(
-                    executor,
-                    patterns.GetArrayElementAtIndex(i).FindPropertyRelative("shooting"));
-            }
-            return;
+            InitializeOverride(shooting, false);
+            InitializeOverride(shooting, true);
         }
-
-        InitializeProjectileLifetimeOverride(
-            executor,
-            pattern.FindPropertyRelative("shooting"));
     }
 
-    private void InitializeProjectileLifetimeOverride(
-        SimpleEnemyAttackExecutor executor,
-        SerializedProperty shooting)
+    private void InitializeOverride(SerializedProperty shooting, bool lifetime)
     {
-        if (shooting == null)
-            return;
-
-        SerializedProperty overrideLifetime = shooting.FindPropertyRelative(
-            "overrideProjectileLifetime");
-        SerializedProperty lifetime = shooting.FindPropertyRelative(
-            "projectileLifetime");
-        if (overrideLifetime == null || lifetime == null)
-            return;
-
-        bool enabled = overrideLifetime.boolValue;
-        bool wasEnabled = projectileLifetimeOverrideStates.TryGetValue(
-            shooting.propertyPath,
-            out bool remembered)
-            ? remembered
-            : enabled;
-        if (enabled && !wasEnabled
-            && executor.TryGetProjectileBaseLifetime(
-                (EnemyProjectileType)shooting.FindPropertyRelative(
-                    "projectileType").enumValueIndex,
-                out float baseLifetime))
+        var property = shooting.FindPropertyRelative(lifetime ? "overrideProjectileLifetime" : "overrideProjectileBaseSpeed");
+        bool enabled = property.boolValue;
+        bool wasEnabled = projectileOverrideStates.TryGetValue(property.propertyPath, out bool previous) ? previous : enabled;
+        if (enabled && !wasEnabled)
         {
-            lifetime.floatValue = baseLifetime;
+            var executor = (SimpleEnemyAttackExecutor)target;
+            var type = (EnemyProjectileType)shooting.FindPropertyRelative("projectileType").enumValueIndex;
+            float value;
+            bool found = lifetime ? executor.TryGetProjectileBaseLifetime(type, out value) : executor.TryGetProjectileBaseSpeed(type, out value);
+            if (found) shooting.FindPropertyRelative(lifetime ? "projectileLifetime" : "projectileBaseSpeed").floatValue = value;
         }
-
-        projectileLifetimeOverrideStates[shooting.propertyPath] = enabled;
+        projectileOverrideStates[property.propertyPath] = enabled;
     }
-
-    private void RememberProjectileBaseSpeedOverrideStates(
-        SerializedProperty pattern)
-    {
-        if (pattern == null)
-            return;
-
-        bool multiple = pattern.FindPropertyRelative("attackPatterns").enumValueIndex
-            == (int)EnemyAttackPatternsMode.Multiple;
-        if (multiple)
-        {
-            SerializedProperty patterns = pattern.FindPropertyRelative("patterns");
-            for (int i = 0; i < patterns.arraySize; i++)
-            {
-                RememberProjectileBaseSpeedOverrideState(
-                    patterns.GetArrayElementAtIndex(i).FindPropertyRelative("shooting"));
-            }
-            return;
-        }
-
-        RememberProjectileBaseSpeedOverrideState(
-            pattern.FindPropertyRelative("shooting"));
-    }
-
-    private void RememberProjectileBaseSpeedOverrideState(
-        SerializedProperty shooting)
-    {
-        if (shooting == null)
-            return;
-
-        SerializedProperty overrideSpeed = shooting.FindPropertyRelative(
-            "overrideProjectileBaseSpeed");
-        if (overrideSpeed != null)
-            projectileBaseSpeedOverrideStates[shooting.propertyPath] =
-                overrideSpeed.boolValue;
-    }
-
-    private void RememberProjectileLifetimeOverrideStates(
-        SerializedProperty pattern)
-    {
-        if (pattern == null)
-            return;
-
-        bool multiple = pattern.FindPropertyRelative("attackPatterns").enumValueIndex
-            == (int)EnemyAttackPatternsMode.Multiple;
-        if (multiple)
-        {
-            SerializedProperty patterns = pattern.FindPropertyRelative("patterns");
-            for (int i = 0; i < patterns.arraySize; i++)
-            {
-                RememberProjectileLifetimeOverrideState(
-                    patterns.GetArrayElementAtIndex(i).FindPropertyRelative("shooting"));
-            }
-            return;
-        }
-
-        RememberProjectileLifetimeOverrideState(
-            pattern.FindPropertyRelative("shooting"));
-    }
-
-    private void RememberProjectileLifetimeOverrideState(
-        SerializedProperty shooting)
-    {
-        if (shooting == null)
-            return;
-
-        SerializedProperty overrideLifetime = shooting.FindPropertyRelative(
-            "overrideProjectileLifetime");
-        if (overrideLifetime != null)
-        {
-            projectileLifetimeOverrideStates[shooting.propertyPath] =
-                overrideLifetime.boolValue;
-        }
-    }
-
     private void CheckProjectileReference(SerializedProperty shooting, string label)
     {
         var type = (EnemyProjectileType)shooting.FindPropertyRelative("projectileType").enumValueIndex;
+        if (type == EnemyProjectileType.Laser) return;
         string reference = type switch
         {
             EnemyProjectileType.Homing => "homingProjectilePrefab",
@@ -271,30 +158,35 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
 
     private void OnSceneGUI()
     {
-        if (Application.isPlaying || target == null)
+        serializedObject.Update();
+        if (target is SimpleEnemyAttackExecutor handleExecutor)
+            EnemyLaserScenePreview.HandlesFor(serializedObject, handleExecutor.transform.position, handleExecutor);
+        if (Application.isPlaying || target == null || !EnemyShootingPreview.ShowFormationVolley
+            || Event.current.type != EventType.Repaint)
             return;
         var executor = (SimpleEnemyAttackExecutor)target;
         var pivot = serializedObject.FindProperty("rotationTarget").objectReferenceValue as Transform;
-        var spawn = serializedObject.FindProperty("projectileSpawnPoint").objectReferenceValue as Transform;
         var patterns = executor.BurstAttackSettings;
+        if (patterns.PatternCount == 0) return;
+        if (HasChildren(patterns))
+        {
+            childPreview ??= new EnemyChildAttackScenePreview();
+            childPreview.Simulate(executor, previewTime, childPreviewTarget);
+            childPreview.SetVisible(true);
+            childPreview.Draw(SceneView.currentDrawingSceneView != null ? SceneView.currentDrawingSceneView.camera : null);
+        }
+        else { childPreview?.Dispose(); childPreview = null; }
         for (int i = 0; i < patterns.PatternCount; i++)
         {
             var shooting = patterns.GetPattern(i).Shooting;
-            Transform basis = shooting.ShootingType == EnemyShootingType.Rotation && pivot != null ? pivot : executor.transform;
-            Vector3 position = spawn != null ? spawn.position : basis.TransformPoint(serializedObject.FindProperty("projectileSpawnOffset").vector3Value);
-            EnemyShootingPreview.Draw(
-                shooting,
-                position,
-                basis.rotation,
-                previewTime,
-                null,
-                executor.transform.position);
+            EnemyShootingPreview.DrawExecutorPattern(executor, shooting, executor.transform.position, previewTime);
         }
         int facingIndex = patterns.FacingPatternIndex;
-        if (patterns.FacingMode == EnemyFacingMode.FollowPattern && facingIndex >= 0)
+        if (patterns.FacingMode == EnemyFacingMode.Rotation
+            || patterns.FacingMode == EnemyFacingMode.FollowPattern && facingIndex >= 0)
         {
             var shooting = patterns.GetPattern(facingIndex).Shooting;
-            Quaternion firingBasis = shooting.ShootingType == EnemyShootingType.Rotation && pivot != null
+            Quaternion firingBasis = shooting.EmissionLayout.Type != EnemyEmissionLayoutType.Point && pivot != null
                 ? pivot.rotation : executor.transform.rotation;
             var facing = serializedObject.FindProperty("facingTarget").objectReferenceValue as Transform;
             EnemyShootingPreview.DrawFacing(patterns, executor.transform.position,

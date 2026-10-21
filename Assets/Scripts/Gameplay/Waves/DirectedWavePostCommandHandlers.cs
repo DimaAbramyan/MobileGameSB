@@ -138,6 +138,9 @@ public sealed partial class DirectedEnemySubWave
             bool finalFrame,
             RuntimeTimelineEvaluationContext runtimeContext)
         {
+            if (wave.patrolPoints == null || wave.patrolPoints.Length == 0)
+                return CopySimulationPositions(input, runtimeContext);
+
             float time = GetContinuousTime(elapsed, timelineDuration);
             Vector3 currentCenter = wave.GetPositionsCenter(input);
             Vector3 targetCenter = wave.GetPatrolCenterPosition(time);

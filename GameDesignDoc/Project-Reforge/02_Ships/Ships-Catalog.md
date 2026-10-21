@@ -14,12 +14,12 @@ Every ship entry should use the following structure:
 Short description of the ship and its defining mechanic.
 ```
 
-| Rarity\Ship Type | Light                       | Medium                  | Heavy               |
-| ---------------- | --------------------------- | ----------------------- | ------------------- |
-| Common           | [[#Prism\|Prism]]           | [[#Gunner\|Gunner]]     | [[#Heavy\|Heavy]]   |
-| Rare             |                             | [[#Arkanoid\|Arkanoid]] | [[#Huskar\|Huskar]] |
-| Epic             | [[#Blade\|Blade]]           | [[#Ghost\|Ghost]]       |                     |
-| Legendary        | [[#Black Hole\|Black Hole]] |                         |                     |
+| Rarity\Ship Type | Light                       | Medium                  | Heavy             |
+| ---------------- | --------------------------- | ----------------------- | ----------------- |
+| Common           | [[#Prism\|Prism]]           | [[#Gunner\|Gunner]]     | [[#Heavy\|Heavy]] |
+| Rare             |                             | [[#Arkanoid\|Arkanoid]] | Orbit             |
+| Epic             | [[#Blade\|Blade]]           | [[#Ghost\|Ghost]]       |                   |
+| Legendary        | [[#Black Hole\|Black Hole]] |                         |                   |
 
 # Ship Roster
 
@@ -137,15 +137,3 @@ Short description of the ship and its defining mechanic.
 В разработке
 
 ---
-### Huskar
-
-**Rarity:** Rare
-
-**Ship Type:** Heavy
-
-**Slots Amount (and their Rank):**
-1(3), 2(1), 2(2)
-**Active Ability:**
-Накапливаемая. Получает вампиризм от своего урона оружия (5%)
-**Passive Ability:**
-Скорострельность зависит от недостающего здоровья 

@@ -1,5 +1,31 @@
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
+
+public enum EnemyProjectileCharacteristic : byte
+{
+    Normal = 0,
+    Fragile = 1
+}
+
+public static class EnemyProjectileCharacteristics
+{
+    public static UnityEngine.Color FragileColour => new UnityEngine.Color(1f, 0.35f, 0.65f, 1f);
+    public static float4 ToRenderColour(UnityEngine.Color colour)
+    {
+        if (UnityEngine.QualitySettings.activeColorSpace == UnityEngine.ColorSpace.Linear)
+            colour = colour.linear;
+        return new float4(colour.r, colour.g, colour.b, colour.a);
+    }
+
+    public static UnityEngine.Color FromRenderColour(float4 value)
+    {
+        var colour = new UnityEngine.Color(value.x, value.y, value.z, value.w);
+        return UnityEngine.QualitySettings.activeColorSpace == UnityEngine.ColorSpace.Linear
+            ? colour.gamma : colour;
+    }
+    public static bool CanBeDestroyed(EnemyProjectileCharacteristic characteristic, bool destroysNormal)
+        => characteristic == EnemyProjectileCharacteristic.Fragile || destroysNormal;
+}
 
 public enum EnemyProjectileSpeedBehavior : byte
 {
@@ -32,6 +58,7 @@ public enum EnemyProjectileScaleProgressMode : byte
 /// </summary>
 public struct EnemyProjectileStaticData : IComponentData
 {
+    public EnemyProjectileCharacteristic Characteristic;
     public float BaseDamage;
     public float Radius;
     public float BaseLifetime;
@@ -67,6 +94,49 @@ public struct EnemyProjectileMovement : IComponentData
     public float OrbitRadius;
     public float OrbitAngleRadians;
     public float OrbitRadialSpeed;
+    public EnemyProjectileOrbitCenterMode OrbitCenterMode;
+    public float2 DnaMedianDirection;
+    public float DnaHalfCycleDuration;
+    public float DnaElapsedTime;
+}
+
+// Arc speed is corrected by angle/sin(angle), so fan rays cross together.
+// Shared by Burst movement and the editor preview; no per-frame allocation.
+public static class EnemyProjectileDnaMotion
+{
+    public const float MaximumHalfAngleDegrees = 179.9f;
+
+    public static void Evaluate(float2 median, float initialAngle, float halfCycleDuration,
+        float elapsed, float medianSpeed, out float2 offset, out float2 direction, out float angularSpeed)
+    {
+        median = math.normalizesafe(median, new float2(0f, 1f));
+        float2 left = new float2(-median.y, median.x);
+        initialAngle = math.clamp(initialAngle, -math.radians(MaximumHalfAngleDegrees), math.radians(MaximumHalfAngleDegrees));
+        if (halfCycleDuration <= 0f)
+        {
+            direction = median * math.cos(initialAngle) + left * math.sin(initialAngle);
+            offset = direction * (medianSpeed * elapsed);
+            angularSpeed = 0f;
+            return;
+        }
+        float phase = math.fmod(math.max(0f, elapsed), 2f * halfCycleDuration) / halfCycleDuration;
+        float side = phase < 1f ? 1f : -1f;
+        float progress = phase < 1f ? phase : phase - 1f;
+        float angle = side * initialAngle * (1f - 2f * progress);
+        direction = median * math.cos(angle) + left * math.sin(angle);
+        angularSpeed = side * math.degrees(2f * initialAngle / halfCycleDuration);
+        float segment = math.floor(math.max(0f, elapsed) / halfCycleDuration);
+        float length = medianSpeed * halfCycleDuration;
+        float x = medianSpeed * elapsed;
+        float y = 0f;
+        if (math.abs(initialAngle) > 0.0001f)
+        {
+            float divisor = 2f * math.sin(initialAngle);
+            x = length * (segment + (math.sin(initialAngle) - side * math.sin(angle)) / divisor);
+            y = side * length * (math.cos(angle) - math.cos(initialAngle)) / divisor;
+        }
+        offset = median * x + left * y;
+    }
 }
 
 public struct EnemyProjectileRemainingLifetime : IComponentData
@@ -90,6 +160,8 @@ public struct EnemyProjectilePreviousPosition : IComponentData
 /// </summary>
 public struct EnemyProjectileCustomSpeed : IComponentData
 {
+    public EnemyProjectileSpeedCurveTarget CurveTarget;
+    public float SpeedMultiplier;
     public float InitialSpeed;
     public float SpeedChangeY;
     public float DistanceSinceSpeedChange;
@@ -174,6 +246,7 @@ public enum EnemyProjectileResolutionKind : byte
 /// </summary>
 public struct EnemyProjectileResolution : IComponentData
 {
+    public byte LifetimeExpired;
     public EnemyProjectileResolutionKind Kind;
     public int TargetId;
 }
@@ -191,14 +264,26 @@ public struct EnemyProjectileCollisionRegistryTag : IComponentData
 /// </summary>
 public struct EnemyProjectileCollisionTarget : IBufferElementData
 {
+    public byte DestroysNormal;
+    public byte IsSegment;
+    public float2 SegmentStart;
+    public float2 SegmentEnd;
+    public float2 SegmentDisplacement;
     public int TargetId;
     public EnemyProjectileCollisionTargetKind Kind;
     public float2 Min;
     public float2 Max;
+    public byte IsCircle;
+    public byte IsBox;
+    public float2 BoxHalfSize;
+    public float2 BoxRight;
+    public float2 PreviousCenter;
+    public float2 Center;
+    public float Radius;
 }
 
 /// <summary>
-/// Current world-space slowing aura, snapshotted alongside the player hitbox.
+/// Current world-space speed field, snapshotted alongside the player hitbox.
 /// Changes displacement without overwriting the projectile's authored velocity.
 /// </summary>
 [InternalBufferCapacity(4)]
@@ -207,32 +292,74 @@ public struct EnemyProjectileSlowField : IBufferElementData
     public float2 Center;
     public float Radius;
     public float MinimumSpeedMultiplier;
+    public float MaximumSpeedMultiplier;
+    public float2 Forward;
+    public float FrontFullEffectCos;
+    public float FrontOuterCos;
+    public float BackFullEffectCos;
+    public float BackOuterCos;
+    public float DistanceFalloff;
+    public float ShipRadius;
+
+    // Shared by Burst systems and legacy MonoBehaviour projectiles. Only the
+    // displacement multiplier changes; authored velocity/direction stay intact.
+    public float EvaluateMultiplier(float2 position, float projectileRadius = 0f)
+    {
+        if (Radius <= 0f)
+            return 1f;
+
+        float2 offset = position - Center;
+        float distanceSq = math.lengthsq(offset);
+        float combinedRadius = math.max(0f, ShipRadius) + math.max(0f, projectileRadius);
+        float outerRadius = Radius + combinedRadius;
+        if (distanceSq >= outerRadius * outerRadius)
+            return 1f;
+
+        float distance = math.sqrt(distanceSq);
+        float2 direction = distance > 0f ? offset / distance : Forward;
+        float edgeDistance = math.max(0f, distance - combinedRadius);
+        float forwardDot = math.dot(Forward, direction);
+        float front = AngularInfluence(forwardDot, FrontOuterCos, FrontFullEffectCos);
+        float back = AngularInfluence(-forwardDot, BackOuterCos, BackFullEffectCos);
+        if (front == 0f && back == 0f)
+            return 1f;
+
+        float distanceInfluence = math.pow(
+            math.smoothstep(0f, 1f, 1f - edgeDistance / Radius),
+            math.max(0.01f, DistanceFalloff));
+        return 1f + distanceInfluence * (
+            front * (MinimumSpeedMultiplier - 1f)
+            + back * (MaximumSpeedMultiplier - 1f));
+    }
+
+    private static float AngularInfluence(float dot, float outerCos, float fullCos)
+    {
+        // SmoothStep in dot space avoids acos for every projectile. Both ends
+        // have zero slope, including the neutral side region.
+        float t = math.saturate((dot - outerCos) / math.max(0.000001f, fullCos - outerCos));
+        return t * t * (3f - 2f * t);
+    }
 
     public static float EvaluateMultiplier(
         float2 position,
-        DynamicBuffer<EnemyProjectileSlowField> fields)
+        DynamicBuffer<EnemyProjectileSlowField> fields,
+        float projectileRadius = 0f)
     {
-        float multiplier = 1f;
+        float slowest = 1f;
+        float fastest = 1f;
         if (!fields.IsCreated)
-            return multiplier;
+            return 1f;
 
         for (int index = 0; index < fields.Length; index++)
         {
-            EnemyProjectileSlowField field = fields[index];
-            if (field.Radius <= 0f)
-                continue;
-
-            float distanceSq = math.distancesq(position, field.Center);
-            if (distanceSq >= field.Radius * field.Radius)
-                continue;
-
-            float normalizedDistance = math.sqrt(distanceSq) / field.Radius;
-            multiplier = math.min(multiplier, math.max(
-                math.clamp(field.MinimumSpeedMultiplier, 0.01f, 1f),
-                normalizedDistance));
+            float value = fields[index].EvaluateMultiplier(position, projectileRadius);
+            slowest = math.min(slowest, value);
+            fastest = math.max(fastest, value);
         }
 
-        return multiplier;
+        // Preserve strongest-slowdown stacking. Acceleration also uses the
+        // strongest field, so duplicate registration cannot compound it.
+        return slowest * fastest;
     }
 }
 
@@ -245,6 +372,7 @@ public struct EnemyProjectilePurgeField : IBufferElementData
 {
     public float2 Center;
     public float Radius;
+    public EnemyProjectileDestructionPolicy DestructionPolicy;
 }
 
 /// <summary>
@@ -252,6 +380,7 @@ public struct EnemyProjectilePurgeField : IBufferElementData
 /// </summary>
 public struct EnemyProjectileResolutionEvent : IBufferElementData
 {
+    public byte UseConfiguredDamage;
     public int TargetId;
     public EnemyProjectileResolutionKind Kind;
     public float Damage;
@@ -261,8 +390,14 @@ public struct EnemyProjectileResolutionEvent : IBufferElementData
 /// Written by the burst-at-point ECS system and consumed by the collision
 /// registry, which owns the managed <see cref="EnemyBullet"/> references.
 /// </summary>
+public struct EnemyChildAttackLineage : IComponentData, IEnableableComponent { }
+public struct EnemyChildAttackLifetimeHold : IComponentData, IEnableableComponent { }
+
 public struct EnemyProjectileBurstSpawnRequest : IBufferElementData
 {
+    public Entity SourceProjectile;
+    public byte HasChildLineage;
+    public EnemyProjectileCharacteristic Characteristic;
     public int BurstProjectileConfigId;
     public float2 Position;
     public float2 Direction;

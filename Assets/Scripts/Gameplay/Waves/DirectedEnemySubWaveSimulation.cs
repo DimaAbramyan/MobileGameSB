@@ -107,6 +107,21 @@ public sealed partial class DirectedEnemySubWave
         return GetFiniteNonNegativeSimulationValue(spawnInterval);
     }
 
+#if UNITY_EDITOR
+    // Shares the exact resolved durations and loop evaluator with movement preview.
+    public float[] GetEditorPreviewCheckpointTimes(out int loopStart, out float loopDuration)
+    {
+        var checkpoints = GetWorldPathCheckpoints();
+        var times = new float[checkpoints.Length];
+        for (int i = 1; i < times.Length; i++)
+            times[i] = times[i - 1] + DirectedWaveEntranceLoopEvaluator.GetSegmentDuration(checkpoints, i - 1);
+        loopStart = HasValidEntranceLoopConfiguration() ? entranceLoopStartCheckpointIndex : -1;
+        loopDuration = loopStart >= 0 ? DirectedWaveEntranceLoopEvaluator.GetLoopDuration(checkpoints,
+            loopStart, entranceLoopTeleportToStart, entranceLoopTeleportDelay) : 0f;
+        return times;
+    }
+#endif
+
     public bool SimulationUsesCommand(DirectedWavePostCommandType type)
     {
         return HasPostCommand(type);
@@ -254,14 +269,32 @@ public sealed partial class DirectedEnemySubWave
         previewTimelineEvaluationContext.Reset();
     }
 
+    #if UNITY_EDITOR
+    public void EvaluateEditorPreviewSubsetNonAlloc(
+        float elapsed,
+        Transform previewParent,
+        int[] spawnOrder,
+        int[] previewSpawnSteps,
+        Dictionary<int, Vector3> result,
+        out string phaseName)
+    {
+        EvaluateSimulationPreviewInternal(elapsed, previewParent, spawnOrder, result,
+            previewTimelineEvaluationContext, out phaseName, previewSpawnSteps);
+    }
+    #endif
+
     private void EvaluateSimulationPreviewInternal(
         float elapsed,
         Transform previewParent,
         int[] spawnOrder,
         Dictionary<int, Vector3> result,
         RuntimeTimelineEvaluationContext evaluationContext,
-        out string phaseName)
+        out string phaseName,
+        int[] previewSpawnSteps = null)
     {
+#if UNITY_EDITOR
+        using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.WaveEvaluate);
+#endif
         elapsed = GetFiniteNonNegativeSimulationValue(elapsed);
         int count = GetEffectiveEnemyCount();
         result.Clear();
@@ -299,8 +332,11 @@ public sealed partial class DirectedEnemySubWave
 
         DirectedWaveRuntimeCheckpoint[] entranceCheckpoints = null;
         float entrancePathDuration = 0f;
-        for (int spawnStep = 0; spawnStep < order.Length; spawnStep++)
+        int previewCount = previewSpawnSteps != null ? previewSpawnSteps.Length : order.Length;
+        for (int sample = 0; sample < previewCount; sample++)
         {
+            int spawnStep = previewSpawnSteps != null ? previewSpawnSteps[sample] : sample;
+            if (spawnStep < 0 || spawnStep >= order.Length) continue;
             float enemyTime = elapsed
                 - spawnStep * Mathf.Max(0f, spawnInterval);
             if (enemyTime < 0f)
@@ -416,6 +452,9 @@ public sealed partial class DirectedEnemySubWave
         Transform previewParent = null,
         bool useRuntimeLimits = true)
     {
+#if UNITY_EDITOR
+        using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.PostPipeline);
+#endif
         elapsed = GetFiniteNonNegativeSimulationValue(elapsed);
         activeCommands?.Clear();
         runtimeContext?.BeginFrame(elapsed);
@@ -702,6 +741,9 @@ public sealed partial class DirectedEnemySubWave
         RuntimeTimelineEvaluationContext runtimeContext = null,
         int maxCompletedCycles = PreviewMaxCompletedCycles)
     {
+#if UNITY_EDITOR
+        using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.PostCommand);
+#endif
         if (command == null)
             return CopySimulationPositions(input, runtimeContext);
 
@@ -1450,6 +1492,9 @@ public sealed partial class DirectedEnemySubWave
         RuntimeTimelineEvaluationContext runtimeContext = null,
         Transform previewParent = null)
     {
+#if UNITY_EDITOR
+        using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.Formation);
+#endif
         int count = GetEffectiveEnemyCount();
         Dictionary<int, Vector3> positions = runtimeContext != null
             ? runtimeContext.RentPositions(count)
@@ -1605,6 +1650,9 @@ public sealed partial class DirectedEnemySubWave
         DirectedWaveRuntimeCheckpoint[] checkpoints,
         float pathDuration)
     {
+#if UNITY_EDITOR
+        using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.Entrance);
+#endif
         if (!HasPhaseEntry)
         {
             return GetSimulationFormationPosition(
@@ -1731,6 +1779,9 @@ public sealed partial class DirectedEnemySubWave
         DirectedWaveRuntimeCheckpoint[] checkpoints,
         float elapsed)
     {
+#if UNITY_EDITOR
+        using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.CheckpointPath);
+#endif
         float remaining = Mathf.Max(0f, elapsed);
         for (int i = 0; i < checkpoints.Length - 1; i++)
         {

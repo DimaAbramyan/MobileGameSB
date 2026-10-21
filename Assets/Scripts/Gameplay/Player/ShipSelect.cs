@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class ShipSelect : MonoBehaviour
@@ -10,20 +9,39 @@ public class ShipSelect : MonoBehaviour
     private readonly HashSet<ParentShip> defeatedShips = new HashSet<ParentShip>();
 
     public event Action<int> OnShipChanged;
+    public bool HasTeamShips => shipVisuals.Count > 0;
+
+    public ParentShip GetLowestHealthShip()
+    {
+        playerController ??= GetComponent<PlayerController>();
+        ParentShip activeShip = playerController != null ? playerController.CurrentShip : null;
+        ParentShip lowest = null;
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            ParentShip ship = transform.GetChild(i).GetComponent<ParentShip>();
+            if (ship == null || ship.IsDestroyed || ship.CurrentHealthPoints <= 0f
+                || defeatedShips.Contains(ship))
+                continue;
+            if (lowest == null || ship.CurrentHealthPoints < lowest.CurrentHealthPoints
+                || (ship == activeShip && ship.CurrentHealthPoints == lowest.CurrentHealthPoints))
+                lowest = ship;
+        }
+        return lowest;
+    }
 
     private sealed class ShipVisual
     {
         public ParentShip Ship { get; }
         private readonly SpriteRenderer sprite;
         private readonly Collider2D collider;
-        private readonly List<Weapon> weapons;
+        private readonly Weapon[] weapons;
 
         public ShipVisual(ParentShip ship)
         {
             Ship = ship;
             sprite = ship.GetComponent<SpriteRenderer>();
             collider = ship.GetComponent<Collider2D>();
-            weapons = ship.GetComponentsInChildren<Weapon>(true).ToList();
+            weapons = ship.GetComponentsInChildren<Weapon>(true);
         }
 
         public void Hide()
@@ -67,7 +85,10 @@ public class ShipSelect : MonoBehaviour
         defeatedShips.Clear();
 
         foreach (ParentShip ship in GetComponentsInChildren<ParentShip>(true))
+        {
             shipVisuals.Add(new ShipVisual(ship));
+            ship.BindTeamBattleLevel(playerController);
+        }
 
         List<ParentShip> availableShips = GetAvailableShips();
         if (availableShips.Count == 0)
@@ -107,29 +128,31 @@ public class ShipSelect : MonoBehaviour
         ActivateShip(availableShips[nextIndex]);
     }
 
-    public int LevelUpAllShips()
-    {
-        int upgradedShips = 0;
-        foreach (ParentShip ship in GetAvailableShips())
-        {
-            int levelBefore = ship.GetLevel();
-            ship.LevelUp();
-            if (ship.GetLevel() > levelBefore)
-                upgradedShips++;
-        }
+    public int LevelUpAllShips() => playerController != null ? playerController.LevelUpAllShips() : 0;
 
-        return upgradedShips;
+    public int SynchronizeTeamBattleLevel()
+    {
+        if (playerController == null) return 0;
+        int synchronizedShips = 0;
+        for (int i = 0; i < shipVisuals.Count; i++)
+        {
+            ParentShip ship = shipVisuals[i].Ship;
+            if (ship != null && ship.ApplyTeamBattleLevel(playerController.TeamBattleLevel))
+                synchronizedShips++;
+        }
+        return synchronizedShips;
     }
 
     public bool HandleShipDeath(ParentShip ship)
     {
-        if (ship == null)
+        if (ship == null || !ContainsShip(ship))
             return false;
 
         defeatedShips.Add(ship);
         GetShipVisual(ship)?.Hide();
         ship.HideShip();
         ship.GetComponent<WeaponController>()?.HideWeapons();
+        ship.gameObject.SetActive(false);
 
         if (playerController == null || playerController.CurrentShip != ship)
             return playerController != null && playerController.CurrentShip != null;
@@ -152,13 +175,37 @@ public class ShipSelect : MonoBehaviour
             action.Invoke(availableShips[i]);
     }
 
+    public bool ContainsShip(ParentShip ship)
+    {
+        return ship != null && GetShipVisual(ship) != null;
+    }
+
+    public int ReviveDefeatedShips()
+    {
+        int revived = 0;
+        for (int index = 0; index < shipVisuals.Count; index++)
+        {
+            ShipVisual visual = shipVisuals[index];
+            ParentShip ship = visual.Ship;
+            if (ship == null || !defeatedShips.Contains(ship))
+                continue;
+            if (!ship.ReviveAfterWave())
+                continue;
+            defeatedShips.Remove(ship);
+            visual.Hide();
+            ship.GetComponent<WeaponController>()?.HideWeapons();
+            revived++;
+        }
+        return revived;
+    }
+
     private List<ParentShip> GetAvailableShips()
     {
         List<ParentShip> availableShips = new List<ParentShip>();
         foreach (Transform child in transform)
         {
             ParentShip ship = child.GetComponent<ParentShip>();
-            if (ship == null || defeatedShips.Contains(ship))
+            if (ship == null || ship.IsDestroyed || defeatedShips.Contains(ship))
                 continue;
 
             availableShips.Add(ship);
@@ -188,6 +235,9 @@ public class ShipSelect : MonoBehaviour
 
     private ShipVisual GetShipVisual(ParentShip ship)
     {
-        return shipVisuals.FirstOrDefault(visual => visual.Ship == ship);
+        for (int index = 0; index < shipVisuals.Count; index++)
+            if (shipVisuals[index].Ship == ship)
+                return shipVisuals[index];
+        return null;
     }
 }

@@ -19,6 +19,8 @@ GameObject:
   - component: {fileID: 4278743391106332174}
   - component: {fileID: 2413064101144684125}
   - component: {fileID: 8064412409332444930}
+  - component: {fileID: 6507724253349020023}
+  - component: {fileID: 5671639254131539623}
   m_Layer: 8
   m_Name: BlackHoleCraft
   m_TagString: Player
@@ -44,7 +46,6 @@ Transform:
   - {fileID: 5434892902807029012}
   - {fileID: 4747362439961467848}
   - {fileID: 8250432384570837014}
-  - {fileID: 5623751699769171023}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7510122182290028595
@@ -125,6 +126,7 @@ MonoBehaviour:
   ShipData: {fileID: 11400000, guid: 4f8412e53075b104ebf23726690ca4ff, type: 2}
   buffMagnet: {fileID: 4096775222194903361}
   damageHitboxCollider: {fileID: 2413064101144684125}
+  healthDamageProjectileClearRadius: 1.75
   IsVisible: 0
 --- !u!114 &4464506009196274525
 MonoBehaviour:
@@ -229,12 +231,6 @@ MonoBehaviour:
     previewButtonSize: {x: 128, y: 128}
     previewWeaponIconScale: {x: 1, y: 1}
     maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 2
-    weaponMount: {fileID: 5623751699769171023}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 128, y: 128}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
 --- !u!58 &2413064101144684125
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -270,7 +266,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.075
+  m_Radius: 0.05
 --- !u!114 &8064412409332444930
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -300,6 +296,34 @@ MonoBehaviour:
   emptyArcOpacity: 0.2
   previewHealthFraction: 1
   previewShieldFraction: 1
+--- !u!114 &6507724253349020023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c485ff1ed87904b9a5e5729584641a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHitboxIndicator
+  visualRadius: 0.075
+  color: {r: 0.1, g: 1, b: 0.7, a: 0.95}
+--- !u!114 &5671639254131539623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3387013190401639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b880daa3862fe2a4aabd2de5127763de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExtraHealthPassive
+  owner: {fileID: 0}
+  MaximumExtraHealth: 1
 --- !u!1 &2996509567083110441
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,37 +441,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!1 &4522926446680320805
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5623751699769171023}
-  m_Layer: 8
-  m_Name: WeaponMount_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5623751699769171023
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4522926446680320805}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.15, y: -0.210789, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3384991692524799735}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5133997152949459455
 GameObject:
   m_ObjectHideFlags: 0

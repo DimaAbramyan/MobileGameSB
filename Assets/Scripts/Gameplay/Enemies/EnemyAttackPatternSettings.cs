@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public enum EnemyAttackPatternsMode : byte
 {
@@ -8,24 +8,45 @@ public enum EnemyAttackPatternsMode : byte
 
 // Flat list entry: keeping the collection out of entries avoids recursive Unity serialization.
 [System.Serializable]
-public sealed class EnemyAttackPatternSettings
+public sealed partial class EnemyAttackPatternSettings
 {
     [SerializeField, HideInInspector] private string patternId = System.Guid.NewGuid().ToString("N");
     public string PatternId => patternId;
 
     [SerializeField] private EnemyShootingSettings shooting = new EnemyShootingSettings();
     [SerializeField] private bool useAttackStartDelay;
-    [SerializeField, Min(0f)] private float attackStartDelay = 1f;
+    [SerializeField] [Randomizable(nameof(attackStartDelayRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private float attackStartDelay = 1f;
     [SerializeField] private EnemyBurstAttackMode burstAttack;
-    [SerializeField, Min(1)] private int attackShotCount = 1;
-    [SerializeField, Min(0f)] private float attackShotInterval = 0.15f;
-    [SerializeField, Min(0f)] private float attackCooldown = 1f;
-    [SerializeField, Min(1)] private int burstShotCount = 1;
-    [SerializeField, Min(0f)] private float burstShotInterval = 0.15f;
+    [SerializeField] [Randomizable(nameof(attackShotCountRandom), 1f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private int attackShotCount = 1;
+    [SerializeField] [Randomizable(nameof(attackShotIntervalRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerShot)]
+    private float attackShotInterval = 0.15f;
+    [SerializeField, Randomizable(nameof(attackCooldownRandom), 0f)] private float attackCooldown = 1f;
+    [SerializeField, HideInInspector] private RandomFloatRange attackCooldownRandom = new();
+    public RandomFloatRange AttackCooldownRandom => attackCooldownRandom ??= new();
+    [SerializeField] [Randomizable(nameof(burstShotCountRandom), 1f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerAttack)]
+    private int burstShotCount = 1;
+    [SerializeField] [Randomizable(nameof(burstShotIntervalRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerShot)]
+    private float burstShotInterval = 0.15f;
 
     [System.NonSerialized] private EnemyBurstAttackSettings runtimeSettings;
 
-    public EnemyShootingSettings Shooting => shooting;
+    public EnemyShootingSettings AuthoredShooting => shooting;
+    public EnemyShootingSettings Shooting => shooting.HasLinkedPresets ? RuntimeSettings.Shooting : shooting;
+    [System.NonSerialized] private int presetRevision = -1;
+    public void ScaleAttackTiming(float multiplier)
+    {
+        var active = shooting.HasLinkedPresets ? RuntimeSettings : runtimeSettings;
+        multiplier = Mathf.Max(.01f, multiplier);
+        attackStartDelay /= multiplier; attackShotInterval /= multiplier;
+        burstShotInterval /= multiplier; attackCooldown /= multiplier;
+        AttackCooldownRandom.Scale(1f / multiplier);
+        AttackStartDelayRandom?.Scale(1f / multiplier); AttackShotIntervalRandom?.Scale(1f / multiplier);
+        BurstShotIntervalRandom?.Scale(1f / multiplier);
+        shooting.ScaleAttackTiming(multiplier);
+        active?.ScaleAttackTiming(multiplier);
+    }
     public bool UsesAttackStartDelay => useAttackStartDelay;
     public float AttackStartDelay => attackStartDelay;
     public EnemyBurstAttackMode BurstAttack => burstAttack;
@@ -39,10 +60,12 @@ public sealed class EnemyAttackPatternSettings
     {
         get
         {
-            if (runtimeSettings == null)
+            if (runtimeSettings == null || presetRevision != EnemyPresetRevision.Value)
             {
-                runtimeSettings = new EnemyBurstAttackSettings();
-                runtimeSettings.CopySinglePatternFrom(this);
+                var copy = new EnemyBurstAttackSettings();
+                copy.CopySinglePatternFrom(this);
+                runtimeSettings = copy;
+                presetRevision = EnemyPresetRevision.Value;
             }
             return runtimeSettings;
         }
@@ -51,13 +74,15 @@ public sealed class EnemyAttackPatternSettings
     public void CopyFrom(EnemyBurstAttackSettings source)
     {
         source.Validate();
-        shooting.CopyFrom(source.Shooting);
+        CopyNumericTimingFrom(source);
+        shooting.CopyFrom(source.AuthoredShooting);
         useAttackStartDelay = source.UsesAttackStartDelay;
         attackStartDelay = source.ConfiguredAttackStartDelay;
         burstAttack = source.BurstAttack;
         attackShotCount = source.AttackShotCount;
         attackShotInterval = source.AttackShotInterval;
         attackCooldown = source.AttackCooldown;
+        AttackCooldownRandom.CopyFrom(source.AttackCooldownRandom);
         burstShotCount = source.BurstShotCount;
         burstShotInterval = source.BurstShotInterval;
         Validate();
@@ -69,6 +94,7 @@ public sealed class EnemyAttackPatternSettings
             return;
         if (preserveIdentity)
             patternId = source.patternId;
+        CopyNumericTimingFrom(source);
         shooting.CopyFrom(source.shooting);
         useAttackStartDelay = source.useAttackStartDelay;
         attackStartDelay = source.attackStartDelay;
@@ -76,6 +102,7 @@ public sealed class EnemyAttackPatternSettings
         attackShotCount = source.attackShotCount;
         attackShotInterval = source.attackShotInterval;
         attackCooldown = source.attackCooldown;
+        AttackCooldownRandom.CopyFrom(source.AttackCooldownRandom);
         burstShotCount = source.burstShotCount;
         burstShotInterval = source.burstShotInterval;
         Validate();

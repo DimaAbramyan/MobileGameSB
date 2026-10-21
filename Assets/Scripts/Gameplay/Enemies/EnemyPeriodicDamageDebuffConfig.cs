@@ -17,7 +17,7 @@ public sealed class EnemyPeriodicDamageDebuffConfig : EnemyDebuffConfig
     [SerializeField, Min(0.01f)] private float tickInterval = 0.5f;
     [SerializeField, Min(0.01f)] private float duration = 3f;
     [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Chemical;
-    [SerializeField] private bool bypassesEnemyShield = true;
+    [SerializeField, HideInInspector] private bool bypassesEnemyShield = true;
 
     [Header("After Successful Damage Tick")]
     [Tooltip("Applied only when the periodic damage tick deals hull damage. Leave empty for no follow-up debuffs.")]
@@ -28,6 +28,7 @@ public sealed class EnemyPeriodicDamageDebuffConfig : EnemyDebuffConfig
     public float Duration => Mathf.Max(0.01f, duration);
     public EnemyDamageType DamageType => damageType;
     public bool BypassesEnemyShield => bypassesEnemyShield;
+    public bool DamageShieldFirst => !bypassesEnemyShield;
     public IReadOnlyList<EnemyDebuffApplication> TickDebuffs => tickDebuffs;
 
     private void OnValidate()

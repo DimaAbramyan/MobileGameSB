@@ -10,6 +10,7 @@ public sealed class EnemyProjectileAuthoring : MonoBehaviour
     [SerializeField] private SpriteRenderer visualRenderer;
 
       [Header("Static Projectile Data")]
+      [SerializeField] private EnemyProjectileCharacteristic characteristic = EnemyProjectileCharacteristic.Fragile;
       [SerializeField, Min(0f)] private float baseDamage = 1f;
       [SerializeField, Min(0.001f)] private float radius = 0.1f;
       [SerializeField, Min(0.01f)] private float baseLifetime = 1f;
@@ -41,6 +42,7 @@ public sealed class EnemyProjectileAuthoring : MonoBehaviour
         AnimationCurve.Linear(0f, 1f, 10f, 1f);
 
     public EnemyBullet LegacyProjectile => legacyProjectile;
+    public EnemyProjectileCharacteristic Characteristic => characteristic;
     public SpriteRenderer VisualRenderer => visualRenderer;
     public float BaseDamage => baseDamage;
       public float Radius => radius;
@@ -124,6 +126,7 @@ public sealed class EnemyProjectileAuthoring : MonoBehaviour
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new EnemyProjectileStaticData
             {
+                Characteristic = authoring.Characteristic,
                   BaseDamage = authoring.baseDamage,
                   Radius = authoring.EffectiveRadius,
                 BaseLifetime = authoring.baseLifetime,

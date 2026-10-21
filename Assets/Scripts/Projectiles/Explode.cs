@@ -15,7 +15,7 @@ public class Explode : MonoBehaviour
     [SerializeField] private float destroyDelay = 0.5f;
 
     private HashSet<GameObject> damagedObjects = new HashSet<GameObject>();
-    private EnemyDamageType damageType = EnemyDamageType.Explosion;
+    private EnemyDamageType damageType = EnemyDamageType.Kinetick;
     private bool bypassesEnemyShield;
     private ParentShip owner;
     private DealDamageManager dealDamageManager;

@@ -25,6 +25,8 @@ public sealed class ChronosTimeFractureField : MonoBehaviour
     private float playerProjectileSpeedMultiplier;
     private float playerProjectileDamageMultiplier;
     private float collapseDamage;
+    private DealDamageManager damageManager;
+    private EnemyDamageType damageType = EnemyDamageType.Default;
     private float scanTimer;
 
     private struct ProjectileSnapshot
@@ -41,7 +43,9 @@ public sealed class ChronosTimeFractureField : MonoBehaviour
         float playerProjectileMultiplier,
         float playerProjectileDamageMult,
         float fieldCollapseDamage,
-        ParentShip fieldOwner)
+        ParentShip fieldOwner,
+        DealDamageManager damageManager = null,
+        EnemyDamageType damageType = EnemyDamageType.Default)
     {
         duration = Mathf.Max(0.1f, fieldDuration);
         radius = Mathf.Max(0.1f, fieldRadius);
@@ -51,6 +55,8 @@ public sealed class ChronosTimeFractureField : MonoBehaviour
         playerProjectileDamageMultiplier = Mathf.Max(1f, playerProjectileDamageMult);
         collapseDamage = Mathf.Max(0f, fieldCollapseDamage);
         owner = fieldOwner;
+        this.damageManager = damageManager;
+        this.damageType = damageType;
         ConfigureFilters();
         transform.localScale = Vector3.one * radius * 2f;
     }
@@ -244,8 +250,12 @@ public sealed class ChronosTimeFractureField : MonoBehaviour
             if (enemy == null || enemy.isDead)
                 continue;
 
-            enemy.TakeDamage(collapseDamage);
-            owner?.NotifyDamageDealt(collapseDamage);
+            if (damageManager != null) damageManager.DealDamage(enemy, owner, collapseDamage, damageType);
+            else
+            {
+                var result = enemy.TakeDamageWithType(collapseDamage, damageType);
+                if (result.DidDamageHull) owner?.NotifyDamageDealt(result.HullDamage);
+            }
         }
     }
 

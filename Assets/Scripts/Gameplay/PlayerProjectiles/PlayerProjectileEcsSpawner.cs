@@ -329,6 +329,20 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
         {
             Value = Mathf.Max(0f, parameters.damage)
         });
+        if (configuration.DamageMultiplierByDistance != null)
+        {
+            PlayerProjectileScaleState scaleState = entityManager.GetComponentData<PlayerProjectileScaleState>(entity);
+            scaleState.InitialDamage = Mathf.Max(0f, parameters.damage);
+            scaleState.InitialRange = initialRange;
+            scaleState.TraveledDistance = 0f;
+            entityManager.SetComponentData(entity, scaleState);
+            float multiplier = Mathf.Max(0f, configuration.DamageMultiplierByDistance.Evaluate(0f));
+            entityManager.SetComponentData(entity, new PlayerProjectileDamage
+            {
+                Value = scaleState.InitialDamage * multiplier,
+                HeatMultiplierDelta = multiplier - 1f
+            });
+        }
         entityManager.SetComponentData(entity, new PlayerProjectileOwner
         {
             Id = collisionRegistry != null
@@ -453,6 +467,11 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
                 DestroyRuntimeObject(visual.RuntimeVisual.Mesh);
         }
 
+        foreach (CompiledConfiguration configuration in configurations.Values)
+        {
+            if (configuration.DistanceDamageCurve.Data.IsCreated)
+                configuration.DistanceDamageCurve.Data.Dispose();
+        }
         configurations.Clear();
         contactConfigurations.Clear();
         visuals.Clear();
@@ -558,6 +577,10 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
             VisualScalePerRootUnit = configuration.VisualScalePerRootUnit,
             GrowthPerSecond = configuration.ScaleGrowthPerSecond
         });
+        if (configuration.DamageMultiplierByDistance != null)
+        {
+            entityManager.AddComponentData(prefab, configuration.DistanceDamageCurve);
+        }
         entityManager.AddComponentData(prefab, new PlayerProjectileResolution
         {
             Kind = PlayerProjectileResolutionKind.None,
@@ -940,6 +963,7 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
             runtimeConfig.growDuringFlight
                 ? runtimeConfig.scaleGrowthPerSecond
                 : Vector2.zero,
+            runtimeConfig.damageMultiplierByDistance,
             collisionRegistry != null
                 ? collisionRegistry.GetOrRegisterDebuffSetId(runtimeConfig.enemyDebuffs)
                 : 0,
@@ -1300,6 +1324,25 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
         }
     }
 
+    private static PlayerProjectileDistanceDamageCurve CompileDistanceDamageCurve(AnimationCurve curve)
+    {
+        if (curve == null || curve.length == 0)
+            return default;
+        using (var builder = new BlobBuilder(Unity.Collections.Allocator.Temp))
+        {
+            ref var root = ref builder.ConstructRoot<PlayerProjectileDistanceDamageCurveData>();
+            const int sampleCount = 257;
+            var samples = builder.Allocate(ref root.Samples, sampleCount);
+            for (int index = 0; index < sampleCount; index++)
+                samples[index] = Mathf.Max(0f, curve.Evaluate(index / (float)(sampleCount - 1)));
+            return new PlayerProjectileDistanceDamageCurve
+            {
+                Data = builder.CreateBlobAssetReference<PlayerProjectileDistanceDamageCurveData>(
+                    Unity.Collections.Allocator.Persistent)
+            };
+        }
+    }
+
     private readonly struct CompiledConfiguration
     {
         public readonly float Radius;
@@ -1335,6 +1378,8 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
         public readonly Vector2 InitialRootScale;
         public readonly Vector2 VisualScalePerRootUnit;
         public readonly Vector2 ScaleGrowthPerSecond;
+        public readonly AnimationCurve DamageMultiplierByDistance;
+        public readonly PlayerProjectileDistanceDamageCurve DistanceDamageCurve;
         public readonly int DebuffSetId;
            public readonly int ExplosionConfigId;
            public readonly int SecondaryProjectileConfigId;
@@ -1376,6 +1421,7 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
             Vector2 initialRootScale,
             Vector2 visualScalePerRootUnit,
                Vector2 scaleGrowthPerSecond,
+               AnimationCurve damageMultiplierByDistance,
                int debuffSetId,
              int explosionConfigId,
              int secondaryProjectileConfigId,
@@ -1418,6 +1464,8 @@ public sealed class PlayerProjectileEcsSpawner : IDisposable
             InitialRootScale = initialRootScale;
             VisualScalePerRootUnit = visualScalePerRootUnit;
             ScaleGrowthPerSecond = scaleGrowthPerSecond;
+            DamageMultiplierByDistance = damageMultiplierByDistance;
+            DistanceDamageCurve = CompileDistanceDamageCurve(damageMultiplierByDistance);
              DebuffSetId = debuffSetId;
              ExplosionConfigId = explosionConfigId;
              SecondaryProjectileConfigId = secondaryProjectileConfigId;

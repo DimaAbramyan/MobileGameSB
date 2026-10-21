@@ -1079,6 +1079,7 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 1
+    aimMode: 0
     forwardFireHalfAngle: 15
     movementMode: 0
     serializedVersion: 11
@@ -1093,6 +1094,38 @@ MonoBehaviour:
       attackPatterns: 0
       patterns: []
       facingMode: 0
+      facingRotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+      facingLayoutVersion: 1
       facingPatternId: 
       facingSpeed: 360
       facingAngleOffset: 0
@@ -1102,6 +1135,17 @@ MonoBehaviour:
       attackStartDelay: 1
       shooting:
         shootingType: 0
+        emissionLayout:
+          type: 0
+          positionOffset: {x: 0, y: 0, z: 0}
+          directionsCount: 4
+          emitterCount: 4
+          radius: 1
+          startAngle: 0
+          centerOffset: {x: 0, y: 0, z: 0}
+          rotateShootingPointOffset: 0
+        layoutRotationEnabled: 0
+        emissionLayoutVersion: 1
         projectileType: 0
         overrideProjectileBaseSpeed: 0
         projectileBaseSpeed: 1
@@ -1157,6 +1201,7 @@ MonoBehaviour:
         projectileOrbitFixedWorldCenter: {x: 0, y: 0}
         projectileOrbitRadius: 0
         projectileOrbitRadialSpeed: 0
+        projectileDnaWeaveSpeed: 1
         projectileSizeBehavior: 0
         projectileSizeChangeY: 0
         projectileSizeChangeSpeed: 1
@@ -2259,6 +2304,7 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 0
+    aimMode: 0
     forwardFireHalfAngle: 15
     movementMode: 0
     serializedVersion: 11
@@ -2273,6 +2319,38 @@ MonoBehaviour:
       attackPatterns: 0
       patterns: []
       facingMode: 0
+      facingRotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+      facingLayoutVersion: 1
       facingPatternId: 
       facingSpeed: 360
       facingAngleOffset: 0
@@ -2282,6 +2360,17 @@ MonoBehaviour:
       attackStartDelay: 1
       shooting:
         shootingType: 0
+        emissionLayout:
+          type: 0
+          positionOffset: {x: 0, y: 0, z: 0}
+          directionsCount: 4
+          emitterCount: 4
+          radius: 1
+          startAngle: 0
+          centerOffset: {x: 0, y: 0, z: 0}
+          rotateShootingPointOffset: 0
+        layoutRotationEnabled: 0
+        emissionLayoutVersion: 1
         projectileType: 0
         overrideProjectileBaseSpeed: 0
         projectileBaseSpeed: 1
@@ -2337,6 +2426,7 @@ MonoBehaviour:
         projectileOrbitFixedWorldCenter: {x: 0, y: 0}
         projectileOrbitRadius: 0
         projectileOrbitRadialSpeed: 0
+        projectileDnaWeaveSpeed: 1
         projectileSizeBehavior: 0
         projectileSizeChangeY: 0
         projectileSizeChangeSpeed: 1
@@ -3111,6 +3201,7 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 0
+    aimMode: 0
     forwardFireHalfAngle: 15
     movementMode: 0
     serializedVersion: 11
@@ -3125,6 +3216,38 @@ MonoBehaviour:
       attackPatterns: 0
       patterns: []
       facingMode: 0
+      facingRotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+      facingLayoutVersion: 1
       facingPatternId: 
       facingSpeed: 360
       facingAngleOffset: 0
@@ -3134,6 +3257,17 @@ MonoBehaviour:
       attackStartDelay: 1
       shooting:
         shootingType: 0
+        emissionLayout:
+          type: 0
+          positionOffset: {x: 0, y: 0, z: 0}
+          directionsCount: 4
+          emitterCount: 4
+          radius: 1
+          startAngle: 0
+          centerOffset: {x: 0, y: 0, z: 0}
+          rotateShootingPointOffset: 0
+        layoutRotationEnabled: 0
+        emissionLayoutVersion: 1
         projectileType: 0
         overrideProjectileBaseSpeed: 0
         projectileBaseSpeed: 1
@@ -3189,6 +3323,7 @@ MonoBehaviour:
         projectileOrbitFixedWorldCenter: {x: 0, y: 0}
         projectileOrbitRadius: 0
         projectileOrbitRadialSpeed: 0
+        projectileDnaWeaveSpeed: 1
         projectileSizeBehavior: 0
         projectileSizeChangeY: 0
         projectileSizeChangeSpeed: 1
@@ -3561,6 +3696,38 @@ MonoBehaviour:
     attackPatterns: 0
     patterns: []
     facingMode: 0
+    facingRotation:
+      direction: 0
+      rotationMode: 0
+      rotationSpeedDegreesPerSecond: 90
+      rotationProgressCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      rotationAngle: 360
+      rotationFromAngle: 0
+      resetRotationOnEnable: 1
+    facingLayoutVersion: 1
     facingPatternId: 
     facingSpeed: 360
     facingAngleOffset: 0
@@ -3570,6 +3737,17 @@ MonoBehaviour:
     attackStartDelay: 1
     shooting:
       shootingType: 0
+      emissionLayout:
+        type: 0
+        positionOffset: {x: 0, y: 0, z: 0}
+        directionsCount: 4
+        emitterCount: 4
+        radius: 1
+        startAngle: 0
+        centerOffset: {x: 0, y: 0, z: 0}
+        rotateShootingPointOffset: 0
+      layoutRotationEnabled: 0
+      emissionLayoutVersion: 1
       projectileType: 0
       overrideProjectileBaseSpeed: 0
       projectileBaseSpeed: 1
@@ -3625,6 +3803,7 @@ MonoBehaviour:
       projectileOrbitFixedWorldCenter: {x: 0, y: 0}
       projectileOrbitRadius: 0
       projectileOrbitRadialSpeed: 0
+      projectileDnaWeaveSpeed: 1
       projectileSizeBehavior: 0
       projectileSizeChangeY: 0
       projectileSizeChangeSpeed: 1
@@ -3701,11 +3880,44 @@ MonoBehaviour:
   overrideAttackPattern: 1
   inheritWaveFireMode: 1
   fireMode: 0
+  aimMode: 0
   forwardFireHalfAngle: 15
   attackPattern:
     attackPatterns: 0
     patterns: []
     facingMode: 0
+    facingRotation:
+      direction: 0
+      rotationMode: 0
+      rotationSpeedDegreesPerSecond: 90
+      rotationProgressCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      rotationAngle: 360
+      rotationFromAngle: 0
+      resetRotationOnEnable: 1
+    facingLayoutVersion: 1
     facingPatternId: 
     facingSpeed: 360
     facingAngleOffset: 0
@@ -3715,6 +3927,17 @@ MonoBehaviour:
     attackStartDelay: 1
     shooting:
       shootingType: 0
+      emissionLayout:
+        type: 0
+        positionOffset: {x: 0, y: 0, z: 0}
+        directionsCount: 4
+        emitterCount: 4
+        radius: 1
+        startAngle: 0
+        centerOffset: {x: 0, y: 0, z: 0}
+        rotateShootingPointOffset: 0
+      layoutRotationEnabled: 0
+      emissionLayoutVersion: 1
       projectileType: 0
       overrideProjectileBaseSpeed: 0
       projectileBaseSpeed: 1
@@ -3770,6 +3993,7 @@ MonoBehaviour:
       projectileOrbitFixedWorldCenter: {x: 0, y: 0}
       projectileOrbitRadius: 0
       projectileOrbitRadialSpeed: 0
+      projectileDnaWeaveSpeed: 1
       projectileSizeBehavior: 0
       projectileSizeChangeY: 0
       projectileSizeChangeSpeed: 1
@@ -5292,6 +5516,7 @@ MonoBehaviour:
     useAttackStartDelay: 0
     attackStartDelay: 0
     fireMode: 1
+    aimMode: 0
     forwardFireHalfAngle: 15
     movementMode: 0
     serializedVersion: 11
@@ -5306,6 +5531,38 @@ MonoBehaviour:
       attackPatterns: 0
       patterns: []
       facingMode: 0
+      facingRotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+      facingLayoutVersion: 1
       facingPatternId: 
       facingSpeed: 360
       facingAngleOffset: 0
@@ -5315,6 +5572,17 @@ MonoBehaviour:
       attackStartDelay: 1
       shooting:
         shootingType: 0
+        emissionLayout:
+          type: 0
+          positionOffset: {x: 0, y: 0, z: 0}
+          directionsCount: 4
+          emitterCount: 4
+          radius: 1
+          startAngle: 0
+          centerOffset: {x: 0, y: 0, z: 0}
+          rotateShootingPointOffset: 0
+        layoutRotationEnabled: 0
+        emissionLayoutVersion: 1
         projectileType: 0
         overrideProjectileBaseSpeed: 0
         projectileBaseSpeed: 1
@@ -5370,6 +5638,7 @@ MonoBehaviour:
         projectileOrbitFixedWorldCenter: {x: 0, y: 0}
         projectileOrbitRadius: 0
         projectileOrbitRadialSpeed: 0
+        projectileDnaWeaveSpeed: 1
         projectileSizeBehavior: 0
         projectileSizeChangeY: 0
         projectileSizeChangeSpeed: 1

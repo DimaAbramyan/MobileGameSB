@@ -144,7 +144,7 @@ public sealed class ChronosEchoPassiveAbility : PassiveAbility
                 : null;
 
             if (projectile != null)
-                Destroy(projectile.gameObject);
+                projectile.TryDestroyByAbility();
         }
     }
 

@@ -1,9 +1,9 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttackAimTarget
+public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyEmissionOriginContext
 {
     [Inject] private DiContainer container;
     [Inject] private EnemyManager enemyManager;
@@ -35,6 +35,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
     private bool spawnFinished;
     private bool activated;
     private bool postBehaviorStarted;
+    public bool HasActivated => activated;
+    public bool IsAttackReady => activated && spawnFinished && movingToFormationCount == 0 && IsPostTimelineRunning;
+    public bool IsAttackParticipantGone => activated && spawnFinished && !HasAliveEnemies();
     private bool individualEntrancePointWarningLogged;
     private bool entranceLoopConfigurationWarningLogged;
 
@@ -214,7 +217,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
         SetFormationAttackReady(
             enemy,
             attackBehaviour != null
-            && attackBehaviour.AllowAutonomousAttackDuringEntrance);
+            && attackBehaviour.AllowAutonomousAttackDuringEntrance, formationIndex);
         aliveEnemies.Add(enemy);
         NotifyEnemySpawned(enemy, spawnStep, plannedEnemyCount);
         enemyBodies[enemy] = enemy.GetComponent<Rigidbody2D>();
@@ -570,7 +573,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
                     checkpoints[nextIndex].position,
                     checkpoints[followingIndex].position,
                     checkpoints[currentIndex].motionToNext,
-                    curvedTime);
+                    curvedTime, checkpoints[currentIndex].curveSettings, checkpoints[nextIndex].curveSettings);
             Vector3 position =
                 DirectedWaveEntranceLoopEvaluator.EvaluateLoopSegment(
                     checkpoints,
@@ -602,15 +605,22 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
         }
     }
 
-    private void SetFormationAttackReady(Enemy enemy, bool isReady)
+    private void SetFormationAttackReady(Enemy enemy, bool isReady, int? numericSlot = null)
     {
         if (enemy == null)
             return;
+
+        if (numericSlot.HasValue && attackBehaviour != null)
+            enemy.AttackPermissions = attackBehaviour.AttackPermissions;
 
         formationAttackComponents.Clear();
         enemy.GetComponents<MonoBehaviour>(formationAttackComponents);
         for (int i = 0; i < formationAttackComponents.Count; i++)
         {
+            if (numericSlot.HasValue && formationAttackComponents[i] is IEnemyAttackActivity activity)
+                attackBehaviour?.RegisterAttackActivity(enemy, activity);
+            if (numericSlot.HasValue && formationAttackComponents[i] is IEnemyAttackNumericSource numeric)
+                numeric.SetNumericOwner(numericSlot.Value);
             if (formationAttackComponents[i] is IFormationAttackActivation activation)
                 activation.SetFormationAttackReady(isReady);
         }
@@ -883,7 +893,8 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
                 position = ToWorld(checkpoint.position, pathCoordinateSpace),
                 durationToNext = checkpoint.durationToNext,
                 motionToNext = checkpoint.motionToNext,
-                easeToNext = checkpoint.easeToNext
+                easeToNext = checkpoint.easeToNext,
+                curveSettings = GetWorldCurveSettings(checkpoint.curveSettings, pathCoordinateSpace)
             };
         }
 
@@ -918,7 +929,10 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
             formationPointsRoot,
             transform,
             spawnPoint,
-            GetEffectiveEnemyCount());
+            GetEffectiveEnemyCount(),
+            FormationConfig.formationOffsetStep,
+            FormationConfig.formationOffsetOrigin,
+            FormationConfig.formationCenterOffsetMode);
         return DirectedWaveFormationSolver.GetPosition(index, settings);
     }
 
@@ -2154,61 +2168,25 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
 
     private Vector3 EvaluatePatrolSegment(int segmentIndex, float time)
     {
-        if (patrolPoints == null || patrolPoints.Length == 0)
-            return Vector3.zero;
+        if (patrolPoints == null || patrolPoints.Length == 0) return Vector3.zero;
+        int nextIndex = GetNextPatrolIndex(segmentIndex);
+        return DirectedWavePathEvaluator.EvaluateSegment(
+            GetPatrolPointPosition(GetPreviousPatrolIndex(segmentIndex)),
+            GetPatrolPointPosition(segmentIndex), GetPatrolPointPosition(nextIndex),
+            GetPatrolPointPosition(GetNextPatrolIndex(nextIndex)), patrolPoints[segmentIndex].motionToNext, time,
+            GetWorldCurveSettings(patrolPoints[segmentIndex].curveSettings, patrolCoordinateSpace),
+            GetWorldCurveSettings(patrolPoints[nextIndex] != null ? patrolPoints[nextIndex].curveSettings : default, patrolCoordinateSpace));
+    }
 
-        int nextIndex = segmentIndex + 1;
-        if (nextIndex >= patrolPoints.Length)
-            nextIndex = patrolLoop ? 0 : patrolPoints.Length - 1;
-
-        Vector3 current = GetPatrolPointPosition(segmentIndex);
-        Vector3 next = GetPatrolPointPosition(nextIndex);
-
-        return patrolPoints[segmentIndex].motionToNext switch
+    private DirectedWaveCurveSettings GetWorldCurveSettings(DirectedWaveCurveSettings settings,
+        DirectedWaveCoordinateSpace space)
+    {
+        return space switch
         {
-            DirectedWaveSegmentMotion.Bezier =>
-                EvaluatePatrolBezierSegment(segmentIndex, time),
-            DirectedWaveSegmentMotion.CatmullRom =>
-                EvaluatePatrolCatmullRomSegment(segmentIndex, time),
-            _ => Vector3.LerpUnclamped(current, next, time)
+            DirectedWaveCoordinateSpace.LocalToSpawnPoint when spawnPoint != null => settings.TransformHandles(spawnPoint.localToWorldMatrix),
+            DirectedWaveCoordinateSpace.LocalToSubWave => settings.TransformHandles(transform.localToWorldMatrix),
+            _ => settings
         };
-    }
-
-    private Vector3 EvaluatePatrolBezierSegment(int segmentIndex, float time)
-    {
-        Vector3 p0 = GetPatrolPointPosition(segmentIndex);
-        Vector3 p3 = GetPatrolPointPosition(GetNextPatrolIndex(segmentIndex));
-        Vector3 previous = GetPatrolPointPosition(GetPreviousPatrolIndex(segmentIndex));
-        Vector3 following = GetPatrolPointPosition(GetNextPatrolIndex(GetNextPatrolIndex(segmentIndex)));
-
-        Vector3 p1 = p0 + (p3 - previous) / 6f;
-        Vector3 p2 = p3 - (following - p0) / 6f;
-        float t = Mathf.Clamp01(time);
-        float oneMinusT = 1f - t;
-
-        return oneMinusT * oneMinusT * oneMinusT * p0
-            + 3f * oneMinusT * oneMinusT * t * p1
-            + 3f * oneMinusT * t * t * p2
-            + t * t * t * p3;
-    }
-
-    private Vector3 EvaluatePatrolCatmullRomSegment(int segmentIndex, float time)
-    {
-        int p1 = segmentIndex;
-        int p0 = GetPreviousPatrolIndex(p1);
-        int p2 = GetNextPatrolIndex(p1);
-        int p3 = GetNextPatrolIndex(p2);
-        float t = Mathf.Clamp01(time);
-
-        return 0.5f * (
-            2f * GetPatrolPointPosition(p1)
-            + (-GetPatrolPointPosition(p0) + GetPatrolPointPosition(p2)) * t
-            + (2f * GetPatrolPointPosition(p0) - 5f * GetPatrolPointPosition(p1)
-                + 4f * GetPatrolPointPosition(p2) - GetPatrolPointPosition(p3))
-            * t * t
-            + (-GetPatrolPointPosition(p0) + 3f * GetPatrolPointPosition(p1)
-                - 3f * GetPatrolPointPosition(p2) + GetPatrolPointPosition(p3))
-            * t * t * t);
     }
 
     private int GetPreviousPatrolIndex(int index)
@@ -2486,6 +2464,9 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyAttac
     }
 
     Vector3 IEnemyAttackAimTarget.AttackTargetPosition => GetPlayerTargetPosition();
+    bool IEnemyEmissionOriginContext.HasEmissionOriginPlayer => HasAttackTarget;
+    Camera IEnemyEmissionOriginContext.EmissionOriginCamera => playerController != null
+        ? playerController.GameplayCamera : Camera.main;
 
     internal Vector3 GetPlayerTargetPosition()
     {

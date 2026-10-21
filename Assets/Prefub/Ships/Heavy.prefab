@@ -93,68 +93,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4251626144448637897}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2980218212159545254
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4300102076293229787}
-  m_Layer: 0
-  m_Name: WeaponMount_5
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4300102076293229787
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2980218212159545254}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.26, y: -0.3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4251626144448637897}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &3145452752532951321
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7626496427141950245}
-  m_Layer: 0
-  m_Name: WeaponMount_3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7626496427141950245
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3145452752532951321}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.26, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4251626144448637897}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5377600966933766361
 GameObject:
   m_ObjectHideFlags: 0
@@ -174,6 +112,8 @@ GameObject:
   - component: {fileID: 8017980473565711609}
   - component: {fileID: 6584022543476391564}
   - component: {fileID: 4987850306089946584}
+  - component: {fileID: 8850441999024986977}
+  - component: {fileID: 6882504491201873288}
   m_Layer: 8
   m_Name: Heavy
   m_TagString: Untagged
@@ -198,9 +138,7 @@ Transform:
   - {fileID: 2033955161108662475}
   - {fileID: 4979269614234718509}
   - {fileID: 8213869560328119283}
-  - {fileID: 7626496427141950245}
-  - {fileID: 4750523677701002950}
-  - {fileID: 4300102076293229787}
+  - {fileID: 6508225746071351764}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8102582971763951421
@@ -340,8 +278,9 @@ MonoBehaviour:
   intangibleState: {fileID: 0}
   ShieldAnchor: {fileID: 8048745723011680577}
   ShipData: {fileID: 11400000, guid: 11afd57821af69f4d93f026d1794cdaa, type: 2}
-  buffMagnet: {fileID: 0}
+  buffMagnet: {fileID: 6008216280297803702}
   damageHitboxCollider: {fileID: 6584022543476391564}
+  healthDamageProjectileClearRadius: 1.75
   IsVisible: 0
 --- !u!114 &3267561703122267529
 MonoBehaviour:
@@ -390,24 +329,6 @@ MonoBehaviour:
     previewButtonSize: {x: 64, y: 64}
     previewWeaponIconScale: {x: 1, y: 1}
     maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 3
-    weaponMount: {fileID: 7626496427141950245}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 64, y: 64}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 4
-    weaponMount: {fileID: 4750523677701002950}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 64, y: 64}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
-  - slotId: 5
-    weaponMount: {fileID: 4300102076293229787}
-    previewButtonOffset: {x: 0, y: 0}
-    previewButtonSize: {x: 64, y: 64}
-    previewWeaponIconScale: {x: 1, y: 1}
-    maxWeaponTierByHullUpgradeLevel: 01000000
 --- !u!58 &6584022543476391564
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -443,7 +364,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.075
+  m_Radius: 0.05
 --- !u!114 &4987850306089946584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -473,6 +394,123 @@ MonoBehaviour:
   emptyArcOpacity: 0.2
   previewHealthFraction: 1
   previewShieldFraction: 1
+--- !u!114 &8850441999024986977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5377600966933766361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c485ff1ed87904b9a5e5729584641a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHitboxIndicator
+  visualRadius: 0.075
+  color: {r: 0.1, g: 1, b: 0.7, a: 0.95}
+--- !u!114 &6882504491201873288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5377600966933766361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b880daa3862fe2a4aabd2de5127763de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExtraHealthPassive
+  owner: {fileID: 0}
+  MaximumExtraHealth: 1
+--- !u!1 &5761154314289503265
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6508225746071351764}
+  - component: {fileID: 5933892387821763470}
+  - component: {fileID: 6008216280297803702}
+  m_Layer: 11
+  m_Name: Magnet
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6508225746071351764
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5761154314289503265}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4251626144448637897}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!58 &5933892387821763470
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5761154314289503265}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0.15}
+  m_Radius: 0.2
+--- !u!114 &6008216280297803702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5761154314289503265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3651408c0f4a5a84ab982da7cec99dfd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Magnite
+  targetOffset: {x: 0, y: 0.15}
+  pickupSnapDistance: 0.08
+  affectedLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  magnetRadius: 0.2
+  attractionRadius: 2
+  forceAmount: 10
 --- !u!1 &6047428235333241272
 GameObject:
   m_ObjectHideFlags: 0
@@ -498,38 +536,7 @@ Transform:
   m_GameObject: {fileID: 6047428235333241272}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.26, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4251626144448637897}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &7496931175931641774
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4750523677701002950}
-  m_Layer: 0
-  m_Name: WeaponMount_4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4750523677701002950
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7496931175931641774}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.26, y: -0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

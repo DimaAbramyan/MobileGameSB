@@ -231,10 +231,12 @@ public sealed class EnemyTemperatureController : IInitializable, ITickable, IDis
                     if (state.BurningDamagePerTick > 0f
                         && dealDamageManager != null)
                     {
-                        dealDamageManager.Value.DealDamage(
+                        dealDamageManager.Value.DealDebuffDamage(
                             enemy,
                             state.BurningOwner,
-                            state.BurningDamagePerTick);
+                            state.BurningDamagePerTick,
+                            EnemyDamageType.Default,
+                            state.BurningDamageShieldFirst);
                     }
 
                     state.NextBurnDamageTime = currentTime
@@ -286,12 +288,15 @@ public sealed class EnemyTemperatureController : IInitializable, ITickable, IDis
         if (state.Temperature < FullTemperature)
             return state;
 
+        bool wasBurning = state.IsBurning && state.BurningEndTime > Time.time;
         state.IsBurning = config.BurningDuration > 0f;
         state.BurningEndTime = Time.time + config.BurningDuration;
-        state.NextBurnDamageTime = Time.time;
+        if (!wasBurning)
+            state.NextBurnDamageTime = Time.time + config.BurningDamageInterval;
         state.BurningDamagePerTick = config.BurningDamagePerTick;
         state.BurningDamageInterval = config.BurningDamageInterval;
         state.BurningOwner = owner;
+        state.BurningDamageShieldFirst = config.DamageShieldFirst;
         if (state.IsBurning)
             enemy.BeginBurning();
 
@@ -418,11 +423,12 @@ public sealed class EnemyTemperatureController : IInitializable, ITickable, IDis
                 if (enemy == null || enemy.isDead)
                     continue;
 
-                dealDamageManager.Value.DealDamage(
+                dealDamageManager.Value.DealDebuffDamage(
                     enemy,
                     profile.Owner,
                     explosionDamage,
-                    EnemyDamageType.Explosion);
+                    EnemyDamageType.Kinetick,
+                    profile.DamageShieldFirst);
             }
         }
         finally
@@ -563,6 +569,7 @@ public sealed class EnemyTemperatureController : IInitializable, ITickable, IDis
         public float BurningDamagePerTick;
         public float BurningDamageInterval;
         public ParentShip BurningOwner;
+        public bool BurningDamageShieldFirst;
         public bool HasThermalExplosionProfile;
         public EnemyHeatProfile ThermalExplosionProfile;
     }

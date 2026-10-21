@@ -3,7 +3,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(DirectedEnemySubWave))]
-public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
+public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
     IDirectedWavePostTimelineBehaviour
 {
     [Header("Attack Settings")]
@@ -21,11 +21,63 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
     [SerializeField, InspectorName("Override Base Projectile Speed"), Tooltip(
         "Uses this speed only in the runtime copy of each enemy attack pattern. Enemy and projectile prefabs are unchanged.")]
     private bool overrideBaseProjectileSpeed;
-    [SerializeField, Min(0.01f), InspectorName("Base Projectile Speed")]
+    [SerializeField, Randomizable(nameof(baseProjectileSpeedRandom), .01f), InspectorName("Base Projectile Speed")]
     private float baseProjectileSpeed = 1f;
+    [SerializeField, HideInInspector] private RandomFloatRange baseProjectileSpeedRandom = new();
+    [SerializeField] private EnemySpeedRandomizeOn baseProjectileSpeedRandomizeOn = EnemySpeedRandomizeOn.PerProjectile;
+    public RandomFloatRange BaseProjectileSpeedRandom => baseProjectileSpeedRandom ??= new();
+    public EnemySpeedRandomizeOn BaseProjectileSpeedRandomizeOn => baseProjectileSpeedRandomizeOn;
 
     [Header("Post-Formation Attack Patterns")]
     [SerializeField] private List<DirectedWaveAttackPattern> attackPatterns = new();
+    [SerializeField] private DirectedWaveAttackExecutionMode executionMode;
+    [SerializeField] private DirectedWaveAttackSequenceSettings attackSequence = new();
+    private DirectedWaveAttackSequenceRuntime sequenceRuntime;
+    private DirectedWaveAttackSequencePlayer sequencePlayer;
+    private DirectedWaveAttackExecutionMode runtimeExecutionMode;
+    private readonly Dictionary<int, DirectedWaveAttackSequenceStep> sequenceGuideSteps = new();
+    private int configurationRevision;
+    public int ConfigurationRevision
+    {
+        get
+        {
+            int stamp = configurationRevision * 397 ^ (attackPreset != null ? attackPreset.ConfigurationRevision : 0);
+            if (UsesAttackSequence) return SequencePresetRevision(AttackSequence.steps, stamp, 0);
+            if (attackPatterns == null) return stamp;
+            for (int i = 0; i < attackPatterns.Count; i++)
+                stamp = stamp * 397 ^ (attackPatterns[i]?.Preset != null ? attackPatterns[i].Preset.ConfigurationRevision : 0);
+            return stamp;
+        }
+    }
+    private static int SequencePresetRevision(List<DirectedWaveAttackSequenceStep> steps, int stamp, int depth)
+    {
+        if (steps == null || depth > DirectedWaveAttackSequenceCursor.MaximumDepth) return stamp;
+        for (int i = 0; i < steps.Count; i++)
+        {
+            var step = steps[i]; if (step == null) continue;
+            stamp = stamp * 397 ^ (step.pattern?.Preset != null ? step.pattern.Preset.ConfigurationRevision : 0);
+            if (step.type == DirectedWaveAttackSequenceStepType.RepeatBlock) stamp = SequencePresetRevision(step.steps, stamp, depth + 1);
+        }
+        return stamp;
+    }
+    public void InvalidateSequenceGuides() { sequenceGuideSteps.Clear(); configurationRevision++; }
+    public bool UsesAttackSequence => executionMode == DirectedWaveAttackExecutionMode.Sequence;
+    public DirectedWaveAttackSequenceSettings AttackSequence => attackSequence ??= new DirectedWaveAttackSequenceSettings();
+    public string ActiveSequenceStep => sequencePlayer?.CurrentStep;
+    public bool AllowsSequenceSlot(int slot) => !useSelectedEnemySlots || selectedEnemySlots.Contains(slot);
+    public bool ControlsSequenceSlot(int slot) => AllowsSequenceSlot(slot) || SequenceOverridesSlot(AttackSequence.steps, slot, 0);
+    private static bool SequenceOverridesSlot(List<DirectedWaveAttackSequenceStep> steps, int slot, int depth)
+    {
+        if (steps == null || depth > DirectedWaveAttackSequenceCursor.MaximumDepth) return false;
+        for (int i = 0; i < steps.Count; i++)
+        {
+            var step = steps[i];
+            if (step == null || !step.enabled) continue;
+            if (step.type == DirectedWaveAttackSequenceStepType.Attack && step.overrideTargetSlots && step.targetSlots.Contains(slot)) return true;
+            if (step.type == DirectedWaveAttackSequenceStepType.RepeatBlock && SequenceOverridesSlot(step.steps, slot, depth + 1)) return true;
+        }
+        return false;
+    }
 
     [Header("Entrance Attacks")]
     [SerializeField] private DirectedWaveEntranceAttackSettings
@@ -63,6 +115,10 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     public int AttackPatternCount => attackPatterns?.Count ?? 0;
 
+#if UNITY_EDITOR
+    public DirectedWaveEntranceAttackSettings EditorPreviewEntranceSettings => entranceAttackSettings;
+#endif
+
     // Scene preview and per-slot overrides resolve the same preset and slot
     // selection as runtime controllers.
     public bool CopyPreviewAttackSettingsTo(int slotIndex, bool entrance, DirectedWaveAttackSettings destination)
@@ -76,6 +132,16 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
         bool entrance,
         DirectedWaveAttackSettings destination)
     {
+        return TryCopyResolvedAttackSettingsTo(slotIndex, entrance, destination, out _);
+    }
+
+    public bool TryCopyResolvedAttackSettingsTo(
+        int slotIndex,
+        bool entrance,
+        DirectedWaveAttackSettings destination,
+        out int attackPatternIndex)
+    {
+        attackPatternIndex = -1;
         if (destination == null)
             return false;
 
@@ -84,6 +150,23 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
             if (!entranceAttackSettings.IsEnabled
                 || useSelectedEnemySlots && !selectedEnemySlots.Contains(slotIndex))
                 return false;
+        }
+        else if (UsesAttackSequence)
+        {
+            // Static guides use the first reachable attack; animated Preview executes the full sequence.
+            if (!sequenceGuideSteps.TryGetValue(slotIndex, out var guide))
+            {
+                var cursor = new DirectedWaveAttackSequenceCursor(AttackSequence);
+                for (int i = 0; i < 256 && cursor.TryNext(out var step); i++)
+                {
+                    if (step.type != DirectedWaveAttackSequenceStepType.Attack
+                        || !(step.overrideTargetSlots ? step.targetSlots.Contains(slotIndex) : AllowsSequenceSlot(slotIndex))) continue;
+                    guide = step; break;
+                }
+                sequenceGuideSteps[slotIndex] = guide;
+            }
+            if (guide != null) { guide.CopySettingsTo(destination); return true; }
+            return false;
         }
         else if (UsesAttackPatterns())
         {
@@ -98,6 +181,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
                     if (slots[j] != slotIndex)
                         continue;
                     pattern.CopyResolvedSettingsTo(destination);
+                    attackPatternIndex = i;
                     return true;
                 }
             }
@@ -111,7 +195,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
         if (resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride)
         {
             destination.SetRuntimeProjectileBaseSpeedOverride(
-                resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride);
+                resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride, resolvedAttackSettings.RuntimeProjectileBaseSpeedRandom, resolvedAttackSettings.RuntimeProjectileBaseSpeedRandomizeOn);
         }
         return true;
     }
@@ -143,7 +227,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
         preset.SetAttackSettings(
             resolvedAttackSettings,
             resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride,
-            resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride);
+            resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride, resolvedAttackSettings.RuntimeProjectileBaseSpeedRandom, resolvedAttackSettings.RuntimeProjectileBaseSpeedRandomizeOn);
     }
 
     public void UsePresetAsLocalSettings()
@@ -155,6 +239,8 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
         baseProjectileSpeed = resolvedAttackSettings.HasRuntimeProjectileBaseSpeedOverride
             ? resolvedAttackSettings.RuntimeProjectileBaseSpeedOverride
             : baseProjectileSpeed;
+        BaseProjectileSpeedRandom.CopyFrom(resolvedAttackSettings.RuntimeProjectileBaseSpeedRandom);
+        baseProjectileSpeedRandomizeOn = resolvedAttackSettings.RuntimeProjectileBaseSpeedRandomizeOn;
         attackPreset = null;
         overridePresetAttacksPerSecond = false;
         RefreshResolvedAttackSettings();
@@ -203,10 +289,14 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
     private void OnEnable()
     {
         RegisterWithWave();
+        if (UsesAttackSequence && wave != null && wave.IsPostTimelineRunning)
+            ((IDirectedWavePostTimelineBehaviour)this).OnPostTimelineStarted(wave);
     }
 
     private void OnDisable()
     {
+        sequencePlayer?.Pause(Time.time);
+        sequenceRuntime?.ReleaseControl();
         attackController?.Stop();
         StopAttackPatternControllers();
         StopContinuousEntranceAttack();
@@ -216,6 +306,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     private void OnValidate()
     {
+        InvalidateSequenceGuides();
         entranceAttackSettings ??= new DirectedWaveEntranceAttackSettings();
         baseProjectileSpeed = Mathf.Max(0.01f, baseProjectileSpeed);
         RefreshResolvedAttackSettings();
@@ -227,6 +318,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
     void IDirectedWavePostTimelineBehaviour.OnPostTimelineStarted(
         DirectedEnemySubWave hostWave)
     {
+        runtimeExecutionMode = executionMode;
         StopContinuousEntranceAttack();
         entranceAttackController?.Stop();
 
@@ -238,6 +330,17 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
 
         RefreshResolvedAttackSettings();
         attackController?.Stop();
+        if (UsesAttackSequence)
+        {
+            StopAttackPatternControllers();
+            sequenceRuntime ??= new DirectedWaveAttackSequenceRuntime(wave, this);
+            sequencePlayer ??= new DirectedWaveAttackSequencePlayer(AttackSequence, sequenceRuntime);
+            sequencePlayer.Begin(ExternalAttackTime, AttackSequence.restartOnReentry);
+            sequenceRuntime.ReserveControl();
+            return;
+        }
+        sequencePlayer?.Stop();
+        sequenceRuntime?.ReleaseControl();
         if (UsesAttackPatterns())
         {
             StartAttackPatternControllers();
@@ -262,6 +365,12 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     void IDirectedWavePostTimelineBehaviour.TickPostTimeline()
     {
+        TickExternalPermissionClock();
+        ApplyCoordinatedCycleLimit();
+        if (runtimeExecutionMode != executionMode)
+            ((IDirectedWavePostTimelineBehaviour)this).OnPostTimelineStarted(wave);
+        if (UsesAttackSequence)
+        { TickCoordinatedSequence(); sequenceRuntime?.KeepControl(); return; }
         attackController?.Tick();
         for (int i = 0; i < attackPatternControllers.Count; i++)
             attackPatternControllers[i]?.Tick();
@@ -269,12 +378,16 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     void IDirectedWavePostTimelineBehaviour.OnPostTimelineStopped()
     {
+        sequencePlayer?.Pause(Time.time);
+        sequenceRuntime?.ReleaseControl();
         attackController?.Stop();
         StopAttackPatternControllers();
     }
 
     void IDirectedWavePostTimelineBehaviour.OnWaveEnemyDestroyed(Enemy enemy)
     {
+        attackActivities.Remove(enemy);
+        sequenceRuntime?.NotifyEnemyDestroyed(enemy);
         entranceAttackController?.NotifyEnemyDestroyed(enemy);
         StopContinuousEntranceAttackForEnemy(enemy);
         attackController?.NotifyEnemyDestroyed(enemy);
@@ -550,6 +663,7 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
             ? attackPreset.AttackSettings
             : attackSettings;
         resolvedAttackSettings.CopyFrom(source);
+        EnemySectorLaunchOrderRegistry.BindSource(resolvedAttackSettings.WaveBurstSettings, this);
 
         if (attackPreset != null && overridePresetAttacksPerSecond)
         {
@@ -561,13 +675,13 @@ public sealed class DirectedWaveAttackBehaviour : MonoBehaviour,
             && attackPreset.OverridesBaseProjectileSpeed)
         {
             resolvedAttackSettings.SetRuntimeProjectileBaseSpeedOverride(
-                attackPreset.BaseProjectileSpeed);
+                attackPreset.BaseProjectileSpeed, attackPreset.BaseProjectileSpeedRandom, attackPreset.BaseProjectileSpeedRandomizeOn);
         }
 
         if (overrideBaseProjectileSpeed)
         {
             resolvedAttackSettings.SetRuntimeProjectileBaseSpeedOverride(
-                baseProjectileSpeed);
+                baseProjectileSpeed, BaseProjectileSpeedRandom, baseProjectileSpeedRandomizeOn);
         }
     }
 }

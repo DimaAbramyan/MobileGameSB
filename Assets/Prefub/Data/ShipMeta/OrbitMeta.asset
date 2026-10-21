@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b1941e8f9e38343906f546321083a9, type: 3}
+  m_Name: OrbitMeta
+  m_EditorClassIdentifier: Assembly-CSharp::ShipMetaConfig
+  sourceShipData: {fileID: 11400000, guid: 3bf8d889f0555a6419b929147b53f7d3, type: 2}
+  sourceHullPrefab: {fileID: 8325040916063848254, guid: 753e4ff2a81175142a550978f59e0254, type: 3}
+  maxLevels: 1
+  levels:
+  - basicStats:
+      maximumHealthPoints: 2
+      maximumShieldPoints: 4
+      healthRegenRatePercent: 10
+      shieldRegenRatePercent: 10
+      speed: 300
+      maximumEnergy: 30
+    contracts:
+    - rid: 7121728315879063681
+    - rid: 7121728315879063682
+  references:
+    version: 2
+    RefIds:
+    - rid: 7121728315879063681
+      type: {class: OrbitShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        projectileDestructionPolicy: 0
+        objectCount: 4
+        objectRadius: 0.1
+        maximumChargedObjectRadius: 0.2
+        baseOrbitRadius: 0.5
+        maximumOrbitRadius: 1.2
+        baseAngularSpeed: 90
+        maximumAngularSpeed: 150
+        clockwise: 0
+        chargeUpDuration: 0.5
+        expansionSpeed: 0.51
+        collapseSpeed: 1.2
+        contactDamage: 10
+        damageInterval: 0.2
+        cooldownReductionPerProjectile: 0.05
+    - rid: 7121728315879063682
+      type: {class: AbilityRecoveryShipMetaContract, ns: , asm: Assembly-CSharp}
+      data:
+        abilityMode: 1
+        cooldown: 0.75
+        maxCharges: 1
+        toggleMaximumTime: 5
+        toggleTimeCostPerSecond: 1
+        toggleRechargeStartTime: 0
+        toggleRechargeDuration: 15

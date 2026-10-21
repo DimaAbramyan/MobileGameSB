@@ -1,7 +1,9 @@
 using UnityEngine;
+using Zenject;
 
 public sealed class ChronosTimeFractureActiveAbility : ActiveAbility
 {
+    [Inject] private DealDamageManager damageManager;
     [SerializeField] private ChronosTimeFractureField fieldPrefab;
     [SerializeField] private Vector2 fieldSpawnOffset = new Vector2(0f, 1.2f);
     [SerializeField, Min(0.1f)] private float duration = 4f;
@@ -11,6 +13,7 @@ public sealed class ChronosTimeFractureActiveAbility : ActiveAbility
     [SerializeField, Min(1f)] private float playerProjectileSpeedMultiplier = 1.5f;
     [SerializeField, Min(1f)] private float playerProjectileDamageMultiplier = 1.35f;
     [SerializeField, Min(0f)] private float collapseDamage = 45f;
+    [SerializeField] private EnemyDamageType damageType = EnemyDamageType.Default;
 
     public override bool Activate(ParentShip owner)
     {
@@ -30,7 +33,7 @@ public sealed class ChronosTimeFractureActiveAbility : ActiveAbility
             playerProjectileSpeedMultiplier,
             playerProjectileDamageMultiplier,
             collapseDamage,
-            owner);
+            owner, damageManager, damageType);
 
         return true;
     }

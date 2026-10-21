@@ -23,7 +23,7 @@ public class EnemyBullet : EnemyProjectile
     public override void TransformPosition()
     {
 
-        transform.position += _position * this._speed * Time.deltaTime;
+        transform.position += _position * this._speed * EffectiveSpeedMultiplier * Time.deltaTime;
 
         DestroyProjByRange();
     }

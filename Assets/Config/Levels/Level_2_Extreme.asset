@@ -73,8 +73,8 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 0}
   randomBackgroundObjects: []
   waves:
-  - {fileID: 5142897750625784009, guid: 88ddad6c233df9e42bc7c6b06234a82a, type: 3}
-  - {fileID: 5142897750625784009, guid: 7cb54c909f96d3446930675c9359babc, type: 3}
-  - {fileID: 5142897750625784009, guid: b17d10c381c7fed44b5b9f6f0e15198f, type: 3}
+  - {fileID: 5142897750625784009, guid: 7702532f970c0fd4e885c10a457d5b9a, type: 3}
+  - {fileID: 5142897750625784009, guid: c6d00f95e742a5f43ae318c252ecf4c8, type: 3}
+  - {fileID: 5142897750625784009, guid: aeb7b681ba9f8f54186bddcf919bf494, type: 3}
   - {fileID: 5142897750625784009, guid: e9128a6dcbdb8db4c813ff87c9d3f0a3, type: 3}
   - {fileID: 5142897750625784009, guid: b4cb7b39c6afade4d9a05f256459a985, type: 3}

@@ -186,20 +186,43 @@ public sealed class ShipMetaConfigEditor : Editor
                 DrawAbilityRecoveryFields(contract, recovery);
                 break;
             case BlackHoleShipMetaContract:
-                DrawField(contract, "duration", "Duration");
-                DrawField(contract, "damage", "Damage per Tick");
-                DrawField(contract, "projectileSlowRadius", "Projectile Slow Radius");
+                EditorGUILayout.LabelField("Active Regional Speed Field", EditorStyles.miniBoldLabel);
+                DrawField(contract, "activeDuration", "ActiveDuration");
+                DrawField(contract, "activeCooldown", "ActiveCooldown", "Uses the standard ActiveAbility recovery timer. This value is authoritative for BlackHole.");
+                DrawField(contract, "frontSpeedMultiplier", "FrontSpeedMultiplier", "Above the ship, including the dividing line. Multiplies the passive effect when enabled.");
+                DrawField(contract, "rearSpeedMultiplier", "RearSpeedMultiplier", "Below the ship. Direction remains unchanged.");
+                DrawField(contract, "rewriteAttackSpeed", "RewriteAttackSpeed", "Also changes enemy attack timing according to enemy position.");
+                DrawField(contract, "enablePassiveAbility", "EnablePassiveAbility", "Keep the original passive field active during the ability.");
+                EditorGUILayout.Space(2f);
+                EditorGUILayout.LabelField("Passive Projectile Speed Field", EditorStyles.miniBoldLabel);
+                DrawField(contract, "projectileSlowRadius", "Effect Radius",
+                    "World-space radius around the ship. Influence smoothly reaches zero at its boundary.");
+                DrawField(contract, "frontFullEffectAngle", "Front Full Effect Angle",
+                    "Full cone width in degrees, centred on local Forward (+Y). Angular influence is strongest inside this cone.");
+                DrawField(contract, "frontTransitionAngle", "Front Transition Angle",
+                    "Smooth fade width in degrees on EACH side of the front cone. Half Full Angle + Transition is limited to 90 degrees.");
+                DrawField(contract, "backFullEffectAngle", "Back Full Effect Angle",
+                    "Full cone width in degrees, centred on local Back (-Y). Angular influence is strongest inside this cone.");
+                DrawField(contract, "backTransitionAngle", "Back Transition Angle",
+                    "Smooth fade width in degrees on EACH side of the back cone. Half Full Angle + Transition is limited to 90 degrees.");
                 DrawField(
                     contract,
                     "minimumProjectileSpeedMultiplier",
-                    "Minimum Projectile Speed Multiplier");
+                    "Min Speed Multiplier", "Maximum slowing on the front axis near the ship. Does not overwrite base projectile speed.");
+                DrawField(contract, "maximumProjectileSpeedMultiplier", "Max Speed Multiplier",
+                    "Maximum acceleration on the rear axis near the ship. 1 disables acceleration.");
+                DrawField(contract, "distanceFalloff", "Distance Falloff",
+                    "Exponent of the smooth distance envelope. 1 = SmoothStep; higher values concentrate the field closer to the ship.");
+                DrawFieldShapeWarning(contract);
                 break;
             case BladeShipMetaContract:
+                DrawField(contract, "projectileDestructionPolicy", "Projectile Destruction Policy", "Fragile Only: destroy only Fragile. Normal And Fragile: destroy both types.");
                 DrawField(contract, "recordingDuration", "Recording Duration");
                 DrawField(contract, "sampleInterval", "Path Sample Interval");
                 DrawField(contract, "width", "Blade Width");
                 DrawField(contract, "speed", "Blade Speed");
                 DrawField(contract, "damage", "Damage");
+                DrawField(contract, "damageType", "Damage Type");
                 DrawField(contract, "lifetime", "Lifetime");
                 EditorGUILayout.Space(2f);
                 EditorGUILayout.LabelField(
@@ -220,16 +243,54 @@ public sealed class ShipMetaConfigEditor : Editor
                     "Minimum Reload Multiplier");
                 break;
             case HeavyShieldShipMetaContract:
-                DrawField(contract, "shieldHealthMultiplier", "Shield Health Multiplier");
+                DrawField(contract, "extraHealthAmount", "Extra Health Amount",
+                    "Grants additional health to the living team ship with the lowest current hull health.");
                 break;
             case ArkanoidShipMetaContract:
+                DrawField(contract, "projectileDestructionPolicy", "Projectile Destruction Policy", "Fragile Only: destroy only Fragile. Normal And Fragile: destroy both types.");
                 DrawField(contract, "paddleFollowSpeed", "Paddle Follow Speed");
+                DrawField(contract, "paddleAttractionRadius", "Paddle Attraction Radius",
+                    "Ball attraction toward its own paddle starts only after a top screen bounce. Independent of the pickup magnet.");
+                DrawField(contract, "paddleAttractionForce", "Paddle Attraction Force",
+                    "Steering strength toward the paddle without changing ball speed. 0 disables attraction.");
                 DrawField(contract, "ballSpeed", "Ball Speed");
+                DrawField(contract, "paddleBounceSpeedMultiplier", "Paddle Bounce Speed Multiplier",
+                    "Multiplier of base Ball Speed after each paddle bounce. 1 disables the boost. Bounces restart the boost without stacking.");
+                DrawField(contract, "paddleBounceRecoveryDuration", "Paddle Bounce Recovery Duration (s)");
+                var bounceCurve = contract.FindPropertyRelative("paddleBounceRecoveryCurve");
+                EditorGUI.BeginChangeCheck();
+                var curve = EditorGUILayout.CurveField(new GUIContent("Paddle Bounce Recovery Curve",
+                    "X: normalized recovery time (0–1). Y: remaining boost (1 = initial boost, 0 = base speed). Endpoints are enforced at runtime."),
+                    bounceCurve.animationCurveValue, Color.green, new Rect(0f, 0f, 1f, 1f));
+                if (EditorGUI.EndChangeCheck()) bounceCurve.animationCurveValue = curve;
                 DrawField(contract, "ballDamage", "Ball Damage");
+                DrawField(contract, "ballDamageType", "Ball Damage Type");
                 DrawField(contract, "stasisDuration", "Stasis Duration");
                 DrawField(contract, "stasisRadiusMultiplier", "Stasis Radius Multiplier");
                 DrawField(contract, "stasisDamagePerSecond", "Stasis Damage per Second");
+                DrawField(contract, "stasisDamageType", "Stasis Damage Type");
                 DrawField(contract, "stasisTickInterval", "Stasis Tick Interval");
+                break;
+            case OrbitShipMetaContract orbit:
+                DrawField(contract, "projectileDestructionPolicy", "Projectile Destruction Policy", "Fragile Only: destroy only Fragile. Normal And Fragile: destroy both types.");
+                DrawField(contract, "objectCount", "Object Count", "Independent satellites with open gaps between them.");
+                DrawField(contract, "objectRadius", "Base Object Radius", "World-space physical hitbox radius without ability charge. Existing Object Radius values are preserved.");
+                DrawField(contract, "maximumChargedObjectRadius", "Maximum Object Radius", "World-space visual and physical radius at full charge. Objects grow and shrink together with the orbit; gaps remain between them.");
+                DrawField(contract, "baseOrbitRadius", "Base Orbit Radius", "Distance from the ship centre to each satellite in the normal state.");
+                DrawField(contract, "maximumOrbitRadius", "Maximum Orbit Radius");
+                DrawField(contract, "baseAngularSpeed", "Base Rotation Speed (deg/s)");
+                DrawField(contract, "maximumAngularSpeed", "Maximum Rotation Speed (deg/s)");
+                DrawField(contract, "clockwise", "Clockwise", "Enabled: clockwise. Disabled: counterclockwise. Applies to normal orbit, expansion and collapse.");
+                DrawField(contract, "chargeUpDuration", "Charge Up Duration (s)", "Time after pressing the ability to reach maximum rotation speed, orbit radius and object size. Lower values mean faster charge. Independent of Maximum Hold Time and recharge.");
+                DrawField(contract, "collapseSpeed", "Collapse Speed", "Return speed in intensity units per second after release. Satellites continue intercepting throughout.");
+                DrawField(contract, "contactDamage", "Enemy Contact Damage");
+                DrawField(contract, "damageType", "Damage Type");
+                DrawField(contract, "damageInterval", "Damage Interval (s)", "Shared per enemy across all satellites, preventing multiple hits in the same interval.");
+                DrawField(contract, "cooldownReductionPerProjectile", "Cooldown Reduction per Projectile (s)",
+                    "Advances the cooldown and Toggle reserve recharge by this many seconds per intercepted enemy projectile, including while held. 0 disables the bonus.");
+                EditorGUILayout.HelpBox("Charge Up Duration controls satellite acceleration. Ability reserve and recovery are configured separately in Ability Recovery.", MessageType.Info);
+                if (orbit.IsObjectRadiusLimited)
+                    EditorGUILayout.HelpBox($"Object radius is limited to {orbit.ObjectRadius:0.###} at rest and {orbit.MaximumChargedObjectRadius:0.###} at full charge to retain dangerous gaps between satellites.", MessageType.Warning);
                 break;
             case DictatorShipMetaContract:
                 DrawDictatorFields(contract);
@@ -279,17 +340,26 @@ public sealed class ShipMetaConfigEditor : Editor
         DrawField(
             contract,
             "kineticDamageBonusPercent",
-            "Kinetic Damage Bonus (%)");
-        DrawField(
-            contract,
-            "explosionDamageBonusPercent",
-            "Explosion Damage Bonus (%)");
+            "Kinetick Damage Bonus (%)");
     }
 
     private static void DrawPrismFields(SerializedProperty contract)
     {
-        EditorGUILayout.LabelField("Active Beam", EditorStyles.miniBoldLabel);
-        DrawField(contract, "beamDamage", "Beam Damage");
+        EditorGUILayout.LabelField("Active Energy Wave", EditorStyles.miniBoldLabel);
+        EditorGUILayout.HelpBox("Cooldown uses the standard Ability Recovery contract. Forward is captured from the ship at activation.", MessageType.Info);
+        DrawField(contract, "wavePrefab", "WavePrefab");
+        if (contract.FindPropertyRelative("wavePrefab").objectReferenceValue == null)
+            EditorGUILayout.HelpBox("Assign a visual WavePrefab before using this ability.", MessageType.Warning);
+        DrawField(contract, "spawnOffset", "SpawnOffset");
+        DrawField(contract, "waveWidth", "WaveWidth");
+        DrawField(contract, "waveThickness", "WaveThickness");
+        DrawField(contract, "waveSpeed", "WaveSpeed");
+        DrawField(contract, "maxDistance", "MaxDistance");
+        DrawField(contract, "plasmaDamage", "Damage");
+        DrawField(contract, "damageType", "DamageType");
+        DrawField(contract, "destroyProjectiles", "DestroyProjectiles");
+        if (contract.FindPropertyRelative("destroyProjectiles").boolValue)
+            DrawField(contract, "projectileDestructionPolicy", "Projectile Destruction Policy");
 
         EditorGUILayout.Space(2f);
         EditorGUILayout.LabelField(
@@ -297,12 +367,8 @@ public sealed class ShipMetaConfigEditor : Editor
             EditorStyles.miniBoldLabel);
         DrawField(
             contract,
-            "beamDamageBonusPercent",
-            "Beam Damage Bonus (%)");
-        DrawField(
-            contract,
-            "energyDamageBonusPercent",
-            "Energy Damage Bonus (%)");
+            "plasmaDamageBonusPercent",
+            "Plazma Damage Bonus (%)");
     }
 
     private static void DrawAbilityRecoveryFields(
@@ -310,6 +376,13 @@ public sealed class ShipMetaConfigEditor : Editor
         AbilityRecoveryShipMetaContract recovery)
     {
         EditorGUILayout.LabelField("Recovery Mode", recovery.AbilityMode.ToString());
+        if (contract.serializedObject.targetObject is ShipMetaConfig config
+            && config.SourceHullPrefab != null && config.SourceHullPrefab.ActiveAbility is BlackHoleActive
+            && recovery.AbilityMode == UltimateAbilityMode.Active)
+        {
+            EditorGUILayout.HelpBox("BlackHole uses ActiveCooldown from its Active Regional Speed Field contract.", MessageType.Info);
+            return;
+        }
         DrawField(contract, "cooldown", recovery.AbilityMode == UltimateAbilityMode.Charges
             ? "Recharge Time per Charge"
             : "Cooldown");
@@ -323,8 +396,11 @@ public sealed class ShipMetaConfigEditor : Editor
         if (recovery.AbilityMode != UltimateAbilityMode.Toggle)
             return;
 
-        DrawField(contract, "toggleMaximumTime", "Maximum Active Time");
+        DrawField(contract, "toggleMaximumTime", "Maximum Hold Time",
+            "Reserve for the existing held ability system. At a cost of 1 per second, this is the maximum hold duration in seconds.");
         DrawField(contract, "toggleTimeCostPerSecond", "Active Time Cost per Second");
+        EditorGUILayout.LabelField("Full Reserve Hold Duration (s)",
+            (recovery.Settings.ToggleMaximumTime / recovery.Settings.ToggleTimeCostPerSecond).ToString("0.##"));
         DrawField(contract, "toggleRechargeStartTime", "Recharge Delay");
         DrawField(contract, "toggleRechargeDuration", "Full Recharge Duration");
     }
@@ -419,13 +495,25 @@ public sealed class ShipMetaConfigEditor : Editor
         serializedObject.Update();
     }
 
+    private static void DrawFieldShapeWarning(SerializedProperty contract)
+    {
+        float front = contract.FindPropertyRelative("frontFullEffectAngle").floatValue * 0.5f;
+        float back = contract.FindPropertyRelative("backFullEffectAngle").floatValue * 0.5f;
+        if (front + contract.FindPropertyRelative("frontTransitionAngle").floatValue >= 90f
+            || back + contract.FindPropertyRelative("backTransitionAngle").floatValue >= 90f)
+        {
+            EditorGUILayout.HelpBox("This lobe reaches the side axis. Transition is capped at 90 degrees; reduce its angles to keep a wide neutral side region.", MessageType.Warning);
+        }
+    }
+
     private static void DrawField(
         SerializedProperty parent,
         string propertyName,
-        string label)
+        string label,
+        string tooltip = null)
     {
         SerializedProperty property = parent?.FindPropertyRelative(propertyName);
         if (property != null)
-            EditorGUILayout.PropertyField(property, new GUIContent(label));
+            EditorGUILayout.PropertyField(property, new GUIContent(label, tooltip));
     }
 }

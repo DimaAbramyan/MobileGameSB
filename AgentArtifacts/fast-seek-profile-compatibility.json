@@ -1,0 +1,46 @@
+[
+  {
+    "wave": "1_1_extrime",
+    "counters_equal": true,
+    "values": {
+      "steps": 1800,
+      "finalProjectiles": 710,
+      "omitted": 0,
+      "snapshots": 31,
+      "snapshotEstimateBytes": 126623360
+    }
+  },
+  {
+    "wave": "1_4_extrime",
+    "counters_equal": true,
+    "values": {
+      "steps": 1800,
+      "finalProjectiles": 2048,
+      "omitted": 13307,
+      "snapshots": 31,
+      "snapshotEstimateBytes": 118166160
+    }
+  },
+  {
+    "wave": "2_2_extrime",
+    "counters_equal": true,
+    "values": {
+      "steps": 1800,
+      "finalProjectiles": 900,
+      "omitted": 0,
+      "snapshots": 31,
+      "snapshotEstimateBytes": 101480208
+    }
+  },
+  {
+    "wave": "2_3_extrime",
+    "counters_equal": true,
+    "values": {
+      "steps": 1800,
+      "finalProjectiles": 1143,
+      "omitted": 0,
+      "snapshots": 23,
+      "snapshotEstimateBytes": 132147232
+    }
+  }
+]

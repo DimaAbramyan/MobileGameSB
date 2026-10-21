@@ -112,7 +112,7 @@ internal static class DirectedWaveEntranceLoopEvaluator
             checkpoints[nextIndex].position,
             checkpoints[followingIndex].position,
             checkpoints[currentIndex].motionToNext,
-            time);
+            time, checkpoints[currentIndex].curveSettings, checkpoints[nextIndex].curveSettings);
     }
 
     public static float GetSegmentDuration(
@@ -244,6 +244,6 @@ internal static class DirectedWaveEntranceLoopEvaluator
             checkpoints[nextIndex].position,
             checkpoints[followingIndex].position,
             checkpoints[currentIndex].motionToNext,
-            normalizedDistance);
+            normalizedDistance, checkpoints[currentIndex].curveSettings, checkpoints[nextIndex].curveSettings);
     }
 }

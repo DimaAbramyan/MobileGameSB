@@ -108,12 +108,12 @@ public sealed class EnemyPeriodicDamageSystem : IInitializable, ITickable, IDisp
             if (dealDamageManager == null)
                 continue;
 
-            EnemyDamageResult result = dealDamageManager.Value.DealDamage(
+            EnemyDamageResult result = dealDamageManager.Value.DealDebuffDamage(
                 enemy,
                 state.Owner,
                 state.Config.DamagePerTick,
                 state.Config.DamageType,
-                state.Config.BypassesEnemyShield);
+                state.Config.DamageShieldFirst);
             if (result.DidDamageHull)
             {
                 OnTickDamagedHull?.Invoke(

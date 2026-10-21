@@ -215,7 +215,7 @@ MonoBehaviour:
   maxLevel: 11
   energyCost: 3
   battleOffset: {x: 0, y: 0, z: 0}
-  damageType: 3
+  damageType: 1
   flightMode: 0
   contactMode: 7
   homingRotationSpeed: 360

@@ -4,7 +4,8 @@ public enum EnemyFacingMode : byte
 {
     Default = 0,
     Fixed = 1,
-    FollowPattern = 2
+    FollowPattern = 2,
+    Rotation = 3
 }
 
 // Shared direction-to-pose rules for runtime and Inspector previews.
@@ -29,6 +30,8 @@ public static class EnemyAttackFacing
     public static Quaternion Preview(EnemyBurstAttackSettings patterns, Quaternion initial,
         Quaternion firingBasis, float elapsed, EnemyRotationSettings rotationOverride = null)
     {
+        if (patterns.FacingMode == EnemyFacingMode.Rotation)
+            return initial * Quaternion.Euler(0f, 0f, patterns.FacingRotation.EvaluateAngle(elapsed));
         int index = patterns.FacingPatternIndex;
         if (patterns.FacingMode != EnemyFacingMode.FollowPattern || index < 0)
             return initial;
@@ -53,7 +56,7 @@ public static class EnemyAttackFacing
     private static Vector3 Direction(EnemyShootingSettings shooting, Quaternion basis,
         float elapsed, EnemyRotationSettings rotationOverride)
     {
-        Quaternion evaluated = shooting.EvaluateDirectionBasis(basis, elapsed, rotationOverride);
-        return shooting.GetFacingDirection(shooting.EvaluateShotDirection(evaluated, basis * Vector3.up));
+        return shooting.GetFacingDirection(shooting.GetEmissionDirection(0, basis, elapsed,
+            basis * Vector3.up, false, rotationOverride));
     }
 }

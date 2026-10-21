@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   displayName: Level 1
+  difficulty: 0
   requiredLevel: {fileID: 0}
   bonusLevel: 0
   goldReward: 1000

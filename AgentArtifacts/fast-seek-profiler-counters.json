@@ -1,0 +1,402 @@
+[
+  {
+    "name": "CrashReporter.RegisterLogCallback",
+    "category": "Other",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "FontEngine.GetChainingContextualSubstitutionRecords",
+    "category": "UI Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Terrain.Trees.RayTracingCulling",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Terrain.Heightmap.RayTracingCullingStep3",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Terrain.Heightmap.RayTracingCullingStep2",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Terrain.Heightmap.RayTracingCullingStep1",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Physics2D.FlagContactsForExit",
+    "category": "Physics2D",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Physics2D.FlagContactsForRecreation",
+    "category": "Physics2D",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.Finalizer",
+    "category": "GC",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.Alloc",
+    "category": "Memory",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.Resize",
+    "category": "GC",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.Collect",
+    "category": "GC",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Main Thread",
+    "category": "Internal",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "EditorConnection.CheckForIncomingConnections",
+    "category": "Network",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "initialDomainReloadingComplete",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "RebuildNativeTypeToScriptingClass",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GlobalCallbacks.logCallback",
+    "category": "Other",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.BuildLiveObjectMaps",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.MarkSceneRootsAndReduceLiveObjects",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.FindLiveObjects",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.DeleteUnusedAssets",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.MarkNormalDependencies",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.MarkExternalDependencies",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.MarkStaticDependencies",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC.MarkDependencies",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "RenderingCommandBuffer.PrepareKeywords",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Async.TextureProcessingCompleteCallback",
+    "category": "Loading",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "CalculateLightProbeSamplingCoordinates",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Shadows.CullingCallbacks",
+    "category": "Render",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "GC Used Memory",
+    "category": "Memory",
+    "unit": "Bytes"
+  },
+  {
+    "name": "GC Reserved Memory",
+    "category": "Memory",
+    "unit": "Bytes"
+  },
+  {
+    "name": "GC Allocation In Frame Count",
+    "category": "Memory",
+    "unit": "Count"
+  },
+  {
+    "name": "GC Allocated In Frame",
+    "category": "Memory",
+    "unit": "Bytes"
+  },
+  {
+    "name": "initialDomainReloadingComplete.Invoke",
+    "category": "PlayerLoop",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "DirectorManager.OnInitialAssembliesReloadingComplete",
+    "category": "PlayerLoop",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ParentSystem:FindMissingChild",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ParentSystem:FindMissingChild (Burst)",
+    "category": "Burst Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ParentSystem:FindMissingChild (Cleanup)",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "TransformAuthoringBaking:BakeToTransformAuthoringComponentJob",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "TransformAuthoringBaking:BakeToTransformAuthoringComponentJob (Burst)",
+    "category": "Burst Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "TransformAuthoringBaking:BakeToTransformAuthoringComponentJob (Cleanup)",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ComponentDataDiffer:GatherExistingChunks",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ComponentDataDiffer:GatherExistingChunks (Burst)",
+    "category": "Burst Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ComponentDataDiffer:GatherExistingChunks (Cleanup)",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "EntityDiffer:GatherExistingChunksJob",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "EntityDiffer:GatherExistingChunksJob (Burst)",
+    "category": "Burst Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "EntityDiffer:GatherExistingChunksJob (Cleanup)",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "UnmanagedSharedComponentDataDiffer:GatherExistingChunks",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "UnmanagedSharedComponentDataDiffer:GatherExistingChunks (Burst)",
+    "category": "Burst Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "UnmanagedSharedComponentDataDiffer:GatherExistingChunks (Cleanup)",
+    "category": "Managed Jobs",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "ScriptableRenderer.InternalFinishRenderingCommon",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_ScriptableRenderer.InternalFinishRenderingCommon",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_PrepareNativePass",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_PrepareNativePass",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_SetupContextData",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_SetupContextData",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_BuildGraph",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_BuildGraph",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_CullNodes",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_CullNodes",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_TryMergeNativePasses",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_TryMergeNativePasses",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_FindResourceUsageRanges",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_FindResourceUsageRanges",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_DetectMemorylessResources",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_DetectMemorylessResources",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_PropagateTextureUVOrigin",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_PropagateTextureUVOrigin",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_ExecuteInitializeResources",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_ExecuteInitializeResources",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_ExecuteBeginRenderpassCommand",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_ExecuteBeginRenderpassCommand",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "NRPRGComp_ExecuteDestroyResources",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "Inl_NRPRGComp_ExecuteDestroyResources",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "CheckLicensingClient",
+    "category": "Other",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "CheckLicensingClientNotification",
+    "category": "Other",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "BindingContext.UpdateSerializedObject",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "BindingContext.ChangeTracking",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "BindingContext.SyncChangeVersion",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  },
+  {
+    "name": "BindingContext.NotifyChanges",
+    "category": "Scripts",
+    "unit": "TimeNanoseconds"
+  }
+]

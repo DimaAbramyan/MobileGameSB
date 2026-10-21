@@ -136,7 +136,7 @@ public sealed class BossController : Enemy
         BossPhaseDefinition phase = phases[phaseIndex];
 
         if (phase.StartDelay > 0f)
-            yield return new WaitForSeconds(phase.StartDelay);
+            yield return WaitForAttackTime(phase.StartDelay, phaseIndex);
 
         while (!isDead && currentPhaseIndex == phaseIndex)
         {
@@ -150,7 +150,7 @@ public sealed class BossController : Enemy
             yield return FireAttack(attack, phaseIndex);
 
             if (phase.DelayBetweenAttacks > 0f)
-                yield return new WaitForSeconds(phase.DelayBetweenAttacks);
+                yield return WaitForAttackTime(phase.DelayBetweenAttacks, phaseIndex);
             else
                 yield return null;
         }
@@ -185,8 +185,7 @@ public sealed class BossController : Enemy
             if (volley < attack.VolleyCount - 1
                 && attack.DelayBetweenVolleys > 0f)
             {
-                yield return new WaitForSeconds(
-                    attack.DelayBetweenVolleys);
+                yield return WaitForAttackTime(attack.DelayBetweenVolleys, phaseIndex);
             }
         }
     }
@@ -241,6 +240,13 @@ public sealed class BossController : Enemy
                 rotation,
                 launchData);
         }
+    }
+
+    private IEnumerator WaitForAttackTime(float duration, int phaseIndex)
+    {
+        float until = AttackTime + duration;
+        while (!isDead && currentPhaseIndex == phaseIndex && AttackTime < until)
+            yield return null;
     }
 
     private Transform GetTarget()

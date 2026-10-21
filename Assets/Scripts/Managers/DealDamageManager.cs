@@ -45,7 +45,8 @@ public class DealDamageManager
             result,
             target,
             projectile.Owner,
-            projectile.EnemyDebuffs);
+              projectile.EnemyDebuffs,
+              projectile.DamageDistanceMultiplier);
 
         return result;
     }
@@ -55,7 +56,7 @@ public class DealDamageManager
         ParentShip owner,
         float damage)
     {
-        return DealDamage(target, owner, damage, EnemyDamageType.Resonance);
+        return DealDamage(target, owner, damage, EnemyDamageType.Default);
     }
 
     public EnemyDamageResult DealDamage(
@@ -111,7 +112,8 @@ public class DealDamageManager
         EnemyDamageType damageType,
         bool bypassesEnemyShield,
         Vector3 impactPosition,
-        IReadOnlyList<EnemyDebuffApplication> debuffs)
+        IReadOnlyList<EnemyDebuffApplication> debuffs,
+        float heatMultiplier = 1f)
     {
         EnemyDamageResult result = DealDamageInternal(
             target,
@@ -120,8 +122,19 @@ public class DealDamageManager
             damageType,
             bypassesEnemyShield,
             impactPosition);
-        ApplyEnemyDebuffs(result, target, owner, debuffs);
+        ApplyEnemyDebuffs(result, target, owner, debuffs, heatMultiplier);
         return result;
+    }
+
+    public EnemyDamageResult DealDebuffDamage(
+        iDamagable target,
+        ParentShip owner,
+        float damage,
+        EnemyDamageType damageType,
+        bool damageShieldFirst = false)
+    {
+        return DealDamageInternal(target, owner, damage, damageType,
+            !damageShieldFirst, null, damageShieldFirst);
     }
 
     private EnemyDamageResult DealDamageInternal(
@@ -130,7 +143,8 @@ public class DealDamageManager
         float damage,
         EnemyDamageType damageType,
         bool bypassesEnemyShield,
-        Vector3? impactPosition)
+        Vector3? impactPosition,
+        bool forceShieldFirst = false)
     {
         if (target == null)
             return EnemyDamageResult.None;
@@ -144,24 +158,13 @@ public class DealDamageManager
 
         if (target is Enemy enemy)
         {
-            EnemyDamageResult result = enemy.TakeDamageWithType(
+            EnemyDamageResult result = enemy.ApplyManagedDamage(
                 damage,
                 damageType,
-                bypassesEnemyShield);
+                bypassesEnemyShield,
+                forceShieldFirst, this, damageBeforeModifier);
             if (owner != null && result.DidDamageHull)
                 owner.NotifyDamageDealt(result.HullDamage);
-
-            if (result.DidDamage)
-            {
-                        DamageApplied?.Invoke(new DamageNumberRequest(
-                            enemy.DamageNumberCenter,
-                            result.TotalDamage,
-                            CalculateDamageModifierPercent(
-                                damageBeforeModifier,
-                                result.TotalDamage),
-                            enemy.GetInstanceID(),
-                            enemy));
-            }
 
             return result;
         }
@@ -171,6 +174,13 @@ public class DealDamageManager
             owner.NotifyDamageDealt(damage);
 
         return EnemyDamageResult.None;
+    }
+
+    internal void NotifyDamageApplied(Enemy enemy, EnemyDamageResult result, float originalDamage)
+    {
+        if (enemy == null || !result.DidDamage) return;
+        DamageApplied?.Invoke(new DamageNumberRequest(enemy.DamageNumberCenter, result.TotalDamage,
+            CalculateDamageModifierPercent(originalDamage, result.TotalDamage), enemy.GetInstanceID(), enemy));
     }
 
     private static float CalculateDamageModifierPercent(
@@ -187,7 +197,8 @@ public class DealDamageManager
         EnemyDamageResult result,
         iDamagable target,
         ParentShip owner,
-        IReadOnlyList<EnemyDebuffApplication> debuffs)
+        IReadOnlyList<EnemyDebuffApplication> debuffs,
+        float heatMultiplier = 1f)
     {
         if (!result.DidDamageHull
             || target is not Enemy enemy
@@ -198,7 +209,15 @@ public class DealDamageManager
         }
 
         for (int index = 0; index < debuffs.Count; index++)
-            enemyDebuffController.Apply(enemy, debuffs[index], owner);
+        {
+            EnemyDebuffApplication application = debuffs[index];
+            if (application == null)
+                continue;
+            float multiplier = application.Debuff is EnemyHeatDebuffConfig
+                ? Mathf.Max(0f, heatMultiplier) : 1f;
+            enemyDebuffController.Apply(enemy, application.Debuff,
+                application.AmountPerHit * multiplier, owner);
+        }
     }
 
     public EnemyDamageResult DealDamage(
@@ -211,7 +230,7 @@ public class DealDamageManager
             target,
             owner,
             damage,
-            EnemyDamageType.Resonance,
+            EnemyDamageType.Default,
             bypassesEnemyShield);
     }
 }

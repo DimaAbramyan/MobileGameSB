@@ -2,33 +2,41 @@ using UnityEngine;
 
 public sealed class ShieldCreateAbility : ActiveAbility
 {
-    private float shieldHealthMultiplier = 1f;
+    private float extraHealthAmount = 1f;
 
-    // Kept only to preserve existing prefab data. The shared barrier is now
-    // handled by TeamBarrierController and does not instantiate this visual.
+    // Kept only to preserve existing prefab references to the previous ability.
     [SerializeField, HideInInspector] private ShieldAbilityPrefab shieldPrefab;
+
+    // Start runs after ParentShip.Awake has applied the configured recovery settings.
+    private void Start() => RestartRecovery();
 
     protected override void ApplySpecificShipMetaStats(
         ShipMetaRuntimeStats stats)
     {
         if (stats.TryGetContract(out HeavyShieldShipMetaContract contract))
-            shieldHealthMultiplier = contract.ShieldHealthMultiplier;
+            extraHealthAmount = contract.ExtraHealthAmount;
     }
 
     public override bool Activate(ParentShip owner)
     {
-        if (owner == null || owner.CurrentShieldPoints <= 0f)
+        if (owner == null || owner.IsDestroyed || extraHealthAmount <= 0f)
             return false;
 
-        PlayerController controller = owner.GetComponentInParent<PlayerController>();
-        if (controller == null)
+        ShipSelect team = owner.GetComponentInParent<ShipSelect>();
+        if (team == null)
             return false;
 
-        float barrierHealth = owner.CurrentShieldPoints * shieldHealthMultiplier;
-        if (barrierHealth <= 0f || !controller.CreateTeamBarrier(barrierHealth))
+        ParentShip target = team.GetLowestHealthShip();
+        if (target == null)
             return false;
 
-        owner.SetShieldPoints(0f);
-        return true;
+        ExtraHealthPassive extraHealth = target.GetComponent<ExtraHealthPassive>();
+        if (extraHealth == null)
+        {
+            Debug.LogError($"ExtraHealth is missing on team ship '{target.name}'.", target);
+            return false;
+        }
+        extraHealth.Init(target);
+        return extraHealth.AddExtraHealth(extraHealthAmount) > 0f;
     }
 }

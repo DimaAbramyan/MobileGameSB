@@ -499,7 +499,7 @@ MonoBehaviour:
   DamageShowing: {fileID: 0}
   Buff: {fileID: 106777174136618416, guid: ab0c2b20b8f62f24ebdb65376eabf60c, type: 3}
   healthBar: {fileID: 7898183990435649192}
-  _maxHealth: 1600
+  _maxHealth: 3000
   _currentHealth: 0
   _fireRate: 3
   _damage: 5
@@ -605,7 +605,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71ab3dad966b4596b383b4a4ff5e847e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  contactDamage: 5
+  contactDamage: 1
   controlLockDuration: 0.5
   baseImpulse: 40
   relativeSpeedMultiplier: 10
@@ -673,6 +673,38 @@ MonoBehaviour:
     attackPatterns: 0
     patterns: []
     facingMode: 0
+    facingRotation:
+      direction: 0
+      rotationMode: 0
+      rotationSpeedDegreesPerSecond: 90
+      rotationProgressCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      rotationAngle: 360
+      rotationFromAngle: 0
+      resetRotationOnEnable: 1
+    facingLayoutVersion: 1
     facingPatternId: 
     facingSpeed: 360
     facingAngleOffset: 0
@@ -682,9 +714,48 @@ MonoBehaviour:
     attackStartDelay: 1
     shooting:
       shootingType: 0
+      emissionOrigin:
+        x:
+          source: 0
+          offset: 0
+          referenceMode: 0
+          boundary: 0
+          captureMode: 0
+        y:
+          source: 0
+          offset: 0
+          referenceMode: 0
+          boundary: 0
+          captureMode: 0
+      emissionLayout:
+        type: 0
+        positionOffset: {x: 0, y: 0, z: 0}
+        directionsCount: 4
+        emitterCount: 4
+        radius: 1
+        startAngle: 0
+        endAngle: 90
+        launchMode: 0
+        startDelay: 0
+        launchInterval: 0.1
+        waitUntilSectorReady: 0
+        reverseOrder: 0
+        centerOffset: {x: 0, y: 0, z: 0}
+        rotateShootingPointOffset: 0
+      layoutRotationEnabled: 0
+      emissionLayoutVersion: 1
       projectileType: 0
+      overwriteProjectileCharacteristic: 0
+      projectileCharacteristic: 1
+      overwriteBaseColour: 0
+      projectileColour: {r: 1, g: 1, b: 1, a: 1}
       overrideProjectileBaseSpeed: 0
       projectileBaseSpeed: 1
+      overrideProjectileLifetime: 0
+      projectileLifetime: 1
+      useChildAttackPattern: 0
+      childAttack:
+        rid: -2
       initialSpeedMode: 0
       randomInitialSpeedMinimum: 1
       randomInitialSpeedMaximum: 2
@@ -728,6 +799,42 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
+      projectileMovementPattern: 0
+      projectileAngularSpeed: 90
+      projectileLateralSpeed: 1
+      projectileOrbitCenterMode: 0
+      projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+      projectileOrbitRadius: 0
+      projectileOrbitRadialSpeed: 0
+      projectileDnaWeaveSpeed: 1
+      projectileSizeBehavior: 0
+      projectileSizeChangeY: 0
+      projectileSizeChangeSpeed: 1
+      projectileSizeChangeCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileFinalSize: 1
       rotate: 1
       rotation:
         direction: 0
@@ -774,6 +881,12 @@ MonoBehaviour:
     legacyShotInterval: 0.15
     serializedVersion: 2
   attackModeVersion: 2
+  emissionBindingVersion: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
 --- !u!1 &5393513681423870037
 GameObject:
   m_ObjectHideFlags: 0

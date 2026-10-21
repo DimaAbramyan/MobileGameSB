@@ -62,7 +62,7 @@ public sealed class BossFight : MonoBehaviour, IWaveEncounter
         completed = true;
         Unsubscribe();
         BossDefeated?.Invoke();
-        waveManager?.GoToNextWave();
+        waveManager?.CompleteCurrentWave();
 
         if (destroyEncounterOnDefeat)
             Destroy(gameObject);

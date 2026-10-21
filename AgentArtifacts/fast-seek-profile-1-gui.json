@@ -1,0 +1,472 @@
+{
+  "wave": "1_4_extrime",
+  "wallMilliseconds": 48115.3209,
+  "activeMilliseconds": 40754.282,
+  "outsidePlayerMilliseconds": 7361.0389,
+  "steps": 1800,
+  "stepsPerUpdate": {
+    "count": 1042,
+    "mean": 1.727447216890595,
+    "minimum": 0.0,
+    "maximum": 11.0,
+    "p50": 2.0,
+    "p95": 2.0,
+    "p99": 2.0,
+    "total": 1800.0
+  },
+  "batchMs": {
+    "count": 1042,
+    "mean": 39.111595009596968,
+    "minimum": 24.0523,
+    "maximum": 368.6569,
+    "p50": 34.2542,
+    "p95": 64.5198,
+    "p99": 91.7295,
+    "total": 40754.282000000043
+  },
+  "finalProjectiles": 2048,
+  "omitted": 13307,
+  "categories": [
+    {
+      "name": "PlayerUpdate",
+      "calls": 1042,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 40754.282,
+      "selfMs": 43.0367,
+      "maximumMs": 368.6569
+    },
+    {
+      "name": "FixedStep",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 40681.0646,
+      "selfMs": 10.311,
+      "maximumMs": 368.6222
+    },
+    {
+      "name": "InitializeCue",
+      "calls": 1801,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 106.9812,
+      "selfMs": 23.9376,
+      "maximumMs": 88.3716
+    },
+    {
+      "name": "Coordinator",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.065,
+      "selfMs": 0.065,
+      "maximumMs": 0.0001
+    },
+    {
+      "name": "SessionTick",
+      "calls": 8880,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 7500.7062,
+      "selfMs": 21.2002,
+      "maximumMs": 39.2502
+    },
+    {
+      "name": "Positions",
+      "calls": 17765,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 38990.5023,
+      "selfMs": 23.1902,
+      "maximumMs": 347.0963
+    },
+    {
+      "name": "WaveEvaluate",
+      "calls": 11046,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 38967.2617,
+      "selfMs": 5975.4002,
+      "maximumMs": 347.0912
+    },
+    {
+      "name": "PostPipeline",
+      "calls": 10689,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 32169.7922,
+      "selfMs": 653.5171,
+      "maximumMs": 345.6893
+    },
+    {
+      "name": "PostCommand",
+      "calls": 22538,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 14725.3552,
+      "selfMs": 7373.0901,
+      "maximumMs": 38.4281
+    },
+    {
+      "name": "Entrance",
+      "calls": 2070,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 822.0693,
+      "selfMs": 819.0812,
+      "maximumMs": 104.4224
+    },
+    {
+      "name": "CheckpointPath",
+      "calls": 505,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 2.9881,
+      "selfMs": 2.9881,
+      "maximumMs": 0.0125
+    },
+    {
+      "name": "Formation",
+      "calls": 10689,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 24143.185,
+      "selfMs": 24143.185,
+      "maximumMs": 344.8012
+    },
+    {
+      "name": "AttackSequence",
+      "calls": 8664,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.334,
+      "selfMs": 0.334,
+      "maximumMs": 0.0008
+    },
+    {
+      "name": "AttackGroup",
+      "calls": 8880,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 5.601,
+      "selfMs": 5.601,
+      "maximumMs": 0.047
+    },
+    {
+      "name": "AttackSlot",
+      "calls": 69510,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 50.3616,
+      "selfMs": 4.8788,
+      "maximumMs": 0.5377
+    },
+    {
+      "name": "QueueVolley",
+      "calls": 604,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 45.4828,
+      "selfMs": 44.9917,
+      "maximumMs": 0.5369
+    },
+    {
+      "name": "EmitDirection",
+      "calls": 3558,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 27.2248,
+      "selfMs": 4.8681,
+      "maximumMs": 0.3683
+    },
+    {
+      "name": "EmitterGeometry",
+      "calls": 1009,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1.4013,
+      "selfMs": 1.4013,
+      "maximumMs": 0.0148
+    },
+    {
+      "name": "Facing",
+      "calls": 714,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.2604,
+      "selfMs": 0.2604,
+      "maximumMs": 0.0057
+    },
+    {
+      "name": "ProjectileStep",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 425.2775,
+      "selfMs": 18.7838,
+      "maximumMs": 0.7088
+    },
+    {
+      "name": "Spawn",
+      "calls": 851,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 21.4465,
+      "selfMs": 21.4465,
+      "maximumMs": 0.3612
+    },
+    {
+      "name": "BurstBounds",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 38.1877,
+      "selfMs": 38.1877,
+      "maximumMs": 0.1948
+    },
+    {
+      "name": "Homing",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 5.0319,
+      "selfMs": 5.0319,
+      "maximumMs": 0.0398
+    },
+    {
+      "name": "Burst",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1.6181,
+      "selfMs": 1.6181,
+      "maximumMs": 0.0052
+    },
+    {
+      "name": "SpeedCurve",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1.2827,
+      "selfMs": 1.2827,
+      "maximumMs": 0.0033
+    },
+    {
+      "name": "SizeCurve",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1.023,
+      "selfMs": 1.023,
+      "maximumMs": 0.0044
+    },
+    {
+      "name": "Movement",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 191.9838,
+      "selfMs": 191.9838,
+      "maximumMs": 0.3031
+    },
+    {
+      "name": "Lifetime",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 127.9331,
+      "selfMs": 127.9331,
+      "maximumMs": 0.1666
+    },
+    {
+      "name": "Laser",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 2.8952,
+      "selfMs": 2.8952,
+      "maximumMs": 0.0174
+    },
+    {
+      "name": "LaserGeometry",
+      "calls": 0,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.0,
+      "selfMs": 0.0,
+      "maximumMs": 0.0
+    },
+    {
+      "name": "Child",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 2.4219,
+      "selfMs": 2.4219,
+      "maximumMs": 0.0113
+    },
+    {
+      "name": "ChildTriggerUpdate",
+      "calls": 0,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.0,
+      "selfMs": 0.0,
+      "maximumMs": 0.0
+    },
+    {
+      "name": "ChildVolley",
+      "calls": 0,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.0,
+      "selfMs": 0.0,
+      "maximumMs": 0.0
+    },
+    {
+      "name": "ChildEmit",
+      "calls": 0,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.0,
+      "selfMs": 0.0,
+      "maximumMs": 0.0
+    },
+    {
+      "name": "Cleanup",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 29.6602,
+      "selfMs": 29.6602,
+      "maximumMs": 0.193
+    },
+    {
+      "name": "BurstSpawn",
+      "calls": 1800,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 4.4561,
+      "selfMs": 4.4561,
+      "maximumMs": 0.0198
+    },
+    {
+      "name": "SnapshotCapture",
+      "calls": 31,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1073.0024,
+      "selfMs": 0.5166,
+      "maximumMs": 67.0831
+    },
+    {
+      "name": "SnapshotManaged",
+      "calls": 36,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1150.8871,
+      "selfMs": 928.0325,
+      "maximumMs": 67.0653
+    },
+    {
+      "name": "SnapshotNative",
+      "calls": 31,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 221.0695,
+      "selfMs": 221.0695,
+      "maximumMs": 33.2858
+    },
+    {
+      "name": "SnapshotVisuals",
+      "calls": 156,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 1.7851,
+      "selfMs": 1.535,
+      "maximumMs": 0.0906
+    },
+    {
+      "name": "SnapshotRestore",
+      "calls": 0,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.0,
+      "selfMs": 0.0,
+      "maximumMs": 0.0
+    },
+    {
+      "name": "CacheTrim",
+      "calls": 759,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.1054,
+      "selfMs": 0.1054,
+      "maximumMs": 0.0011
+    },
+    {
+      "name": "Publish",
+      "calls": 1,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 2.6027,
+      "selfMs": 0.0015,
+      "maximumMs": 2.6027
+    },
+    {
+      "name": "PublishVisuals",
+      "calls": 10,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.2279,
+      "selfMs": 0.2176,
+      "maximumMs": 0.0943
+    },
+    {
+      "name": "CaptureRender",
+      "calls": 1,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 2.4237,
+      "selfMs": 2.4237,
+      "maximumMs": 2.4237
+    },
+    {
+      "name": "Visibility",
+      "calls": 1043,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 2.4217,
+      "selfMs": 2.4217,
+      "maximumMs": 0.0175
+    },
+    {
+      "name": "WindowGUI",
+      "calls": 728,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 5024.6716,
+      "selfMs": 4044.2758,
+      "maximumMs": 2719.2212
+    },
+    {
+      "name": "SceneGUI",
+      "calls": 4,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 0.4167,
+      "selfMs": 0.4167,
+      "maximumMs": 0.2381
+    },
+    {
+      "name": "Timeline",
+      "calls": 728,
+      "allocatedBytes": 0,
+      "selfAllocatedBytes": 0,
+      "inclusiveMs": 980.2926,
+      "selfMs": 980.2926,
+      "maximumMs": 306.7269
+    }
+  ]
+}

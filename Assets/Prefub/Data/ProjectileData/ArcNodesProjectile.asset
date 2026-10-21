@@ -15,7 +15,7 @@ MonoBehaviour:
   deliveryType: 0
   simulationBackend: 1
   damage: 18
-  damageType: 3
+  damageType: 1
   projectilePrefab: {fileID: 5124484808078174344, guid: 4fc5484eb9924fc4da9e842f43bd0b97, type: 3}
   range: 666
   speed: 3

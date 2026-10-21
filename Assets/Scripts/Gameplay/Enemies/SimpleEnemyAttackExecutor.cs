@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Serialization;
 using Zenject;
 using System.Collections.Generic;
@@ -6,14 +6,19 @@ using System.Collections.Generic;
 [DefaultExecutionOrder(-100)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Enemy))]
-public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
+public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
     IEnemyBurstAttackExecutor, IEnemyBurstAttackSettingsOverrideReceiver,
     IEnemyProjectileTypeOverrideReceiver, IEnemyShootingSettingsReceiver, IFormationAttackActivation,
     IEnemyAttackSettingsOverrideState, IEnemyAttackPatternSettingsReceiver, IEnemyAttackDirectionProvider,
-    IEnemyAttackAimReceiver, IEnemyAttackSequenceExecutor, IEnemyLockedAimAttackExecutor
+    IEnemyAttackAimReceiver, IEnemyAttackSequenceExecutor, IEnemyLockedAimAttackExecutor,
+    IEnemyEmissionAimAttackExecutor, IEnemyPendingEmissionExecutor, IEnemyStationaryAttackExecutor, IEnemyEmissionOriginReceiver,
+    IEnemyAttackCompletionReceiver, IEnemyAttackActivity, IEnemySectorLaunchOrderSource
 {
+    private EnemyAttackCompletionTracker completionTracker;
+    public void SetAttackCompletionTracker(EnemyAttackCompletionTracker tracker) => completionTracker = tracker;
     private const int CurrentAttackModeVersion = 2;
     [Inject] private EnemyProjectileEcsSpawner projectileSpawner;
+    [InjectOptional] private PlayerController originPlayer;
 
     [SerializeField, HideInInspector] private EnemyProjectileType projectileType;
     [SerializeField, FormerlySerializedAs("projectilePrefab")] private EnemyBullet defaultProjectilePrefab;
@@ -21,7 +26,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     [SerializeField] private EnemyBullet burstAtPointProjectilePrefab;
     [SerializeField] private Transform projectileSpawnPoint;
     [SerializeField] private Vector3 projectileSpawnOffset = new Vector3(0f, 0.25f, 0f);
-    [SerializeField, Tooltip("Single: rotate this pivot or the whole enemy when empty. Multiple: use its fixed orientation as the firing basis; neither ship nor pivot is rotated.")]
+    [SerializeField, Tooltip("Fixed basis for Emission Layout. Empty uses the enemy's initial orientation. Layout Rotation never rotates this Transform.")]
     private Transform rotationTarget;
     [SerializeField, Tooltip("Optional visible child to turn in Follow Pattern. Empty turns the enemy itself. Firing directions and spawn positions remain independent.")]
     private Transform facingTarget;
@@ -45,18 +50,36 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     [SerializeField, InspectorName("Attack Pattern")]
     private EnemyBurstAttackSettings burstAttackSettings = new EnemyBurstAttackSettings();
     [SerializeField, HideInInspector] private int attackModeVersion;
+    [SerializeField, HideInInspector] private int emissionBindingVersion;
 
     private Enemy enemy;
     private CircleShip circleShip;
     private EnemyShootingSettings waveShootingSettings;
     private EnemyBurstAttackSettings waveAttackSettings;
     private EnemyAttackPatternSchedule[] patternSchedules;
+    private bool[] autonomousPatternStarted;
+    public bool HasActiveAttack
+    {
+        get
+        {
+            if (pendingSectors.Count > 0) return true;
+            if (!autonomousAttack || isWaveAttackControlled) return false;
+            if (!burstAttackSettings.HasMultiplePatterns) return remainingAttackShots > 0;
+            if (autonomousPatternStarted != null)
+                for (int i = 0; i < autonomousPatternStarted.Length; i++) if (autonomousPatternStarted[i]) return true;
+            return false;
+        }
+    }
     private float patternRotationTime;
+    private float facingRotationTime;
     private bool patternRotationRunning;
     private Quaternion firingEnemyLocalRotation;
     private Quaternion firingPivotRelativeRotation;
     private Vector3 firingDefaultSpawnOffset;
     private Vector3 firingRotationSpawnOffset;
+    private Vector3 firingPivotPositionOffset;
+    private Quaternion firingSpawnPointRelativeRotation;
+    private Vector3 firingSpawnPointRelativeScale = Vector3.one;
     private bool ownedSpawnPoint;
     private Transform boundFacingTarget;
     private Quaternion initialFacingLocalRotation;
@@ -69,13 +92,40 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     private readonly Dictionary<EnemyShootingSettings,
         EnemyProjectileRandomSpreadSequence> randomSpreadSequences = new();
     private readonly List<EnemyProjectileSpawnRequest> projectileSpawnRequests = new(32);
+    private readonly Dictionary<EnemyBurstAttackSettings, Vector3[]> lockedEmissionDirections = new();
+    private readonly Dictionary<EnemyBurstAttackSettings, EnemyEmissionOriginCaptureState> originCaptures = new();
+    private readonly Dictionary<EnemyBurstAttackSettings, Vector3> shotOrigins = new();
+    private readonly HashSet<EnemyBurstAttackSettings> preparedOriginShots = new();
+    private bool warnedMissingOriginContext;
+    private System.Func<EnemyShootingSettings, float> childSpreadSampler;
+    private readonly List<PendingSectorVolley> pendingSectors = new(4);
+    private readonly Stack<PendingSectorVolley> sectorPool = new(4);
+    private readonly Dictionary<EnemyBurstAttackSettings, float> sectorCompletionTimes = new();
+    private readonly EnemySectorLaunchOrderRegistry sectorOrders = new();
+
+    private sealed class PendingSectorVolley
+    {
+        public EnemyRandomSpeedSample NumericSpeed;
+        public EnemySectorLaunchTicket LaunchOrder;
+        public EnemyBurstAttackSettings Settings;
+        public EnemyShootingSettings Shooting;
+        public PatternAim Aim;
+        public float Speed, Spread, StartTime;
+        public int NextOrder;
+        public bool WaitingForReady;
+        public bool Failed;
+        public Vector3[] LockedDirections;
+        public Vector3? Origin;
+    }
 
     private struct PatternAim
     {
         public bool HasValue;
         public bool UsesTargetPosition;
         public bool UsesAimedDirection;
+        public bool UsesStationaryDirection;
         public Vector3 Value;
+        public Vector3[] LockedEmissionDirections;
 
         public Vector3 GetRequestedDirection(Vector3 position)
         {
@@ -105,7 +155,6 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             return angle;
         }
     }
-    private readonly EnemyAttackRotation rotation = new EnemyAttackRotation();
     private bool isWaveAttackControlled;
     private bool isFormationAttackReady = true;
     private int remainingAttackShots;
@@ -117,11 +166,12 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     private EnemyShootingSettings ActiveShooting => waveShootingSettings
         ?? (ActivePatterns.PatternCount > 0 ? ActivePatterns.GetPattern(0).Shooting : burstAttackSettings.Shooting);
     private Transform DirectionTransform => rotationTarget != null ? rotationTarget : transform;
-    private bool UsesVirtualRotation => ActivePatterns.HasMultiplePatterns
-        || ActivePatterns.FacingMode != EnemyFacingMode.Default;
     private Quaternion FiringEnemyRotation => transform.parent != null
         ? transform.parent.rotation * firingEnemyLocalRotation : firingEnemyLocalRotation;
-    public Vector3 AttackForward => UsesVirtualRotation ? FiringEnemyRotation * Vector3.up : transform.up;
+    private Vector3 FiringEnemyScale => transform.parent != null
+        ? (transform.parent.localToWorldMatrix * Matrix4x4.TRS(Vector3.zero, firingEnemyLocalRotation, transform.localScale)).lossyScale
+        : transform.localScale;
+    public Vector3 AttackForward => FiringEnemyRotation * Vector3.up;
     public bool CanPerformWaveAttack
     {
         get
@@ -129,9 +179,10 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             if (!isActiveAndEnabled || enemy == null || enemy.isDead || projectileSpawner == null || ActivePatterns.PatternCount == 0)
                 return false;
             if (!ActivePatterns.HasMultiplePatterns)
-                return GetSelectedProjectilePrefab(ActiveShooting.ProjectileType) != null;
+                return ActiveShooting.ProjectileType == EnemyProjectileType.Laser || ActiveShooting.ResolveProjectilePrefab(GetSelectedProjectilePrefab(ActiveShooting.ProjectileType)) != null;
             for (int i = 0; i < ActivePatterns.PatternCount; i++)
-                if (GetSelectedProjectilePrefab(ActivePatterns.GetPattern(i).Shooting.ProjectileType) == null)
+                if (ActivePatterns.GetPattern(i).Shooting.ProjectileType != EnemyProjectileType.Laser
+                    && ActivePatterns.GetPattern(i).Shooting.ResolveProjectilePrefab(GetSelectedProjectilePrefab(ActivePatterns.GetPattern(i).Shooting.ProjectileType)) == null)
                     return false;
             return true;
         }
@@ -147,9 +198,12 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         if (settings == null || settings.PatternCount == 0)
             return false;
 
-        return TryGetProjectileBaseSpeed(
-            settings.GetPattern(0).Shooting.ProjectileType,
-            out baseSpeed);
+        var shooting = settings.GetPattern(0).Shooting;
+        var prefab = shooting.ResolveProjectilePrefab(GetSelectedProjectilePrefab(shooting.ProjectileType));
+        var authoring = prefab != null ? prefab.GetComponent<EnemyProjectileAuthoring>() : null;
+        if (authoring == null) return false;
+        baseSpeed = authoring.BaseSpeed;
+        return true;
     }
 
     public bool TryGetProjectileBaseSpeed(
@@ -188,8 +242,6 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     {
         get
         {
-            if (!UsesVirtualRotation)
-                return rotation.IsComplete;
             for (int i = 0; i < ActivePatterns.PatternCount; i++)
             {
                 EnemyShootingSettings shooting = ActivePatterns.GetPattern(i).Shooting;
@@ -226,14 +278,15 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
 
     private void OnDisable()
     {
-        rotation.Pause();
+        CancelPendingEmissions();
+        sectorOrders.Clear();
         patternRotationRunning = false;
         RestoreFacingPose();
         waveAimTarget = null;
         waveShootingSettings = null;
         waveAttackSettings = null;
         isWaveAttackControlled = false;
-        ClearInitialSpeedSequences();
+        ClearInitialSpeedSequences(); NumericRegistry.Clear();
         if (circleShip != null)
             circleShip.SetWaveAttackControl(false);
     }
@@ -243,6 +296,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         MigrateLegacyAttackMode();
         if (Application.isPlaying && enemy != null)
         {
+            CancelPendingEmissions();
             RefreshRotation(false);
             ResetAttackSchedule();
             UpdateLegacyAttackControl();
@@ -252,27 +306,43 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     private void Update()
     {
         if (enemy == null || enemy.isDead)
-            return;
-        if (UsesVirtualRotation)
         {
-            if (patternRotationRunning)
-                patternRotationTime += Time.deltaTime;
+            CancelPendingEmissions();
+            return;
         }
-        else
-            rotation.Tick(Time.deltaTime);
+        float rotationDeltaTime = PatternRotationDeltaTime;
+        if (patternRotationRunning)
+            patternRotationTime += rotationDeltaTime;
+        facingRotationTime += rotationDeltaTime;
+        if (enemy.AttackPermissions != null && enemy.AttackPermissions.Interrupted) return;
+        TickPendingSectors(AttackTime);
         if (autonomousAttack && !isWaveAttackControlled && isFormationAttackReady && CanPerformWaveAttack)
-            TickAutonomousAttack(Time.time);
+            TickAutonomousAttack(AttackTime);
     }
+
+    private float AttackTime => enemy != null ? enemy.AttackTime : Time.time;
+
+    // Only authored attack/facing rotations use this clock; physical movement keeps world time.
+    private float PatternRotationDeltaTime => Time.deltaTime
+        * (enemy != null ? enemy.AttackPermissions != null && enemy.AttackPermissions.Interrupted
+            ? 0f : enemy.FireRateMultiplier * enemy.AttackSpeedMultiplier : 1f);
 
     private void LateUpdate()
     {
         if (enemy != null && !enemy.isDead)
-            TickFacing(Time.deltaTime);
+            TickFacing(PatternRotationDeltaTime);
     }
 
     private void TickFacing(float deltaTime)
     {
         EnemyBurstAttackSettings patterns = ActivePatterns;
+        if (patterns.FacingMode == EnemyFacingMode.Rotation && boundFacingTarget != null)
+        {
+            boundFacingTarget.localRotation = initialFacingLocalRotation
+                * Quaternion.Euler(0f, 0f, patterns.FacingRotation.EvaluateAngle(facingRotationTime));
+            facingPoseApplied = true;
+            return;
+        }
         if (patterns.FacingMode != EnemyFacingMode.FollowPattern || boundFacingTarget == null)
             return;
         int index = patterns.FacingPatternIndex;
@@ -282,19 +352,16 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         EnemyShootingSettings shooting = pattern.Shooting;
         Vector3 position = GetProjectileSpawnPosition(pattern);
         PatternAim aim = patternAims[index];
+        if (aim.UsesStationaryDirection) position = GetEmissionPosition(pattern, 0);
         Vector3 requested = aim.GetRequestedDirection(position);
         bool usesAimedShotGunDirection = aim.UsesTargetPosition || aim.UsesAimedDirection;
-        if (waveAimTarget != null && (!(waveAimTarget is Object source) || source != null))
+        if (!aim.UsesStationaryDirection && waveAimTarget != null && (!(waveAimTarget is Object source) || source != null))
         {
             requested = waveAimTarget.AttackTargetPosition - position;
             usesAimedShotGunDirection = true;
         }
-        Vector3 direction = shooting.GetFacingDirection(
-            ResolveShotDirection(
-                shooting,
-                requested,
-                usesAimedShotGunDirection,
-                true));
+        Vector3 direction = shooting.GetFacingDirection(shooting.GetEmissionDirection(0,
+            GetVirtualDirectionBasis(shooting), patternRotationTime, requested, usesAimedShotGunDirection, stationary: aim.UsesStationaryDirection));
         boundFacingTarget.rotation = EnemyAttackFacing.Step(boundFacingTarget.rotation, direction,
             patterns.FacingSpeed, patterns.FacingAngleOffset, deltaTime);
         facingPoseApplied = true;
@@ -302,7 +369,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
 
     private void StorePatternAim(EnemyBurstAttackSettings pattern, PatternAim aim)
     {
-        if (!UsesVirtualRotation || patternAims == null)
+        if (patternAims == null)
             return;
         for (int i = 0; i < ActivePatterns.PatternCount; i++)
         {
@@ -316,41 +383,16 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     private Quaternion GetVirtualDirectionBasis(EnemyShootingSettings shooting)
     {
         Quaternion basis = FiringEnemyRotation;
-        if (shooting.ShootingType == EnemyShootingType.Rotation)
+        if (shooting.EmissionLayout.Type != EnemyEmissionLayoutType.Point)
             basis *= firingPivotRelativeRotation;
-        return shooting.EvaluateDirectionBasis(basis, patternRotationTime);
-    }
-
-    private Quaternion GetShotDirectionBasis(
-        EnemyShootingSettings shooting,
-        bool virtualRotation)
-    {
-        if (virtualRotation)
-            return GetVirtualDirectionBasis(shooting);
-
-        Transform pivot = shooting.ShootingType == EnemyShootingType.Rotation
-            ? DirectionTransform
-            : transform;
-        return pivot.rotation;
-    }
-
-    private Vector3 ResolveShotDirection(
-        EnemyShootingSettings shooting,
-        Vector3 requestedDirection,
-        bool useAimedShotGunDirection,
-        bool virtualRotation)
-    {
-        Quaternion basis = GetShotDirectionBasis(shooting, virtualRotation);
-        return shooting.EvaluateShotDirection(
-            basis,
-            requestedDirection,
-            useAimedShotGunDirection);
+        return basis;
     }
 
     public void ApplyBurstAttackSettingsOverride(EnemyBurstAttackSettings settings)
     {
         if (settings == null)
             return;
+        CancelPendingEmissions();
         burstAttackSettings.CopyFrom(settings);
         PrepareRandomSpreadSequences(burstAttackSettings);
         HasAttackSettingsOverride = true;
@@ -369,6 +411,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     {
         if (ReferenceEquals(waveAttackSettings, settings))
             return;
+        CancelPendingEmissions();
         waveAttackSettings = settings;
         PrepareRandomSpreadSequences(waveAttackSettings);
         waveShootingSettings = settings != null && !settings.HasMultiplePatterns ? settings.Shooting : null;
@@ -379,6 +422,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     {
         if (ReferenceEquals(waveShootingSettings, settings) && waveAttackSettings == null)
             return;
+        CancelPendingEmissions();
         waveShootingSettings = settings;
         PrepareRandomSpreadSequence(waveShootingSettings);
         waveAttackSettings = null;
@@ -394,6 +438,7 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         isWaveAttackControlled = isControlled;
         if (!isControlled)
         {
+            CancelPendingEmissions();
             waveAimTarget = null;
             SetWaveAttackSettings(null);
             SetWaveShootingSettings(null);
@@ -416,13 +461,85 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             return;
 
         PrepareRandomSpreadSequences(settings);
+        if (!resettingNumericSchedule) BeginSectorLaunchOrder(settings);
         for (int index = 0; index < settings.PatternCount; index++)
         {
             EnemyBurstAttackSettings pattern = settings.GetPattern(index);
             initialSpeedSequences[pattern] = default;
+            if (!isWaveAttackControlled) lockedEmissionDirections.Remove(pattern);
+            if (!resettingNumericSchedule) NumericRegistry.Get(pattern)?.BeginSpeed();
             activeInitialSpeedSequences.Add(pattern);
         }
     }
+
+    public void BeginSectorLaunchOrder(EnemyBurstAttackSettings settings)
+    {
+        for (int i = 0; i < settings.PatternCount; i++) sectorOrders.BeginAttack(settings.GetPattern(i).Shooting.EmissionLayout);
+    }
+
+    public void BeginEmissionOriginAttack(EnemyBurstAttackSettings settings)
+    {
+        for (int i = 0; i < settings.PatternCount; i++)
+        {
+            var pattern = settings.GetPattern(i);
+            EnemyEmissionOriginCaptureState capture = default;
+            capture.Begin(pattern.Shooting.EmissionOrigin, GetOriginPlayerPosition(), resettingNumericSchedule ? null : NumericRegistry.Get(pattern));
+            originCaptures[pattern] = capture;
+            shotOrigins.Remove(pattern);
+            preparedOriginShots.Remove(pattern);
+        }
+    }
+
+    private Vector3 GetOriginPlayerPosition() => waveAimTarget != null
+        ? waveAimTarget.AttackTargetPosition : originPlayer != null ? originPlayer.transform.position : Vector3.zero;
+
+    private Camera GetOriginCamera()
+    {
+        if (waveAimTarget is IEnemyEmissionOriginContext context) return context.EmissionOriginCamera;
+        return originPlayer != null ? originPlayer.GameplayCamera : Camera.main;
+    }
+
+    public bool PrepareEmissionOriginShot(EnemyBurstAttackSettings settings, bool burstStart, Vector3? capturedPlayer = null, Vector2? capturedOffsets = null, EnemyAttackNumericState numericOverride = null)
+    {
+        for (int i = 0; i < settings.PatternCount; i++)
+        {
+            var pattern = settings.GetPattern(i);
+            var origin = pattern.Shooting.EmissionOrigin;
+            bool hasPlayer = waveAimTarget is IEnemyEmissionOriginContext context
+                ? context.HasEmissionOriginPlayer : waveAimTarget != null || originPlayer != null;
+            Camera camera = origin.RequiresBounds ? GetOriginCamera() : null;
+            Rect bounds = default;
+            if (origin.UsesPlayer && !hasPlayer
+                || origin.RequiresBounds && !EnemyEmissionOriginSettings.TryGetGameplayBounds(camera, transform.position.z, out bounds))
+            {
+                if (!warnedMissingOriginContext)
+                {
+                    warnedMissingOriginContext = true;
+                    Debug.LogWarning("Emission Origin requires a player reference or a valid gameplay camera for Boundary coordinates.", this);
+                }
+                return false;
+            }
+            originCaptures.TryGetValue(pattern, out var capture);
+            if (!originCaptures.ContainsKey(pattern)) capture.Begin(origin, GetOriginPlayerPosition(), NumericRegistry.Get(pattern));
+            capture.BindNumeric(origin, numericOverride ?? NumericRegistry.Get(pattern));
+            Vector3 player = capture.Prepare(origin, GetOriginPlayerPosition(), burstStart, burstStart && pattern.RepeatBurst);
+            player = capturedPlayer ?? player;
+            initialSpeedSequences.TryGetValue(pattern, out var speedState);
+            numericShots[pattern] = (numericOverride ?? NumericRegistry.Get(pattern))?.PrepareSpeed(pattern.Shooting, burstStart && pattern.RepeatBurst,
+                pattern.Shooting.InitialSpeedMode == EnemyProjectileInitialSpeedMode.Consistent ? speedState.ConsistentDelta : 0f) ?? default;
+            numericGeometry[pattern] = pattern.Shooting.SampleGeometry(numericShots[pattern].Numeric);
+            originCaptures[pattern] = capture;
+            var offsets = capturedOffsets ?? capture.RandomOffsets;
+            shotOrigins[pattern] = offsets.HasValue ? origin.Resolve(transform.position, player, bounds, offsets.Value)
+                : origin.Resolve(transform.position, player, bounds);
+            preparedOriginShots.Add(pattern);
+        }
+        return true;
+    }
+
+    private Vector3 GetShotOrigin(EnemyBurstAttackSettings pattern)
+        => !pattern.Shooting.EmissionOrigin.IsDefault && shotOrigins.TryGetValue(pattern, out var position)
+            ? position : transform.position;
 
     public void EndAttackSequence(EnemyBurstAttackSettings settings)
     {
@@ -430,7 +547,11 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             return;
 
         for (int index = 0; index < settings.PatternCount; index++)
+        {
             activeInitialSpeedSequences.Remove(settings.GetPattern(index));
+            NumericRegistry.Release(settings.GetPattern(index));
+            numericGeometry.Remove(settings.GetPattern(index));
+        }
     }
 
     public bool TryFireAt(Vector3 targetPosition, EnemyBurstAttackSettings attackSettings)
@@ -457,9 +578,15 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             attackSettings);
     }
 
+    public bool TryFireStationary(Vector3 directionOrPoint, bool worldPoint, EnemyBurstAttackSettings settings)
+    {
+        return TryFire(new PatternAim { HasValue = true, UsesTargetPosition = worldPoint,
+            UsesStationaryDirection = true, Value = directionOrPoint }, settings);
+    }
+
     public Vector3 GetWaveAimOrigin(EnemyBurstAttackSettings settings)
     {
-        return GetProjectileSpawnPosition((settings ?? burstAttackSettings).GetPattern(0));
+        return GetEmissionPosition((settings ?? burstAttackSettings).GetPattern(0), 0);
     }
 
     public bool TryFireInAimedDirection(Vector3 direction, EnemyBurstAttackSettings settings)
@@ -472,21 +599,27 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         }, settings);
     }
 
-    private bool TryFire(PatternAim aim, EnemyBurstAttackSettings attackSettings)
+    public bool TryFireWithLockedEmissionAim(Vector3 targetPosition, EnemyBurstAttackSettings settings, bool refresh)
+    {
+        return TryFire(new PatternAim { HasValue = true, UsesTargetPosition = true,
+            UsesAimedDirection = true, Value = targetPosition }, settings, refresh);
+    }
+
+    private bool TryFire(PatternAim aim, EnemyBurstAttackSettings attackSettings, bool refreshEmissionAim = false)
     {
         EnemyBurstAttackSettings settings = attackSettings ?? burstAttackSettings;
         bool fired = false;
         for (int i = 0; i < settings.PatternCount; i++)
         {
             EnemyBurstAttackSettings pattern = settings.GetPattern(i);
-            Vector3 position = GetProjectileSpawnPosition(pattern);
-            StorePatternAim(pattern, aim);
+            if (!preparedOriginShots.Contains(pattern) && !PrepareEmissionOriginShot(pattern, false)) return false;
+            PatternAim patternAim = aim;
+            if (aim.UsesTargetPosition && aim.UsesAimedDirection)
+                patternAim.LockedEmissionDirections = GetLockedEmissionDirections(pattern, aim.Value, refreshEmissionAim || pattern.Shooting.UsesGeometryRandomization);
+            StorePatternAim(pattern, patternAim);
             bool success = TryLaunchProjectiles(
-                position,
-                aim.GetRequestedDirection(position),
-                pattern,
-                settings.HasMultiplePatterns || UsesVirtualRotation,
-                aim.UsesTargetPosition || aim.UsesAimedDirection);
+                pattern, patternAim);
+            preparedOriginShots.Remove(pattern);
             fired |= success;
             if (!success)
                 return false;
@@ -494,37 +627,75 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         return fired;
     }
 
-    private Vector3 GetProjectileSpawnPosition(EnemyBurstAttackSettings settings)
+    private Vector3 GetProjectileSpawnPosition(EnemyBurstAttackSettings settings, EnemyShootingSettings geometry = null)
     {
-        if (UsesVirtualRotation)
-        {
-            if (projectileSpawnPoint != null && !ownedSpawnPoint)
-                return projectileSpawnPoint.position;
-            Vector3 offset = settings.Shooting.ShootingType == EnemyShootingType.Rotation
-                ? firingRotationSpawnOffset : firingDefaultSpawnOffset;
-            Vector3 localPoint = transform.localPosition
-                + firingEnemyLocalRotation * Vector3.Scale(offset, transform.localScale);
-            return transform.parent != null ? transform.parent.TransformPoint(localPoint) : localPoint;
-        }
-        if (projectileSpawnPoint != null)
+        if (projectileSpawnPoint != null && !ownedSpawnPoint)
             return projectileSpawnPoint.position;
-        Transform pivot = settings.Shooting.ShootingType == EnemyShootingType.Rotation ? DirectionTransform : transform;
-        return pivot.TransformPoint(projectileSpawnOffset);
+        EnemyShootingSettings shooting = geometry ?? GetShotGeometry(settings);
+        Vector3 offset = shooting.EmissionLayout.Type == EnemyEmissionLayoutType.Radial
+            || shooting.EmissionLayout.Type == EnemyEmissionLayoutType.Sector
+            ? firingRotationSpawnOffset : firingDefaultSpawnOffset;
+        Vector3 position = GetFiringPoint(offset);
+        if (shooting.EmissionLayout.RotateShootingPointOffset && shooting.Rotates
+            && (projectileSpawnPoint == null || projectileSpawnPoint == DirectionTransform
+                || projectileSpawnPoint.IsChildOf(DirectionTransform)))
+        {
+            Vector3 pivot = GetFiringPoint(firingPivotPositionOffset);
+            position = pivot + Quaternion.Euler(0f, 0f, shooting.EvaluateLayoutAngle(patternRotationTime)) * (position - pivot);
+        }
+        return position;
     }
 
-    private bool TryLaunchProjectiles(Vector3 position, Vector3 direction, EnemyBurstAttackSettings settings,
-        bool virtualRotation, bool useAimedShotGunDirection)
+    private Vector3 GetFiringPoint(Vector3 offset)
     {
-        EnemyShootingSettings shooting = settings.Shooting;
-        EnemyBullet prefab = GetSelectedProjectilePrefab(shooting.ProjectileType);
-        if (!isActiveAndEnabled || enemy == null || enemy.isDead || prefab == null || projectileSpawner == null)
+        Vector3 localPoint = transform.localPosition
+            + firingEnemyLocalRotation * Vector3.Scale(offset, transform.localScale);
+        return transform.parent != null ? transform.parent.TransformPoint(localPoint) : localPoint;
+    }
+
+    public Vector3 GetEmissionPosition(EnemyBurstAttackSettings pattern, int index)
+        => GetEmissionPositionAtOrigin(pattern, index, GetShotOrigin(pattern));
+
+    private Vector3 GetEmissionPositionAtOrigin(EnemyBurstAttackSettings pattern, int index, Vector3 origin, EnemyShootingSettings geometry = null)
+    {
+        var shooting = geometry ?? GetShotGeometry(pattern);
+        Quaternion basis = GetVirtualDirectionBasis(shooting);
+        Quaternion pointBasis = projectileSpawnPoint != null
+            ? ownedSpawnPoint ? FiringEnemyRotation * firingSpawnPointRelativeRotation : projectileSpawnPoint.rotation : basis;
+        Vector3 scale = FiringEnemyScale;
+        if (shooting.EmissionLayout.Type == EnemyEmissionLayoutType.Point && projectileSpawnPoint != null)
+            scale = ownedSpawnPoint ? Vector3.Scale(scale, firingSpawnPointRelativeScale) : projectileSpawnPoint.lossyScale;
+        return shooting.GetEmissionPositionFromOrigin(index, GetProjectileSpawnPosition(pattern, shooting), transform.position, origin,
+            basis, pointBasis, FiringEnemyRotation, scale, patternRotationTime);
+    }
+
+    private Vector3[] GetLockedEmissionDirections(EnemyBurstAttackSettings pattern, Vector3 target, bool refresh)
+    {
+        int count = GetShotGeometry(pattern).UsesExtendedNumericRandomization
+            ? Mathf.Min(EnemyChildAttackSettings.MaximumPerStep, GetShotGeometry(pattern).DirectionCount) : GetShotGeometry(pattern).DirectionCount;
+        if (!lockedEmissionDirections.TryGetValue(pattern, out var directions) || directions.Length != count)
+        {
+            directions = new Vector3[count];
+            lockedEmissionDirections[pattern] = directions;
+            refresh = true;
+        }
+        if (refresh)
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 direction = target - GetEmissionPosition(pattern, i);
+                directions[i] = direction.sqrMagnitude > .0001f ? direction.normalized : AttackForward;
+            }
+        return directions;
+    }
+
+    private bool TryLaunchProjectiles(EnemyBurstAttackSettings settings, PatternAim aim)
+    {
+        EnemyShootingSettings shooting = GetShotGeometry(settings);
+        EnemyBullet prefab = shooting.ResolveProjectilePrefab(GetSelectedProjectilePrefab(shooting.ProjectileType));
+        if (!isActiveAndEnabled || enemy == null || enemy.isDead
+            || prefab == null && shooting.ProjectileType != EnemyProjectileType.Laser || projectileSpawner == null)
             return false;
-        direction = ResolveShotDirection(
-            shooting,
-            direction,
-            useAimedShotGunDirection,
-            virtualRotation);
-        EnemyProjectileAuthoring authoring = prefab.GetComponent<EnemyProjectileAuthoring>();
+        EnemyProjectileAuthoring authoring = prefab != null ? prefab.GetComponent<EnemyProjectileAuthoring>() : null;
         float projectileBaseSpeed = authoring != null ? authoring.BaseSpeed : 0f;
         bool hasActiveSpeedSequence = activeInitialSpeedSequences.Contains(settings);
         EnemyProjectileInitialSpeedState speedState = hasActiveSpeedSequence
@@ -539,68 +710,155 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         float randomSpreadAngle = shooting.UsesShotGun
             ? 0f
             : GetPrecomputedRandomSpreadAngle(shooting);
-        int fanProjectileCount = shooting.UsesFan
-            ? shooting.FanProjectileCount
-            : 1;
-        projectileSpawnRequests.Clear();
-        for (int arm = 0; arm < shooting.DirectionCount; arm++)
+        if (shooting.EmissionLayout.IsSequential)
         {
-            float shotGunRandomSpreadAngle = 0f;
-            for (int projectile = 0; projectile < shooting.ProjectilesPerDirection; projectile++)
-            {
-                if (shooting.UsesShotGun
-                    && shooting.ShootingMode == EnemyProjectileFireMode.Random
-                    && projectile % fanProjectileCount == 0)
-                {
-                    shotGunRandomSpreadAngle =
-                        GetPrecomputedRandomSpreadAngle(shooting);
-                }
-
-                float projectileRandomSpreadAngle = shooting.UsesShotGun
-                    ? shotGunRandomSpreadAngle
-                    : randomSpreadAngle;
-                float initialSpeed = shooting.InitialSpeedMode
-                    == EnemyProjectileInitialSpeedMode.Random
-                    ? shooting.GetRandomInitialSpeed()
-                    : volleySpeed;
-                projectileSpawnRequests.Add(new EnemyProjectileSpawnRequest(
-                    prefab,
-                    position,
-                    shooting.GetProjectileDirection(
-                        direction,
-                        arm,
-                        projectile,
-                        projectileRandomSpreadAngle),
-                    enemy.DamageMultiplier,
-                    initialSpeed,
-                    shooting.SpeedBehavior,
-                    shooting.SpeedChangeY,
-                    shooting.SpeedByDistance,
-                    shooting.SizeBehavior,
-                    shooting.SizeChangeY,
-                    shooting.SizeChangeSpeed,
-                    shooting.SizeChangeCurve,
-                    shooting.FinalSize,
-                    transform.position,
-                    shooting.MovementPattern,
-                    shooting.AngularSpeed,
-                    shooting.LateralSpeed,
-                    shooting.OrbitCenterMode,
-                    shooting.OrbitFixedWorldCenter,
-                    shooting.OrbitRadius,
-                    shooting.OrbitRadialSpeed,
-                    shooting.OverridesProjectileLifetime,
-                    shooting.ProjectileLifetime));
-            }
+            if (!QueueSector(settings, aim, volleySpeed, randomSpreadAngle, AttackTime)) return false;
         }
-
-        if (!projectileSpawner.TrySpawnBatch(projectileSpawnRequests))
+        else if (!TryLaunchDirections(settings, aim, volleySpeed, randomSpreadAngle, 0,
+            shooting.UsesExtendedNumericRandomization ? Mathf.Min(EnemyChildAttackSettings.MaximumPerStep, shooting.DirectionCount) : shooting.DirectionCount,
+            randomSpeed: GetNumericShot(settings)))
             return false;
 
         speedState.AdvanceAfterVolley(shooting);
         if (hasActiveSpeedSequence)
             initialSpeedSequences[settings] = speedState;
         return true;
+    }
+
+    private bool TryLaunchDirections(EnemyBurstAttackSettings settings, PatternAim aim, float volleySpeed,
+        float randomSpreadAngle, int firstOrder, int endOrder, Vector3? volleyOrigin = null, EnemyRandomSpeedSample randomSpeed = default, EnemySectorLaunchTicket? launchOrder = null, EnemyShootingSettings geometry = null)
+    {
+        EnemyShootingSettings shot = geometry ?? GetShotGeometry(settings);
+        EnemyShootingSettings shooting = shot;
+        EnemyBullet prefab = shooting.ResolveProjectilePrefab(GetSelectedProjectilePrefab(shooting.ProjectileType));
+        if (!isActiveAndEnabled || enemy == null || enemy.isDead
+            || prefab == null && shooting.ProjectileType != EnemyProjectileType.Laser || projectileSpawner == null)
+            return false;
+        projectileSpawnRequests.Clear();
+        for (int order = firstOrder; order < endOrder; order++)
+        {
+            shooting = shot;
+            int arm = shooting.EmissionLayout.IsSequential ? launchOrder.HasValue
+                ? launchOrder.Value.GetLaunchIndex(shooting.EmissionLayout, order) : shooting.EmissionLayout.GetLaunchIndex(order) : order;
+            shooting = shooting.SampleGeometry(randomSpeed.Numeric.ForDirection(arm), true);
+            Vector3 origin = volleyOrigin ?? GetShotOrigin(settings);
+            Vector3 position = GetEmissionPositionAtOrigin(settings, arm, origin, shooting);
+            Vector3 requested = aim.LockedEmissionDirections != null
+                ? arm < aim.LockedEmissionDirections.Length ? aim.LockedEmissionDirections[arm] : aim.Value - position : aim.GetRequestedDirection(position);
+            Vector3 direction = shooting.GetEmissionDirection(arm, GetVirtualDirectionBasis(shooting),
+                patternRotationTime, requested, aim.UsesTargetPosition || aim.UsesAimedDirection, stationary: aim.UsesStationaryDirection);
+            childSpreadSampler ??= GetPrecomputedRandomSpreadAngle;
+            EnemyAttackProjectileBuilder.AppendEmitter(projectileSpawnRequests, prefab, shooting, position, origin, direction,
+                enemy.DamageMultiplier, volleySpeed, randomSpreadAngle,
+                new EnemyProjectilePrefabSet(defaultProjectilePrefab, homingProjectilePrefab, burstAtPointProjectilePrefab), childSpreadSampler,
+                completionTracker: completionTracker, randomSpeed: randomSpeed, projectileOffset: arm * shooting.ProjectilesPerDirection,
+                maximum: shooting.UsesExtendedNumericRandomization ? Mathf.Max(0, EnemyChildAttackSettings.MaximumPerStep - projectileSpawnRequests.Count) : int.MaxValue,
+                directionIndex: arm,
+                laserOrigin: shooting.ProjectileType == EnemyProjectileType.Laser
+                    ? new EnemyLaserOrigin(transform, transform.position, shooting.EmissionOrigin, GetOriginCamera(), waveAimTarget,
+                        originPlayer != null ? originPlayer.transform : null) : default);
+        }
+
+        return projectileSpawner.TrySpawnBatch(projectileSpawnRequests);
+    }
+
+    private bool QueueSector(EnemyBurstAttackSettings settings, PatternAim aim, float speed, float spread, float time)
+    {
+        PendingSectorVolley volley = sectorPool.Count > 0 ? sectorPool.Pop() : new PendingSectorVolley();
+        volley.Settings = settings;
+        volley.Shooting = GetShotGeometry(settings);
+        volley.LaunchOrder = sectorOrders.Reserve(volley.Shooting.EmissionLayout);
+        volley.Origin = volley.Shooting.EmissionOrigin.IsDefault ? (Vector3?)null : GetShotOrigin(settings);
+        volley.Aim = aim;
+        if (aim.LockedEmissionDirections != null)
+        {
+            int count = aim.LockedEmissionDirections.Length;
+            if (volley.LockedDirections == null || volley.LockedDirections.Length != count)
+                volley.LockedDirections = new Vector3[count];
+            System.Array.Copy(aim.LockedEmissionDirections, volley.LockedDirections, count);
+            volley.Aim.LockedEmissionDirections = volley.LockedDirections;
+        }
+        volley.Speed = speed; volley.NumericSpeed = GetNumericShot(settings);
+        volley.Spread = spread;
+        volley.NextOrder = 0;
+        volley.Failed = false;
+        volley.WaitingForReady = volley.Shooting.EmissionLayout.WaitUntilSectorReady && !isFormationAttackReady;
+        volley.StartTime = time;
+        pendingSectors.Add(volley);
+        TickPendingSectors(time);
+        return !volley.Failed;
+    }
+
+    private void TickPendingSectors(float time)
+    {
+        for (int i = 0; i < pendingSectors.Count;)
+        {
+            PendingSectorVolley volley = pendingSectors[i];
+            EnemyEmissionLayoutSettings layout = volley.Shooting.EmissionLayout;
+            if (volley.WaitingForReady)
+            {
+                if (!isFormationAttackReady) { i++; continue; }
+                volley.WaitingForReady = false;
+                volley.StartTime = time;
+            }
+            int end = volley.NextOrder;
+            int total = volley.Shooting.UsesExtendedNumericRandomization ? Mathf.Min(EnemyChildAttackSettings.MaximumPerStep, layout.EmissionCount) : layout.EmissionCount;
+            while (end < total && time >= volley.StartTime + layout.StartDelay + end * layout.LaunchInterval)
+                end++;
+            bool success = true;
+            if (end > volley.NextOrder)
+            {
+                PatternAim aim = volley.Aim;
+                // Continuous Aimed follows the current target at the actual launch time.
+                if (aim.UsesTargetPosition && !aim.UsesAimedDirection && !aim.UsesStationaryDirection && waveAimTarget != null
+                    && (!(waveAimTarget is Object target) || target != null))
+                    aim.Value = waveAimTarget.AttackTargetPosition;
+                success = TryLaunchDirections(volley.Settings, aim, volley.Speed, volley.Spread, volley.NextOrder, end,
+                    volley.Origin ?? transform.position, volley.NumericSpeed, volley.LaunchOrder, volley.Shooting);
+                volley.Failed = !success;
+                if (!success) Debug.LogError("Sector launch failed; remaining directions were cancelled.", this);
+                volley.NextOrder = end;
+            }
+            if (success && volley.NextOrder < total) { i++; continue; }
+            if (success) volley.LaunchOrder.Complete(); else volley.LaunchOrder.Cancel();
+            sectorCompletionTimes[volley.Settings] = time;
+            pendingSectors.RemoveAt(i);
+            volley.Settings = null;
+            volley.Shooting = null;
+            volley.Aim = default;
+            sectorPool.Push(volley);
+        }
+    }
+
+    public bool HasPendingEmissions(EnemyBurstAttackSettings settings)
+    {
+        if (settings == null) return false;
+        for (int i = 0; i < pendingSectors.Count; i++)
+            for (int pattern = 0; pattern < settings.PatternCount; pattern++)
+                if (ReferenceEquals(pendingSectors[i].Settings, settings.GetPattern(pattern))) return true;
+        return false;
+    }
+
+    private bool CanRestartSectorAttack(EnemyBurstAttackSettings settings, float time, float rate)
+    {
+        if (HasPendingEmissions(settings)) return false;
+        return !sectorCompletionTimes.TryGetValue(settings, out float completion)
+            || time >= completion + (numericCooldowns.TryGetValue(settings, out float value) ? value : settings.AttackCooldown) / rate;
+    }
+
+    private void CancelPendingEmissions()
+    {
+        for (int i = 0; i < pendingSectors.Count; i++)
+        {
+            PendingSectorVolley volley = pendingSectors[i];
+            volley.LaunchOrder.Cancel();
+            volley.Settings = null;
+            volley.Shooting = null;
+            volley.Aim = default;
+            sectorPool.Push(volley);
+        }
+        pendingSectors.Clear();
+        sectorCompletionTimes.Clear();
     }
 
     public void ApplyRotationOverride(EnemyRotationSettings settings)
@@ -610,21 +868,19 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             RefreshRotation(true);
     }
 
-    public void RestartRotation() { RefreshRotation(true); }
+    public void RestartRotation()
+    {
+        float facingTime = facingRotationTime;
+        RefreshRotation(true);
+        facingRotationTime = facingTime;
+    }
     public void PauseRotation()
     {
-        rotation.Pause();
         patternRotationRunning = false;
     }
     public void ResumeRotation()
     {
-        if (UsesVirtualRotation)
-        {
-            patternRotationRunning = true;
-            return;
-        }
-        if (ActiveShooting.Rotates)
-            rotation.Resume();
+        patternRotationRunning = true;
     }
 
     public void SetRotationTarget(Transform target)
@@ -638,34 +894,30 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     private void RefreshRotation(bool restart)
     {
         RestoreFacingPose();
-        rotation.Bind(DirectionTransform, ActiveShooting.Rotation);
-        if (UsesVirtualRotation)
-        {
-            rotation.RestoreInitialPose();
-            CaptureVirtualBasis();
-            if (restart)
-                patternRotationTime = 0f;
-            patternRotationRunning = true;
-            if (ActivePatterns.FacingMode == EnemyFacingMode.FollowPattern && ActivePatterns.FacingPatternIndex < 0)
-                Debug.LogWarning("Facing Pattern is missing. Select an existing pattern in the attack profile.", this);
-            return;
-        }
         CaptureVirtualBasis();
-        if (!ActiveShooting.Rotates)
-        {
-            rotation.Pause();
-            return;
-        }
         if (restart)
-            rotation.Restart();
-        else
-            rotation.Resume();
+        {
+            patternRotationTime = 0f;
+            facingRotationTime = 0f;
+        }
+        patternRotationRunning = true;
+        if (ActivePatterns.FacingMode == EnemyFacingMode.FollowPattern && ActivePatterns.FacingPatternIndex < 0)
+            Debug.LogWarning("Facing Pattern is missing. Select an existing pattern in the attack profile.", this);
     }
 
     private void CaptureVirtualBasis()
     {
         firingEnemyLocalRotation = transform.localRotation;
         firingPivotRelativeRotation = Quaternion.Inverse(transform.rotation) * DirectionTransform.rotation;
+        firingPivotPositionOffset = transform.InverseTransformPoint(DirectionTransform.position);
+        firingSpawnPointRelativeRotation = projectileSpawnPoint != null
+            ? Quaternion.Inverse(transform.rotation) * projectileSpawnPoint.rotation : Quaternion.identity;
+        Vector3 rootScale = transform.lossyScale;
+        Vector3 pointScale = projectileSpawnPoint != null ? projectileSpawnPoint.lossyScale : rootScale;
+        firingSpawnPointRelativeScale = new Vector3(
+            Mathf.Abs(rootScale.x) > .0001f ? pointScale.x / rootScale.x : 1f,
+            Mathf.Abs(rootScale.y) > .0001f ? pointScale.y / rootScale.y : 1f,
+            Mathf.Abs(rootScale.z) > .0001f ? pointScale.z / rootScale.z : 1f);
         ownedSpawnPoint = projectileSpawnPoint != null
             && (projectileSpawnPoint == transform || projectileSpawnPoint.IsChildOf(transform));
         firingDefaultSpawnOffset = ownedSpawnPoint
@@ -700,25 +952,50 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
             circleShip.SetWaveAttackControl(isWaveAttackControlled || autonomousAttack);
     }
 
+    private bool TryFireAutonomousPattern(EnemyBurstAttackSettings pattern, bool burstStart)
+    {
+        var firing = pattern.Shooting.PresetFiring;
+        if (!firing.enabled) return TryFireInDirection(AttackForward, pattern);
+        if (firing.fireMode == DirectedWaveAttackFireMode.None) return false;
+        if (firing.fireMode == DirectedWaveAttackFireMode.Stationary)
+            return firing.stationaryFireSettings.TryFire(this, pattern, AttackForward);
+        if (firing.fireMode == DirectedWaveAttackFireMode.Default) return TryFireInDirection(AttackForward, pattern);
+        if (originPlayer == null && waveAimTarget == null) return false;
+        var target = GetOriginPlayerPosition();
+        if (firing.fireMode == DirectedWaveAttackFireMode.ForwardWhenPlayerAhead)
+        {
+            Vector3 direction = target - transform.position;
+            if (direction.sqrMagnitude > .0001f && Vector3.Dot(direction.normalized, AttackForward) < Mathf.Cos(firing.forwardFireHalfAngle * Mathf.Deg2Rad)) return false;
+            return TryFireInDirection(AttackForward, pattern);
+        }
+        bool refresh = firing.aimMode == DirectedWaveAttackAimMode.AimContinuous
+            || firing.aimMode == DirectedWaveAttackAimMode.AimOnBurst && pattern.RepeatBurst && burstStart;
+        return TryFireWithLockedEmissionAim(target, pattern, refresh);
+    }
+
     private void ResetAttackSchedule()
     {
-        ClearInitialSpeedSequences();
+        ClearInitialSpeedSequences(); resettingNumericSchedule = true;
         if (burstAttackSettings.HasMultiplePatterns)
         {
+            if (autonomousPatternStarted == null || autonomousPatternStarted.Length != burstAttackSettings.PatternCount)
+                autonomousPatternStarted = new bool[burstAttackSettings.PatternCount];
+            else System.Array.Clear(autonomousPatternStarted, 0, autonomousPatternStarted.Length);
             if (patternSchedules == null || patternSchedules.Length != burstAttackSettings.PatternCount)
                 patternSchedules = new EnemyAttackPatternSchedule[burstAttackSettings.PatternCount];
             float fireRate = enemy != null ? enemy.FireRateMultiplier : 1f;
             for (int i = 0; i < patternSchedules.Length; i++)
             {
-                patternSchedules[i].Begin(burstAttackSettings.GetPattern(i), Time.time, fireRate, true);
+                patternSchedules[i].Begin(burstAttackSettings.GetPattern(i), AttackTime, fireRate, true, NumericRegistry.Get(burstAttackSettings.GetPattern(i)));
                 BeginAttackSequence(burstAttackSettings.GetPattern(i));
+                BeginEmissionOriginAttack(burstAttackSettings.GetPattern(i));
             }
         }
         remainingAttackShots = 0;
         remainingBurstShots = 0;
         float rate = enemy != null ? enemy.FireRateMultiplier : 1f;
-        nextAttackTime = Time.time + burstAttackSettings.AttackStartDelay / Mathf.Max(0.01f, rate);
-        nextShotTime = nextAttackTime;
+        nextAttackTime = AttackTime + (burstAttackSettings.AttackStartDelayRandom.enabled ? 0f : burstAttackSettings.AttackStartDelay / Mathf.Max(0.01f, rate));
+        nextShotTime = nextAttackTime; resettingNumericSchedule = false;
     }
 
     private void TickAutonomousAttack(float currentTime)
@@ -731,31 +1008,38 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         float rate = Mathf.Max(0.01f, enemy.FireRateMultiplier);
         if (remainingAttackShots <= 0)
         {
-            if (currentTime < nextAttackTime)
+            if (enemy.AttackPermissions != null && !enemy.AttackPermissions.AllowNewAttacks) return;
+            if (currentTime < nextAttackTime || !CanRestartSectorAttack(burstAttackSettings, currentTime, rate))
                 return;
-            remainingAttackShots = burstAttackSettings.GetAttackShotCountForFireRate(rate);
+            remainingAttackShots = burstAttackSettings.GetAttackShotCountForFireRate(rate, NumericRegistry.Get(burstAttackSettings));
+            numericBurstCount = burstAttackSettings.SampleBurstCount(NumericRegistry.Get(burstAttackSettings));
             remainingBurstShots = 0;
-            nextShotTime = currentTime;
+            nextShotTime = currentTime + (burstAttackSettings.AttackStartDelayRandom.enabled
+                ? burstAttackSettings.SampleStartDelay(NumericRegistry.Get(burstAttackSettings)) / rate : 0f);
             BeginAttackSequence(burstAttackSettings);
+            BeginEmissionOriginAttack(burstAttackSettings);
         }
         if (currentTime < nextShotTime)
             return;
         if (burstAttackSettings.RepeatBurst && remainingBurstShots <= 0)
-            remainingBurstShots = burstAttackSettings.BurstShotCount;
-        TryFireInDirection(AttackForward, burstAttackSettings);
+            remainingBurstShots = numericBurstCount;
+        if (!PrepareEmissionOriginShot(burstAttackSettings, !burstAttackSettings.RepeatBurst
+            || remainingBurstShots == numericBurstCount)) return;
+        TryFireAutonomousPattern(burstAttackSettings, !burstAttackSettings.RepeatBurst || remainingBurstShots == numericBurstCount);
         if (burstAttackSettings.RepeatBurst && --remainingBurstShots > 0)
         {
-            nextShotTime = currentTime + burstAttackSettings.BurstShotInterval;
+            nextShotTime = currentTime + burstAttackSettings.SampleBurstInterval(NumericRegistry.Get(burstAttackSettings));
             return;
         }
         if (--remainingAttackShots > 0)
         {
-            nextShotTime = currentTime + burstAttackSettings.AttackShotInterval
+            nextShotTime = currentTime + burstAttackSettings.SampleShotInterval(NumericRegistry.Get(burstAttackSettings))
                 / (burstAttackSettings.RepeatBurst ? 1f : rate);
             return;
         }
+        float cooldown = SampleNumericCooldown(burstAttackSettings);
         EndAttackSequence(burstAttackSettings);
-        nextAttackTime = currentTime + burstAttackSettings.AttackCooldown / rate;
+        nextAttackTime = currentTime + cooldown / rate;
     }
 
     private void TickMultipleAutonomousAttacks(float currentTime)
@@ -765,24 +1049,37 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         {
             EnemyBurstAttackSettings pattern = burstAttackSettings.GetPattern(i);
             ref EnemyAttackPatternSchedule schedule = ref patternSchedules[i];
-            if (schedule.IsComplete && currentTime >= schedule.NextAttackTime)
+            if (!autonomousPatternStarted[i] && enemy.AttackPermissions != null && !enemy.AttackPermissions.AllowNewAttacks) continue;
+            if (schedule.IsComplete && currentTime >= schedule.NextAttackTime && CanRestartSectorAttack(pattern, currentTime, rate))
             {
-                schedule.Begin(pattern, currentTime, rate, false);
+                schedule.Begin(pattern, currentTime, rate, false, NumericRegistry.Get(pattern));
                 BeginAttackSequence(pattern);
+                BeginEmissionOriginAttack(pattern);
             }
             if (!schedule.IsDue(currentTime))
                 continue;
-            TryFireInDirection(AttackForward, pattern);
-            schedule.Advance(pattern, currentTime, rate);
+            if (!PrepareEmissionOriginShot(pattern, schedule.IsBurstStart)) continue;
+            TryFireAutonomousPattern(pattern, schedule.IsBurstStart);
+            autonomousPatternStarted[i] = true;
+            schedule.Advance(pattern, currentTime, rate, schedule.IsLastShot ? SampleNumericCooldown(pattern) : (float?)null);
             if (schedule.IsComplete)
+            {
+                autonomousPatternStarted[i] = false;
                 EndAttackSequence(pattern);
+            }
         }
     }
 
     private void ClearInitialSpeedSequences()
     {
         initialSpeedSequences.Clear();
+        numericShots.Clear(); numericCooldowns.Clear(); numericGeometry.Clear(); NumericRegistry.ReleaseAll();
         activeInitialSpeedSequences.Clear();
+        lockedEmissionDirections.Clear();
+        originCaptures.Clear();
+        shotOrigins.Clear();
+        preparedOriginShots.Clear();
+        warnedMissingOriginContext = false;
     }
 
     private void PrepareRandomSpreadSequences(EnemyBurstAttackSettings settings)
@@ -835,6 +1132,12 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
         autonomousAttack = true;
         burstAttackSettings.CopyFrom(settings);
         burstAttackSettings.Shooting.ConfigureRotation(rotationSettings, rotates);
+        if (rotates && burstAttackSettings.FacingMode == EnemyFacingMode.Default)
+        {
+            burstAttackSettings.SetFacing(EnemyFacingMode.Rotation);
+            burstAttackSettings.FacingRotation.CopyFrom(burstAttackSettings.Shooting.Rotation);
+            burstAttackSettings.Shooting.EmissionLayout.SetRotateShootingPointOffset(true);
+        }
         PrepareRandomSpreadSequences(burstAttackSettings);
         attackModeVersion = CurrentAttackModeVersion;
         if (Application.isPlaying)
@@ -854,6 +1157,14 @@ public sealed class SimpleEnemyAttackExecutor : MonoBehaviour,
     {
         burstAttackSettings ??= new EnemyBurstAttackSettings();
         burstAttackSettings.Validate();
+        if (emissionBindingVersion < 1)
+        {
+            if (burstAttackSettings.Shooting.HadLegacyRotation && burstAttackSettings.FacingMode == EnemyFacingMode.Rotation
+                && facingTarget == null && rotationTarget != null
+                && (rotationTarget == transform || rotationTarget.IsChildOf(transform)))
+                facingTarget = rotationTarget;
+            emissionBindingVersion = 1;
+        }
         if (attackModeVersion >= CurrentAttackModeVersion)
             return;
         if (attackModeVersion < 1 && burstAttackSettings.UsesAreaAttack)
@@ -880,5 +1191,6 @@ public enum EnemyProjectileType : byte
 {
     Default = 0,
     Homing = 1,
-    BurstAtPoint = 2
+    BurstAtPoint = 2,
+    Laser = 3
 }

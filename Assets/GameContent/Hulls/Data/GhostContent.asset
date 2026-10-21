@@ -16,8 +16,8 @@ MonoBehaviour:
   displayName: Ghost
   passiveAbilityDescription: 
   activeAbilityDescription: 
-  icon: {fileID: 21300000, guid: 86a04b94dcac4f946a2721dc796ff8d9, type: 3}
-  prefab: {fileID: 4920108328250008159, guid: 7afba5160c4213843a565bcc28e0d2c9, type: 3}
+  icon: {fileID: 21300000, guid: 56cee2d825260b5448a8a4dff0a2a7f1, type: 3}
+  prefab: {fileID: 3387013190401639, guid: 34ce5a258cabeec439feb388097c46ab, type: 3}
   rarity: 0
   purchasePrice: 0
   purchaseCoresPrice: 0
@@ -30,6 +30,7 @@ MonoBehaviour:
   maxUpgradeLevel: 0
   upgradePrices: []
   data: {fileID: 11400000, guid: 71777804cd809b54ca2ba4d9a3183254, type: 2}
+  isAvailableForCrafting: 1
   defaultColorPalette:
     primary: {r: 1, g: 1, b: 1, a: 1}
     secondary: {r: 0.35, g: 0.35, b: 0.35, a: 1}

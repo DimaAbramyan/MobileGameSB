@@ -36,6 +36,7 @@ public readonly struct EnemyHeatProfile
     public float CoolingPerSecond { get; }
     public Explode ExplosionPrefab { get; }
     public EnemyHeatDebuffConfig SourceConfig { get; }
+    public bool DamageShieldFirst => SourceConfig != null && SourceConfig.DamageShieldFirst;
 }
 
 public sealed class EnemyHeatSystem : IInitializable, IDisposable
@@ -226,11 +227,12 @@ public sealed class EnemyHeatSystem : IInitializable, IDisposable
                 if (enemy == null || enemy.isDead)
                     continue;
 
-                dealDamageManager.Value.DealDamage(
+                dealDamageManager.Value.DealDebuffDamage(
                     enemy,
                     profile.Owner,
                     explosionDamage,
-                    EnemyDamageType.Explosion);
+                    EnemyDamageType.Kinetick,
+                    profile.DamageShieldFirst);
             }
         }
         finally

@@ -17,8 +17,8 @@ MonoBehaviour:
   maxLevels: 1
   levels:
   - basicStats:
-      maximumHealthPoints: 999999
-      maximumShieldPoints: 20
+      maximumHealthPoints: 1
+      maximumShieldPoints: 2
       healthRegenRatePercent: 10
       shieldRegenRatePercent: 10
       speed: 300
@@ -42,7 +42,20 @@ MonoBehaviour:
     - rid: 3397718787192520807
       type: {class: BlackHoleShipMetaContract, ns: , asm: Assembly-CSharp}
       data:
+        activeDuration: 5
+        activeCooldown: 5
+        frontSpeedMultiplier: 0.25
+        rearSpeedMultiplier: 9
+        rewriteAttackSpeed: 1
+        enablePassiveAbility: 1
+        projectileDestructionPolicy: 1
         duration: 5.2
         damage: 50
         projectileSlowRadius: 3
         minimumProjectileSpeedMultiplier: 0.1
+        frontFullEffectAngle: 55
+        frontTransitionAngle: 60
+        backFullEffectAngle: 20
+        backTransitionAngle: 25
+        maximumProjectileSpeedMultiplier: 3
+        distanceFalloff: 1

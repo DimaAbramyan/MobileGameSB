@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: PhantomMeta
   m_EditorClassIdentifier: Assembly-CSharp::ShipMetaConfig
   sourceShipData: {fileID: 11400000, guid: 71777804cd809b54ca2ba4d9a3183254, type: 2}
-  sourceHullPrefab: {fileID: 8325040916063848254, guid: e7ee1e6a59fd955468683afb908e3d67, type: 3}
+  sourceHullPrefab: {fileID: 8325040916063848254, guid: 26d10a55c0f649e4398ded5409c94836, type: 3}
   maxLevels: 1
   levels:
   - basicStats:
-      maximumHealthPoints: 50
-      maximumShieldPoints: 30
+      maximumHealthPoints: 1
+      maximumShieldPoints: 3
       healthRegenRatePercent: 10
       shieldRegenRatePercent: 10
       speed: 75

@@ -27,7 +27,6 @@ public sealed class WaveEnemyDifficultyModifierEditor : Editor
                 MessageType.Info);
             DrawFormula("Hull health", modifier.HullHealthMultiplier, 1f);
             DrawFormula("Shield health", modifier.ShieldHealthMultiplier, 1f);
-            DrawFormula("Damage", modifier.DamageMultiplier, 1f);
             DrawFormula("Fire rate", modifier.FireRateMultiplier, 1f);
             return;
         }
@@ -44,10 +43,6 @@ public sealed class WaveEnemyDifficultyModifierEditor : Editor
                 "Shield health",
                 modifier.ShieldHealthMultiplier,
                 level.EnemyShieldHealthMultiplier);
-            DrawFormula(
-                "Damage",
-                modifier.DamageMultiplier,
-                level.EnemyDamageMultiplier);
             DrawFormula(
                 "Fire rate",
                 modifier.FireRateMultiplier,

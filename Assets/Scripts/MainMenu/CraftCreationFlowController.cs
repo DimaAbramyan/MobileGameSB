@@ -153,6 +153,12 @@ public sealed class CraftCreationFlowController : MonoBehaviour
 
     public void SetSelectedHull(HullContentDefinition hull)
     {
+        if (hull != null && !hull.IsAvailableForCrafting)
+        {
+            Debug.LogWarning($"Cannot select hull '{hull.DisplayName}': it is unavailable for crafting.", this);
+            return;
+        }
+
         if (hull != null && !IsContentOwned(hull))
         {
             Debug.LogWarning(
@@ -187,7 +193,7 @@ public sealed class CraftCreationFlowController : MonoBehaviour
             return false;
 
         if (!string.IsNullOrWhiteSpace(ship.hullContentId))
-            return contentCatalogService.TryGetHull(ship.hullContentId, out hull);
+            return contentCatalogService.TryGetHull(ship.hullContentId, ship.shipId, out hull);
 
         return contentCatalogService.TryGetHullByShipId(ship.shipId, out hull);
     }

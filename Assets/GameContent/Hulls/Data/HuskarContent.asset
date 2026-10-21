@@ -30,6 +30,7 @@ MonoBehaviour:
   maxUpgradeLevel: 0
   upgradePrices: []
   data: {fileID: 11400000, guid: eb1d5e307ce0c974aa413d83d3c4518c, type: 2}
+  isAvailableForCrafting: 0
   defaultColorPalette:
     primary: {r: 1, g: 1, b: 1, a: 1}
     secondary: {r: 0.35, g: 0.35, b: 0.35, a: 1}

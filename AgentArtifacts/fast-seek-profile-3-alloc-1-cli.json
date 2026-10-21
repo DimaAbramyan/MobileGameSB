@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "command": "command run_script",
+  "data": {
+    "command": "run_script",
+    "parameters": {
+      "file": "AgentScripts/ProfileWaveFastSeek.cs",
+      "entry": "ProfileWaveFastSeek.Run",
+      "args": "[3,\"alloc\",1]",
+      "timeout_ms": "240000"
+    },
+    "result": {
+      "diagnostics": [],
+      "compileMs": 80,
+      "executeMs": 64782,
+      "assemblyName": "PipelineRunScript_ProfileWaveFastSeek_c2dc50a94d584d708bce15f6e148280b",
+      "success": true,
+      "result": {
+        "wave": "2_3_extrime",
+        "variant": "alloc",
+        "repeat": 1,
+        "wallSeconds": 59.748366499999996,
+        "activeMilliseconds": 41402.059599999935,
+        "waitingMilliseconds": 18346.30690000006,
+        "stepsPerUpdate": 1.7733990147783252,
+        "stepMs": 22.891623888888883,
+        "gc0": 43,
+        "snapshotEstimateBytes": 132147232,
+        "worldCleanup": true,
+        "output": "AgentArtifacts/fast-seek-profile-3-alloc-1.json"
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

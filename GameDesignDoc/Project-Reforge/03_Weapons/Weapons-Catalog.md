@@ -14,12 +14,13 @@ Every weapon entry should use the following structure:
 Short description of the weapon and its defining mechanic.
 ```
 
-| Rarity\Damage Type | Kinetic                         | Explosion                                                         | Plasma                                                             | Resonance                 | Electric                              | Chemical                            |
-| ------------------ | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------- | ------------------------------------- | ----------------------------------- |
-| Common             | [[#MiniGun\|MiniGun]]           | [[#Piercing Explosive Projectile\|Piercing Explosive Projectile]] | [[#PlasmaGun\|PlasmaGun]], [[#Continuous Laser\|Continuous Laser]] | [[#Microwave\|Microwave]] |                                       |                                     |
-| Rare               | [[#Drill]]                      | [[#Rocket Launcher\|Rocket Launcher]]                             |                                                                    |                           | [[#Ball Lightning\|Ball Lightning]]   | [[#FlameThrower\|FlameThrower]]     |
-| Epic               | [[#Circular Saw\|Circular Saw]] |                                                                   | [[#Heating Beam\|Heating Beam]]                                    | Resonance Sphere?         | [[#Chain Lightning\|Chain Lightning]] | [[#Freeze Sprayer\|Freeze Sprayer]] |
-| Legendary          |                                 |                                                                   | [[#Q-Beam\|Q-Beam]]                                                |                           | [[#Arc Nodes\|Arc Nodes]]             | [[#Acid Sprayer\|Acid Sprayer]]     |
+| Rarity\Damage Type | Kinetic                                                                                 | Multiple                             | Plasma                                                             | Chemical                            |
+| ------------------ | --------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------ | ----------------------------------- |
+| Common             | [[#MiniGun\|MiniGun]],[[#Piercing Explosive Projectile\|Piercing Explosive Projectile]] | [[#Microwave\|Microwave]]            | [[#PlasmaGun\|PlasmaGun]], [[#Continuous Laser\|Continuous Laser]] |                                     |
+| Rare               | [[#Drill]], [[#Rocket Launcher\|Rocket Launcher]]                                       | [[#Ball Lightning\|Ball Lightning]]  |                                                                    | [[#FlameThrower\|FlameThrower]]     |
+| Epic               | [[#Circular Saw\|Circular Saw]]                                                         | [[#Chain Lightning\|Chain Lightnin]] | [[#Heating Beam\|Heating Beam]]                                    | [[#Freeze Sprayer\|Freeze Sprayer]] |
+| Legendary          |                                                                                         | [[#Arc Nodes\|Arc Nodes]]            | [[#Q-Beam\|Q-Beam]],                                               | [[#Acid Sprayer\|Acid Sprayer]]     |
+
 
 # Weapon Roster
 

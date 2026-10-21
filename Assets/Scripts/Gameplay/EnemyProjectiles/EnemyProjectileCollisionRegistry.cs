@@ -1,12 +1,14 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Collections;
 using Unity.Mathematics;
+using Unity.Transforms;
 using UnityEngine;
 using Zenject;
 
 /// <summary>
 /// Bridge between ECS enemy projectiles and the existing MonoBehaviour player team.
-/// It snapshots only registered player and Arkanoid colliders; ECS performs the
+/// It snapshots only registered player and interceptor colliders; ECS performs the
 /// projectile sweep and returns a compact resolution event for this class to apply.
 /// </summary>
 [DefaultExecutionOrder(-500)]
@@ -14,12 +16,45 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
 {
     private readonly List<RegisteredTarget> targets = new();
     private readonly Dictionary<ParentShip, int> shipTargetIds = new();
-    private readonly Dictionary<ArkanoidBall, int> interceptorTargetIds = new();
+    private readonly Dictionary<EnemyProjectileInterceptor, int> interceptorTargetIds = new();
     private readonly Dictionary<int, RegisteredTarget> targetsById = new();
     private readonly Dictionary<EnemyBullet, int> burstProjectileConfigIds = new();
     private readonly Dictionary<int, EnemyBullet> burstProjectileConfigsById = new();
     private readonly List<BlackHolePrefab> projectilePurgeFields = new();
+    private readonly Dictionary<int, EnemyProjectilePurgeField> waveClearPurgeFields = new();
+    public void SetWaveClearPurgeField(int id, EnemyProjectilePurgeField field) => waveClearPurgeFields[id] = field;
+    public void RemoveWaveClearPurgeField(int id) => waveClearPurgeFields.Remove(id);
     private readonly List<EnemyProjectileSpawnRequest> burstSpawnRequests = new(32);
+    private readonly List<BlackHoleActive> regionSpeedFields = new(2);
+
+    public void RegisterRegionSpeedField(BlackHoleActive ability)
+    {
+        if (ability == null || regionSpeedFields.Contains(ability)) return;
+        regionSpeedFields.Add(ability);
+        if (EnsureRegistryEntity()) UpdateTargetSnapshot();
+    }
+
+    public void UnregisterRegionSpeedField(BlackHoleActive ability)
+    {
+        regionSpeedFields.Remove(ability);
+        if (entityWorld != null && entityWorld.IsCreated && entityManager.Exists(registryEntity))
+            UpdateTargetSnapshot();
+    }
+
+    public float EvaluateActiveSpeedMultiplier(Vector2 position, bool attackSpeed = false)
+    {
+        float slowest = 1f, fastest = 1f;
+        for (int i = 0; i < regionSpeedFields.Count; i++)
+        {
+            var ability = regionSpeedFields[i];
+            if (ability == null || attackSpeed && !ability.RewriteAttackSpeed
+                || !ability.TryGetRegionSpeedField(out var field)) continue;
+            float value = field.EvaluateMultiplier(new float2(position.x, position.y));
+            slowest = Mathf.Min(slowest, value);
+            fastest = Mathf.Max(fastest, value);
+        }
+        return slowest * fastest;
+    }
 
     private EntityManager entityManager;
     private World entityWorld;
@@ -64,6 +99,16 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
 
     public void RegisterInterceptor(ArkanoidBall ball)
     {
+        RegisterInterceptor((EnemyProjectileInterceptor)ball);
+    }
+
+    public void UnregisterInterceptor(ArkanoidBall ball)
+    {
+        UnregisterInterceptor((EnemyProjectileInterceptor)ball);
+    }
+
+    public void RegisterInterceptor(EnemyProjectileInterceptor ball)
+    {
         if (ball == null || interceptorTargetIds.ContainsKey(ball))
             return;
 
@@ -75,7 +120,7 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
             interceptorTargetIds);
     }
 
-    public void UnregisterInterceptor(ArkanoidBall ball)
+    public void UnregisterInterceptor(EnemyProjectileInterceptor ball)
     {
         if (ball == null
             || !interceptorTargetIds.TryGetValue(ball, out int targetId))
@@ -147,12 +192,14 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         burstProjectileConfigIds.Clear();
         burstProjectileConfigsById.Clear();
         projectilePurgeFields.Clear();
+        waveClearPurgeFields.Clear();
         burstProjectileSpawner = null;
+        regionSpeedFields.Clear();
     }
 
     private void RegisterTarget<TKey>(
         ParentShip ship,
-        ArkanoidBall ball,
+        EnemyProjectileInterceptor ball,
         EnemyProjectileCollisionTargetKind kind,
         Collider2D[] colliders,
         Dictionary<TKey, int> targetIds)
@@ -185,12 +232,46 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         }
     }
 
+    public void ClearEnemyProjectiles(Vector2 center, float radius)
+    {
+        if (radius <= 0f || !EnsureRegistryEntity()) return;
+        using EntityQuery query = entityManager.CreateEntityQuery(
+            ComponentType.ReadOnly<EnemyProjectileStaticData>(),
+            ComponentType.ReadOnly<LocalTransform>(),
+            ComponentType.ReadWrite<EnemyProjectileResolution>());
+        using NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
+        float2 origin = new float2(center.x, center.y);
+        float radiusSquared = radius * radius;
+        for (int i = 0; i < entities.Length; i++)
+        {
+            Entity entity = entities[i];
+            if (entityManager.GetComponentData<EnemyProjectileResolution>(entity).Kind
+                != EnemyProjectileResolutionKind.None) continue;
+            float2 position = entityManager.GetComponentData<LocalTransform>(entity).Position.xy;
+            if (entityManager.HasComponent<EnemyLaserState>(entity))
+            {
+                var beam = entityManager.GetComponentData<EnemyLaserState>(entity);
+                if (!EnemyLaserGeometryUtility.Hits(beam, new EnemyProjectileCollisionTarget
+                    { IsCircle = 1, Center = origin, PreviousCenter = origin, Radius = radius })) continue;
+            }
+            else if (math.distancesq(position, origin) > radiusSquared) continue;
+            // Resolve through normal ECS cleanup without structural changes while
+            // this registry may be consuming its damage-event buffer.
+            entityManager.SetComponentData(entity, new EnemyProjectileResolution
+            {
+                Kind = EnemyProjectileResolutionKind.Expired
+            });
+        }
+    }
+
     private bool EnsureRegistryEntity()
     {
         if (entityWorld != null
             && entityWorld.IsCreated
             && entityManager.Exists(registryEntity))
         {
+            if (!entityManager.HasBuffer<EnemyProjectileRegionSpeedField>(registryEntity))
+                entityManager.AddBuffer<EnemyProjectileRegionSpeedField>(registryEntity);
             return true;
         }
 
@@ -206,6 +287,7 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
             new EnemyProjectileCollisionRegistryTag());
         entityManager.AddBuffer<EnemyProjectileCollisionTarget>(registryEntity);
         entityManager.AddBuffer<EnemyProjectileSlowField>(registryEntity);
+        entityManager.AddBuffer<EnemyProjectileRegionSpeedField>(registryEntity);
         entityManager.AddBuffer<EnemyProjectilePurgeField>(registryEntity);
         entityManager.AddBuffer<EnemyProjectileResolutionEvent>(registryEntity);
         entityManager.AddBuffer<EnemyProjectileBurstSpawnRequest>(registryEntity);
@@ -229,11 +311,14 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
             switch (resolutionEvent.Kind)
             {
                 case EnemyProjectileResolutionKind.Intercepted:
-                    target.Ball?.NotifyEnemyProjectileIntercepted();
+                    target.Interceptor?.NotifyEnemyProjectileIntercepted();
                     break;
                 case EnemyProjectileResolutionKind.HitPlayer:
                     if (IsCurrentShip(target.Ship))
-                        target.Ship.TryTakeDamage(resolutionEvent.Damage);
+                    {
+                        if (resolutionEvent.UseConfiguredDamage != 0) target.Ship.TryTakeConfiguredDamage(resolutionEvent.Damage);
+                        else target.Ship.TryTakeDamage(resolutionEvent.Damage);
+                    }
                     break;
             }
         }
@@ -257,30 +342,26 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
                 continue;
             }
 
-            burstSpawnRequests.Add(new EnemyProjectileSpawnRequest(
-                projectile,
-                new Vector3(request.Position.x, request.Position.y, 0f),
-                new Vector3(request.Direction.x, request.Direction.y, 0f),
-                1f,
-                0f,
-                EnemyProjectileSpeedBehavior.None,
-                0f,
-                null,
-                EnemyProjectileSizeBehavior.Default,
-                0f,
-                1f,
-                null,
-                1f));
+            burstProjectileSpawner.AppendBurstSpawnRequest(burstSpawnRequests, request, projectile);
         }
 
+        // Structural spawns invalidate dynamic buffer handles.
+        requests.Clear();
         if (burstSpawnRequests.Count > 0)
             burstProjectileSpawner.TrySpawnBatch(burstSpawnRequests);
-
-        requests.Clear();
     }
 
     private void UpdateTargetSnapshot()
     {
+        var regions = entityManager.GetBuffer<EnemyProjectileRegionSpeedField>(registryEntity);
+        regions.Clear();
+        for (int i = regionSpeedFields.Count - 1; i >= 0; i--)
+        {
+            var ability = regionSpeedFields[i];
+            if (ability == null || !ability.TryGetRegionSpeedField(out var region))
+            { regionSpeedFields.RemoveAt(i); continue; }
+            regions.Add(region);
+        }
         DynamicBuffer<EnemyProjectileCollisionTarget> snapshot = entityManager
             .GetBuffer<EnemyProjectileCollisionTarget>(registryEntity);
         snapshot.Clear();
@@ -307,6 +388,9 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
             purgeFields.Add(purgeField);
         }
 
+        foreach (EnemyProjectilePurgeField field in waveClearPurgeFields.Values)
+            purgeFields.Add(field);
+
         for (int targetIndex = targets.Count - 1; targetIndex >= 0; targetIndex--)
         {
             RegisteredTarget target = targets[targetIndex];
@@ -329,7 +413,47 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
                 slowFields.Add(slowField);
             }
 
+            if (target.Interceptor is MaterializedBladeTrail blade)
+            {
+                blade.AppendProjectileCollisionTargets(snapshot, target.Id);
+                continue;
+            }
+
+            if (target.Interceptor != null
+                && target.Interceptor.TryGetCircularSweep(
+                    out Vector2 previousCenter, out Vector2 center, out float radius))
+            {
+                snapshot.Add(new EnemyProjectileCollisionTarget
+                {
+                    TargetId = target.Id,
+                    Kind = target.Kind,
+                    DestroysNormal = target.Interceptor.DestroysNormalProjectiles ? (byte)1 : (byte)0,
+                    IsCircle = 1,
+                    PreviousCenter = new float2(previousCenter.x, previousCenter.y),
+                    Center = new float2(center.x, center.y),
+                    Radius = radius,
+                    Min = new float2(center.x - radius, center.y - radius),
+                    Max = new float2(center.x + radius, center.y + radius)
+                });
+                continue;
+            }
+
             Collider2D[] colliders = target.Colliders;
+            if (target.Interceptor != null && target.Interceptor.TryGetBoxSweep(
+                out Vector2 previousBoxCenter, out Vector2 boxCenter, out Vector2 boxSize, out Vector2 boxRight))
+            {
+                snapshot.Add(new EnemyProjectileCollisionTarget
+                {
+                    TargetId = target.Id, Kind = target.Kind,
+                    DestroysNormal = target.Interceptor.DestroysNormalProjectiles ? (byte)1 : (byte)0,
+                    IsBox = 1,
+                    PreviousCenter = new float2(previousBoxCenter.x, previousBoxCenter.y),
+                    Center = new float2(boxCenter.x, boxCenter.y),
+                    BoxHalfSize = new float2(boxSize.x, boxSize.y) * .5f,
+                    BoxRight = new float2(boxRight.x, boxRight.y)
+                });
+                continue;
+            }
             for (int colliderIndex = 0;
                  colliderIndex < colliders.Length;
                  colliderIndex++)
@@ -339,10 +463,18 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
                     continue;
 
                 Bounds bounds = collider.bounds;
+                bool isHullCircle = target.Kind == EnemyProjectileCollisionTargetKind.PlayerShip
+                    && collider is CircleCollider2D;
+                float2 hullCenter = new float2(bounds.center.x, bounds.center.y);
                 snapshot.Add(new EnemyProjectileCollisionTarget
                 {
                     TargetId = target.Id,
                     Kind = target.Kind,
+                    DestroysNormal = target.Interceptor != null && target.Interceptor.DestroysNormalProjectiles ? (byte)1 : (byte)0,
+                    IsCircle = isHullCircle ? (byte)1 : (byte)0,
+                    PreviousCenter = hullCenter,
+                    Center = hullCenter,
+                    Radius = isHullCircle ? Mathf.Max(bounds.extents.x, bounds.extents.y) : 0f,
                     Min = new float2(bounds.min.x, bounds.min.y),
                     Max = new float2(bounds.max.x, bounds.max.y)
                 });
@@ -356,8 +488,8 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         targetsById.Remove(target.Id);
         if (target.Ship != null)
             shipTargetIds.Remove(target.Ship);
-        if (target.Ball != null)
-            interceptorTargetIds.Remove(target.Ball);
+        if (target.Interceptor != null)
+            interceptorTargetIds.Remove(target.Interceptor);
     }
 
     private bool IsCurrentShip(ParentShip ship)
@@ -371,24 +503,24 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         public readonly int Id;
         public readonly EnemyProjectileCollisionTargetKind Kind;
         public readonly ParentShip Ship;
-        public readonly ArkanoidBall Ball;
+        public readonly EnemyProjectileInterceptor Interceptor;
         public readonly Collider2D[] Colliders;
 
         public bool IsAlive => Kind == EnemyProjectileCollisionTargetKind.PlayerShip
             ? Ship != null && Ship.isActiveAndEnabled
-            : Ball != null && Ball.isActiveAndEnabled;
+            : Interceptor != null && Interceptor.isActiveAndEnabled;
 
         public RegisteredTarget(
             int id,
             EnemyProjectileCollisionTargetKind kind,
             ParentShip ship,
-            ArkanoidBall ball,
+            EnemyProjectileInterceptor ball,
             Collider2D[] colliders)
         {
             Id = id;
             Kind = kind;
             Ship = ship;
-            Ball = ball;
+            Interceptor = ball;
             Colliders = colliders;
         }
     }

@@ -4,8 +4,10 @@ using Zenject;
 
 public sealed class EnemyContactImpact : MonoBehaviour
 {
-    [Header("Damage")]
-    [SerializeField, Min(0f)] private float contactDamage = 5f;
+    // Retained for serialized prefab compatibility; incoming hits are fixed.
+#pragma warning disable CS0414 // Legacy serialized data is intentionally no longer read.
+    [SerializeField, HideInInspector] private float contactDamage = ParentShip.EnemyHitDamage;
+#pragma warning restore CS0414
 
     [Header("Control")]
     [SerializeField, Min(0f)] private float controlLockDuration = 0.5f;
@@ -39,15 +41,22 @@ public sealed class EnemyContactImpact : MonoBehaviour
         if (collision.collider.GetComponentInParent<TwinCloneController>() != null)
             return;
 
-        if (!playerShip.TryTakeDamage(contactDamage))
+        if (!playerShip.TryTakeDamage(ParentShip.EnemyHitDamage))
             return;
 
-        playerBody.GetComponent<PlayerController>()
-            ?.ApplyControlLoss(playerShip, controlLockDuration);
+        PlayerController controller = playerBody.GetComponent<PlayerController>();
+        float relativeSpeed = collision.relativeVelocity.magnitude;
+        if (controller != null && controller.UsesDirectMovement)
+        {
+            Rigidbody2D enemyBody = GetComponent<Rigidbody2D>();
+            Vector2 enemyVelocity = enemyBody != null ? enemyBody.linearVelocity : Vector2.zero;
+            relativeSpeed = Mathf.Max(relativeSpeed, (controller.CurrentVelocity - enemyVelocity).magnitude);
+        }
+        controller?.ApplyControlLoss(playerShip, controlLockDuration);
         ApplyKnockback(
             playerShip,
             playerBody,
-            collision.relativeVelocity.magnitude);
+            relativeSpeed);
     }
 
     private void ApplyKnockback(
@@ -68,7 +77,11 @@ public sealed class EnemyContactImpact : MonoBehaviour
             relativeSpeed,
             CreateKnockbackSettings());
 
-        playerBody.AddForce(direction * impulse, ForceMode2D.Impulse);
+        PlayerController controller = playerBody.GetComponent<PlayerController>();
+        if (controller != null)
+            controller.ApplyKnockback(direction * impulse);
+        else
+            playerBody.AddForce(direction * impulse, ForceMode2D.Impulse);
     }
 
     private ShipKnockbackService.Settings CreateKnockbackSettings()
@@ -88,6 +101,7 @@ public sealed class EnemyContactImpact : MonoBehaviour
 
     private void OnValidate()
     {
+        contactDamage = ParentShip.EnemyHitDamage;
         referenceMass = Mathf.Max(0.001f, referenceMass);
         referenceSpeed = Mathf.Max(0.001f, referenceSpeed);
     }

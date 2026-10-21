@@ -1,18 +1,21 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public sealed class PlayerHitboxIndicator : MonoBehaviour
 {
     private const float LineWidth = 0.012f;
-    private const int CircleSegments = 24;
+    private const int CircleSegments = 32;
 
+    [SerializeField, Min(0f), Tooltip("Radius of the visual marker in ship-local units. Does not change the damage collider.")]
+    private float visualRadius = 0.075f;
     [SerializeField] private Color color = new(0.1f, 1f, 0.7f, 0.95f);
 
-    private readonly List<LineRenderer> lines = new();
     private ParentShip ship;
     private Collider2D hitbox;
+    private LineRenderer visual;
     private Material material;
+
+    public float VisualRadius => Mathf.Max(0f, visualRadius);
 
     public void Initialize(ParentShip owner, Collider2D collider)
     {
@@ -23,43 +26,65 @@ public sealed class PlayerHitboxIndicator : MonoBehaviour
 
     private void LateUpdate()
     {
-        bool visible = ship != null && ship.IsVisible
-            && hitbox != null && hitbox.enabled;
-        for (int index = 0; index < lines.Count; index++)
-            if (lines[index] != null)
-                lines[index].enabled = visible;
+        if (visual != null)
+            visual.enabled = ship != null && ship.IsVisible && !ship.IsDestroyed
+                && hitbox != null && hitbox.enabled && VisualRadius > 0f;
+    }
+
+    private void OnDisable()
+    {
+        if (visual != null)
+            visual.enabled = false;
+    }
+
+    private void OnValidate()
+    {
+        visualRadius = Mathf.Max(0f, visualRadius);
+        if (Application.isPlaying && visual != null)
+            Rebuild();
     }
 
     private void OnDestroy()
     {
         if (material != null)
-            Destroy(material);
+        {
+            if (Application.isPlaying)
+                Destroy(material);
+            else
+                DestroyImmediate(material);
+        }
     }
 
     private void Rebuild()
     {
-        ClearLines();
         if (hitbox == null || !EnsureMaterial())
             return;
 
-        switch (hitbox)
+        if (visual == null)
         {
-            case BoxCollider2D box:
-                DrawBox(box);
-                break;
-            case CircleCollider2D circle:
-                DrawCircle(circle);
-                break;
-            case PolygonCollider2D polygon:
-                DrawPolygon(polygon);
-                break;
-            case EdgeCollider2D edge:
-                DrawPath(edge.points, false);
-                break;
-            default:
-                DrawBounds();
-                break;
+            var visualObject = new GameObject("Visual Hitbox");
+            visualObject.transform.SetParent(transform, false);
+            visual = visualObject.AddComponent<LineRenderer>();
+            visual.useWorldSpace = false;
+            visual.loop = true;
+            visual.positionCount = CircleSegments;
+            visual.startWidth = LineWidth;
+            visual.endWidth = LineWidth;
+            visual.numCapVertices = 2;
+            visual.numCornerVertices = 2;
+            visual.sortingOrder = 1000;
         }
+
+        visual.sharedMaterial = material;
+        visual.startColor = color;
+        visual.endColor = color;
+        Vector3 center = transform.InverseTransformPoint(hitbox.transform.TransformPoint(hitbox.offset));
+        for (int index = 0; index < CircleSegments; index++)
+        {
+            float angle = index * Mathf.PI * 2f / CircleSegments;
+            visual.SetPosition(index, center + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * VisualRadius);
+        }
+        LateUpdate();
     }
 
     private bool EnsureMaterial()
@@ -73,96 +98,30 @@ public sealed class PlayerHitboxIndicator : MonoBehaviour
             Debug.LogError("Sprites/Default shader is unavailable for the player hitbox indicator.", this);
             return false;
         }
-
-        material = new Material(shader)
-        {
-            name = "Player Hitbox Indicator Material"
-        };
-        material.color = color;
+        material = new Material(shader) { name = "Player Visual Hitbox Material" };
         return true;
     }
 
-    private void DrawBox(BoxCollider2D box)
+    private void OnDrawGizmosSelected()
     {
-        Vector2 halfSize = box.size * 0.5f;
-        Vector2 center = box.offset;
-        DrawPath(new[]
-        {
-            center + new Vector2(-halfSize.x, -halfSize.y),
-            center + new Vector2(-halfSize.x, halfSize.y),
-            center + new Vector2(halfSize.x, halfSize.y),
-            center + new Vector2(halfSize.x, -halfSize.y)
-        }, true);
-    }
-
-    private void DrawCircle(CircleCollider2D circle)
-    {
-        var points = new Vector2[CircleSegments];
-        for (int index = 0; index < points.Length; index++)
-        {
-            float angle = index * Mathf.PI * 2f / points.Length;
-            points[index] = circle.offset + new Vector2(
-                Mathf.Cos(angle),
-                Mathf.Sin(angle)) * circle.radius;
-        }
-
-        DrawPath(points, true);
-    }
-
-    private void DrawPolygon(PolygonCollider2D polygon)
-    {
-        for (int index = 0; index < polygon.pathCount; index++)
-            DrawPath(polygon.GetPath(index), true);
-    }
-
-    private void DrawBounds()
-    {
-        Bounds bounds = hitbox.bounds;
-        Vector3[] worldPoints =
-        {
-            new(bounds.min.x, bounds.min.y, 0f),
-            new(bounds.min.x, bounds.max.y, 0f),
-            new(bounds.max.x, bounds.max.y, 0f),
-            new(bounds.max.x, bounds.min.y, 0f)
-        };
-
-        var localPoints = new Vector2[worldPoints.Length];
-        for (int index = 0; index < worldPoints.Length; index++)
-            localPoints[index] = transform.InverseTransformPoint(worldPoints[index]);
-        DrawPath(localPoints, true);
-    }
-
-    private void DrawPath(Vector2[] points, bool closed)
-    {
-        if (points == null || points.Length < 2)
+        Collider2D collider = hitbox != null ? hitbox : GetComponent<Collider2D>();
+        if (collider == null)
             return;
 
-        var lineObject = new GameObject("Hitbox Outline");
-        lineObject.transform.SetParent(transform, false);
-        LineRenderer line = lineObject.AddComponent<LineRenderer>();
-        line.sharedMaterial = material;
-        line.useWorldSpace = false;
-        line.loop = closed;
-        line.positionCount = points.Length;
-        line.startWidth = LineWidth;
-        line.endWidth = LineWidth;
-        line.numCapVertices = 2;
-        line.numCornerVertices = 2;
-        line.sortingOrder = 1000;
-        line.startColor = color;
-        line.endColor = color;
-
-        for (int index = 0; index < points.Length; index++)
-            line.SetPosition(index, points[index]);
-
-        lines.Add(line);
-    }
-
-    private void ClearLines()
-    {
-        for (int index = 0; index < lines.Count; index++)
-            if (lines[index] != null)
-                Destroy(lines[index].gameObject);
-        lines.Clear();
+        Vector3 center = transform.InverseTransformPoint(collider.transform.TransformPoint(collider.offset));
+        Matrix4x4 previousMatrix = Gizmos.matrix;
+        Color previousColor = Gizmos.color;
+        Gizmos.matrix = transform.localToWorldMatrix;
+        Gizmos.color = color;
+        Vector3 previous = center + Vector3.right * VisualRadius;
+        for (int index = 1; index <= CircleSegments; index++)
+        {
+            float angle = index * Mathf.PI * 2f / CircleSegments;
+            Vector3 next = center + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * VisualRadius;
+            Gizmos.DrawLine(previous, next);
+            previous = next;
+        }
+        Gizmos.matrix = previousMatrix;
+        Gizmos.color = previousColor;
     }
 }

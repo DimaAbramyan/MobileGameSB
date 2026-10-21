@@ -18,6 +18,9 @@ internal readonly struct DirectedWaveFormationSettings
     public readonly Transform subWaveTransform;
     public readonly Transform spawnPoint;
     public readonly int enemyCount;
+    public readonly Vector2 offsetStep;
+    public readonly DirectedWaveFormationOffsetOrigin offsetOrigin;
+    public readonly DirectedWaveFormationCenterOffsetMode centerOffsetMode;
 
     public DirectedWaveFormationSettings(
         bool frozen,
@@ -35,7 +38,10 @@ internal readonly struct DirectedWaveFormationSettings
         Transform pointsRoot,
         Transform subWaveTransform,
         Transform spawnPoint,
-        int enemyCount)
+        int enemyCount,
+        Vector2 offsetStep = default,
+        DirectedWaveFormationOffsetOrigin offsetOrigin = DirectedWaveFormationOffsetOrigin.Middle,
+        DirectedWaveFormationCenterOffsetMode centerOffsetMode = DirectedWaveFormationCenterOffsetMode.Linear)
     {
         this.frozen = frozen;
         this.layout = layout;
@@ -53,6 +59,9 @@ internal readonly struct DirectedWaveFormationSettings
         this.subWaveTransform = subWaveTransform;
         this.spawnPoint = spawnPoint;
         this.enemyCount = enemyCount;
+        this.offsetStep = offsetStep;
+        this.offsetOrigin = offsetOrigin;
+        this.centerOffsetMode = centerOffsetMode;
     }
 }
 
@@ -78,20 +87,11 @@ internal static class DirectedWaveFormationSolver
             DirectedWaveFormationLayout.Circle =>
                 GetCirclePosition(index, settings),
             DirectedWaveFormationLayout.Triangle =>
-                GetPolygonPerimeterPosition(
-                    index,
-                    GetTriangleVertices(settings),
-                    settings),
+                GetPolygonPosition(index, settings),
             DirectedWaveFormationLayout.Square =>
-                GetPolygonPerimeterPosition(
-                    index,
-                    GetSquareVertices(settings),
-                    settings),
+                GetPolygonPosition(index, settings),
             DirectedWaveFormationLayout.Diamond =>
-                GetPolygonPerimeterPosition(
-                    index,
-                    GetDiamondVertices(settings),
-                    settings),
+                GetPolygonPosition(index, settings),
             DirectedWaveFormationLayout.CustomPoints =>
                 GetCustomPosition(index, settings),
             DirectedWaveFormationLayout.TransformPoints =>
@@ -99,10 +99,12 @@ internal static class DirectedWaveFormationSolver
             _ => GetHorizontalLinePosition(index, settings)
         };
 
+        Vector3 offset = DirectedWaveFormationOffset.Evaluate(index, settings.enemyCount,
+            settings.offsetStep, settings.offsetOrigin, settings.centerOffsetMode);
         if (settings.layout == DirectedWaveFormationLayout.TransformPoints)
-            return localPosition;
+            return localPosition + ToWorld(offset, settings) - ToWorld(Vector3.zero, settings);
 
-        return ToWorld(localPosition, settings);
+        return ToWorld(localPosition + offset, settings);
     }
 
     private static Vector3 GetHorizontalLinePosition(
@@ -198,13 +200,26 @@ internal static class DirectedWaveFormationSolver
                 0f);
     }
 
+    private static Vector3 GetPolygonPosition(int index, in DirectedWaveFormationSettings settings)
+    {
+        System.Span<Vector3> vertices = stackalloc Vector3[4];
+        int count = settings.layout == DirectedWaveFormationLayout.Triangle ? 3 : 4;
+        if (settings.layout == DirectedWaveFormationLayout.Triangle)
+            GetTriangleVertices(settings, vertices);
+        else if (settings.layout == DirectedWaveFormationLayout.Square)
+            GetSquareVertices(settings, vertices);
+        else
+            GetDiamondVertices(settings, vertices);
+        return GetPolygonPerimeterPosition(index, vertices.Slice(0, count), settings);
+    }
+
     private static Vector3 GetPolygonPerimeterPosition(
         int index,
-        Vector3[] vertices,
+        System.ReadOnlySpan<Vector3> vertices,
         in DirectedWaveFormationSettings settings)
     {
         int count = Mathf.Max(1, settings.enemyCount);
-        if (count <= 1 || vertices == null || vertices.Length == 0)
+        if (count <= 1 || vertices.Length == 0)
             return settings.center;
 
         float totalLength = 0f;
@@ -238,44 +253,35 @@ internal static class DirectedWaveFormationSolver
         return vertices[0];
     }
 
-    private static Vector3[] GetTriangleVertices(
-        in DirectedWaveFormationSettings settings)
+    private static void GetTriangleVertices(
+        in DirectedWaveFormationSettings settings, System.Span<Vector3> vertices)
     {
         Vector2 flattening = GetSafeShapeFlattening(settings);
-        return new[]
-        {
-            GetShapePoint(90f, flattening, settings),
-            GetShapePoint(210f, flattening, settings),
-            GetShapePoint(330f, flattening, settings)
-        };
+        vertices[0] = GetShapePoint(90f, flattening, settings);
+        vertices[1] = GetShapePoint(210f, flattening, settings);
+        vertices[2] = GetShapePoint(330f, flattening, settings);
     }
 
-    private static Vector3[] GetSquareVertices(
-        in DirectedWaveFormationSettings settings)
+    private static void GetSquareVertices(
+        in DirectedWaveFormationSettings settings, System.Span<Vector3> vertices)
     {
         Vector2 flattening = GetSafeShapeFlattening(settings);
         float x = settings.shapeRadius * flattening.x;
         float y = settings.shapeRadius * flattening.y;
-        return new[]
-        {
-            settings.center + new Vector3(-x, y, 0f),
-            settings.center + new Vector3(x, y, 0f),
-            settings.center + new Vector3(x, -y, 0f),
-            settings.center + new Vector3(-x, -y, 0f)
-        };
+        vertices[0] = settings.center + new Vector3(-x, y, 0f);
+        vertices[1] = settings.center + new Vector3(x, y, 0f);
+        vertices[2] = settings.center + new Vector3(x, -y, 0f);
+        vertices[3] = settings.center + new Vector3(-x, -y, 0f);
     }
 
-    private static Vector3[] GetDiamondVertices(
-        in DirectedWaveFormationSettings settings)
+    private static void GetDiamondVertices(
+        in DirectedWaveFormationSettings settings, System.Span<Vector3> vertices)
     {
         Vector2 flattening = GetSafeShapeFlattening(settings);
-        return new[]
-        {
-            settings.center + Vector3.up * settings.shapeRadius * flattening.y,
-            settings.center + Vector3.right * settings.shapeRadius * flattening.x,
-            settings.center + Vector3.down * settings.shapeRadius * flattening.y,
-            settings.center + Vector3.left * settings.shapeRadius * flattening.x
-        };
+        vertices[0] = settings.center + Vector3.up * settings.shapeRadius * flattening.y;
+        vertices[1] = settings.center + Vector3.right * settings.shapeRadius * flattening.x;
+        vertices[2] = settings.center + Vector3.down * settings.shapeRadius * flattening.y;
+        vertices[3] = settings.center + Vector3.left * settings.shapeRadius * flattening.x;
     }
 
     private static Vector3 GetShapePoint(

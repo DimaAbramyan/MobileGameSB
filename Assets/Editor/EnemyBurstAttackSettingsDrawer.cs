@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(EnemyBurstAttackSettings))]
@@ -123,16 +123,27 @@ internal static class EnemyAttackPatternFields
 
     public static float Height(SerializedProperty property, bool hasDelay)
     {
-        int lines = 6 + (Repeats(property) ? 2 : 0);
+        return EnemyShootingSettingsDrawer.SettingsHeight(property.FindPropertyRelative("shooting"), property, hasDelay);
+    }
+
+    public static float TimingHeight(SerializedProperty property, bool hasDelay)
+    {
+        int lines = (EnemyChildAttackSettingsDrawer.IsChildPattern(property) ? 5 : 7) + (Repeats(property) ? 2 : 0);
         if (hasDelay) lines += property.FindPropertyRelative("useAttackStartDelay").boolValue ? 2 : 1;
-        return lines * (EditorGUIUtility.singleLineHeight + Spacing)
-            + EditorGUI.GetPropertyHeight(property.FindPropertyRelative("shooting"), true) + Spacing;
+        return lines * (EditorGUIUtility.singleLineHeight + Spacing);
     }
 
     public static void Draw(ref Rect position, SerializedProperty property, bool hasDelay)
     {
+        EnemyShootingSettingsDrawer.DrawSettings(ref position, property.FindPropertyRelative("shooting"), property, hasDelay);
+    }
+
+    public static void DrawTiming(ref Rect position, SerializedProperty property, bool hasDelay)
+    {
         var shooting = property.FindPropertyRelative("shooting");
-        Field(ref position, shooting, "Shooting");
+        position.height = EditorGUIUtility.singleLineHeight;
+        EditorGUI.LabelField(position, "Attack Timing", EditorStyles.miniBoldLabel);
+        position.y += position.height + Spacing;
         if (hasDelay)
         {
             Field(ref position, property.FindPropertyRelative("useAttackStartDelay"), "Delay Attack Start");
@@ -148,7 +159,7 @@ internal static class EnemyAttackPatternFields
         var burstInterval = property.FindPropertyRelative("burstShotInterval");
         Field(ref position, count, repeats ? "Bursts Per Attack" : "Shots Per Attack");
         Field(ref position, interval, repeats ? "Burst Interval" : "Shot Interval");
-        Field(ref position, cooldown, "Attack Cooldown");
+        if (!EnemyChildAttackSettingsDrawer.IsChildPattern(property)) Field(ref position, cooldown, "Attack Cooldown");
         if (repeats)
         {
             Field(ref position, burstCount, "Shots Per Burst");
@@ -157,18 +168,33 @@ internal static class EnemyAttackPatternFields
         int events = Mathf.Max(1, count.intValue) * (repeats ? Mathf.Max(1, burstCount.intValue) : 1);
         int projectiles = events * EnemyShootingSettingsDrawer.GetProjectilesPerVolley(shooting);
         float duration = EnemyBurstAttackSettings.CalculateAttackDuration(repeats, count.intValue,
-            interval.floatValue, burstCount.intValue, burstInterval.floatValue);
+            interval.floatValue, burstCount.intValue, burstInterval.floatValue)
+            + ((EnemyEmissionLayoutSettings)shooting.FindPropertyRelative("emissionLayout").boxedValue).LaunchDuration;
         position.height = EditorGUIUtility.singleLineHeight;
-        EditorGUI.LabelField(position, $"Attack duration: {duration:0.###} s ({events} shot events / {projectiles} projectiles)", EditorStyles.miniLabel);
+        bool randomTiming = property.boxedValue is EnemyBurstAttackSettings burst ? burst.UsesRandomTiming
+            : property.boxedValue is EnemyAttackPatternSettings pattern && pattern.UsesRandomTiming;
+        bool randomGeometry = ((EnemyShootingSettings)shooting.boxedValue).UsesGeometryRandomization;
+        EditorGUI.LabelField(position, randomTiming || randomGeometry
+            ? $"Randomized attack · fixed values: {duration:0.###} s / {events} events / {projectiles} projectiles"
+            : $"Attack duration: {duration:0.###} s ({events} shot events / {projectiles} projectiles)", EditorStyles.miniLabel);
         position.y += position.height + Spacing;
-        EditorGUI.LabelField(position, $"Full attack cycle: {duration + Mathf.Max(0f, cooldown.floatValue):0.###} s (including cooldown)", EditorStyles.miniLabel);
-        position.y += position.height + Spacing;
+        if (!EnemyChildAttackSettingsDrawer.IsChildPattern(property))
+        {
+            var range = (RandomFloatRange)property.FindPropertyRelative("attackCooldownRandom").boxedValue;
+            if (range != null && range.enabled)
+            {
+                range.GetBounds(out float low, out float high, 0f);
+                EditorGUI.LabelField(position, $"Full attack cycle: {duration + low:0.###}–{duration + high:0.###} s (random cooldown)", EditorStyles.miniLabel);
+            }
+            else EditorGUI.LabelField(position, $"Full attack cycle: {duration + Mathf.Max(0f, cooldown.floatValue):0.###} s (including cooldown)", EditorStyles.miniLabel);
+            position.y += position.height + Spacing;
+        }
     }
 
     private static void Field(ref Rect position, SerializedProperty property, string label)
     {
         position.height = EditorGUI.GetPropertyHeight(property, true);
-        EditorGUI.PropertyField(position, property, new GUIContent(label), true);
+        EditorGUI.PropertyField(position, property, new GUIContent(label, EnemyAttackInspectorHints.Field(property)), true);
         position.y += position.height + Spacing;
     }
 }
@@ -181,6 +207,8 @@ internal static class EnemyFacingFields
 
     public static float Height(SerializedProperty property)
     {
+        if (property.FindPropertyRelative("facingMode").enumValueIndex == (int)EnemyFacingMode.Rotation)
+            return Line + EditorGUI.GetPropertyHeight(property.FindPropertyRelative("facingRotation"), true) + 2f;
         if (!Follows(property))
             return Line;
         return 4 * Line + (MissingPattern(property) ? 2 * Line : 0f);
@@ -193,8 +221,17 @@ internal static class EnemyFacingFields
 
     public static void Draw(ref Rect position, SerializedProperty property)
     {
-        EditorGUI.PropertyField(position, property.FindPropertyRelative("facingMode"), new GUIContent("Facing Mode"));
+        EditorGUI.PropertyField(position, property.FindPropertyRelative("facingMode"), new GUIContent("Enemy Facing"));
         position.y += Line;
+        if (property.FindPropertyRelative("facingMode").enumValueIndex == (int)EnemyFacingMode.Rotation)
+        {
+            var rotation = property.FindPropertyRelative("facingRotation");
+            position.height = EditorGUI.GetPropertyHeight(rotation, true);
+            EditorGUI.PropertyField(position, rotation, new GUIContent("Enemy Facing Rotation"), true);
+            position.y += position.height + 2f;
+            position.height = EditorGUIUtility.singleLineHeight;
+            return;
+        }
         if (!Follows(property))
             return;
         var patterns = property.FindPropertyRelative("patterns");
@@ -207,7 +244,8 @@ internal static class EnemyFacingFields
         {
             var shooting = multiple ? patterns.GetArrayElementAtIndex(i).FindPropertyRelative("shooting")
                 : property.FindPropertyRelative("shooting");
-            string type = shooting.FindPropertyRelative("shootingType").enumDisplayNames[shooting.FindPropertyRelative("shootingType").enumValueIndex];
+            var layout = shooting.FindPropertyRelative("emissionLayout.type");
+            string type = layout.enumDisplayNames[layout.enumValueIndex];
             string shape = shooting.FindPropertyRelative("shootingMode").enumDisplayNames[shooting.FindPropertyRelative("shootingMode").enumValueIndex];
             labels[i] = $"Pattern {i + 1} ({type} / {shape})";
             if (!multiple || (i == 0 && string.IsNullOrEmpty(selected.stringValue))

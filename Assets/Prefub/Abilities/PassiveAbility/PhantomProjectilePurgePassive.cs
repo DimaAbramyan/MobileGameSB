@@ -54,7 +54,7 @@ public sealed class PhantomProjectilePurgePassive : PassiveAbility
                 continue;
             }
 
-            Destroy(enemyProjectile.gameObject);
+            enemyProjectile.TryDestroyByAbility();
         }
     }
 

@@ -1,0 +1,60 @@
+{
+  "success": true,
+  "command": "command console",
+  "data": {
+    "command": "console",
+    "parameters": {
+      "level": "error",
+      "tail": "10"
+    },
+    "result": {
+      "entries": [
+        {
+          "seq": 22,
+          "timestampUtc": "2026-10-21T07:41:43.1940299Z",
+          "level": "error",
+          "logType": "Error",
+          "message": "Missing Profiler.EndSample (Every BeginSample call must have a subsequent EndSample call within the same frame): SearchImporter.IndexingRequest\nPrevious 5 samples:\n\tGC.Alloc\n\tMono.JIT\n\tGC.Alloc\n\tMono.JIT\n\tGC.Alloc\nIn the scope:\n\tSearchImporter.IndexingRequest\n\tEditorApplication.delayCall: UnityEditor.Search.SearchInit.IndexationOnStartup\n\tUnityEditor.CoreModule.dll!UnityEditor::EditorApplication.Internal_CallDelayFunctions() [Invoke]\n\tInspector.Tick\n\tApplication.Tick",
+          "stackTrace": "",
+          "seeded": false
+        },
+        {
+          "seq": 23,
+          "timestampUtc": "2026-10-21T07:41:43.7603891Z",
+          "level": "error",
+          "logType": "Error",
+          "message": "Non-matching Profiler.EndSample (Every EndSample call must have a preceding BeginSample call within the same frame): SearchImporter.IndexingRequest\nPrevious 5 samples:\n\tGC.Alloc\n\tMono.JIT\n\tGC.Alloc\n\tMono.JIT\n\tGC.Alloc\nIn the scope:\n\tUnityEditor.CoreModule.dll!UnityEditor::EditorApplication.Internal_InvokeTickEvents() [Invoke]\n\tApplication.TickGlobalCallbacks\n\tApplication.Tick\n\tEditorLoop\n\tMain Thread",
+          "stackTrace": "",
+          "seeded": false
+        }
+      ],
+      "cursor": 31,
+      "session": "011f846b39a0419bb14038e5914d5515",
+      "returned": 2,
+      "dropped": false,
+      "reset": false,
+      "counts": {
+        "error": 2,
+        "warn": 29,
+        "log": 0
+      },
+      "groundTruth": {
+        "sampledUtc": "2026-10-21T07:51:35.6580606Z",
+        "ageMs": 4,
+        "compilationFailed": false,
+        "compiling": false,
+        "consoleErrors": 2,
+        "consoleWarnings": 16,
+        "consoleLogs": 0,
+        "seeded": true
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

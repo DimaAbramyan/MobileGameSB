@@ -44,7 +44,7 @@ public class WeaponData : ScriptableObject
 
     [Header("Damage Type")]
     [SerializeField] private EnemyDamageType damageType =
-        EnemyDamageType.Kinetic;
+        EnemyDamageType.Kinetick;
 
     [Header("Behaviours")]
     [FormerlySerializedAs("movementMode")]

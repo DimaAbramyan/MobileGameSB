@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb4f858a507b353499313b36b3edc0be, type: 3}
+  m_Name: Orbit
+  m_EditorClassIdentifier: 
+  speed: 300
+  mass: 4
+  drag: 8
+  maximumHealthPoints: 5
+  overrideHealthRegeneration: 0
+  healthRegenCooldown: 60
+  healthRegenRate: 10
+  maximumShieldPoints: 5
+  overrideShieldRegeneration: 0
+  shieldRegenCooldown: 30
+  shieldRegenRate: 10
+  maximumEnergy: 20
+  maximumWeaponCount: 3
+  currentLvl: 0
+  abilityDamageProgression:
+    damageBonusPercentByLevel:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+  abilityDamageProgressionConfig: {fileID: 11400000, guid: f05d27d9f21b85e4aa3282c7803455c2, type: 2}
+  shipId: 11
+  shipMetaConfig: {fileID: 11400000, guid: dd2dee7818a79814c87ae877ae451f67, type: 2}

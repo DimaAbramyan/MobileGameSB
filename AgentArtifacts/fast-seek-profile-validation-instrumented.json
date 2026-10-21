@@ -1,0 +1,38 @@
+{
+  "success": true,
+  "command": "command run_script",
+  "data": {
+    "command": "run_script",
+    "parameters": {
+      "file": "AgentScripts/VerifyFastSeekProfiling.cs",
+      "entry": "VerifyFastSeekProfiling.Run",
+      "timeout_ms": "240000"
+    },
+    "result": {
+      "diagnostics": [],
+      "compileMs": 60,
+      "executeMs": 14194,
+      "assemblyName": "PipelineRunScript_VerifyFastSeekProfiling_64bf47fbf3974adaa84955d9a4e626b1",
+      "success": true,
+      "result": {
+        "instrumented": {
+          "passed": true,
+          "checks": 1018,
+          "fullManagedAndNativeState": true,
+          "seek60": true,
+          "retarget": true,
+          "transport": true,
+          "maxSpeed": true
+        },
+        "profilerSteps": 4717
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

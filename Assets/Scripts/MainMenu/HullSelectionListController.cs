@@ -54,7 +54,7 @@ public sealed class HullSelectionListController : MonoBehaviour
         for (int i = 0; i < hulls.Count; i++)
         {
             HullContentDefinition hull = hulls[i];
-            if (hull == null)
+            if (hull == null || !hull.IsAvailableForCrafting)
                 continue;
 
             bool isOwned = contentProgressService.IsOwned(hull);

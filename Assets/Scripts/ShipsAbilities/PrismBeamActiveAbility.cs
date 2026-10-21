@@ -1,149 +1,96 @@
-using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Zenject;
 
 public sealed class PrismBeamActiveAbility : ActiveAbility
 {
-    private const float ChargeDuration = 1f;
-    private const float BeamRange = 30f;
-    private const float BeamHalfWidth = 0.35f;
-
-    [Inject] private EnemyManager enemyManager;
     [Inject] private DealDamageManager dealDamageManager;
+    [Inject] private EnemyProjectileCollisionRegistry projectileRegistry;
 
-    [Header("Default Meta Contract")]
     [FormerlySerializedAs("defaultBeamDamage")]
-    [SerializeField, HideInInspector, Min(0f)]
-    private float defaultPlasmaDamage = 150f;
+    [SerializeField, HideInInspector, Min(0f)] private float defaultPlasmaDamage = 150f;
     [FormerlySerializedAs("defaultBeamDamageBonusPercent")]
-    [SerializeField, HideInInspector, Min(0f)]
-    private float defaultPlasmaDamageBonusPercent = 15f;
+    [SerializeField, HideInInspector, Min(0f)] private float defaultPlasmaDamageBonusPercent = 15f;
     [FormerlySerializedAs("defaultEnergyDamageBonusPercent")]
-    [SerializeField, HideInInspector, Min(0f)]
-    private float defaultElectricDamageBonusPercent = 10f;
+    [SerializeField, HideInInspector, Min(0f)] private float defaultElectricDamageBonusPercent = 10f;
+    [SerializeField, HideInInspector] private GameObject defaultWavePrefab;
 
-      private PrismShipMetaContract metaContract;
-      private Coroutine chargeCoroutine;
-      private float abilityDamageMultiplier = 1f;
+    private PrismShipMetaContract metaContract;
+    private float abilityDamageMultiplier = 1f;
+    private readonly List<PrismEnergyWave> waves = new();
 
-    protected override void Awake()
+    protected override void ApplySpecificShipMetaStats(ShipMetaRuntimeStats stats)
     {
-        base.Awake();
-        if (cooldown <= 0f)
-            cooldown = 12f;
+        stats.TryGetContract(out PrismShipMetaContract contract);
+        metaContract = contract != null ? (PrismShipMetaContract)contract.Clone() : null;
     }
 
-      protected override void ApplySpecificShipMetaStats(
-          ShipMetaRuntimeStats stats)
-    {
-        stats.TryGetContract(out metaContract);
-      }
-
-      public override void ApplyBattleAbilityDamageMultiplier(
-          float damageMultiplier)
-      {
-          abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
-      }
+    public override void ApplyBattleAbilityDamageMultiplier(float damageMultiplier)
+        => abilityDamageMultiplier = Mathf.Max(1f, damageMultiplier);
 
     public PrismShipMetaContract CreateDefaultMetaContract()
     {
         var contract = new PrismShipMetaContract();
-        contract.Configure(
-            defaultPlasmaDamage,
-            defaultPlasmaDamageBonusPercent,
-            defaultElectricDamageBonusPercent);
+        contract.Configure(defaultPlasmaDamage, defaultPlasmaDamageBonusPercent, defaultElectricDamageBonusPercent);
+        contract.ConfigureWave(defaultWavePrefab, 1f, 4f, .3f, 1.5f, 15f, EnemyDamageType.Plazma, false);
         return contract;
     }
 
     public override bool Activate(ParentShip activationOwner)
     {
-        if (activationOwner == null
-            || metaContract == null
-            || enemyManager == null
-            || dealDamageManager == null
-            || chargeCoroutine != null)
+        if (activationOwner == null || activationOwner.IsDestroyed || metaContract == null || dealDamageManager == null)
+            return false;
+        if (metaContract.WavePrefab == null)
         {
+            Debug.LogError("Prism energy wave requires WavePrefab in PrismMeta.", this);
             return false;
         }
-
-        activationOwner.LockShipSwitching(ChargeDuration);
-        chargeCoroutine = StartCoroutine(ChargeAndFire(activationOwner));
-        return true;
-    }
-
-    private IEnumerator ChargeAndFire(ParentShip activationOwner)
-    {
-        yield return new WaitForSeconds(ChargeDuration);
-
-        if (activationOwner != null)
-            FireBeam(activationOwner);
-
-        chargeCoroutine = null;
-    }
-
-    private void FireBeam(ParentShip activationOwner)
-    {
-        Vector2 origin = activationOwner.transform.position;
-        Vector2 direction = activationOwner.transform.up;
-        if (direction.sqrMagnitude <= Mathf.Epsilon)
-            return;
-
-        direction.Normalize();
-        DamageEnemiesOnBeam(activationOwner, origin, direction);
-
-        Material material = activationOwner.TryGetComponent(
-            out SpriteRenderer spriteRenderer)
-            ? spriteRenderer.sharedMaterial
-            : null;
-        PrismBeamVisual.Create(
-            origin,
-            origin + direction * BeamRange,
-            material);
-    }
-
-    private void DamageEnemiesOnBeam(
-        ParentShip activationOwner,
-        Vector2 origin,
-        Vector2 direction)
-    {
-        if (enemyManager.enemyList == null)
-            return;
-
-        for (int index = enemyManager.enemyList.Count - 1;
-             index >= 0;
-             index--)
+        if (metaContract.DestroyProjectiles && projectileRegistry == null)
         {
-            Enemy enemy = enemyManager.enemyList[index];
-            if (enemy == null || enemy.isDead || !enemy.isActiveAndEnabled)
-                continue;
-
-            Vector2 offset = enemy.transform.position - (Vector3)origin;
-            float forwardDistance = Vector2.Dot(offset, direction);
-            if (forwardDistance < 0f || forwardDistance > BeamRange)
-                continue;
-
-            float lateralDistance = Mathf.Abs(
-                direction.x * offset.y - direction.y * offset.x);
-            if (lateralDistance > BeamHalfWidth)
-                continue;
-
-            dealDamageManager.DealDamage(
-                  enemy,
-                  activationOwner,
-                  metaContract.PlasmaDamage * abilityDamageMultiplier,
-                  EnemyDamageType.Plasma);
+            Debug.LogError("Prism energy wave requires the enemy projectile registry.", this);
+            return false;
         }
+        Vector2 direction = activationOwner.transform.up;
+        if (direction.sqrMagnitude < .0001f) return false;
+        direction.Normalize();
+        var root = new GameObject("Prism Energy Wave");
+        root.transform.position = activationOwner.transform.position + (Vector3)(direction * metaContract.SpawnOffset);
+        root.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f);
+        var wave = root.AddComponent<PrismEnergyWave>();
+        wave.Initialize(activationOwner, metaContract, abilityDamageMultiplier, dealDamageManager, projectileRegistry);
+        for (int i = waves.Count - 1; i >= 0; i--)
+            if (waves[i] == null) waves.RemoveAt(i);
+        waves.Add(wave);
+        return true;
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
+        for (int i = waves.Count - 1; i >= 0; i--)
+        {
+            if (waves[i] == null) continue;
+            if (Application.isPlaying) Destroy(waves[i].gameObject);
+            else DestroyImmediate(waves[i].gameObject);
+        }
+        waves.Clear();
+    }
 
-        if (chargeCoroutine == null)
-            return;
-
-        StopCoroutine(chargeCoroutine);
-        chargeCoroutine = null;
+    private void OnDrawGizmosSelected()
+    {
+        ParentShip ship = GetComponent<ParentShip>();
+        PrismShipMetaContract config = metaContract;
+        if (config == null && ship != null && ship.ShipData != null)
+            ship.ShipData.GetMetaRuntimeStats(0).TryGetContract(out config);
+        if (config == null) return;
+        Matrix4x4 previous = Gizmos.matrix; Color previousColor = Gizmos.color;
+        Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, Vector3.one);
+        Gizmos.color = new Color(.1f, .85f, 1f);
+        Vector3 size = new Vector3(config.WaveWidth, config.WaveThickness, .01f);
+        Vector3 start = Vector3.up * config.SpawnOffset;
+        Vector3 end = start + Vector3.up * config.MaxDistance;
+        Gizmos.DrawWireCube(start, size); Gizmos.DrawLine(start, end); Gizmos.DrawWireCube(end, size);
+        Gizmos.matrix = previous; Gizmos.color = previousColor;
     }
 }

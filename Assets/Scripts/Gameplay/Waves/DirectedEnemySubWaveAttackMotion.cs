@@ -83,6 +83,12 @@ public sealed partial class DirectedEnemySubWave
             position);
     }
 
+    internal bool UsesFixedAttackMovement(Enemy enemy)
+    {
+        Rigidbody2D body = GetCachedEnemyBody(enemy);
+        return body != null && body.simulated;
+    }
+
     internal IEnumerator ReturnAttackEnemyAlongEntrancePath(
         Enemy enemy,
         float speedMultiplier)

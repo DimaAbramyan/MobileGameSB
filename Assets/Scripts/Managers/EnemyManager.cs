@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class EnemyManager
 {
+    public Vector3 LastKilledEnemyPosition { get; private set; }
+    public int EnemyKillCount { get; private set; }
     public event Action<Enemy> OnEnemyAdded;
     public event Action<Enemy> OnEnemyDestroyed;
     public List<Enemy> enemyList { get; private set; }
@@ -127,7 +129,12 @@ public class EnemyManager
     }
     public void NotifyEnemyDestroyed(Enemy enemy)
     {
-        enemyList.Remove(enemy);
+        if (enemy != null && enemy.isDead)
+        {
+            LastKilledEnemyPosition = enemy.transform.position;
+            EnemyKillCount++;
+        }
+        enemyList?.Remove(enemy);
         OnEnemyDestroyed?.Invoke(enemy);
     }
 }

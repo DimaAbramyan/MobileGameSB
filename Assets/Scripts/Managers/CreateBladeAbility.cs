@@ -1,10 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Zenject;
 
 public class CreateBladeAbility : ActiveAbility
 {
+    [Inject] private EnemyProjectileCollisionRegistry projectileCollisionRegistry;
+    [Inject] private DealDamageManager damageManager;
+    private EnemyDamageType damageType = EnemyDamageType.Default;
     [SerializeField] private GameObject blade;
+    private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.NormalAndFragile;
     [SerializeField, HideInInspector, Min(0.05f)]
     private float recordingDuration = 1f;
     [SerializeField, HideInInspector] private float sampleInterval = 0.1f;
@@ -32,7 +39,9 @@ public class CreateBladeAbility : ActiveAbility
         bladeWidth = contract.Width;
         bladeSpeed = contract.Speed;
         bladeDamage = contract.Damage;
+        damageType = contract.DamageType;
         bladeLifetime = contract.Lifetime;
+        projectileDestructionPolicy = contract.ProjectileDestructionPolicy;
       }
 
       public override void ApplyBattleAbilityDamageMultiplier(
@@ -86,8 +95,17 @@ public class CreateBladeAbility : ActiveAbility
 
     public void SpawnBlade(ParentShip owner = null)
     {
-        if (savedPoints.Count < 2)
+        if (savedPoints.Count == 0)
             return;
+
+        if (savedPoints.Count == 1)
+        {
+            Vector2 center = savedPoints[0];
+            Vector2 forward = GetForwardDirection(owner);
+            Vector2 right = new Vector2(forward.y, -forward.x) * bladeWidth * .5f;
+            savedPoints[0] = center - right;
+            savedPoints.Add(center + right);
+        }
 
         GameObject trail = Instantiate(blade, savedPoints[0], Quaternion.identity);
         MaterializedBladeTrail materializedBlade =
@@ -96,6 +114,7 @@ public class CreateBladeAbility : ActiveAbility
         if (materializedBlade == null)
             materializedBlade = trail.AddComponent<MaterializedBladeTrail>();
 
+          materializedBlade.SetProjectileDestructionPolicy(projectileDestructionPolicy);
           materializedBlade.Init(
               savedPoints,
               GetForwardDirection(owner),
@@ -104,7 +123,8 @@ public class CreateBladeAbility : ActiveAbility
               bladeDamage,
               bladeLifetime,
               owner,
-              abilityDamageMultiplier);
+              abilityDamageMultiplier,
+              projectileCollisionRegistry, damageManager, damageType);
         savedPoints.Clear();
     }
 
@@ -201,8 +221,23 @@ public class CreateBladeAbility : ActiveAbility
     }
 }
 
-public sealed class MaterializedBladeTrail : MonoBehaviour
+public sealed class MaterializedBladeTrail : EnemyProjectileInterceptor
 {
+    private DealDamageManager damageManager;
+    private EnemyDamageType damageType = EnemyDamageType.Default;
+    private readonly ContactFilter2D damageFilter = new ContactFilter2D { useTriggers = true };
+    private Collider2D[] overlapHits = new Collider2D[32];
+    private RaycastHit2D[] sweepHits = new RaycastHit2D[32];
+    private Vector2 previousDamagePosition;
+    private EnemyProjectileCollisionRegistry projectileRegistry;
+    private Vector2[] projectileEdgePoints;
+    private Vector2 previousPosition;
+    private float projectileEdgeRadius;
+    private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.NormalAndFragile;
+    public override EnemyProjectileDestructionPolicy ProjectileDestructionPolicy =>
+        projectileDestructionPolicy;
+    public void SetProjectileDestructionPolicy(EnemyProjectileDestructionPolicy policy)
+        => projectileDestructionPolicy = policy;
     private readonly HashSet<Enemy> damagedEnemies = new();
 
     private float damage;
@@ -222,10 +257,15 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
           float damage,
           float lifetime,
           ParentShip sourceOwner,
-          float damageMultiplier)
+          float damageMultiplier,
+          EnemyProjectileCollisionRegistry collisionRegistry = null,
+          DealDamageManager damageManager = null,
+          EnemyDamageType damageType = EnemyDamageType.Default)
     {
         this.speed = speed;
         this.damage = damage;
+        this.damageManager = damageManager;
+        this.damageType = damageType;
           this.lifetime = lifetime;
           owner = sourceOwner;
           fallbackDamageMultiplier = Mathf.Max(1f, damageMultiplier);
@@ -245,7 +285,44 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
 
         ConfigurePhysics(localPoints, width);
         ConfigureVisual(localPoints, width);
+        projectileRegistry?.UnregisterInterceptor(this);
+        projectileRegistry = collisionRegistry;
+        projectileEdgePoints = localPoints;
+        projectileEdgeRadius = width * 0.5f;
+        previousPosition = transform.position;
+        previousDamagePosition = transform.position;
+        projectileRegistry?.RegisterInterceptor(this);
+        ScanDamageContacts();
     }
+
+    public void AppendProjectileCollisionTargets(DynamicBuffer<EnemyProjectileCollisionTarget> targets, int targetId)
+    {
+        if (!isActiveAndEnabled || projectileEdgePoints == null) return;
+        Vector2 currentPosition = transform.position;
+        Vector2 displacement = currentPosition - previousPosition;
+        float radius = projectileEdgeRadius * Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
+        for (int i = 1; i < projectileEdgePoints.Length; i++)
+        {
+            Vector3 a = transform.TransformPoint(projectileEdgePoints[i - 1]);
+            Vector3 b = transform.TransformPoint(projectileEdgePoints[i]);
+            targets.Add(new EnemyProjectileCollisionTarget
+            {
+                TargetId = targetId,
+                Kind = EnemyProjectileCollisionTargetKind.Interceptor,
+                DestroysNormal = DestroysNormalProjectiles ? (byte)1 : (byte)0,
+                IsSegment = 1,
+                SegmentStart = new float2(a.x, a.y),
+                SegmentEnd = new float2(b.x, b.y),
+                SegmentDisplacement = new float2(displacement.x, displacement.y),
+                Radius = radius
+            });
+        }
+        previousPosition = currentPosition;
+    }
+
+    private void OnEnable() => projectileRegistry?.RegisterInterceptor(this);
+    private void OnDisable() => projectileRegistry?.UnregisterInterceptor(this);
+    private void OnDestroy() => projectileRegistry?.UnregisterInterceptor(this);
 
     private void ConfigurePhysics(Vector2[] localPoints, float width)
     {
@@ -258,6 +335,7 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
             edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
 
         edgeCollider.isTrigger = true;
+        edgeCollider.enabled = true;
         edgeCollider.edgeRadius = width * 0.5f;
         edgeCollider.points = localPoints;
 
@@ -267,6 +345,8 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
 
         body.bodyType = RigidbodyType2D.Kinematic;
         body.gravityScale = 0f;
+        body.useFullKinematicContacts = true;
+        body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         body.linearVelocity = direction * speed;
     }
 
@@ -301,6 +381,7 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
 
     private void FixedUpdate()
     {
+        ScanDamageContacts();
         aliveTime += Time.fixedDeltaTime;
         if (aliveTime >= lifetime)
         {
@@ -327,21 +408,60 @@ public sealed class MaterializedBladeTrail : MonoBehaviour
 
     private void HandleContact(Collider2D other)
     {
+        if (other == null) return;
         EnemyProjectile enemyProjectile =
             other.GetComponentInParent<EnemyProjectile>();
         if (enemyProjectile != null)
         {
-            Destroy(enemyProjectile.gameObject);
+            TryDestroyEnemyProjectile(enemyProjectile);
             return;
         }
 
         Enemy enemy = other.GetComponentInParent<Enemy>();
-        if (enemy == null || damagedEnemies.Contains(enemy))
+        if (enemy == null || enemy.isDead || damagedEnemies.Contains(enemy))
             return;
 
         damagedEnemies.Add(enemy);
-          enemy.TakeDamage(damage * GetCurrentDamageMultiplier());
+        float amount = damage * GetCurrentDamageMultiplier();
+        if (damageManager != null) damageManager.DealDamage(enemy, owner, amount, damageType);
+        else
+        {
+            var result = enemy.TakeDamageWithType(amount, damageType);
+            if (result.DidDamageHull) owner?.NotifyDamageDealt(result.HullDamage);
+        }
       }
+
+    private void ScanDamageContacts()
+    {
+        if (projectileEdgePoints == null) return;
+        Vector2 currentPosition = transform.position;
+        Vector2 displacement = currentPosition - previousDamagePosition;
+        float distance = displacement.magnitude;
+        float radius = projectileEdgeRadius * Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
+        for (int i = 1; i < projectileEdgePoints.Length; i++)
+        {
+            Vector2 a = transform.TransformPoint(projectileEdgePoints[i - 1]);
+            Vector2 b = transform.TransformPoint(projectileEdgePoints[i]);
+            Vector2 center = (a + b) * .5f;
+            Vector2 edge = b - a;
+            Vector2 size = new Vector2(edge.magnitude + radius * 2f, radius * 2f);
+            float angle = Mathf.Atan2(edge.y, edge.x) * Mathf.Rad2Deg;
+            if (distance > 0f)
+            {
+                int count;
+                while ((count = Physics2D.CapsuleCast(center - displacement, size, CapsuleDirection2D.Horizontal,
+                    angle, displacement / distance, damageFilter, sweepHits, distance)) == sweepHits.Length)
+                    System.Array.Resize(ref sweepHits, sweepHits.Length * 2);
+                for (int hit = 0; hit < count; hit++) HandleContact(sweepHits[hit].collider);
+            }
+            int overlaps;
+            while ((overlaps = Physics2D.OverlapCapsule(center, size, CapsuleDirection2D.Horizontal,
+                angle, damageFilter, overlapHits)) == overlapHits.Length)
+                System.Array.Resize(ref overlapHits, overlapHits.Length * 2);
+            for (int hit = 0; hit < overlaps; hit++) HandleContact(overlapHits[hit]);
+        }
+        previousDamagePosition = currentPosition;
+    }
 
       private float GetCurrentDamageMultiplier()
       {

@@ -4,11 +4,15 @@ public class HealthRegeneration : MonoBehaviour
 {
     private ParentShip parentShip;
     private float healthRegenCooldown;
-    float healthRegenRate;
+    // Keep the existing zero-rate switch for configurations with regeneration disabled.
+    private bool regenerationEnabled;
+    // Restarted by health damage or a completed recovery step.
     private float lastDamageTime;
-    private bool isRegenerating;
+    private float pauseStartedAt;
+    private bool isPaused;
 
-    private bool CanRegenerate => Time.time - lastDamageTime >= healthRegenCooldown;
+    private float ElapsedTime => (isPaused ? pauseStartedAt : Time.time) - lastDamageTime;
+    private bool CanRegenerate => ElapsedTime >= healthRegenCooldown;
 
     private void Awake()
     {
@@ -20,18 +24,47 @@ public class HealthRegeneration : MonoBehaviour
         }
 
         healthRegenCooldown = parentShip.ShipData.HealthRegenCooldown;
-        healthRegenRate = parentShip.ShipData.HealthRegenRatePercent;
-        lastDamageTime = float.NegativeInfinity;
+        regenerationEnabled = parentShip.ShipData.HealthRegenRatePercent > 0f;
+        lastDamageTime = Time.time;
+        SetPaused(parentShip.IsVisible || parentShip.IsDestroyed);
 
-        parentShip.OnDamagePipeline += OnDamageTaken;
+        parentShip.OnHealthDamageTaken += OnHealthDamageTaken;
     }
 
-    private float OnDamageTaken(float damage)
+    private void OnHealthDamageTaken(float damage)
+    {
+        RestartCooldown();
+    }
+
+    public void RestartCooldown()
     {
         lastDamageTime = Time.time;
-        isRegenerating = false;
+        if (isPaused)
+            pauseStartedAt = Time.time;
         UpdateCooldownProgress();
-        return damage;
+    }
+
+    public void SetPaused(bool paused)
+    {
+        if (isPaused == paused)
+            return;
+        if (paused)
+            pauseStartedAt = Time.time;
+        else
+            lastDamageTime += Time.time - pauseStartedAt;
+        isPaused = paused;
+        UpdateCooldownProgress();
+    }
+
+    private void OnDisable()
+    {
+        SetPaused(true);
+    }
+
+    private void OnEnable()
+    {
+        if (parentShip != null)
+            SetPaused(parentShip.IsVisible || parentShip.IsDestroyed || parentShip.CurrentHealthPoints <= 0f);
     }
 
     private void Update()
@@ -39,50 +72,33 @@ public class HealthRegeneration : MonoBehaviour
         if (parentShip == null)
             return;
 
+        SetPaused(parentShip.IsVisible || parentShip.IsDestroyed || parentShip.CurrentHealthPoints <= 0f);
+        if (isPaused)
+            return;
+
         UpdateCooldownProgress();
 
         if (!CanRegenerate)
-        {
-            isRegenerating = false;
             return;
-        }
 
-        if (parentShip.IsVisible)
-        {
-            isRegenerating = false;
-            return;
-        }
-
-        if (healthRegenRate <= 0f
+        if (!regenerationEnabled
             || parentShip.CurrentHealthPoints >= parentShip.MaximumHealthPoints)
-        {
-            isRegenerating = false;
             return;
-        }
 
-        if (!isRegenerating)
-        {
-            isRegenerating = true;
-            parentShip.NotifyHealthRegenerationStarted();
-        }
-
-        float restoredHealth = parentShip.MaximumHealthPoints
-            * healthRegenRate
-            / 100f
-            * Time.deltaTime;
-        parentShip.HealHealth(restoredHealth);
+        parentShip.NotifyHealthRegenerationStarted();
+        parentShip.HealHealth(1f);
+        RestartCooldown();
 
         if (parentShip.CurrentHealthPoints < parentShip.MaximumHealthPoints)
             return;
 
-        isRegenerating = false;
         parentShip.NotifyHealthFullyRegenerated();
     }
 
     private void OnDestroy()
     {
         if (parentShip != null)
-            parentShip.OnDamagePipeline -= OnDamageTaken;
+            parentShip.OnHealthDamageTaken -= OnHealthDamageTaken;
     }
 
     private void UpdateCooldownProgress()
@@ -92,7 +108,7 @@ public class HealthRegeneration : MonoBehaviour
 
         float progress = healthRegenCooldown <= 0f
             ? 1f
-            : (Time.time - lastDamageTime) / healthRegenCooldown;
+            : ElapsedTime / healthRegenCooldown;
         parentShip.SetHealthRegenerationCooldownProgress(progress);
     }
 }

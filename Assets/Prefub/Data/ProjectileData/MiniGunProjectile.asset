@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileData
   deliveryType: 0
   simulationBackend: 1
-  damage: 3
+  damage: 2
   damageType: 0
   projectilePrefab: {fileID: 7717844111302252331, guid: 706e464bd5135fc41a46c7b729c11279, type: 3}
   range: 10

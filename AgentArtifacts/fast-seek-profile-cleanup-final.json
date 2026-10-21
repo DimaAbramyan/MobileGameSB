@@ -1,0 +1,28 @@
+{
+  "success": true,
+  "command": "command eval",
+  "data": {
+    "command": "eval",
+    "parameters": {
+      "code": "return new { profilerDisabled = !UnityEditorInternal.ProfilerDriver.enabled, profileEditor = UnityEditorInternal.ProfilerDriver.profileEditor, diagnosticOff = WavePreviewProfiler.Current == null && !WavePreviewProfiler.UnitySamples && !WavePreviewProfiler.SkipNewSnapshots && !WavePreviewProfiler.IntermediateVisuals && WavePreviewProfiler.ProjectileLimit == -1, worlds = Unity.Entities.World.All.Count };"
+    },
+    "result": {
+      "output": null,
+      "diagnostics": [],
+      "success": true,
+      "result": {
+        "profilerDisabled": true,
+        "profileEditor": false,
+        "diagnosticOff": true,
+        "worlds": 0
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

@@ -17,8 +17,8 @@ MonoBehaviour:
   maxLevels: 1
   levels:
   - basicStats:
-      maximumHealthPoints: 50
-      maximumShieldPoints: 50
+      maximumHealthPoints: 5
+      maximumShieldPoints: 5
       healthRegenRatePercent: 10
       shieldRegenRatePercent: 10
       speed: 300
@@ -42,6 +42,15 @@ MonoBehaviour:
     - rid: 3397718835116900445
       type: {class: PrismShipMetaContract, ns: , asm: Assembly-CSharp}
       data:
+        wavePrefab: {fileID: 1885442798797967922, guid: 5c5d8da36382aad4fab5b62e4b6a9f18, type: 3}
+        spawnOffset: 1
+        waveWidth: 4
+        waveThickness: 0.3
+        waveSpeed: 1.5
+        maxDistance: 15
+        damageType: 1
+        destroyProjectiles: 1
+        projectileDestructionPolicy: 0
         plasmaDamage: 150
         plasmaDamageBonusPercent: 15
-        electricDamageBonusPercent: 10
+        electricDamageBonusPercent: 0

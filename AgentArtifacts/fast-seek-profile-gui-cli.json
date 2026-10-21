@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "command": "command run_script",
+  "data": {
+    "command": "run_script",
+    "parameters": {
+      "file": "AgentScripts/ProfileWaveFastSeek.cs",
+      "entry": "ProfileWaveFastSeek.Gui",
+      "args": "[1]",
+      "timeout_ms": "240000"
+    },
+    "result": {
+      "diagnostics": [],
+      "compileMs": 273,
+      "executeMs": 55407,
+      "assemblyName": "PipelineRunScript_ProfileWaveFastSeek_cbed034d25c647ff855bbd3d8ade7e3b",
+      "success": true,
+      "result": {
+        "wave": "1_4_extrime",
+        "wallMilliseconds": 48115.3209,
+        "activeMilliseconds": 40754.282,
+        "outsidePlayerMilliseconds": 7361.0389,
+        "steps": 1800
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

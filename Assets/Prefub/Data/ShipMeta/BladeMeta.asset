@@ -17,8 +17,8 @@ MonoBehaviour:
   maxLevels: 1
   levels:
   - basicStats:
-      maximumHealthPoints: 60
-      maximumShieldPoints: 50
+      maximumHealthPoints: 2
+      maximumShieldPoints: 3
       healthRegenRatePercent: 10
       shieldRegenRatePercent: 10
       speed: 500
@@ -42,6 +42,7 @@ MonoBehaviour:
     - rid: 3397718787192520799
       type: {class: BladeShipMetaContract, ns: , asm: Assembly-CSharp}
       data:
+        projectileDestructionPolicy: 0
         recordingDuration: 1
         sampleInterval: 0.1
         width: 0.45

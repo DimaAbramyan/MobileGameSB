@@ -12,10 +12,12 @@ public class UIController : MonoBehaviour
         [SerializeField] private RectTransform hudRoot;
         [SerializeField] private StatBar healthBar;
         [SerializeField] private StatBar shieldBar;
+        [SerializeField] private StatBar extraHealthBar;
         [SerializeField] private UnityEngine.UI.Image shipPreviewFill;
         [Header("Health values")]
         [SerializeField] private TMP_Text healthValueText;
         [SerializeField] private TMP_Text shieldValueText;
+        [SerializeField] private TMP_Text extraHealthValueText;
         [Header("Regeneration cooldown")]
         [SerializeField] private Slider healthRegenerationCooldownSlider;
         [SerializeField] private Slider shieldRegenerationCooldownSlider;
@@ -25,6 +27,7 @@ public class UIController : MonoBehaviour
         [SerializeField] private TMP_Text abilityChargesCountText;
 
         private ParentShip boundShip;
+        private ExtraHealthPassive boundExtraHealth;
         private int displayedAbilityCharges = -1;
         private bool abilityChargesCountVisible;
 
@@ -72,6 +75,24 @@ public class UIController : MonoBehaviour
             boundShip.SubscribeShield(UpdateShieldValueText);
             boundShip.OnMaxShieldChanged += UpdateShieldValueText;
 
+            boundExtraHealth = boundShip.GetComponent<ExtraHealthPassive>();
+            if (boundExtraHealth != null && extraHealthBar != null)
+            {
+                extraHealthBar.Setup(boundShip,
+                    () => boundExtraHealth.MaximumExtraHealth,
+                    boundExtraHealth.SubscribeExtraHealth,
+                    boundExtraHealth.UnsubscribeExtraHealth,
+                    () => boundExtraHealth.ExtraHealth);
+                boundExtraHealth.OnMaximumExtraHealthChanged += extraHealthBar.UpdateMax;
+                boundExtraHealth.SubscribeExtraHealth(UpdateExtraHealthValueText);
+                UpdateExtraHealthValueText(boundExtraHealth.ExtraHealth);
+            }
+            else
+            {
+                extraHealthBar?.Clear();
+                SetValueText(extraHealthValueText, 0f, 0f);
+            }
+
             UpdateHealthValueText(boundShip.CurrentHealthPoints);
             UpdateShieldValueText(boundShip.CurrentShieldPoints);
 
@@ -91,6 +112,13 @@ public class UIController : MonoBehaviour
 
         public void Unbind()
         {
+            if (boundExtraHealth != null)
+            {
+                if (extraHealthBar != null)
+                    boundExtraHealth.OnMaximumExtraHealthChanged -= extraHealthBar.UpdateMax;
+                boundExtraHealth.UnsubscribeExtraHealth(UpdateExtraHealthValueText);
+            }
+            boundExtraHealth = null;
             if (boundShip != null)
             {
                 if (healthBar != null)
@@ -110,6 +138,7 @@ public class UIController : MonoBehaviour
 
             healthBar?.Clear();
             shieldBar?.Clear();
+            extraHealthBar?.Clear();
             if (shipPreviewFill != null)
             {
                 shipPreviewFill.sprite = null;
@@ -119,6 +148,7 @@ public class UIController : MonoBehaviour
             SetAbilityChargesCount(0, false);
             SetValueText(healthValueText, 0f, 0f);
             SetValueText(shieldValueText, 0f, 0f);
+            SetValueText(extraHealthValueText, 0f, 0f);
             boundShip = null;
         }
 
@@ -142,6 +172,12 @@ public class UIController : MonoBehaviour
             SetAbilityChargesCount(
                 ability.CurrentCharges,
                 hasCharges);
+        }
+
+        private void UpdateExtraHealthValueText(float value)
+        {
+            SetValueText(extraHealthValueText, value,
+                boundExtraHealth != null ? boundExtraHealth.MaximumExtraHealth : 0f);
         }
 
         private void UpdateHealthRegenerationCooldown(float progress)
@@ -253,6 +289,7 @@ public class UIController : MonoBehaviour
     [SerializeField, HideInInspector] private PlayerShipHUD[] shipStatusBars;
     [SerializeField] private HullCatalog hullCatalog;
     private ParentShip boundShip;
+    private ExtraHealthPassive boundExtraHealth;
 
     private bool HasExplicitTeamStatusBars => playerShip1Hud != null
         || playerShip2Hud != null;
@@ -265,6 +302,7 @@ public class UIController : MonoBehaviour
         if (playerController == null)
             return;
 
+        playerController.OnTeamShipsRevived += HandleTeamShipsRevived;
         if (!HasTeamStatusBars)
         {
             playerController.OnCurrentShipChanged += BindUI;
@@ -298,6 +336,8 @@ public class UIController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (playerController != null)
+            playerController.OnTeamShipsRevived -= HandleTeamShipsRevived;
         if (playerController != null && !HasTeamStatusBars)
             playerController.OnCurrentShipChanged -= BindUI;
 
@@ -313,6 +353,12 @@ public class UIController : MonoBehaviour
         }
 
         boundShip = null;
+    }
+
+    private void HandleTeamShipsRevived()
+    {
+        if (HasTeamStatusBars)
+            BindTeamStatusBars();
     }
 
     private void BindTeamStatusBars()
@@ -402,7 +448,8 @@ public class UIController : MonoBehaviour
 
         ExtraHealthPassive extraHealth = ship.GetComponent<ExtraHealthPassive>();
 
-        if (extraHealth != null)
+        boundExtraHealth = extraHealth;
+        if (extraHealth != null && extraHealthBar != null)
         {
             extraHealthBar.Setup(
                 ship,
@@ -410,16 +457,21 @@ public class UIController : MonoBehaviour
                 extraHealth.SubscribeExtraHealth,
                 extraHealth.UnsubscribeExtraHealth,
                 () => extraHealth.ExtraHealth);
+            extraHealth.OnMaximumExtraHealthChanged += extraHealthBar.UpdateMax;
         }
         else
         {
-            extraHealthBar.SetValue(0);
+            extraHealthBar?.Clear();
         }
 
     }
 
     private void UnbindMaxValueEvents()
     {
+        if (boundExtraHealth != null && extraHealthBar != null)
+            boundExtraHealth.OnMaximumExtraHealthChanged -= extraHealthBar.UpdateMax;
+        boundExtraHealth = null;
+        extraHealthBar?.Clear();
         if (boundShip == null)
             return;
 

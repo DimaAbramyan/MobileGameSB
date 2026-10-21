@@ -405,7 +405,7 @@ public partial struct PlayerProjectileResonanceSphereSystem : ISystem
                         OwnerId = ownerLookup[entity].Id,
                         DebuffSetId = projectileData.DebuffSetId,
                         Damage = currentState.StoredDamage,
-                        DamageType = EnemyDamageType.Resonance,
+                        DamageType = EnemyDamageType.Default,
                         BypassesEnemyShield = 0,
                         ImpactPosition = target.Position
                     });

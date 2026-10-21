@@ -27,10 +27,39 @@ public interface IEnemyAttackSequenceExecutor
     void EndAttackSequence(EnemyBurstAttackSettings settings);
 }
 
+// Entry-route attacks can begin an order epoch without resetting speed/aim schedules.
+public interface IEnemySectorLaunchOrderSource
+{
+    void BeginSectorLaunchOrder(EnemyBurstAttackSettings settings);
+}
+
 public interface IEnemyLockedAimAttackExecutor
 {
     Vector3 GetWaveAimOrigin(EnemyBurstAttackSettings settings);
     bool TryFireInAimedDirection(Vector3 direction, EnemyBurstAttackSettings settings);
+}
+
+public interface IEnemyStationaryAttackExecutor
+{
+    bool TryFireStationary(Vector3 directionOrPoint, bool worldPoint, EnemyBurstAttackSettings settings);
+}
+
+// Circle acquires a separate direction from each emitter, then keeps those
+// directions until the wave starts a new attack/burst acquisition.
+public interface IEnemyEmissionAimAttackExecutor
+{
+    bool TryFireWithLockedEmissionAim(Vector3 targetPosition, EnemyBurstAttackSettings settings, bool refresh);
+}
+
+// A shot may enqueue several layout directions; the wave waits for their actual launch.
+public interface IEnemyPendingEmissionExecutor
+{
+    bool HasPendingEmissions(EnemyBurstAttackSettings settings);
+}
+
+public interface IEnemyAttackActivity
+{
+    bool HasActiveAttack { get; }
 }
 
 public interface IEnemyBurstAttackSettingsOverrideReceiver
@@ -75,6 +104,18 @@ public interface IEnemyAttackDirectionProvider
 public interface IEnemyAttackAimTarget
 {
     Vector3 AttackTargetPosition { get; }
+}
+
+public interface IEnemyEmissionOriginContext : IEnemyAttackAimTarget
+{
+    bool HasEmissionOriginPlayer { get; }
+    Camera EmissionOriginCamera { get; }
+}
+
+public interface IEnemyEmissionOriginReceiver
+{
+    void BeginEmissionOriginAttack(EnemyBurstAttackSettings settings);
+    bool PrepareEmissionOriginShot(EnemyBurstAttackSettings settings, bool burstStart, Vector3? capturedPlayer = null, Vector2? capturedOffsets = null, EnemyAttackNumericState numericOverride = null);
 }
 
 public interface IEnemyAttackAimReceiver

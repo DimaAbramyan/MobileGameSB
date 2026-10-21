@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "command": "command run_script",
+  "data": {
+    "command": "run_script",
+    "parameters": {
+      "file": "AgentScripts/VerifyWavePreviewFastSeek.cs",
+      "entry": "VerifyWavePreviewFastSeek.Run",
+      "timeout_ms": "240000"
+    },
+    "result": {
+      "diagnostics": [],
+      "compileMs": 4027,
+      "executeMs": 17290,
+      "assemblyName": "PipelineRunScript_VerifyWavePreviewFastSeek_5d9dfc4f94044d74be93d0f069f8f86c",
+      "success": true,
+      "result": {
+        "passed": true,
+        "checks": 1020,
+        "fullManagedAndNativeState": true,
+        "seek60": true,
+        "retarget": true,
+        "transport": true,
+        "maxSpeed": true
+      }
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

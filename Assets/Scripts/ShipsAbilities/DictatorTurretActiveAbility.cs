@@ -58,7 +58,7 @@ public sealed class DictatorTurretActiveAbility : ActiveAbility
         var contract = new DictatorShipMetaContract();
         contract.Configure(
             defaultProjectilePrefab,
-            EnemyDamageType.Kinetic,
+            EnemyDamageType.Kinetick,
             defaultTurretLifetime,
             defaultTurretProjectileDamage,
             defaultTurretReloadTime,

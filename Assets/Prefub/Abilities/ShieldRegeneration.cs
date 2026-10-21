@@ -4,9 +4,10 @@ public class ShieldRegeneration : MonoBehaviour
 {
     private ParentShip parentShip;
     private float shieldRegenCooldown;
-    private float shieldRegenRate;
+    // Keep the existing zero-rate switch for configurations with regeneration disabled.
+    private bool regenerationEnabled;
+    // Restarted by either incoming damage or a completed recovery step.
     private float lastDamageTime;
-    private bool isRegenerating;
 
     private bool CanRegenerate => Time.time - lastDamageTime >= shieldRegenCooldown;
 
@@ -21,18 +22,22 @@ public class ShieldRegeneration : MonoBehaviour
         }
 
         shieldRegenCooldown = parentShip.ShipData.ShieldRegenCooldown;
-        shieldRegenRate = parentShip.ShipData.ShieldRegenRatePercent;
-        lastDamageTime = float.NegativeInfinity;
+        regenerationEnabled = parentShip.ShipData.ShieldRegenRatePercent > 0f;
+        lastDamageTime = Time.time;
 
         parentShip.OnDamagePipeline += OnDamageTaken;
     }
 
     private float OnDamageTaken(float damage)
     {
-        lastDamageTime = Time.time;
-        isRegenerating = false;
-        UpdateCooldownProgress();
+        RestartCooldown();
         return damage;
+    }
+
+    public void RestartCooldown()
+    {
+        lastDamageTime = Time.time;
+        UpdateCooldownProgress();
     }
 
     private void Update()
@@ -40,37 +45,26 @@ public class ShieldRegeneration : MonoBehaviour
         if (parentShip == null)
             return;
 
+        if (parentShip.IsDestroyed || parentShip.CurrentHealthPoints <= 0f)
+            return;
+
         UpdateCooldownProgress();
 
         if (!CanRegenerate)
-        {
-            isRegenerating = false;
             return;
-        }
 
-        if (shieldRegenRate <= 0f
+        if (!regenerationEnabled
             || parentShip.CurrentShieldPoints >= parentShip.MaximumShieldPoints)
-        {
-            isRegenerating = false;
             return;
-        }
 
-        if (!isRegenerating)
-        {
-            isRegenerating = true;
-            parentShip.NotifyShieldRegenerationStarted();
-        }
-
-        float restoredShield = parentShip.MaximumShieldPoints
-            * shieldRegenRate
-            / 100f
-            * Time.deltaTime;
-        parentShip.HealShield(restoredShield);
+        parentShip.NotifyShieldRegenerationStarted();
+        parentShip.HealShield(1f);
+        lastDamageTime = Time.time;
+        UpdateCooldownProgress();
 
         if (parentShip.CurrentShieldPoints < parentShip.MaximumShieldPoints)
             return;
 
-        isRegenerating = false;
         parentShip.NotifyShieldFullyRegenerated();
     }
 

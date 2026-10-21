@@ -1,0 +1,59 @@
+{
+  "editor": [
+    {
+      "Id": 1216,
+      "ProcessName": "Unity",
+      "WorkingSet64": 202747904,
+      "PeakWorkingSet64": 941010944,
+      "CPU": 3.640625,
+      "PriorityClass": 16384
+    },
+    {
+      "Id": 2412,
+      "ProcessName": "unity",
+      "WorkingSet64": 16179200,
+      "PeakWorkingSet64": 27181056,
+      "CPU": 0.0,
+      "PriorityClass": 32
+    },
+    {
+      "Id": 19232,
+      "ProcessName": "Unity",
+      "WorkingSet64": 6410776576,
+      "PeakWorkingSet64": 6638059520,
+      "CPU": 920.84375,
+      "PriorityClass": 32
+    },
+    {
+      "Id": 21976,
+      "ProcessName": "unity",
+      "WorkingSet64": 35913728,
+      "PeakWorkingSet64": 35913728,
+      "CPU": 0.03125,
+      "PriorityClass": 32
+    },
+    {
+      "Id": 23076,
+      "ProcessName": "Unity",
+      "WorkingSet64": 412090368,
+      "PeakWorkingSet64": 938512384,
+      "CPU": 3.28125,
+      "PriorityClass": 16384
+    },
+    {
+      "Id": 27080,
+      "ProcessName": "unity",
+      "WorkingSet64": 48193536,
+      "PeakWorkingSet64": 59359232,
+      "CPU": 0.21875,
+      "PriorityClass": 32
+    }
+  ],
+  "captured": "2026-10-21T10:33:39.1343802+03:00",
+  "cpu": {
+    "Name": "AMD Ryzen 7 5800X 8-Core Processor             ",
+    "NumberOfCores": 8,
+    "NumberOfLogicalProcessors": 16
+  },
+  "shell": "7.4.13"
+}

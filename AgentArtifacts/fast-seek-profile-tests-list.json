@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "command": "command list_tests",
+  "data": {
+    "command": "list_tests",
+    "parameters": {
+      "mode": "editor"
+    },
+    "result": {
+      "Mode": "EditMode",
+      "Count": 0,
+      "Tests": [],
+      "success": true,
+      "result": null,
+      "message": "Found 0 test(s)."
+    },
+    "target": {
+      "host": "127.0.0.1",
+      "port": 7800,
+      "projectPath": "C:\\My project"
+    }
+  },
+  "errors": [],
+  "warnings": []
+}

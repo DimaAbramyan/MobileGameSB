@@ -426,9 +426,15 @@ public sealed partial class DirectedEnemySubWave
 
     private DirectedWaveFormationBehaviour ResolveFormationBehaviour()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.FormationResolve);
+#endif
         if (formationBehaviour != null)
             return formationBehaviour;
 
+#if UNITY_EDITOR
+        if (cachedFormationBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.FormationLookupMiss);
+#endif
         cachedFormationBehaviour ??=
             GetComponent<DirectedWaveFormationBehaviour>();
         return cachedFormationBehaviour;
@@ -436,9 +442,15 @@ public sealed partial class DirectedEnemySubWave
 
     private DirectedWavePhaseEntryBehaviour ResolvePhaseEntryBehaviour()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PhaseResolve);
+#endif
         if (phaseEntryBehaviour != null)
             return phaseEntryBehaviour;
 
+#if UNITY_EDITOR
+        if (cachedPhaseEntryBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PhaseLookupMiss);
+#endif
         cachedPhaseEntryBehaviour ??=
             GetComponent<DirectedWavePhaseEntryBehaviour>();
         return cachedPhaseEntryBehaviour;
@@ -446,18 +458,30 @@ public sealed partial class DirectedEnemySubWave
 
     private DirectedWavePostBehaviour ResolvePostBehaviour()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PostResolve);
+#endif
         if (postBehaviourBlock != null)
             return postBehaviourBlock;
 
+#if UNITY_EDITOR
+        if (cachedPostBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PostLookupMiss);
+#endif
         cachedPostBehaviour ??= GetComponent<DirectedWavePostBehaviour>();
         return cachedPostBehaviour;
     }
 
     private DirectedWaveCompletionBehaviour ResolveCompletionBehaviour()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.CompletionResolve);
+#endif
         if (completionBehaviour != null)
             return completionBehaviour;
 
+#if UNITY_EDITOR
+        if (cachedCompletionBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.CompletionLookupMiss);
+#endif
         cachedCompletionBehaviour ??=
             GetComponent<DirectedWaveCompletionBehaviour>();
         return cachedCompletionBehaviour;
@@ -891,18 +915,27 @@ public sealed partial class DirectedEnemySubWave
 
     private DirectedWaveFormationConfiguration GetLegacyCompatibilityFormation()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.LegacyFormation);
+#endif
         EnsureLegacyCompatibilityConfiguration();
         return legacyCompatibilityFormation;
     }
 
     private DirectedWavePhaseEntryConfiguration GetLegacyCompatibilityPhaseEntry()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.LegacyEntry);
+#endif
         EnsureLegacyCompatibilityConfiguration();
         return legacyCompatibilityPhaseEntry;
     }
 
     private DirectedWavePostBehaviourConfiguration GetLegacyCompatibilityPostBehaviour()
     {
+#if UNITY_EDITOR
+        WavePreviewProfiler.Count(WavePreviewProfiler.Counter.LegacyPost);
+#endif
         EnsureLegacyCompatibilityConfiguration();
         return legacyCompatibilityPostBehaviour;
     }
@@ -925,6 +958,9 @@ public sealed partial class DirectedEnemySubWave
             formationLayout = legacyFormationLayout,
             formationCoordinateSpace = legacyFormationCoordinateSpace,
             formationCenter = legacyFormationCenter,
+            formationOffsetStep = formation != null ? formation.formationOffsetStep : Vector2.zero,
+            formationOffsetOrigin = formation != null ? formation.formationOffsetOrigin : DirectedWaveFormationOffsetOrigin.Middle,
+            formationCenterOffsetMode = formation != null ? formation.formationCenterOffsetMode : DirectedWaveFormationCenterOffsetMode.Linear,
             spacing = legacySpacing,
             columns = legacyColumns,
             rows = legacyRows,

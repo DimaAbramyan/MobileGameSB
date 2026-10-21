@@ -12,10 +12,32 @@ public class Projectile : MonoBehaviour
     private ProjectilePoolController poolController;
     private bool isActive;
     public float speed { get; private set; }
-    public float damage { get; private set; }
+    private float unscaledDamage;
+    private AnimationCurve damageMultiplierByDistance;
+    private float traveledDistance;
+    private Vector3 lastTravelPosition;
+    public float DamageDistanceMultiplier
+    {
+        get
+        {
+            if (damageMultiplierByDistance == null || damageMultiplierByDistance.length == 0)
+                return 1f;
+            float distance = traveledDistance + Vector3.Distance(lastTravelPosition, transform.position);
+            float progress = maxLength > 0f ? Mathf.Clamp01(distance / maxLength) : 0f;
+            return Mathf.Max(0f, damageMultiplierByDistance.Evaluate(progress));
+        }
+    }
+    public float damage
+    {
+        get
+        {
+            return unscaledDamage * DamageDistanceMultiplier;
+        }
+        private set => unscaledDamage = value;
+    }
     public float baseDamage;
     public float maxLength { get; private set; }
-    public EnemyDamageType DamageType { get; private set; } = EnemyDamageType.Kinetic;
+    public EnemyDamageType DamageType { get; private set; } = EnemyDamageType.Kinetick;
     public Vector3 direction{ get; private set; }
     public float fadeTime = 1f;
     private ParentShip owner;
@@ -74,9 +96,11 @@ public class Projectile : MonoBehaviour
         fadeTime = 1f;
         speed = 0f;
         damage = 0f;
+        damageMultiplierByDistance = null;
+        traveledDistance = 0f;
         baseDamage = 0f;
         maxLength = 0f;
-        DamageType = EnemyDamageType.Kinetic;
+        DamageType = EnemyDamageType.Kinetick;
         direction = Vector3.zero;
         remainingLifetime = 0f;
         lifetimeFadeDuration = 0f;
@@ -149,6 +173,9 @@ public class Projectile : MonoBehaviour
         speed = param.speed;
         damage = param.damage;
         baseDamage = param.damage;
+        damageMultiplierByDistance = runtimeConfig.damageMultiplierByDistance;
+        traveledDistance = 0f;
+        lastTravelPosition = transform.position;
         maxLength = runtimeConfig.secondaryProjectile != null
                     && runtimeConfig.secondarySpawnTrigger
                     == SecondaryProjectileSpawnTrigger.AfterTravelDistance
@@ -280,6 +307,8 @@ public class Projectile : MonoBehaviour
 
         UpdateColliderLifetime();
         runtimeBehaviors?.Move(this);
+        traveledDistance += Vector3.Distance(lastTravelPosition, transform.position);
+        lastTravelPosition = transform.position;
         runtimeBehaviors?.Tick(this);
         if ((transform.position - startPosition).sqrMagnitude > maxLength * maxLength)
         {

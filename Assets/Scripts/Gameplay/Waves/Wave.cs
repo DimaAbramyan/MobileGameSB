@@ -90,8 +90,10 @@ public class Wave : MonoBehaviour, IWaveEncounter
         subWavesLeft = 0;
         Log($"Initializing wave. Scheduled subwaves: {schedule.Count}");
 
-        foreach (WaveSubWaveCue cue in schedule)
+        WaveAttackCoordinator coordinator = GetComponent<WaveAttackCoordinator>();
+        for (int cueIndex = 0; cueIndex < schedule.Count; cueIndex++)
         {
+            WaveSubWaveCue cue = schedule[cueIndex];
             GameObject prefab = cue.SubWavePrefab;
             if (prefab == null)
             {
@@ -124,6 +126,7 @@ public class Wave : MonoBehaviour, IWaveEncounter
 
             instance.SetActive(false);
             subWave.PrepareForActivation();
+            coordinator?.Register(cueIndex, subWave, prefab);
 
             subWavesInfo.Add(subWave);
             subWavesLeft++;
@@ -184,6 +187,8 @@ public class Wave : MonoBehaviour, IWaveEncounter
             activationRoutines.Add(StartCoroutine(dangerWarning.PlayWarning()));
         }
 
+        GetComponent<WaveAttackCoordinator>()?.BeginCoordination(Time.time + warningDuration);
+
         for (int i = 0; i < pendingActivationSubWaves.Count; i++)
         {
             Coroutine routine = StartCoroutine(
@@ -233,18 +238,21 @@ public class Wave : MonoBehaviour, IWaveEncounter
 
     public void WhenSubWaveCleared()
     {
+        if (subWavesLeft <= 0)
+            return;
         subWavesLeft--;
         Log($"Subwave cleared. Remaining: {subWavesLeft}");
         if (subWavesLeft <= 0)
         {
             Log("Wave cleared. Moving to next wave.");
-            waveManager?.GoToNextWave();
+            waveManager?.CompleteCurrentWave();
             Destroy(gameObject);
         }
     }
 
     void OnDestroy()
     {
+        GetComponent<WaveAttackCoordinator>()?.StopCoordination();
         metalDropPlan?.Dispose();
 
         for (int i = 0; i < activationRoutines.Count; i++)
