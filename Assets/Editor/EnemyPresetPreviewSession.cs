@@ -132,7 +132,7 @@ public sealed class EnemyPresetPreviewSession : IDisposable
                 EnemyAttackProjectileBuilder.AppendEmitter(requests, prefab, directionShooting, emitter.Position, frame.Origin.GetValueOrDefault(), emitter.BaseDirection,
                     1f, volley.Speed, volley.Spread, prefabs, _ => Mathf.Lerp(shooting.RandomMinAngle, shooting.RandomMaxAngle, (float)random.NextDouble()),
                     maximum: remaining, randomSpeed: volley.Numeric, projectileOffset: arm * shooting.ProjectilesPerDirection,
-                    directionIndex: arm,
+                    directionIndex: arm, targetPoint: shooting.UsesTargetPoint ? target : null,
                     speedSampler: s => Mathf.Lerp(s.RandomInitialSpeedMinimum, s.RandomInitialSpeedMaximum, (float)random.NextDouble()),
                     laserOrigin: new EnemyLaserOrigin(source.transform, source.transform.position, shooting.EmissionOrigin, camera));
                 omitted += Mathf.Max(0, shooting.ProjectilesPerDirection - remaining);

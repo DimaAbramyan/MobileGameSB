@@ -1959,12 +1959,11 @@ public static class PlayerProjectileCollisionMath
         ref float entry,
         ref float exit)
     {
-        if (math.abs(direction) < 0.00001f)
+        if (direction == 0f)
             return start >= minimum && start <= maximum;
 
-        float inverseDirection = 1f / direction;
-        float first = (minimum - start) * inverseDirection;
-        float second = (maximum - start) * inverseDirection;
+        float first = (minimum - start) / direction;
+        float second = (maximum - start) / direction;
         if (first > second)
         {
             float swap = first;

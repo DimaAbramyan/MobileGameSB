@@ -26,23 +26,28 @@ public sealed partial class EnemyChildAttackRunner
         var resolution = manager.GetComponentData<EnemyProjectileResolution>(state.Parent);
         // Natural expiry on the crossing frame can still be owned by Destroy Parent, as for other triggers.
         if (resolution.Kind != EnemyProjectileResolutionKind.None
-            && !(state.Settings.DestroyParent && resolution.LifetimeExpired != 0))
+            && !(state.Settings.DestroysParentOnCompletion && resolution.LifetimeExpired != 0))
         { state.Complete = true; return; }
 
         RefreshParentPose(state);
         float fraction = 0f;
-        bool crossed = (!state.Settings.TriggerOnce || state.BoundaryEvents == 0)
-            && TryBoundaryBounds(state.Position.z, out Rect bounds)
-            && EnemyChildAttackBoundaryIntersection.TryCross(state.Previous, state.Position, bounds,
-                state.Settings.TriggerBoundaries, state.Settings.BoundaryOffset, out fraction, out _);
+        Vector3 reachedPosition = default;
+        bool crossed = false;
+        if ((!state.Settings.TriggerOnce || state.BoundaryEvents == 0) && TryBoundaryBounds(state.Position.z, out Rect bounds))
+        {
+            var screen=manager.GetComponentData<EnemyProjectileScreenState>(state.Parent);
+            crossed=EnemyProjectileTargetPositionUtility.TryBoundaryContact(state.Previous,state.Position,screen,bounds,
+                state.Settings.TriggerBoundaries,state.Settings.BoundaryOffset,out fraction,out reachedPosition);
+        }
         if (crossed)
         {
             // An occurrence is ordinary scheduled child work. It shares lineage/caps/emission code,
             // but owns its delay and captured pose so overlapping crossings cannot overwrite each other.
             float reachedAt = time - Mathf.Max(0f, delta) * (1f - fraction);
-            Vector3 reachedPosition = Vector3.LerpUnclamped(state.Previous, state.Position, fraction);
             StartBoundaryAttack(state, reachedPosition, reachedAt + state.Settings.TimeOffset, time, delta, preview);
         }
+        if(!crossed && EnemyProjectileTargetPositionUtility.IsHidden(manager,state.Parent) && state.ActiveBoundaryAttacks==0)
+            state.Complete=true;
         state.Previous = state.Position;
         if (resolution.Kind != EnemyProjectileResolutionKind.None && state.BoundaryEvents == 0)
             state.Complete = true;
@@ -53,7 +58,7 @@ public sealed partial class EnemyChildAttackRunner
         if (parents.Count >= EnemyChildAttackSettings.MaximumTrackedParents || owner.Budget.Remaining <= 0)
         { Limit(1); return; }
         owner.BoundaryEvents++;
-        if (owner.Settings.DestroyParent)
+        if (owner.Settings.DestroysParentOnCompletion)
         {
             manager.SetComponentData(owner.Parent, default(EnemyProjectileResolution));
             manager.SetComponentEnabled<EnemyChildAttackLifetimeHold>(owner.Parent, true);
@@ -82,10 +87,11 @@ public sealed partial class EnemyChildAttackRunner
     private void FinishBoundaryObservation(ParentState owner)
     {
         if (owner.ActiveBoundaryAttacks > 0 || owner.BoundaryEvents == 0) return;
-        if (owner.Settings.DestroyParent && manager.Exists(owner.Parent)
+        if (owner.Settings.DestroysParentOnCompletion && manager.Exists(owner.Parent)
             && manager.GetComponentData<EnemyProjectileResolution>(owner.Parent).Kind == EnemyProjectileResolutionKind.None)
             manager.SetComponentData(owner.Parent, new EnemyProjectileResolution { Kind = EnemyProjectileResolutionKind.Expired });
-        if (owner.Settings.TriggerOnce || owner.Settings.DestroyParent || owner.Budget.Remaining <= 0)
+        if (owner.Settings.TriggerOnce || owner.Settings.DestroysParentOnCompletion || owner.Budget.Remaining <= 0
+            || EnemyProjectileTargetPositionUtility.IsHidden(manager,owner.Parent))
             owner.Complete = true;
     }
 }

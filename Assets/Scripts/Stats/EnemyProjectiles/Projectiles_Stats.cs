@@ -56,6 +56,12 @@ public abstract class EnemyProjectile: MonoBehaviour
         return true;
     }
 
+    public void DestroyForSystemCleanup()
+    {
+        gameObject.SetActive(false);
+        Destroy(gameObject);
+    }
+
     public virtual void TransformPosition(){}
     public virtual void DestroyProjByRange() { }
 
@@ -77,7 +83,7 @@ public abstract class EnemyProjectile: MonoBehaviour
             receiver.TryTakeDamage(_damage);
         }
 
-        Destroy(gameObject);
+        if (Characteristic != EnemyProjectileCharacteristic.Indestructible) Destroy(gameObject);
     }
     public void SetMultiplier(float multiplier)
     { this.SpeedMultiplier = multiplier; }

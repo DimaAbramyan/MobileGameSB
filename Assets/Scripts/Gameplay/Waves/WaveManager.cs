@@ -415,11 +415,12 @@ public class WaveManager : MonoBehaviour
             {
                 Center = new Unity.Mathematics.float2(explosion.Center.x, explosion.Center.y),
                 Radius = explosion.Radius,
+                SystemCleanup = 1,
                 DestructionPolicy = EnemyProjectileDestructionPolicy.NormalAndFragile
             });
             if (explosion.Age >= waveClearExplosionLifetime)
             {
-                projectileCollisionRegistry?.ClearEnemyProjectiles(explosion.Center, explosion.Radius);
+                projectileCollisionRegistry?.ClearEnemyProjectiles(explosion.Center, explosion.Radius, systemCleanup: true);
                 projectileCollisionRegistry?.RemoveWaveClearPurgeField(explosion.Id);
                 projectileClearExplosions.RemoveAt(i);
             }
@@ -439,7 +440,7 @@ public class WaveManager : MonoBehaviour
             EnemyProjectile projectile = explosionHits[i].GetComponentInParent<EnemyProjectile>();
             if (projectile != null
                 && ((Vector2)projectile.transform.position - center).sqrMagnitude <= radiusSquared)
-                projectile.TryDestroyByAbility(true);
+                projectile.DestroyForSystemCleanup();
         }
     }
 

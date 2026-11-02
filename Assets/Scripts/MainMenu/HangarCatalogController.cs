@@ -342,12 +342,16 @@ public sealed class HangarCatalogController : MonoBehaviour
           SetText(actionButtonLabel, GetSelectedActionLabel());
           if (selectedContent is HullContentDefinition hull)
           {
+              hullInfoView?.SetProgressService(contentProgressService);
               hullInfoView?.Show(hull);
               return;
           }
 
           if (selectedContent is WeaponContentDefinition weapon)
+          {
+              weaponInfoView?.SetProgressService(contentProgressService);
               weaponInfoView?.Show(weapon);
+          }
     }
 
       private void SetInfoViewsActive(bool hasSelection)

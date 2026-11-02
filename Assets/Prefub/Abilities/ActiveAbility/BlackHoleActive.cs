@@ -12,6 +12,7 @@ public class BlackHoleActive : ActiveAbility
     [SerializeField, HideInInspector] private BlackHolePrefab blackHole;
     [SerializeField, HideInInspector] private float duration;
     private BlackHoleShipMetaContract settings = new();
+    public override IStatValueProvider DisplayStatSnapshot => settings;
     private ParentShip activeShip;
     private PassiveAbility suspendedPassive;
     private PlayerEffectController effects;

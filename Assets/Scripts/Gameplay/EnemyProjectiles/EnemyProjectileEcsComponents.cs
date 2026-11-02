@@ -1,10 +1,11 @@
-﻿using Unity.Entities;
+using Unity.Entities;
 using Unity.Mathematics;
 
 public enum EnemyProjectileCharacteristic : byte
 {
     Normal = 0,
-    Fragile = 1
+    Fragile = 1,
+    Indestructible = 2
 }
 
 public static class EnemyProjectileCharacteristics
@@ -24,7 +25,8 @@ public static class EnemyProjectileCharacteristics
             ? colour.gamma : colour;
     }
     public static bool CanBeDestroyed(EnemyProjectileCharacteristic characteristic, bool destroysNormal)
-        => characteristic == EnemyProjectileCharacteristic.Fragile || destroysNormal;
+        => characteristic == EnemyProjectileCharacteristic.Fragile
+            || characteristic == EnemyProjectileCharacteristic.Normal && destroysNormal;
 }
 
 public enum EnemyProjectileSpeedBehavior : byte
@@ -87,6 +89,9 @@ public struct EnemyProjectileMovement : IComponentData
 {
     public EnemyProjectileMovementPattern Pattern;
     public float2 ForwardDirection;
+    public float2 TargetPoint;
+    public float TargetInitialDistance;
+    public byte HasReachedTarget;
     public float ReferenceSpeed;
     public float AngularSpeedDegreesPerSecond;
     public float LateralSpeed;
@@ -144,8 +149,18 @@ public struct EnemyProjectileRemainingLifetime : IComponentData
     public float Value;
 }
 
+[InternalBufferCapacity(1)]
+public struct EnemyProjectilePlayerContact : IBufferElementData
+{
+    public int TargetId;
+    public byte Touching;
+}
+
 public struct EnemyProjectileDamage : IComponentData
 {
+    public byte HitPlayer;
+    public EnemyDamageType Type;
+    public byte UseConfiguredDamage;
     public float Value;
 }
 
@@ -182,6 +197,8 @@ public struct EnemyProjectileSpeedCurveSample : IBufferElementData
 /// </summary>
 public struct EnemyProjectileCustomScale : IComponentData
 {
+    // Delta storage keeps default/legacy ECS state at scale 1.
+    public float BaseSizeDelta;
     public float ScaleChangeY;
     public float ProgressSinceScaleChange;
     public float ProgressSpeed;
@@ -373,6 +390,7 @@ public struct EnemyProjectilePurgeField : IBufferElementData
     public float2 Center;
     public float Radius;
     public EnemyProjectileDestructionPolicy DestructionPolicy;
+    public byte SystemCleanup;
 }
 
 /// <summary>
@@ -380,6 +398,7 @@ public struct EnemyProjectilePurgeField : IBufferElementData
 /// </summary>
 public struct EnemyProjectileResolutionEvent : IBufferElementData
 {
+    public EnemyDamageType DamageType;
     public byte UseConfiguredDamage;
     public int TargetId;
     public EnemyProjectileResolutionKind Kind;

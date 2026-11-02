@@ -27,11 +27,30 @@ public partial class EnemyChildAttackSystem : SystemBase
     }
 }
 
+// Finalize child work after all resolution producers, before entities are removed.
+// This also lets an Expired event emit its immediate volley on a screen-exit frame.
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(EnemyCompositeCleanupSystem))]
+[UpdateBefore(typeof(ProjectileCleanupSystem))]
+public partial class EnemyChildAttackCleanupSystem : SystemBase
+{
+    private EntityQuery owners;
+    protected override void OnCreate() => owners = GetEntityQuery(ComponentType.ReadOnly<EnemyChildAttackSimulation>());
+    protected override void OnUpdate()
+    {
+        using var entities = owners.ToEntityArray(Allocator.Temp);
+        for (int i = 0; i < entities.Length; i++)
+            EntityManager.GetComponentObject<EnemyChildAttackSimulation>(entities[i]).Runner.ResolveRemovedParents((float)SystemAPI.Time.ElapsedTime);
+    }
+}
+
 public sealed partial class EnemyChildAttackRunner
 {
     private const int MaximumVolleys = 2048;
     private const int MaximumShotEvents = 128;
     private readonly EntityManager manager;
+    private readonly World world;
+    private bool disposed;
     private readonly EnemyProjectileEcsSpawner spawner;
     private readonly EntityQuery allProjectiles;
     private readonly EntityQuery targets;
@@ -72,7 +91,7 @@ public sealed partial class EnemyChildAttackRunner
         public int NumericKey, BoundaryEvents, ActiveBoundaryAttacks;
         public float Birth, Distance, AttackStart, NextRepeat, DamageMultiplier;
         public Vector3 Position, Previous, Forward, CapturedOrigin, CapturedForward;
-        public bool Started, Detached, Complete;
+        public bool Started, Complete;
         public ParentState BoundaryOwner;
         public EnemyAttackPatternSchedule Schedule;
         public EnemyProjectileInitialSpeedState Speed;
@@ -95,6 +114,7 @@ public sealed partial class EnemyChildAttackRunner
     public EnemyChildAttackRunner(EntityManager manager, EnemyProjectileEcsSpawner spawner)
     {
         this.manager = manager; this.spawner = spawner;
+        world = manager.World;
         allProjectiles = manager.CreateEntityQuery(typeof(EnemyProjectileStaticData));
         targets = manager.CreateEntityQuery(typeof(EnemyProjectileCollisionRegistryTag), typeof(EnemyProjectileCollisionTarget));
         burstRegistries = manager.CreateEntityQuery(typeof(EnemyProjectileCollisionRegistryTag), typeof(EnemyProjectileBurstSpawnRequest));
@@ -121,7 +141,11 @@ public sealed partial class EnemyChildAttackRunner
         {
             var pose = manager.GetComponentData<LocalTransform>(entity);
             position = new Vector3(pose.Position.x, pose.Position.y, pose.Position.z);
-            if (request.ChildAttack.UsesScreenBoundary) boundaryObservers++;
+            if (request.ChildAttack.UsesScreenBoundary)
+            {
+                boundaryObservers++;
+                manager.SetComponentEnabled<EnemyChildAttackScreenHold>(entity, true);
+            }
         }
         parents.Add(new ParentState { Parent = entity, Settings = request.ChildAttack.SampleNumeric((uint)numericKey), Prefabs = prefabs, Completion = request.CompletionTracker,
             Budget = budget, Generation = request.ChildGeneration, DamageMultiplier = request.DamageMultiplier,
@@ -156,11 +180,39 @@ public sealed partial class EnemyChildAttackRunner
         }
         int count = parents.Count; // New descendants never trigger recursively in this simulation step.
         for (int i = 0; i < count; i++) Update(parents[i], time, previewTarget.HasValue, delta);
+        RemoveCompletedParents();
+    }
+
+    public void CollectPendingParents(HashSet<Entity> destination)
+    { for(int i=0;i<parents.Count;i++)if(!parents[i].Complete)destination.Add(parents[i].Parent); }
+
+    public void ResolveRemovedParents(float time)
+    {
+        int count = parents.Count;
+        for (int i = 0; i < count; i++)
+        {
+            var state = parents[i];
+            if (state.Complete) continue;
+            bool exists = manager.Exists(state.Parent);
+            if (exists && manager.GetComponentData<EnemyProjectileResolution>(state.Parent).Kind == EnemyProjectileResolutionKind.None) continue;
+            // Update handles an explicit death event before cleanup, then cancels
+            // every future shot. A missing entity never starts an event retrospectively.
+            Update(state, time, false, 0f);
+        }
+        RemoveCompletedParents();
+    }
+
+    private void RemoveCompletedParents()
+    {
         for (int i = parents.Count - 1; i >= 0; i--)
         {
             var state = parents[i];
             if (!state.Complete) continue;
-            if (state.Settings.UsesScreenBoundary && state.BoundaryOwner == null) boundaryObservers--;
+            if (state.Settings.UsesScreenBoundary && state.BoundaryOwner == null)
+            {
+                boundaryObservers--;
+                if (manager.Exists(state.Parent)) manager.SetComponentEnabled<EnemyChildAttackScreenHold>(state.Parent, false);
+            }
             if (state.BoundaryOwner != null)
             {
                 state.BoundaryOwner.ActiveBoundaryAttacks--;
@@ -212,19 +264,24 @@ public sealed partial class EnemyChildAttackRunner
 #if UNITY_EDITOR
         using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.ChildTriggerUpdate);
 #endif
+        if (state.Complete) return;
+        if(manager.Exists(state.Parent)&&EnemyProjectileTargetPositionUtility.IsHidden(manager,state.Parent)&&state.Settings.FireMode==DirectedWaveAttackFireMode.None){Cancel(state);return;}
+        if (!manager.Exists(state.Parent)) { Cancel(state); return; }
         if (state.Settings.UsesScreenBoundary && state.BoundaryOwner == null)
         { UpdateBoundaryObserver(state, time, delta, preview); return; }
-        bool exists = manager.Exists(state.Parent);
-        if (exists && manager.HasComponent<EnemyLaserState>(state.Parent)
+        bool exists = true;
+        if (manager.HasComponent<EnemyLaserState>(state.Parent)
             && manager.GetComponentData<EnemyLaserState>(state.Parent).Cancelled != 0)
-        { CancelVolleys(state); state.Complete = true; return; }
-        var resolution = exists ? manager.GetComponentData<EnemyProjectileResolution>(state.Parent).Kind : EnemyProjectileResolutionKind.Expired;
-        if (state.BoundaryOwner != null && (!exists || resolution != EnemyProjectileResolutionKind.None))
-        { CancelVolleys(state); state.Complete = true; return; }
-        if (exists && !state.Detached)
+        { Cancel(state); return; }
+        var resolution = manager.GetComponentData<EnemyProjectileResolution>(state.Parent).Kind;
+        if ((state.Started || state.BoundaryOwner != null) && resolution != EnemyProjectileResolutionKind.None)
+        { Cancel(state); return; }
+        if (exists)
         {
             var pose = RefreshParentPose(state);
-            if (preview && !manager.HasComponent<EnemyLaserState>(state.Parent) && state.Settings.TriggerMode == EnemyChildAttackTriggerMode.OnEvent
+            if (preview && !EnemyProjectileTargetPositionUtility.IsHidden(manager,state.Parent) && !manager.HasComponent<EnemyLaserState>(state.Parent)
+                && manager.GetComponentData<EnemyProjectileStaticData>(state.Parent).Characteristic != EnemyProjectileCharacteristic.Indestructible
+                && state.Settings.TriggerMode == EnemyChildAttackTriggerMode.OnEvent
                 && state.Settings.EventType == EnemyChildAttackEvent.HitPlayer && hasTarget)
             {
                 float radius = manager.GetComponentData<EnemyProjectileStaticData>(state.Parent).Radius * pose.Scale + .05f;
@@ -242,9 +299,13 @@ public sealed partial class EnemyChildAttackRunner
         if (!state.Started)
         {
             if (!trigger)
-            { if (!exists || resolution != EnemyProjectileResolutionKind.None) state.Complete = true; return; }
+            {
+                if(EnemyProjectileTargetPositionUtility.IsHidden(manager,state.Parent) && state.Settings.TriggerMode!=EnemyChildAttackTriggerMode.AfterTime && !state.Settings.UsesTargetReached)
+                { Cancel(state); return; }
+                if (!exists || resolution != EnemyProjectileResolutionKind.None) state.Complete = true; return;
+            }
             // Destroy Parent owns expiry after activation; hits/interception and expiry-triggered events still resolve normally.
-            bool holdLifetime = state.Settings.DestroyParent && exists
+            bool holdLifetime = state.Settings.DestroysParentOnCompletion && exists
                 && (state.Settings.TriggerMode != EnemyChildAttackTriggerMode.OnEvent || state.Settings.EventType != EnemyChildAttackEvent.Expired);
             if (holdLifetime && resolution == EnemyProjectileResolutionKind.Expired
                 && manager.GetComponentData<EnemyProjectileResolution>(state.Parent).LifetimeExpired != 0)
@@ -254,24 +315,26 @@ public sealed partial class EnemyChildAttackRunner
             }
             if (holdLifetime && resolution == EnemyProjectileResolutionKind.None)
                 manager.SetComponentEnabled<EnemyChildAttackLifetimeHold>(state.Parent, true);
+            if (resolution != EnemyProjectileResolutionKind.None && state.Settings.TriggerMode != EnemyChildAttackTriggerMode.OnEvent)
+            { Cancel(state); return; }
             state.Started = true;
-            state.Detached = !exists || resolution != EnemyProjectileResolutionKind.None;
             state.CapturedOrigin = state.Settings.ResolveOrigin(state.Position, state.Forward);
             state.CapturedForward = state.Forward;
-            BeginAttack(state, time);
+            float start=time;
+            if(state.Settings.UsesTargetReached)
+            {
+                var reached=manager.GetComponentData<EnemyProjectileTargetPosition>(state.Parent);
+                state.CapturedForward=new Vector3(reached.Forward.x,reached.Forward.y);
+                state.CapturedOrigin=state.Settings.ResolveOrigin(reached.Position,state.CapturedForward);
+                start=reached.ReachedTime+state.Settings.TimeOffset;
+            }
+            BeginAttack(state, start);
         }
-        else if (!state.Detached && (!exists || resolution != EnemyProjectileResolutionKind.None))
-        {
-            // External interception cancels an ordinary attack. Event attacks and lifetime expiry finish from the last pose.
-            if (resolution != EnemyProjectileResolutionKind.Expired && state.Settings.TriggerMode != EnemyChildAttackTriggerMode.OnEvent)
-            { CancelVolleys(state); state.Complete = true; return; }
-            state.Detached = true;
-        }
-        if (state.Budget.Remaining <= 0)
+        if (state.Budget.Remaining <= 0 && !state.Settings.RepeatsUntilParentDestroyed)
         {
             CancelVolleys(state);
             Limit(1);
-            if (state.BoundaryOwner == null && state.Settings.DestroyParent && exists && resolution == EnemyProjectileResolutionKind.None)
+            if (state.BoundaryOwner == null && state.Settings.DestroysParentOnCompletion && exists && resolution == EnemyProjectileResolutionKind.None)
                 manager.SetComponentData(state.Parent, new EnemyProjectileResolution { Kind = EnemyProjectileResolutionKind.Expired });
             state.Complete = true;
             return;
@@ -293,15 +356,18 @@ public sealed partial class EnemyChildAttackRunner
                 Emit(state, volley.Shooting, volley, volley.Next++, time);
             if (volley.Next >= volley.Count) { volley.LaunchOrder.Complete(); state.Volleys.RemoveAt(i); pendingCount--; }
         }
+        // Resolution events may emit work due now, never delayed shots/repeats
+        // after the parent has been removed by the cleanup phase of this step.
+        if (resolution != EnemyProjectileResolutionKind.None) { Cancel(state); return; }
         if ((!state.Schedule.IsComplete && state.Shots < MaximumShotEvents) || state.Volleys.Count > 0) return;
         if (!state.Schedule.IsComplete) Limit(1);
-        if (++state.Repeat < state.Settings.RepeatCount)
+        if (state.Settings.RepeatsUntilParentDestroyed || ++state.Repeat < state.Settings.RepeatCount)
         {
             float next = time + state.Settings.RepeatInterval;
             BeginAttack(state, next);
             return;
         }
-        if (state.BoundaryOwner == null && state.Settings.DestroyParent && exists && resolution == EnemyProjectileResolutionKind.None)
+        if (state.BoundaryOwner == null && state.Settings.DestroysParentOnCompletion && exists && resolution == EnemyProjectileResolutionKind.None)
             manager.SetComponentData(state.Parent, new EnemyProjectileResolution { Kind = EnemyProjectileResolutionKind.Expired });
         state.Complete = true;
     }
@@ -311,13 +377,18 @@ public sealed partial class EnemyChildAttackRunner
         var pose = manager.GetComponentData<LocalTransform>(state.Parent);
         state.Position = new Vector3(pose.Position.x, pose.Position.y, pose.Position.z);
         Vector3 movement = state.Position - state.Previous;
-        state.Distance += movement.magnitude;
+        var screen = manager.GetComponentData<EnemyProjectileScreenState>(state.Parent);
+        bool bounced = screen.Settings.BounceOnScreenBounds && math.any(math.isfinite(screen.BounceContacts));
+        // A reflected step's endpoint chord can be shorter than the travelled
+        // path, or point opposite to its final direction.
+        state.Distance += bounced ? math.length(screen.BounceTo - screen.BounceFrom) : movement.magnitude;
         var velocity = manager.GetComponentData<EnemyProjectileVelocity>(state.Parent).Value;
         if (manager.HasComponent<EnemyLaserState>(state.Parent))
         {
             var direction = manager.GetComponentData<EnemyLaserState>(state.Parent).Direction;
             state.Forward = new Vector3(direction.x, direction.y);
         }
+        else if (bounced && math.lengthsq(velocity) > .0001f) state.Forward = new Vector3(velocity.x, velocity.y).normalized;
         else if (movement.sqrMagnitude > .000001f) state.Forward = movement.normalized;
         else if (math.lengthsq(velocity) > .0001f) state.Forward = new Vector3(velocity.x, velocity.y).normalized;
         return pose;
@@ -332,8 +403,14 @@ public sealed partial class EnemyChildAttackRunner
             default:
                 switch (state.Settings.EventType)
                 {
+                    case EnemyChildAttackEvent.OnTargetReached:
+                        return exists && manager.HasComponent<EnemyProjectileTargetPosition>(state.Parent)
+                            && manager.IsComponentEnabled<EnemyProjectileTargetPosition>(state.Parent)
+                            && manager.GetComponentData<EnemyProjectileTargetPosition>(state.Parent).Reached!=0
+                            && time+.00001f>=manager.GetComponentData<EnemyProjectileTargetPosition>(state.Parent).ReachedTime+state.Settings.TimeOffset;
                     case EnemyChildAttackEvent.OnSpawn: return exists;
                     case EnemyChildAttackEvent.HitPlayer: return resolution == EnemyProjectileResolutionKind.HitPlayer
+                        || exists && manager.GetComponentData<EnemyProjectileDamage>(state.Parent).HitPlayer != 0
                         || exists && manager.HasComponent<EnemyLaserState>(state.Parent)
                             && manager.GetComponentData<EnemyLaserState>(state.Parent).HitPlayer != 0;
                     case EnemyChildAttackEvent.Intercepted: return resolution == EnemyProjectileResolutionKind.Intercepted;
@@ -347,6 +424,10 @@ public sealed partial class EnemyChildAttackRunner
 
     private static void BeginAttack(ParentState state, float time)
     {
+        // A lifetime-wide family cap would silently stop an infinite emitter.
+        // Each repetition owns a fresh bounded family; existing children retain
+        // their old budget, while depth/live/per-step limits remain unchanged.
+        if (state.Settings.RepeatsUntilParentDestroyed) state.Budget = new EnemyChildAttackBudget();
         var layout = state.Settings.Pattern.Shooting.EmissionLayout;
         if (layout.UsesPingPong) (state.SectorOrders ??= new EnemySectorLaunchOrderRegistry()).BeginAttack(layout);
         state.AttackStart = time; state.NextRepeat = time; state.Shots = 0;
@@ -354,10 +435,10 @@ public sealed partial class EnemyChildAttackRunner
         state.Schedule.Begin(state.Settings.Pattern.RuntimeSettings, time, 1f, true, state.Numeric);
     }
 
-    private Vector3 Origin(ParentState state) => state.Settings.OriginMode == EnemyChildAttackOriginMode.CaptureOnStart
+    private Vector3 Origin(ParentState state) => state.Settings.UsesTargetReached || state.Settings.OriginMode == EnemyChildAttackOriginMode.CaptureOnStart
         ? state.CapturedOrigin : state.Settings.ResolveOrigin(state.Position, state.Forward);
     private Quaternion Basis(ParentState state) => Quaternion.FromToRotation(Vector3.up,
-        state.Settings.OriginMode == EnemyChildAttackOriginMode.CaptureOnStart ? state.CapturedForward : state.Forward);
+        state.Settings.UsesTargetReached || state.Settings.OriginMode == EnemyChildAttackOriginMode.CaptureOnStart ? state.CapturedForward : state.Forward);
     private Vector3 Position(ParentState state, EnemyShootingSettings shooting, int arm, float time)
     {
         var origin = Origin(state); var basis = Basis(state);
@@ -414,7 +495,8 @@ public sealed partial class EnemyChildAttackRunner
 #endif
         int arm = shooting.EmissionLayout.IsSequential ? volley.LaunchOrder.GetLaunchIndex(shooting.EmissionLayout, order) : order;
         shooting = shooting.SampleGeometry(volley.NumericSpeed.Numeric.ForDirection(arm), true);
-        int available = Mathf.Min(frameBudget, state.Budget.Remaining);
+        int entityCost = shooting.IsComposite ? shooting.Composite.Resolve(shooting.ProjectileType).EntityCost : 1;
+        int available = Mathf.Min(frameBudget, state.Budget.Remaining) / entityCost;
         int requestedCount = shooting.ProjectilesPerDirection;
         if (available <= 0) { Limit(requestedCount); return; }
         Vector3 position = Position(state, shooting, arm, time);
@@ -434,11 +516,11 @@ public sealed partial class EnemyChildAttackRunner
         EnemyAttackProjectileBuilder.AppendEmitter(requests, state.Prefabs.Get(shooting.ProjectileType), shooting,
             position, Origin(state), direction, state.DamageMultiplier, volley.Speed, volley.Spread, state.Prefabs, spreadSampler,
             available, state.Generation + 1, state.Budget, speedSampler, state.Completion, volley.NumericSpeed, arm * shooting.ProjectilesPerDirection,
-            directionIndex: arm,
+            directionIndex: arm, targetPoint: shooting.UsesTargetPoint ? targetPosition : null,
             laserOrigin: new EnemyLaserOrigin(null, state.Position, null, boundaryCamera,
                 entity: state.Parent, freezeTranslation: state.Settings.OriginMode == EnemyChildAttackOriginMode.CaptureOnStart));
         if (spawner.TrySpawnBatch(requests))
-        { frameBudget -= requests.Count; state.Budget.Remaining -= requests.Count; }
+        { frameBudget -= requests.Count * entityCost; state.Budget.Remaining -= requests.Count * entityCost; }
         else Limit(requests.Count);
         if (requestedCount > requests.Count) Limit(requestedCount - requests.Count);
     }
@@ -455,8 +537,11 @@ public sealed partial class EnemyChildAttackRunner
 
     public void Dispose()
     {
+        if (disposed) return;
+        disposed = true;
         for (int i = 0; i < parents.Count; i++) { CancelVolleys(parents[i]); parents[i].Completion?.EndChild(); }
-        parents.Clear(); lineages.Clear(); allProjectiles.Dispose(); targets.Dispose(); burstRegistries.Dispose();
+        parents.Clear(); lineages.Clear();
+        if (world.IsCreated) { allProjectiles.Dispose(); targets.Dispose(); burstRegistries.Dispose(); }
     }
 
     private void CancelVolleys(ParentState state)
@@ -464,5 +549,11 @@ public sealed partial class EnemyChildAttackRunner
         for (int i = 0; i < state.Volleys.Count; i++) state.Volleys[i].LaunchOrder.Cancel();
         pendingCount -= state.Volleys.Count;
         state.Volleys.Clear();
+    }
+
+    private void Cancel(ParentState state)
+    {
+        CancelVolleys(state);
+        state.Complete = true;
     }
 }

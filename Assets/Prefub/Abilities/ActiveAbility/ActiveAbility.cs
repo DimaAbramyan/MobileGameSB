@@ -10,8 +10,11 @@ public enum UltimateAbilityMode
 
 public abstract class ActiveAbility : MonoBehaviour
 {
+    public virtual IStatValueProvider DisplayStatSnapshot => null;
     [Inject] protected AudioDatabase audioDatabase;
     [Inject] protected SoundManager audioManager;
+    [InjectOptional] private PlayerController actionOwner;
+    public event System.Action<ParentShip> Activated;
 
     [SerializeField]
     private UltimateAbilityMode abilityMode = UltimateAbilityMode.Active;
@@ -199,6 +202,7 @@ public abstract class ActiveAbility : MonoBehaviour
 
     public void TryActivate(ParentShip owner)
     {
+        if (actionOwner != null && actionOwner.ActionLocks.Blocks(PlayerActions.Ability)) return;
         ValidateRuntimeValues();
 
         switch (abilityMode)
@@ -355,8 +359,9 @@ public abstract class ActiveAbility : MonoBehaviour
         if (cooldownTimer > 0f)
             return;
 
-        if (Activate(owner) && StartsCooldownOnActivation)
-            StartCooldown();
+        if (!Activate(owner)) return;
+        if (StartsCooldownOnActivation) StartCooldown();
+        Activated?.Invoke(owner);
     }
 
     private void TryActivateToggle(ParentShip owner)
@@ -372,6 +377,7 @@ public abstract class ActiveAbility : MonoBehaviour
 
         activeToggleOwner = owner;
         toggleIsActive = true;
+        Activated?.Invoke(owner);
     }
 
     private void TryActivateCharge(ParentShip owner)
@@ -386,6 +392,7 @@ public abstract class ActiveAbility : MonoBehaviour
 
         if (currentCharges < maxCharges && cooldownTimer <= 0f)
             StartCooldown();
+        Activated?.Invoke(owner);
     }
 
     private void StopToggle(ParentShip releaseOwner, bool startCooldown)

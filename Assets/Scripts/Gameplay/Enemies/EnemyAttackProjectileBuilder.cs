@@ -21,8 +21,10 @@ public static class EnemyAttackProjectileBuilder
         int generation = 0, EnemyChildAttackBudget budget = null,
         Func<EnemyShootingSettings, float> speedSampler = null,
         EnemyAttackCompletionTracker completionTracker = null, EnemyRandomSpeedSample randomSpeed = default, int projectileOffset = 0,
-        EnemyLaserOrigin laserOrigin = default, int directionIndex = 0)
+        EnemyLaserOrigin laserOrigin = default, int directionIndex = 0, Vector3? targetPoint = null)
     {
+        if (shooting.UsesTargetPoint && !targetPoint.HasValue)
+            throw new ArgumentException("TargetPoint requires the player position at projectile release.", nameof(targetPoint));
         var directionNumeric = randomSpeed.Numeric.ForDirection(directionIndex);
         shooting = shooting.SampleGeometry(directionNumeric, true);
         bool extended = shooting.UsesExtendedNumericRandomization;
@@ -31,6 +33,7 @@ public static class EnemyAttackProjectileBuilder
         float stackSpread = 0f, dnaFanSpeed = volleySpeed;
         int count = Mathf.Min(shooting.ProjectilesPerDirection, maximum);
         if (extended) count = Mathf.Min(count, EnemyChildAttackSettings.MaximumPerStep);
+        float groupCenter = shooting.EnableSpawnOffset ? shooting.GetSpawnOffsetGroupCenter(directionIndex, directionNumeric) : 0f;
         for (int projectile = 0; projectile < count; projectile++)
         {
             var numeric = directionNumeric.ForProjectile(projectile);
@@ -53,8 +56,10 @@ public static class EnemyAttackProjectileBuilder
                 speed = numeric.Active && extended
                     ? SampleLegacyRandomSpeed(shooting, numeric)
                     : speedSampler != null ? speedSampler(shooting) : shooting.GetRandomInitialSpeed();
-            requests.Add(new EnemyProjectileSpawnRequest(prefab, position,
-                shooting.GetProjectileDirection(direction, 0, projectile, spread, numeric), damageMultiplier, speed,
+            Vector3 finalDirection = shooting.GetProjectileDirection(direction, 0, projectile, spread, numeric);
+            Vector3 spawnPosition = shooting.GetProjectileSpawnPosition(position, finalDirection, directionIndex, projectile, numeric, groupCenter);
+            requests.Add(new EnemyProjectileSpawnRequest(prefab, spawnPosition,
+                finalDirection, damageMultiplier, speed,
                 shooting.SpeedBehavior, values.SpeedChangeY, shooting.SpeedByDistance,
                 shooting.SizeBehavior, values.SizeChangeY, values.SizeChangeSpeed, shooting.SizeChangeCurve, values.FinalSize,
                 origin, shooting.MovementPattern, values.AngularSpeed, values.LateralSpeed,
@@ -66,7 +71,8 @@ public static class EnemyAttackProjectileBuilder
                 shooting.OverwritesProjectileCharacteristic, shooting.ProjectileCharacteristic,
                 shooting.ChildAttack, prefabs, generation, budget, shooting.SpeedCurveTarget, completionTracker,
                 NumericRandomStream.Hash(randomSpeed.SeedKey ^ (uint)numericIndex),
-                shooting.ProjectileType == EnemyProjectileType.Laser ? shooting.Laser : null, laserOrigin));
+                shooting.ProjectileType == EnemyProjectileType.Laser ? shooting.Laser : null, laserOrigin, shooting.ScreenBoundary, shooting.IsComposite ? shooting.Composite.Resolve(shooting.ProjectileType, numeric) : default,
+                shooting.OverrideBaseSize ? shooting.BaseSize : 1f, shooting.CollisionSettings, shooting.OverridesProjectileDamage, shooting.ProjectileDamage, targetPoint, shooting.TargetPositionSettings));
         }
     }
 }

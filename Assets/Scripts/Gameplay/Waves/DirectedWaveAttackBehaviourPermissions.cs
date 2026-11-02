@@ -103,6 +103,7 @@ public sealed partial class DirectedWaveAttackBehaviour
         if (sequencePlayer == null) return;
         sequencePlayer.AllowNewAttacks = AttackPermissions.AllowNewAttacks;
         sequencePlayer.Tick(ExternalAttackTime);
+        if (sequencePlayer.IsComplete) sequenceRuntime?.CompleteLayoutRotationProgram();
         if (coordinatedCycleLimit >= 0 && sequencePlayer.IsComplete && AttackPermissions.AllowNewAttacks
             && coordinatedSequenceCycles + 1 < coordinatedCycleLimit)
         { coordinatedSequenceCycles++; sequencePlayer.Begin(ExternalAttackTime, true); }

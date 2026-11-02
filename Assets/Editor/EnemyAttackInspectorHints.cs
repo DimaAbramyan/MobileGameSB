@@ -25,7 +25,7 @@ public static class EnemyAttackInspectorHints
             "fanMinAngle" => "Нижняя граница Fan в градусах относительно базового направления emitter.",
             "fanMaxAngle" => "Верхняя граница Fan в градусах. Снаряды равномерно занимают весь диапазон между границами.",
             "fanProjectileCount" => "Число снарядов в каждом Fan. Итог: Emission Count × Stack Count × Fan Count.",
-            "projectileType" => "Тип создаваемого снаряда: Default, Homing или Burst At Point. Используется соответствующий prefab из References & Emitter Binding.",
+            "projectileType" => "Тип создаваемого снаряда: Default, Homing, Burst At Point, Laser или Composite. Для Composite выберите Composite Shape; prefab компонентов задаётся в Projectile Settings или References & Emitter Binding.",
             "initialSpeedMode" => "Default: базовая скорость. Random: случайная скорость из диапазона. Consistent: базовая скорость с изменением после каждого залпа.",
             "randomInitialSpeedMinimum" => "Минимальная начальная скорость в режиме Random.",
             "randomInitialSpeedMaximum" => "Максимальная начальная скорость в режиме Random. DNA-Like использует одну скорость на Fan для одновременных пересечений.",

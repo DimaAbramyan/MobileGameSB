@@ -8,6 +8,16 @@ public sealed class HullSelectionInfoController : MonoBehaviour
     [Header("Flow")]
     [SerializeField] private CraftCreationFlowController craftCreationFlow;
 
+    [Header("Stat Blocks")]
+    [SerializeField] private StatBlocksView statBlocksView;
+    [SerializeField] private StatDescriptionView activeDescriptionView;
+    [SerializeField] private StatDescriptionView passiveDescriptionView;
+    [SerializeField] private ParentShip runtimeHull;
+    private HullContentDefinition shownHull;
+    private CraftUIButton pointerPreview, navigationPreview;
+    public HullContentDefinition DisplayedHull { get; private set; }
+    public StatBlocksView StatBlocks => statBlocksView;
+
     [Header("Top")]
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text hullNameText;
@@ -30,16 +40,24 @@ public sealed class HullSelectionInfoController : MonoBehaviour
     private ContentProgressService contentProgressService;
 
     [Inject]
-    private void Construct(ContentProgressService progressService)
+    private void Construct(ContentProgressService progressService) => SetProgressService(progressService);
+
+    public void SetProgressService(ContentProgressService progressService)
     {
+        if (ReferenceEquals(contentProgressService, progressService)) return;
+        if (contentProgressService != null) contentProgressService.ProgressChanged -= RefreshCurrent;
         contentProgressService = progressService;
 
         if (isActiveAndEnabled)
+        {
+            if (contentProgressService != null) contentProgressService.ProgressChanged += RefreshCurrent;
             Refresh(craftCreationFlow != null ? craftCreationFlow.SelectedHull : null);
+        }
     }
 
     private void OnEnable()
     {
+        if (contentProgressService != null) contentProgressService.ProgressChanged += RefreshCurrent;
         if (craftCreationFlow != null)
             craftCreationFlow.HullSelectionChanged += Refresh;
 
@@ -48,16 +66,41 @@ public sealed class HullSelectionInfoController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (contentProgressService != null) contentProgressService.ProgressChanged -= RefreshCurrent;
+        pointerPreview = navigationPreview = null;
         if (craftCreationFlow != null)
             craftCreationFlow.HullSelectionChanged -= Refresh;
     }
 
     public void Show(HullContentDefinition hull)
     {
-        Refresh(hull);
+        shownHull = hull;
+        RefreshCurrent();
     }
 
-    private void Refresh(HullContentDefinition hull)
+    public void SetRuntimeSource(ParentShip ship) { runtimeHull = ship; RefreshCurrent(); }
+    public void Preview(CraftUIButton button, bool pointer)
+    {
+        if (button == null || !(button.Content is HullContentDefinition)) return;
+        if (pointer) pointerPreview = button; else navigationPreview = button;
+        RefreshCurrent();
+    }
+    public void EndPreview(CraftUIButton button, bool pointer)
+    {
+        if (pointer) { if (pointerPreview != button) return; pointerPreview = null; }
+        else { if (navigationPreview != button) return; navigationPreview = null; }
+        RefreshCurrent();
+    }
+    private void RefreshCurrent()
+    {
+        HullContentDefinition hull = craftCreationFlow != null ? craftCreationFlow.SelectedHull : shownHull;
+        var preview = pointerPreview != null ? pointerPreview : navigationPreview;
+        if (preview != null && preview.Content is HullContentDefinition hovered) hull = hovered;
+        RefreshDetails(hull);
+    }
+
+    private void Refresh(HullContentDefinition _) => RefreshCurrent();
+    private void RefreshDetails(HullContentDefinition hull)
     {
         if (hull == null || hull.Data == null)
         {
@@ -66,9 +109,16 @@ public sealed class HullSelectionInfoController : MonoBehaviour
         }
 
         ShipData data = hull.Data;
+        DisplayedHull = hull;
         int upgradeLevel = CraftProgressionText.GetUpgradeLevel(
             hull,
             contentProgressService);
+        if (statBlocksView != null)
+        {
+            if (runtimeHull != null && runtimeHull.gameObject.scene.IsValid() && runtimeHull.ShipData == data)
+                statBlocksView.Bind(runtimeHull);
+            else statBlocksView.Preview(data.ShipMetaConfig, upgradeLevel);
+        }
         bool canPreviewUpgrade = craftCreationFlow == null
             && contentProgressService != null
             && contentProgressService.GetState(hull).CanUpgrade;
@@ -120,12 +170,16 @@ public sealed class HullSelectionInfoController : MonoBehaviour
                 stats.MaximumEnergy,
                 nextStats.MaximumEnergy,
                 canPreviewUpgrade));
-        SetText(activeAbilityDescriptionText, hull.ActiveAbilityDescription);
-        SetText(passiveAbilityDescriptionText, hull.PassiveAbilityDescription);
+        if (activeDescriptionView != null) activeDescriptionView.SetFallback(hull.ActiveAbilityDescription);
+        else SetText(activeAbilityDescriptionText, hull.ActiveAbilityDescription);
+        if (passiveDescriptionView != null) passiveDescriptionView.SetFallback(hull.PassiveAbilityDescription);
+        else SetText(passiveAbilityDescriptionText, hull.PassiveAbilityDescription);
     }
 
     private void Clear()
     {
+        DisplayedHull = null;
+        if (statBlocksView != null && statBlocksView.Meta != null) statBlocksView.Show(null);
         if (iconImage != null)
         {
             iconImage.sprite = null;
@@ -140,8 +194,10 @@ public sealed class HullSelectionInfoController : MonoBehaviour
         SetText(speedText, string.Empty);
         SetText(weaponSlotsInfoText, string.Empty);
         SetText(energyCapacityInfoText, string.Empty);
-        SetText(activeAbilityDescriptionText, string.Empty);
-        SetText(passiveAbilityDescriptionText, string.Empty);
+        if (activeDescriptionView != null) activeDescriptionView.SetFallback("");
+        else SetText(activeAbilityDescriptionText, string.Empty);
+        if (passiveDescriptionView != null) passiveDescriptionView.SetFallback("");
+        else SetText(passiveAbilityDescriptionText, string.Empty);
     }
 
     private static void SetText(TMP_Text text, string value)

@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using Zenject;
 
+[DisallowMultipleComponent]
 public sealed class BossFight : MonoBehaviour, IWaveEncounter
 {
     [Inject] private DiContainer container;
@@ -18,6 +19,7 @@ public sealed class BossFight : MonoBehaviour, IWaveEncounter
     private WaveManager waveManager;
     private BossController bossInstance;
     private bool completed;
+    private bool initialized;
 
     public BossController ActiveBoss => bossInstance;
     public event Action<BossController> BossSpawned;
@@ -25,10 +27,17 @@ public sealed class BossFight : MonoBehaviour, IWaveEncounter
 
     public void Init(WaveManager owner)
     {
-        if (waveManager != null || completed)
+        if (initialized || completed)
             return;
 
+        initialized = true;
         waveManager = owner;
+
+        if (container == null)
+        {
+            FailEncounter("Zenject container is not injected. Instantiate the encounter through Zenject.");
+            return;
+        }
 
         if (bossPrefab == null)
         {

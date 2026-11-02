@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -13,7 +13,7 @@ using Zenject;
 /// Creates the first ECS enemy-projectile slice from existing enemy attack behaviours.
 /// Mesh and material are created once per projectile configuration and reused by all shots.
 /// </summary>
-public sealed class EnemyProjectileEcsSpawner : IDisposable
+public sealed partial class EnemyProjectileEcsSpawner : IDisposable
 {
     // Entities Graphics has no SpriteRenderer sortingOrder. Draw enemy bullets
     // after ordinary transparent sprites, with the requested priority of 99.
@@ -43,9 +43,25 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
     public int ActiveChildAttackParents => childAttacks?.ActiveParents ?? 0;
     public void UpdateChildAttacks(float time, float delta, Vector3? target = null, int maximumLive = EnemyChildAttackSettings.MaximumLiveProjectiles, Camera gameplayCamera = null)
         => childAttacks?.Tick(time, delta, target, maximumLive, gameplayCamera);
+    public void ResolveRemovedChildAttackParents(float time) => childAttacks?.ResolveRemovedParents(time);
 
     private EntityManager entityManager;
     private World entityWorld;
+
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+    // Explicit ownership for the isolated performance scene. Ordinary gameplay keeps its existing path.
+    public long PerformanceSpawnedCount { get; private set; }
+    public int PerformanceHighestChildGeneration { get; private set; }
+    public static EnemyProjectileEcsSpawner CreatePerformanceWorld(World world, EnemyProjectileCollisionRegistry registry)
+    {
+        if (world == null || !world.IsCreated || registry == null)
+            throw new ArgumentException("A live owned World and collision registry are required.");
+        var result = new EnemyProjectileEcsSpawner
+        { entityWorld = world, entityManager = world.EntityManager, collisionRegistry = registry };
+        registry.RegisterBurstProjectileSpawner(result);
+        return result;
+    }
+#endif
 
 #if UNITY_EDITOR
     private Dictionary<int, EnemyBullet> previewBurstPrefabs;
@@ -129,7 +145,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         float initialSpeed,
         EnemyProjectileSpeedBehavior speedBehavior,
         float speedChangeY,
-        AnimationCurve speedByDistance)
+        AnimationCurve speedByDistance, bool normalized = false)
     {
         return TrySpawn(
             legacyPrefab,
@@ -190,6 +206,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         if (requests == null || requests.Count == 0 || !EnsureEntityManager())
             return false;
 
+        if (!CompositeBatchFits(requests)) return false;
         preparedSpawns.Clear();
         for (int index = 0; index < requests.Count; index++)
         {
@@ -244,6 +261,11 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         }
 
         EnemyProjectileSpawnSettings spawnSettings = configuration.CreateSpawnSettings();
+        if (request.MovementPattern == EnemyProjectileMovementPattern.TargetPoint)
+        {
+            if (!request.TargetPoint.HasValue) throw new ArgumentException("TargetPoint requires a captured player position.");
+            spawnSettings.FlightMode = EnemyProjectileFlightMode.Straight;
+        }
 #if UNITY_EDITOR
         if (previewBurstPrefabs != null)
         {
@@ -260,8 +282,8 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             return false;
         }
 
-        bool usesCustomSpeed = request.SpeedBehavior
-            == EnemyProjectileSpeedBehavior.Customized;
+        bool usesCustomSpeed = request.MovementPattern == EnemyProjectileMovementPattern.TargetPoint
+            || request.SpeedBehavior == EnemyProjectileSpeedBehavior.Customized;
         ProjectileScaleSource scaleSource = GetScaleSource(request, configuration);
         if (!TryGetRuntimeTemplate(
                 configuration,
@@ -274,7 +296,9 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             return false;
         }
 
-        float2 direction = new(request.Direction.x, request.Direction.y);
+        Vector3 requestedDirection = request.MovementPattern == EnemyProjectileMovementPattern.TargetPoint
+            ? request.TargetPoint.Value - request.Position : request.Direction;
+        float2 direction = new(requestedDirection.x, requestedDirection.y);
         if (math.lengthsq(direction) < 0.0001f)
             direction = new float2(0f, -1f);
         else
@@ -287,7 +311,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             Configuration = configuration,
             SpawnSettings = spawnSettings,
             Direction = direction,
-            EffectiveDamage = ParentShip.EnemyHitDamage,
+            EffectiveDamage = request.OverridesDamage ? request.Damage : ParentShip.EnemyHitDamage,
             EffectiveCharacteristic = request.OverwritesCharacteristic
                 ? request.Characteristic : configuration.Characteristic,
             EffectiveLifetime = request.OverridesLifetime
@@ -299,6 +323,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             BurstProjectileConfigId = burstProjectileConfigId,
             ScaleSource = scaleSource
         };
+        if (request.Composite.Enabled) prepared.Template = GetCompositeCenterTemplate(prepared);
         return true;
     }
 
@@ -394,10 +419,21 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         });
         entityManager.AddComponentData(template, new EnemyProjectileVelocity());
         entityManager.AddComponentData(template, new EnemyProjectileMovement());
+        entityManager.AddComponentData(template,new EnemyProjectileTargetPosition());
+        entityManager.SetComponentEnabled<EnemyProjectileTargetPosition>(template,false);
+        entityManager.AddComponent<EnemyProjectileHiddenAnchor>(template);
+        entityManager.SetComponentEnabled<EnemyProjectileHiddenAnchor>(template,false);
         entityManager.AddComponentData(template, new EnemyProjectileRemainingLifetime());
         entityManager.AddComponentData(template, new EnemyProjectileDamage());
+        entityManager.AddBuffer<EnemyProjectilePlayerContact>(template);
         entityManager.AddComponentData(template, new EnemyProjectilePreviousPosition());
         entityManager.AddComponentData(template, new EnemyProjectileResolution());
+        entityManager.AddComponentData(template, new EnemyProjectileCollisionState());
+        entityManager.AddComponentData(template, new EnemyProjectileScreenState());
+        entityManager.AddComponent<EnemyProjectileBounceEnabled>(template);
+        entityManager.SetComponentEnabled<EnemyProjectileBounceEnabled>(template, false);
+        entityManager.AddComponent<EnemyChildAttackScreenHold>(template);
+        entityManager.SetComponentEnabled<EnemyChildAttackScreenHold>(template, false);
 
         if (usesCustomSpeed)
         {
@@ -405,9 +441,10 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             entityManager.AddBuffer<EnemyProjectileSpeedCurveSample>(template);
         }
 
+        // Collision systems use this component to opt into actual transform scale.
+        entityManager.AddComponentData(template, new EnemyProjectileCustomScale());
         if (scaleSource != ProjectileScaleSource.None)
         {
-            entityManager.AddComponentData(template, new EnemyProjectileCustomScale());
             DynamicBuffer<EnemyProjectileScaleCurveSample> scaleSamples =
                 entityManager.AddBuffer<EnemyProjectileScaleCurveSample>(template);
             if (scaleSource == ProjectileScaleSource.Configuration)
@@ -461,12 +498,19 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         try
         {
             entityManager.Instantiate(template, entities);
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+            PerformanceSpawnedCount += count;
+#endif
             for (int index = 0; index < count; index++)
             {
                 ConfigureSpawnedEntity(
                     entities[index],
                     preparedSpawns[rangeStart + index]);
                 var request = preparedSpawns[rangeStart + index].Request;
+                if (request.Composite.Enabled) ConfigureComposite(entities[index], preparedSpawns[rangeStart + index]);
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+                PerformanceHighestChildGeneration = Mathf.Max(PerformanceHighestChildGeneration, request.ChildGeneration);
+#endif
                 if (request.ChildAttack != null || request.ChildBudget != null)
                 {
                     if (childAttacks == null)
@@ -485,15 +529,34 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         }
     }
 
+    private void ConfigureScreenBoundary(Entity entity, EnemyProjectileSpawnRequest request)
+    {
+        var position = entityManager.GetComponentData<LocalTransform>(entity).Position;
+        entityManager.SetComponentData(entity, new EnemyProjectileScreenState { Settings = request.ScreenBoundary, Previous = position.xy });
+        if (entityManager.HasComponent<EnemyProjectileBounceEnabled>(entity))
+            entityManager.SetComponentEnabled<EnemyProjectileBounceEnabled>(entity, request.ScreenBoundary.BounceOnScreenBounds
+                && request.ScreenBoundary.BounceEdges != EnemyChildAttackBoundaries.None);
+    }
+
     private void ConfigureSpawnedEntity(Entity entity, PreparedProjectileSpawn prepared)
     {
+        var targetSettings=prepared.Request.TargetPositionSettings;
+        var targetMode=prepared.Request.Laser==null && prepared.Request.MovementPattern==EnemyProjectileMovementPattern.TargetPoint ? EnemyProjectileTargetPositionMode.TargetPoint
+            : targetSettings.ScreenBoundary ? EnemyProjectileTargetPositionMode.ScreenBoundary : EnemyProjectileTargetPositionMode.None;
+        entityManager.SetComponentData(entity,new EnemyProjectileTargetPosition { Mode=targetMode,Boundaries=targetSettings.Boundaries,Offset=targetSettings.Offset,
+            HideParent=(byte)(targetSettings.HideParent?1:0),Previous=new float2(prepared.Request.Position.x,prepared.Request.Position.y) });
+        entityManager.SetComponentEnabled<EnemyProjectileTargetPosition>(entity,targetMode!=EnemyProjectileTargetPositionMode.None);
+        entityManager.SetComponentData(entity, EnemyProjectileCollisionState.Create(
+            prepared.Request.CollisionSettings, prepared.Request.BaseSize));
         if (prepared.Request.Laser != null)
         {
             lasers.Register(entity, prepared.Request, (float)entityWorld.Time.ElapsedTime);
+            ConfigureScreenBoundary(entity, prepared.Request);
             return;
         }
         var staticData = entityManager.GetComponentData<EnemyProjectileStaticData>(entity);
         staticData.Characteristic = prepared.EffectiveCharacteristic;
+        staticData.BaseDamage = prepared.EffectiveDamage;
         entityManager.SetComponentData(entity, staticData);
         if (prepared.Request.OverwritesBaseColour
             || prepared.EffectiveCharacteristic == EnemyProjectileCharacteristic.Fragile
@@ -522,7 +585,8 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         });
         entityManager.SetComponentData(entity, new EnemyProjectileDamage
         {
-            Value = prepared.EffectiveDamage
+            Value = prepared.EffectiveDamage,
+            UseConfiguredDamage = prepared.Request.OverridesDamage ? (byte)1 : (byte)0
         });
         entityManager.SetComponentData(entity, new EnemyProjectilePreviousPosition
         {
@@ -530,7 +594,8 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         });
         entityManager.SetComponentData(entity, new EnemyProjectileResolution());
 
-        if (prepared.Request.SpeedBehavior == EnemyProjectileSpeedBehavior.Customized)
+        if (prepared.Request.SpeedBehavior == EnemyProjectileSpeedBehavior.Customized
+            || prepared.Request.MovementPattern == EnemyProjectileMovementPattern.TargetPoint)
         {
             entityManager.SetComponentData(entity, new EnemyProjectileCustomSpeed
             {
@@ -546,7 +611,8 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
             DynamicBuffer<EnemyProjectileSpeedCurveSample> speedSamples =
                 entityManager.GetBuffer<EnemyProjectileSpeedCurveSample>(entity);
             speedSamples.Clear();
-            AddSpeedCurveSamples(speedSamples, prepared.Request.SpeedByDistance);
+            AddSpeedCurveSamples(speedSamples, prepared.Request.SpeedByDistance,
+                prepared.Request.MovementPattern == EnemyProjectileMovementPattern.TargetPoint);
         }
 
         if (prepared.ScaleSource == ProjectileScaleSource.Attack)
@@ -603,12 +669,19 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
                 break;
         }
 
+        var scaleState = entityManager.GetComponentData<EnemyProjectileCustomScale>(entity);
+        scaleState.BaseSizeDelta = prepared.Request.BaseSize - 1f;
+        entityManager.SetComponentData(entity, scaleState);
         entityManager.SetComponentData(
             entity,
             LocalTransform.FromPositionRotationScale(
                 spawnPosition,
                 GetRotation(prepared.Direction),
-                1f));
+                prepared.Request.BaseSize));
+        // Entry/crossing history starts at the real spawn pose, including Orbit's resolved radius.
+        ConfigureScreenBoundary(entity, prepared.Request);
+        var targetState=entityManager.GetComponentData<EnemyProjectileTargetPosition>(entity);
+        targetState.Previous=new float2(spawnPosition.x,spawnPosition.y);entityManager.SetComponentData(entity,targetState);
     }
 
     private static EnemyProjectileMovement CreateMovement(
@@ -661,7 +734,9 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         {
             Pattern = request.MovementPattern,
             ForwardDirection = prepared.Direction,
-            ReferenceSpeed = Mathf.Max(0.0001f, dna ? prepared.EffectiveSpeed : referenceSpeed),
+            TargetPoint = request.TargetPoint.HasValue ? new float2(request.TargetPoint.Value.x, request.TargetPoint.Value.y) : default,
+            TargetInitialDistance = request.TargetPoint.HasValue ? Vector2.Distance(request.Position, request.TargetPoint.Value) : 0f,
+            ReferenceSpeed = Mathf.Max(0.0001f, dna || request.MovementPattern == EnemyProjectileMovementPattern.TargetPoint ? prepared.EffectiveSpeed : referenceSpeed),
             AngularSpeedDegreesPerSecond = dna && request.DnaHalfCycleDuration > 0f
                 ? math.degrees(2f * dnaAngle / request.DnaHalfCycleDuration) : request.AngularSpeed,
             LateralSpeed = request.LateralSpeed,
@@ -754,7 +829,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
 
     private static void AddSpeedCurveSamples(
         DynamicBuffer<EnemyProjectileSpeedCurveSample> samples,
-        AnimationCurve speedByDistance)
+        AnimationCurve speedByDistance, bool normalized = false)
     {
         if (speedByDistance == null || speedByDistance.length == 0)
         {
@@ -771,7 +846,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         for (int keyIndex = 0; keyIndex < keys.Length; keyIndex++)
             maximumDistance = Mathf.Max(maximumDistance, keys[keyIndex].time);
 
-        maximumDistance = Mathf.Max(0.01f, maximumDistance);
+        maximumDistance = normalized ? 1f : Mathf.Max(0.01f, maximumDistance);
         for (int sampleIndex = 0;
              sampleIndex < CustomSpeedCurveSampleCount;
              sampleIndex++)
@@ -828,7 +903,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         AnimationCurve sizeChangeCurve,
         float finalSize)
     {
-        float clampedFinalSize = Mathf.Max(0.01f, finalSize);
+        float clampedFinalSize = Mathf.Max(0f, finalSize);
         for (int sampleIndex = 0;
              sampleIndex < CustomSpeedCurveSampleCount;
              sampleIndex++)
@@ -851,11 +926,12 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
 
     public void Dispose()
     {
+        // Presentation resources and completion gates outlive ECS handles during World shutdown.
+        childAttacks?.Dispose();
+        lasers?.Dispose();
         if (entityWorld != null && entityWorld.IsCreated)
         {
-            childAttacks?.Dispose();
             if (entityManager.Exists(childAttackOwner)) entityManager.DestroyEntity(childAttackOwner);
-            lasers?.Dispose();
             if (entityManager.Exists(laserOwner)) entityManager.DestroyEntity(laserOwner);
         }
         lasers = null;
@@ -871,6 +947,7 @@ public sealed class EnemyProjectileEcsSpawner : IDisposable
         visualsByConfiguration.Clear();
         configurationsByPrefab.Clear();
         templatesByKey.Clear();
+        compositeCenters.Clear(); compositeMembers.Clear();
         invalidConfigurationsLogged.Clear();
         entityWorld = null;
     }
@@ -1106,6 +1183,11 @@ public struct EnemyProjectileSpawnSettings
 /// </summary>
 public readonly struct EnemyProjectileSpawnRequest
 {
+    public readonly EnemyProjectileCollisionSettings CollisionSettings;
+    public readonly EnemyCompositeProjectileSpec Composite;
+    public int EntityCost => Composite.EntityCost;
+    public readonly float BaseSize;
+    public readonly EnemyProjectileScreenSettings ScreenBoundary;
     public readonly EnemyLaserSettings Laser;
     public readonly EnemyLaserOrigin LaserOrigin;
     public readonly EnemyAttackCompletionTracker CompletionTracker;
@@ -1117,7 +1199,11 @@ public readonly struct EnemyProjectileSpawnRequest
     public readonly EnemyBullet LegacyPrefab;
     public readonly Vector3 Position;
     public readonly Vector3 Direction;
+    public readonly Vector3? TargetPoint;
+    public readonly EnemyProjectileTargetPositionSettings TargetPositionSettings;
     public readonly float DamageMultiplier;
+    public readonly bool OverridesDamage;
+    public readonly float Damage;
     public readonly float InitialSpeed;
     public readonly bool OverridesLifetime;
     public readonly float Lifetime;
@@ -1165,7 +1251,9 @@ public readonly struct EnemyProjectileSpawnRequest
         int childGeneration = 0, EnemyChildAttackBudget childBudget = null,
         EnemyProjectileSpeedCurveTarget speedCurveTarget = EnemyProjectileSpeedCurveTarget.Both,
         EnemyAttackCompletionTracker completionTracker = null, uint numericSeedKey = 0,
-        EnemyLaserSettings laser = null, EnemyLaserOrigin laserOrigin = default)
+        EnemyLaserSettings laser = null, EnemyLaserOrigin laserOrigin = default,
+        EnemyProjectileScreenSettings screenBoundary = default, EnemyCompositeProjectileSpec composite = default, float baseSize = 1f,
+        EnemyProjectileCollisionSettings collisionSettings = default, bool overridesDamage = false, float damage = 1f, Vector3? targetPoint = null, EnemyProjectileTargetPositionSettings targetPositionSettings = default)
         : this(
             legacyPrefab,
             position,
@@ -1193,7 +1281,7 @@ public readonly struct EnemyProjectileSpawnRequest
             overwritesCharacteristic: overwritesCharacteristic,
             characteristic: characteristic, childAttack: childAttack, childPrefabs: childPrefabs,
             childGeneration: childGeneration, childBudget: childBudget, speedCurveTarget: speedCurveTarget,
-            completionTracker: completionTracker, numericSeedKey: numericSeedKey, laser: laser, laserOrigin: laserOrigin)
+            completionTracker: completionTracker, numericSeedKey: numericSeedKey, laser: laser, laserOrigin: laserOrigin, screenBoundary: screenBoundary, composite: composite, baseSize: baseSize, collisionSettings: collisionSettings, overridesDamage: overridesDamage, damage: damage, targetPoint: targetPoint, targetPositionSettings: targetPositionSettings)
     {
     }
 
@@ -1231,8 +1319,18 @@ public readonly struct EnemyProjectileSpawnRequest
         int childGeneration = 0, EnemyChildAttackBudget childBudget = null,
         EnemyProjectileSpeedCurveTarget speedCurveTarget = EnemyProjectileSpeedCurveTarget.Both,
         EnemyAttackCompletionTracker completionTracker = null, uint numericSeedKey = 0,
-        EnemyLaserSettings laser = null, EnemyLaserOrigin laserOrigin = default)
+        EnemyLaserSettings laser = null, EnemyLaserOrigin laserOrigin = default,
+        EnemyProjectileScreenSettings screenBoundary = default, EnemyCompositeProjectileSpec composite = default, float baseSize = 1f,
+        EnemyProjectileCollisionSettings collisionSettings = default, bool overridesDamage = false, float damage = 1f, Vector3? targetPoint = null, EnemyProjectileTargetPositionSettings targetPositionSettings = default)
     {
+        TargetPoint = targetPoint;
+        TargetPositionSettings = targetPositionSettings;
+        CollisionSettings = collisionSettings;
+        OverridesDamage = overridesDamage;
+        Damage = float.IsFinite(damage) ? Mathf.Max(0f, damage) : 0f;
+        Composite = composite;
+        BaseSize = float.IsFinite(baseSize) ? Mathf.Max(0f, baseSize) : 1f;
+        ScreenBoundary = screenBoundary;
         Laser = laser; LaserOrigin = laserOrigin;
         CompletionTracker = completionTracker; NumericSeedKey = numericSeedKey;
         ChildAttack = childAttack; ChildPrefabs = childPrefabs; ChildGeneration = childGeneration; ChildBudget = childBudget;

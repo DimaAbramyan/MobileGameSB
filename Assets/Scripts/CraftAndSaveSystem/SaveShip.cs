@@ -33,30 +33,13 @@ public class SaveSystem : MonoBehaviour
             return;
 
         saveData.EnsureColorPalette();
-        string directoryPath = Application.persistentDataPath + "/Saves";
-
-        if (!Directory.Exists(directoryPath))
+        var saves = new SaveManager();
+        if (!saves.TrySaveNewShip(saveData, out string error))
         {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        string filePath = Path.Combine(directoryPath, $"{saveData.shipName}.json");
-        if (File.Exists(filePath))
-        {
-            Debug.Log("Данное название занято, переименуйте корабль");
+            Debug.Log(error);
             return;
         }
-        if (saveData.shipName == "")
-        {
-            Debug.Log("Введите название корабля");
-            return;
-        }
-
-        string json = JsonUtility.ToJson(saveData, true);
-
-        File.WriteAllText(filePath, json);
-
-        Debug.Log($"Сохранение выполнено: {filePath}");
+        Debug.Log($"Сохранение выполнено: {saveData.shipName}");
         SceneManager.LoadScene("SelectMenu");
     }
 }

@@ -4,13 +4,15 @@ public sealed partial class WaveShootingPreviewSession
 {
     private float sequenceTime;
     private readonly List<SequenceRun> sequenceRuns = new();
+    private readonly List<VisualPose> sequenceRotationPoses = new();
     private sealed class SequenceHost : IDirectedWaveAttackSequenceHost
     {
         private readonly WaveShootingPreviewSession owner;
+        private readonly Slot groupSlot;
         private DirectedWaveAttackSequenceStep pendingStep;
         private List<Slot> chosen;
         private HashSet<int> indices;
-        public SequenceHost(WaveShootingPreviewSession owner) => this.owner = owner;
+        public SequenceHost(WaveShootingPreviewSession owner, Slot groupSlot = null) { this.owner = owner; this.groupSlot = groupSlot; }
         public bool TryStart(DirectedWaveAttackSequenceStep step, out IDirectedWaveAttackSequenceRun execution)
         {
             execution = null;
@@ -20,10 +22,15 @@ public sealed partial class WaveShootingPreviewSession
                 for (int i = 0; i < owner.slots.Count; i++)
                 {
                     var slot = owner.slots[i];
-                    if (slot.Entrance || slot.Group != null) continue;
+                    if (slot.Entrance || (groupSlot != null ? slot != groupSlot : slot.Group != null)) continue;
                     if (!(step.overrideTargetSlots ? step.targetSlots.Contains(slot.Index)
-                        : owner.wave.AttackPatternBehaviour.AllowsSequenceSlot(slot.Index))) continue;
+                        : groupSlot != null || owner.wave.AttackPatternBehaviour.AllowsSequenceSlot(slot.Index))) continue;
                     chosen.Add(slot); indices.Add(slot.Index);
+                    if (groupSlot == null && !owner.sequenceRotationPoses.Contains(slot.Pose))
+                    {
+                        owner.sequenceRotationPoses.Add(slot.Pose);
+                        slot.Pose.LayoutPrograms++; slot.Pose.LayoutProgramHasAttack = false;
+                    }
                 }
             }
             for (int i = owner.sequenceRuns.Count - 1; i >= 0; i--)
@@ -33,7 +40,8 @@ public sealed partial class WaveShootingPreviewSession
                 if (previous.Indices.Overlaps(indices)) return false;
             }
             var settings = new DirectedWaveAttackSettings(); step.CopySettingsTo(settings);
-            var group = new Group { Settings = settings, SequenceOwned = true, Completion = new EnemyAttackCompletionTracker(),
+            if (groupSlot != null) settings.UseSingleDispatchScheduling();
+            var group = new Group { Settings = settings, SequenceOwned = true, GrantedGroupDispatch = groupSlot != null, Completion = new EnemyAttackCompletionTracker(),
                 Numeric = settings.CreateSchedulingNumeric(NumericRandomPreviewControls.SeedOffset) };
             group.NextTime = owner.sequenceTime + settings.SampleStartDelay(group.Numeric);
             owner.groups.Add(group);
@@ -76,7 +84,8 @@ public sealed partial class WaveShootingPreviewSession
             for (int i = owner.volleys.Count - 1; i >= 0; i--)
                 if (owner.volleys[i].Slot.Group == group)
                 { owner.volleys[i].LaunchOrder.Cancel(); owner.volleyPool.Push(owner.volleys[i]); owner.volleys.RemoveAt(i); }
-            for (int i = 0; i < group.Slots.Count; i++) owner.slots.Remove(group.Slots[i]);
+            for (int i = 0; i < group.Slots.Count; i++)
+            { EndLayoutRotation(group.Slots[i], owner.sequenceTime); owner.slots.Remove(group.Slots[i]); }
             owner.groups.Remove(group);
         }
     }

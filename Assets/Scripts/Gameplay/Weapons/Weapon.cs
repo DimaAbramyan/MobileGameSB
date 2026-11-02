@@ -43,6 +43,56 @@ public class Weapon : MonoBehaviour
     public event Action<Weapon> OnShot;
 
     public int Level => level;
+    // Read-only snapshots of the same values used by firing; no projectile is spawned.
+    public ParentShip RuntimeOwner => owner;
+    public WeaponRuntimeStats RuntimeStats => currentStats;
+    public ProjectileParams RuntimeProjectileParameters => CreateProjectileParams();
+    public float RuntimeReloadTime => reloadTime;
+    public float GetRuntimeReloadMultiplier(WeaponController controller = null)
+        => controller != null ? controller.GetEffectiveReloadMultiplier(this) : burstReloadMultiplier;
+    public float GetRuntimeShotsPerSecond(WeaponController controller = null)
+        => WeaponMetaConfig.CalculateDpsInfo(currentStats,
+            fanFireContract != null ? fanFireContract.GetAverageProjectileCount() : 1f,
+            Damage, false, 0f, GetRuntimeReloadMultiplier(controller)).ShotsPerSecond;
+
+    public bool TryGetFiredProjectileStats(string rootSlotId, ProjectileData expected, int depth,
+        out ProjectileRuntimeStats stats)
+    {
+        stats = default;
+        if (weaponData == null || depth < 0 || !weaponData.TryGetProjectileRuntimeStats(
+                rootSlotId, level, out ProjectileData root, out var rootStats)) return false;
+        // Contact and Beam delivery do not use FireConfiguredProjectiles' child override path.
+        if (depth > 0 && root.DeliveryType != ProjectileDeliveryType.Projectile) return false;
+        // Contact and Beam delivery do not use FireConfiguredProjectiles' child override path.
+        if (depth > 0 && root.DeliveryType != ProjectileDeliveryType.Projectile) return false;
+        ProjectileData current = root;
+        for (int i = 0; i < depth; i++)
+        {
+            if (!current.TryGetContract(out SpawnSecondaryProjectileContract child)
+                || child.SecondaryProjectile == null) return false;
+            current = child.SecondaryProjectile;
+        }
+        if (current != expected) return false;
+        if (depth == 0)
+        {
+            var parameters = CreateProjectileParams(rootStats);
+            stats = new ProjectileRuntimeStats(parameters.damage, parameters.maxLength, parameters.speed);
+        }
+        else if (depth == 1 && root.UsesEntities)
+        {
+            if (!TryGetPrimarySecondaryProjectileRuntimeStats(root, out stats)) stats = current.GetRuntimeStats();
+        }
+        else if (depth == 1)
+        {
+            var config = root.CreateRuntimeConfig();
+            ConfigureSecondaryProjectileRuntimeStats(config);
+            stats = config.hasSecondaryProjectileRuntimeStats
+                ? new ProjectileRuntimeStats(config.secondaryProjectileDamage, config.secondaryProjectileRange, config.secondaryProjectileSpeed)
+                : current.GetRuntimeStats();
+        }
+        else stats = current.GetRuntimeStats(); // Descendants do not inherit the root's override in gameplay.
+        return true;
+    }
     public Enemy Target => target;
     protected ParentShip Owner => owner;
     protected WeaponRuntimeStats CurrentStats => currentStats;

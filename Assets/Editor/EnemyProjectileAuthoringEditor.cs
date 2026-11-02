@@ -70,6 +70,7 @@ public sealed class EnemyProjectileAuthoringEditor : Editor
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Static Projectile Data", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("characteristic"));
         EditorGUILayout.PropertyField(baseDamage);
         EditorGUILayout.PropertyField(radius);
         EditorGUILayout.PropertyField(baseLifetime);

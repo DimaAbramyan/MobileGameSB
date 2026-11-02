@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -11,17 +11,24 @@ using UnityEngine.Rendering;
 // Owns simulation and presentation resources for one inspector. No default world or GameObjects per bullet.
 public sealed partial class EnemyProjectilePreviewWorld : IDisposable
 {
-    public const int MaximumProjectiles = 2048;
+    // Dense waves can retain ~7000 live projectiles during their normal 30s lifetime.
+    // Keep a bounded preview without cutting off their emission after ~10 seconds.
+    public const int MaximumProjectiles = 8192;
     private readonly World world = new World("Scene shooting preview", WorldFlags.Editor);
     private readonly EnemyProjectileEcsSpawner spawner;
     private readonly EntityQuery projectiles;
     private readonly EntityQuery renderProjectiles;
     private Entity registry;
-    private readonly SystemHandle speed, scale, homing, burst, movement, lifetime;
+    private readonly SystemHandle speed, scale, homing, burst, movement, lifetime, compositePose, compositeCleanup, playerCollision, sizeCleanup, collisionState;
+    private readonly EnemyProjectileTargetPositionSystem targetPosition;
+    private readonly EnemyProjectileHiddenAnchorCleanupSystem anchorCleanup;
+    private readonly EnemyProjectileScreenBoundarySystem screenBoundary;
+    private readonly EnemyProjectileScreenBounceSystem screenBounce;
     private readonly Dictionary<(Mesh, Material, float4), RenderBatch> batches = new();
     private readonly List<RenderBatch> batchList = new();
     private readonly HashSet<Camera> previewCameras = new();
     private bool visible = true;
+    private bool disposed;
     private sealed class RenderBatch
     {
         public Mesh Mesh;
@@ -40,19 +47,29 @@ public sealed partial class EnemyProjectilePreviewWorld : IDisposable
         spawner = EnemyProjectileEcsSpawner.CreateEditorPreview(world);
         var manager = world.EntityManager;
         registry = manager.CreateEntity(typeof(EnemyProjectileCollisionRegistryTag));
+        manager.AddComponentData(registry,new EnemyProjectilePreviewCollisionPolicy());
         manager.AddBuffer<EnemyProjectileCollisionTarget>(registry);
         manager.AddBuffer<EnemyProjectileBurstSpawnRequest>(registry);
         manager.AddBuffer<EnemyProjectileResolutionEvent>(registry);
         projectiles = manager.CreateEntityQuery(typeof(EnemyProjectileMovement), typeof(LocalTransform), typeof(EnemyProjectileResolution));
         renderProjectiles = manager.CreateEntityQuery(new EntityQueryDesc {
             All = new[] { ComponentType.ReadOnly<EnemyProjectileMovement>(), ComponentType.ReadOnly<LocalTransform>(), ComponentType.ReadOnly<EnemyProjectileResolution>() },
-            None = new[] { ComponentType.ReadOnly<EnemyLaserState>() } });
+            None = new[] { ComponentType.ReadOnly<EnemyLaserState>(), ComponentType.ReadOnly<EnemyCompositeCenter>(), ComponentType.ReadOnly<DisableRendering>() } });
         speed = world.GetOrCreateSystem<ProjectileCustomSpeedSystem>();
         scale = world.GetOrCreateSystem<ProjectileCustomScaleSystem>();
         homing = world.GetOrCreateSystem<ProjectileHomingSystem>();
         burst = world.GetOrCreateSystem<ProjectileBurstAtPointSystem>();
         movement = world.GetOrCreateSystem<ProjectileMovementSystem>();
+        compositePose = world.GetOrCreateSystem<EnemyCompositePoseSystem>();
+        collisionState = world.GetOrCreateSystem<EnemyProjectileCollisionStateSystem>();
+        sizeCleanup = world.GetOrCreateSystem<EnemyProjectileSizeCleanupSystem>();
+        screenBounce = world.GetOrCreateSystemManaged<EnemyProjectileScreenBounceSystem>();
+        targetPosition=world.GetOrCreateSystemManaged<EnemyProjectileTargetPositionSystem>();
+        anchorCleanup=world.GetOrCreateSystemManaged<EnemyProjectileHiddenAnchorCleanupSystem>();
+        compositeCleanup = world.GetOrCreateSystem<EnemyCompositeCleanupSystem>();
+        playerCollision = world.GetOrCreateSystem<ProjectilePlayerCollisionSystem>();
         lifetime = world.GetOrCreateSystem<ProjectileLifetimeSystem>();
+        screenBoundary = world.GetOrCreateSystemManaged<EnemyProjectileScreenBoundarySystem>();
         RenderPipelineManager.beginCameraRendering += BeforePipelineCamera;
         Camera.onPreCull += BeforeBuiltinCamera;
     }
@@ -85,10 +102,13 @@ public sealed partial class EnemyProjectilePreviewWorld : IDisposable
     {
         using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.Spawn);
         int available = Mathf.Max(0, WavePreviewProfiler.EffectiveProjectileLimit(MaximumProjectiles) - Count);
-        if (requests.Count > available)
+        int accepted=0;
+        while(accepted<requests.Count && requests[accepted].EntityCost<=available)
+        { available-=requests[accepted].EntityCost; accepted++; }
+        if(accepted<requests.Count)
         {
-            Omitted += requests.Count - available;
-            requests.RemoveRange(available, requests.Count - available);
+            Omitted += requests.Count-accepted;
+            requests.RemoveRange(accepted,requests.Count-accepted);
         }
         if (requests.Count > 0) spawner.TrySpawnBatch(requests);
     }
@@ -96,6 +116,7 @@ public sealed partial class EnemyProjectilePreviewWorld : IDisposable
     public void Step(float time, float delta, Vector3 target, Camera gameplayCamera = null)
     {
         using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.ProjectileStep);
+        gameplayCamera ??= WavePreviewGameplayCamera.GameplayCamera;
         world.SetTime(new Unity.Core.TimeData(time, delta));
         var targets = world.EntityManager.GetBuffer<EnemyProjectileCollisionTarget>(registry);
         targets.Clear();
@@ -109,9 +130,19 @@ public sealed partial class EnemyProjectilePreviewWorld : IDisposable
         using (WavePreviewProfiler.Measure(WavePreviewProfiler.Area.SpeedCurve)) speed.Update(world.Unmanaged);
         using (WavePreviewProfiler.Measure(WavePreviewProfiler.Area.SizeCurve)) scale.Update(world.Unmanaged);
         using (WavePreviewProfiler.Measure(WavePreviewProfiler.Area.Movement)) movement.Update(world.Unmanaged);
+        compositePose.Update(world.Unmanaged);
+        collisionState.Update(world.Unmanaged);
+        sizeCleanup.Update(world.Unmanaged);
+        screenBounce.UpdatePreview(gameplayCamera);
+        targetPosition.UpdatePreview(gameplayCamera);
+        playerCollision.Update(world.Unmanaged);
         using (WavePreviewProfiler.Measure(WavePreviewProfiler.Area.Lifetime)) lifetime.Update(world.Unmanaged);
         spawner.UpdateLasers(time, gameplayCamera);
         spawner.UpdateChildAttacks(time, delta, target, WavePreviewProfiler.EffectiveProjectileLimit(MaximumProjectiles), gameplayCamera);
+        screenBoundary.UpdatePreview(gameplayCamera);
+        compositeCleanup.Update(world.Unmanaged);
+        spawner.ResolveRemovedChildAttackParents(time);
+        anchorCleanup.Update();
         using (WavePreviewProfiler.Measure(WavePreviewProfiler.Area.Cleanup))
         using (var entities = projectiles.ToEntityArray(Allocator.Temp))
         using (var resolutions = projectiles.ToComponentDataArray<EnemyProjectileResolution>(Allocator.Temp))
@@ -209,15 +240,21 @@ public sealed partial class EnemyProjectilePreviewWorld : IDisposable
 
     public void Dispose()
     {
-        if (!world.IsCreated) return;
+        if (disposed) return;
+        disposed = true;
         RenderPipelineManager.beginCameraRendering -= BeforePipelineCamera;
         Camera.onPreCull -= BeforeBuiltinCamera;
         previewCameras.Clear();
-        projectiles.Dispose();
-        renderProjectiles.Dispose();
+        // A World can be disposed during Editor shutdown before its preview owner.
+        // Queries are already invalid then, but managed subscriptions and visuals still need cleanup.
+        if (world.IsCreated)
+        {
+            projectiles.Dispose();
+            renderProjectiles.Dispose();
+        }
         // Spawner destroys entities/templates before freeing the meshes and materials they refer to.
         spawner.Dispose();
-        world.Dispose();
+        if (world.IsCreated) world.Dispose();
         for (int i = 0; i < batchList.Count; i++)
             UnityEngine.Object.DestroyImmediate(batchList[i].Material);
         batches.Clear(); batchList.Clear();

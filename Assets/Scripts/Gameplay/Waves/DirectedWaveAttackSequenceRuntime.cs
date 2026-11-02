@@ -5,18 +5,25 @@ internal sealed class DirectedWaveAttackSequenceRuntime : IDirectedWaveAttackSeq
 {
     private readonly DirectedEnemySubWave wave;
     private readonly DirectedWaveAttackBehaviour behaviour;
+    private readonly int? groupSlot;
     private readonly List<Run> runs = new();
     private DirectedWaveAttackSequenceStep pendingStep;
     private HashSet<int> pendingSlots;
     private readonly Dictionary<Enemy, IWaveAttackExecutor> controlled = new();
     private readonly List<Enemy> candidates = new();
     private readonly List<MonoBehaviour> components = new();
+    private readonly HashSet<SimpleEnemyAttackExecutor> rotationPrograms = new();
+    public void CompleteLayoutRotationProgram()
+    {
+        foreach (var executor in rotationPrograms) if (executor != null) executor.EndLayoutRotationProgram();
+        rotationPrograms.Clear();
+    }
     public bool IsIdle
     {
         get { for (int i = 0; i < runs.Count; i++) if (!runs[i].IsIdle) return false; return true; }
     }
-    public DirectedWaveAttackSequenceRuntime(DirectedEnemySubWave wave, DirectedWaveAttackBehaviour behaviour)
-    { this.wave = wave; this.behaviour = behaviour; }
+    public DirectedWaveAttackSequenceRuntime(DirectedEnemySubWave wave, DirectedWaveAttackBehaviour behaviour, int? groupSlot = null)
+    { this.wave = wave; this.behaviour = behaviour; this.groupSlot = groupSlot; }
 
     public bool TryStart(DirectedWaveAttackSequenceStep step, out IDirectedWaveAttackSequenceRun execution)
     {
@@ -25,7 +32,8 @@ internal sealed class DirectedWaveAttackSequenceRuntime : IDirectedWaveAttackSeq
         {
             pendingStep = step; pendingSlots = new HashSet<int>();
             for (int i = 0; i < wave.GetConfiguredEnemySlotCount(); i++)
-                if (step.overrideTargetSlots ? step.targetSlots.Contains(i) : behaviour.AllowsSequenceSlot(i)) pendingSlots.Add(i);
+                if ((!groupSlot.HasValue || groupSlot.Value == i)
+                    && (step.overrideTargetSlots ? step.targetSlots.Contains(i) : groupSlot.HasValue || behaviour.AllowsSequenceSlot(i))) pendingSlots.Add(i);
         }
         var slots = pendingSlots;
         for (int i = runs.Count - 1; i >= 0; i--)
@@ -34,7 +42,16 @@ internal sealed class DirectedWaveAttackSequenceRuntime : IDirectedWaveAttackSeq
             if (runs[i].Slots.Overlaps(slots)) return false;
         }
         var settings = new DirectedWaveAttackSettings(); step.CopySettingsTo(settings);
-        var run = new Run(wave, slots, settings, settings.RuntimeAttackSpeedMultiplier);
+        wave.GetWaveAttackCandidates(candidates);
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var enemy = candidates[i];
+            if (enemy == null || !wave.TryGetFormationIndex(enemy, out int index) || !slots.Contains(index)) continue;
+            var executor = enemy.GetComponent<SimpleEnemyAttackExecutor>();
+            if (executor != null && rotationPrograms.Add(executor)) executor.BeginLayoutRotationProgram();
+        }
+        if (groupSlot.HasValue) settings.UseSingleDispatchScheduling();
+        var run = new Run(wave, slots, settings, settings.RuntimeAttackSpeedMultiplier, groupSlot.HasValue);
         runs.Add(run); execution = run;
         return true;
     }
@@ -64,6 +81,7 @@ internal sealed class DirectedWaveAttackSequenceRuntime : IDirectedWaveAttackSeq
     }
     public void ReleaseControl()
     {
+        CompleteLayoutRotationProgram();
         foreach (var entry in controlled)
             if (entry.Key != null) entry.Value.SetWaveAttackControl(false);
         controlled.Clear();
@@ -78,11 +96,11 @@ internal sealed class DirectedWaveAttackSequenceRuntime : IDirectedWaveAttackSeq
         public bool RootComplete => released;
         public bool IsIdle => released || controller.IsIdle;
         public bool ChildrenComplete => completion.IsComplete;
-        public Run(DirectedEnemySubWave wave, HashSet<int> slots, DirectedWaveAttackSettings settings, float speed)
+        public Run(DirectedEnemySubWave wave, HashSet<int> slots, DirectedWaveAttackSettings settings, float speed, bool groupDispatch)
         {
             Slots = slots;
             controller = new DirectedWaveAttackController(wave, settings,
-                enemy => wave.TryGetFormationIndex(enemy, out int index) && slots.Contains(index));
+                enemy => wave.TryGetFormationIndex(enemy, out int index) && slots.Contains(index), false, groupDispatch);
             controller.BeginSingleCycle(speed, completion);
         }
         public void Tick()

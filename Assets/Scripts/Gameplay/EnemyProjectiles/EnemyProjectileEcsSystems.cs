@@ -20,6 +20,7 @@ public partial struct ProjectileCustomSpeedSystem : ISystem
         ComponentLookup<EnemyProjectileBurstAtPoint> burstProjectiles =
             SystemAPI.GetComponentLookup<EnemyProjectileBurstAtPoint>(true);
         var customScales = SystemAPI.GetComponentLookup<EnemyProjectileCustomScale>(true);
+        var movements = SystemAPI.GetComponentLookup<EnemyProjectileMovement>(true);
         SystemAPI.TryGetSingletonBuffer<EnemyProjectileSlowField>(out var slowFields, true);
         SystemAPI.TryGetSingletonBuffer<EnemyProjectileRegionSpeedField>(out var regionFields, true);
         foreach ((RefRO<LocalTransform> transform,
@@ -35,9 +36,10 @@ public partial struct ProjectileCustomSpeedSystem : ISystem
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<EnemyProjectileResolution>,
                      DynamicBuffer<EnemyProjectileSpeedCurveSample>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyProjectileHiddenAnchor>().WithEntityAccess())
         {
-            if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
+            if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None
+                || movements.HasComponent(entity) && movements[entity].Pattern == EnemyProjectileMovementPattern.TargetPoint)
                 continue;
 
             if (burstProjectiles.HasComponent(entity)
@@ -95,7 +97,7 @@ public partial struct ProjectileCustomSpeedSystem : ISystem
         return false;
     }
 
-    private static float EvaluateSpeedMultiplier(
+    public static float EvaluateSpeedMultiplier(
         DynamicBuffer<EnemyProjectileSpeedCurveSample> curveSamples,
         float distance)
     {
@@ -165,7 +167,7 @@ public partial struct ProjectileCustomScaleSystem : ISystem
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<EnemyProjectileResolution>,
                      DynamicBuffer<EnemyProjectileScaleCurveSample>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyProjectileHiddenAnchor>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -200,8 +202,8 @@ public partial struct ProjectileCustomScaleSystem : ISystem
                               staticData.ValueRO.Radius * transform.ValueRO.Scale);
             }
 
-            transform.ValueRW.Scale = math.max(
-                0.01f,
+            transform.ValueRW.Scale = (1f + customScale.ValueRO.BaseSizeDelta) * math.max(
+                0f,
                 EvaluateScaleMultiplier(
                     curveSamples,
                     customScale.ValueRO.ProgressSinceScaleChange));
@@ -278,22 +280,27 @@ public partial struct ProjectilePurgeFieldSystem : ISystem
         if (!purgeFields.IsCreated || purgeFields.Length == 0)
             return;
 
+        var hidden=SystemAPI.GetComponentLookup<EnemyProjectileHiddenAnchor>(true);
+        var lasers=SystemAPI.GetComponentLookup<EnemyLaserState>(true);
+        var centers=SystemAPI.GetComponentLookup<EnemyCompositeCenter>(true);
         foreach ((RefRO<LocalTransform> transform,
                   RefRO<EnemyProjectileStaticData> staticData,
-                  RefRW<EnemyProjectileResolution> resolution)
+                  RefRW<EnemyProjectileResolution> resolution, Entity entity)
                  in SystemAPI.Query<RefRO<LocalTransform>, RefRO<EnemyProjectileStaticData>,
-                     RefRW<EnemyProjectileResolution>>().WithNone<EnemyLaserState>())
+                     RefRW<EnemyProjectileResolution>>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
 
+            bool anchor=hidden.HasComponent(entity)&&hidden.IsComponentEnabled(entity);
+            if((lasers.HasComponent(entity)||centers.HasComponent(entity))&&!anchor)continue;
             for (int fieldIndex = 0;
                  fieldIndex < purgeFields.Length;
                  fieldIndex++)
             {
                 EnemyProjectilePurgeField field = purgeFields[fieldIndex];
-                if (!EnemyProjectileCharacteristics.CanBeDestroyed(staticData.ValueRO.Characteristic,
-                    field.DestructionPolicy == EnemyProjectileDestructionPolicy.NormalAndFragile))
+                if (field.SystemCleanup == 0 && (anchor || !EnemyProjectileCharacteristics.CanBeDestroyed(staticData.ValueRO.Characteristic,
+                    field.DestructionPolicy == EnemyProjectileDestructionPolicy.NormalAndFragile)))
                     continue;
                 if (field.Radius <= 0f
                     || math.distancesq(
@@ -345,7 +352,7 @@ public partial struct ProjectileHomingSystem : ISystem
                      RefRW<EnemyProjectileVelocity>,
                      RefRW<EnemyProjectileHoming>,
                      RefRO<EnemyProjectileResolution>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyProjectileHiddenAnchor>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -459,7 +466,7 @@ public partial struct ProjectileBurstAtPointSystem : ISystem
                      RefRW<EnemyProjectileBurstAtPoint>,
                      RefRO<EnemyProjectileStaticData>,
                      RefRW<EnemyProjectileResolution>>()
-                     .WithEntityAccess())
+                     .WithNone<EnemyProjectileHiddenAnchor>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -565,6 +572,7 @@ public partial struct ProjectileMovementSystem : ISystem
         ComponentLookup<EnemyProjectileCustomSpeed> customSpeeds = SystemAPI
             .GetComponentLookup<EnemyProjectileCustomSpeed>(false);
         var customScales = SystemAPI.GetComponentLookup<EnemyProjectileCustomScale>(true);
+        var speedCurves = SystemAPI.GetBufferLookup<EnemyProjectileSpeedCurveSample>(true);
         foreach ((RefRW<LocalTransform> transform,
                   RefRW<EnemyProjectilePreviousPosition> previousPosition,
                   RefRW<EnemyProjectileVelocity> velocity,
@@ -578,7 +586,7 @@ public partial struct ProjectileMovementSystem : ISystem
                      RefRW<EnemyProjectileMovement>,
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<EnemyProjectileResolution>>()
-                     .WithNone<EnemyLaserState>().WithEntityAccess())
+                     .WithNone<EnemyLaserState,EnemyProjectileHiddenAnchor>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -592,6 +600,32 @@ public partial struct ProjectileMovementSystem : ISystem
                 staticData.ValueRO.Radius * (customScales.HasComponent(entity)
                     ? transform.ValueRO.Scale : 1f));
             float2 authoredVelocity = velocity.ValueRO.Value;
+            if (movement.ValueRO.Pattern == EnemyProjectileMovementPattern.TargetPoint)
+            {
+                float2 offset = movement.ValueRO.TargetPoint - currentPosition;
+                float remaining = math.length(offset);
+                if (movement.ValueRO.HasReachedTarget != 0 || remaining <= 0.00001f)
+                {
+                    transform.ValueRW.Position.xy = movement.ValueRO.TargetPoint;
+                    velocity.ValueRW.Value = float2.zero;
+                    movement.ValueRW.HasReachedTarget = 1;
+                    continue;
+                }
+                float normalizedDistance = math.saturate(remaining / math.max(0.00001f, movement.ValueRO.TargetInitialDistance));
+                float multiplier = ProjectileCustomSpeedSystem.EvaluateSpeedMultiplier(speedCurves[entity], normalizedDistance);
+                // A strictly positive approach speed prevents asymptotic/non-monotonic curves from stranding a bullet.
+                multiplier = math.isfinite(multiplier) ? math.max(0.01f, multiplier) : 1f;
+                float speed = movement.ValueRO.ReferenceSpeed * multiplier;
+                float2 forwardToTarget = offset / remaining;
+                float step = math.min(remaining, speed * math.max(0f, slowMultiplier) * math.max(0f, deltaTime));
+                float2 next = step >= remaining ? movement.ValueRO.TargetPoint : currentPosition + forwardToTarget * step;
+                transform.ValueRW.Position = new float3(next, transform.ValueRO.Position.z);
+                transform.ValueRW.Rotation = quaternion.RotateZ(math.atan2(forwardToTarget.y, forwardToTarget.x) + math.PI * 0.5f);
+                movement.ValueRW.ForwardDirection = forwardToTarget;
+                movement.ValueRW.HasReachedTarget = (byte)(step >= remaining ? 1 : 0);
+                velocity.ValueRW.Value = step >= remaining ? float2.zero : forwardToTarget * speed;
+                continue;
+            }
             if (movement.ValueRO.Pattern == EnemyProjectileMovementPattern.Default)
             {
                 float2 currentVelocity = authoredVelocity * slowMultiplier;
@@ -768,6 +802,7 @@ public partial struct ProjectileInterceptorSystem : ISystem
             .GetComponentLookup<EnemyProjectileBurstAtPoint>(true);
         ComponentLookup<EnemyProjectileCustomScale> customScales = SystemAPI
             .GetComponentLookup<EnemyProjectileCustomScale>(true);
+        var collisionStates = SystemAPI.GetComponentLookup<EnemyProjectileCollisionState>(true);
 
         foreach ((RefRW<EnemyProjectileResolution> resolution,
                   RefRO<EnemyProjectilePreviousPosition> previousPosition,
@@ -778,8 +813,10 @@ public partial struct ProjectileInterceptorSystem : ISystem
                      RefRO<EnemyProjectilePreviousPosition>,
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<LocalTransform>>()
-                     .WithNone<EnemyLaserState>().WithEntityAccess())
+                     .WithNone<EnemyLaserState,EnemyCompositeCenter>().WithEntityAccess())
         {
+            if (collisionStates.HasComponent(entity) && collisionStates[entity].Disabled != 0)
+                continue;
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
 
@@ -855,7 +892,7 @@ public partial struct ProjectileInterceptorSystem : ISystem
         float2 edge = b - a;
         float denominator = movement.x * edge.y - movement.y * edge.x;
         float2 offset = a - start;
-        if (math.abs(denominator) > 0.000001f)
+        if (denominator != 0f)
         {
             float t = (offset.x * edge.y - offset.y * edge.x) / denominator;
             float u = (offset.x * movement.y - offset.y * movement.x) / denominator;
@@ -872,7 +909,7 @@ public partial struct ProjectileInterceptorSystem : ISystem
     {
         float2 edge = b - a;
         float lengthSq = math.lengthsq(edge);
-        float t = lengthSq > 0.000001f ? math.saturate(math.dot(point - a, edge) / lengthSq) : 0f;
+        float t = lengthSq > 0f ? math.saturate(math.dot(point - a, edge) / lengthSq) : 0f;
         return math.lengthsq(point - (a + t * edge));
     }
 
@@ -883,7 +920,7 @@ public partial struct ProjectileInterceptorSystem : ISystem
         float2 relativeEnd = end - center;
         float2 segment = relativeEnd - relativeStart;
         float lengthSq = math.lengthsq(segment);
-        float time = lengthSq > 0.0000001f
+        float time = lengthSq > 0f
             ? math.saturate(-math.dot(relativeStart, segment) / lengthSq) : 0f;
         return math.lengthsq(relativeStart + segment * time) <= radius * radius;
     }
@@ -924,12 +961,13 @@ public partial struct ProjectileInterceptorSystem : ISystem
         ref float entry,
         ref float exit)
     {
-        if (math.abs(direction) < 0.00001f)
+        if (direction == 0f)
             return start >= minimum && start <= maximum;
 
-        float inverseDirection = 1f / direction;
-        float first = (minimum - start) * inverseDirection;
-        float second = (maximum - start) * inverseDirection;
+        // Small non-zero movement can still cross a surface. Divide directly so
+        // a tiny direction does not overflow an intermediate reciprocal.
+        float first = (minimum - start) / direction;
+        float second = (maximum - start) / direction;
         if (first > second)
         {
             float swap = first;
@@ -961,10 +999,16 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
         if (targets.Length == 0)
             return;
 
+        bool previewOnlyParts = SystemAPI.HasSingleton<EnemyProjectilePreviewCollisionPolicy>();
+        var compositeParts = SystemAPI.GetComponentLookup<EnemyCompositePart>(true);
         ComponentLookup<EnemyProjectileBurstAtPoint> burstProjectiles = SystemAPI
             .GetComponentLookup<EnemyProjectileBurstAtPoint>(true);
         ComponentLookup<EnemyProjectileCustomScale> customScales = SystemAPI
             .GetComponentLookup<EnemyProjectileCustomScale>(true);
+        var collisionStates = SystemAPI.GetComponentLookup<EnemyProjectileCollisionState>(true);
+        var contactsLookup = SystemAPI.GetBufferLookup<EnemyProjectilePlayerContact>();
+        var damageLookup = SystemAPI.GetComponentLookup<EnemyProjectileDamage>();
+        var events = SystemAPI.GetSingletonBuffer<EnemyProjectileResolutionEvent>();
 
         foreach ((RefRW<EnemyProjectileResolution> resolution,
                   RefRO<EnemyProjectilePreviousPosition> previousPosition,
@@ -975,8 +1019,12 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
                      RefRO<EnemyProjectilePreviousPosition>,
                      RefRO<EnemyProjectileStaticData>,
                      RefRO<LocalTransform>>()
-                     .WithNone<EnemyLaserState>().WithEntityAccess())
+                     .WithNone<EnemyLaserState,EnemyCompositeCenter>().WithEntityAccess())
         {
+            if (previewOnlyParts && !compositeParts.HasComponent(entity)
+                && staticData.ValueRO.Characteristic != EnemyProjectileCharacteristic.Indestructible) continue;
+            if (collisionStates.HasComponent(entity) && collisionStates[entity].Disabled != 0)
+                continue;
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
 
@@ -986,6 +1034,14 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
                 continue;
             }
 
+            bool persistent = staticData.ValueRO.Characteristic == EnemyProjectileCharacteristic.Indestructible;
+            DynamicBuffer<EnemyProjectilePlayerContact> contacts = default;
+            if (persistent)
+            {
+                contacts = contactsLookup[entity];
+                for (int i = 0; i < contacts.Length; i++)
+                { var contact = contacts[i]; contact.Touching = 0; contacts[i] = contact; }
+            }
             for (int index = 0; index < targets.Length; index++)
             {
                 EnemyProjectileCollisionTarget target = targets[index];
@@ -1006,6 +1062,32 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
                 if (!intersects)
                     continue;
 
+                if (persistent)
+                {
+                    int existing = -1;
+                    for (int i = 0; i < contacts.Length; i++)
+                        if (contacts[i].TargetId == target.TargetId) { existing = i; break; }
+                    if (existing < 0)
+                    {
+                        var damage = damageLookup[entity];
+                        damage.HitPlayer = 1;
+                        damageLookup[entity] = damage;
+                        events.Add(new EnemyProjectileResolutionEvent { TargetId = target.TargetId,
+                            Kind = EnemyProjectileResolutionKind.HitPlayer, Damage = damage.Value,
+                            DamageType = damage.Type, UseConfiguredDamage = damage.UseConfiguredDamage });
+                    }
+                    bool touching = target.IsCircle != 0
+                        ? math.distancesq(transform.ValueRO.Position.xy, target.Center)
+                            <= math.square(target.Radius + projectileRadius)
+                        : ProjectileInterceptorSystem.IntersectsExpandedBounds(transform.ValueRO.Position.xy,
+                            transform.ValueRO.Position.xy, target.Min, target.Max, projectileRadius);
+                    if (touching)
+                    {
+                        var contact = new EnemyProjectilePlayerContact { TargetId = target.TargetId, Touching = 1 };
+                        if (existing >= 0) contacts[existing] = contact; else contacts.Add(contact);
+                    }
+                    continue;
+                }
                 resolution.ValueRW = new EnemyProjectileResolution
                 {
                     Kind = EnemyProjectileResolutionKind.HitPlayer,
@@ -1013,6 +1095,9 @@ public partial struct ProjectilePlayerCollisionSystem : ISystem
                 };
                 break;
             }
+            if (persistent)
+                for (int i = contacts.Length - 1; i >= 0; i--)
+                    if (contacts[i].Touching == 0) contacts.RemoveAtSwapBack(i);
         }
     }
 }
@@ -1039,7 +1124,7 @@ public partial struct ProjectileLifetimeSystem : ISystem
                   Entity entity)
                  in SystemAPI.Query<RefRW<EnemyProjectileRemainingLifetime>,
                      RefRW<EnemyProjectileResolution>>()
-                     .WithNone<EnemyLaserState>().WithEntityAccess())
+                     .WithNone<EnemyLaserState,EnemyProjectileHiddenAnchor>().WithEntityAccess())
         {
             if (resolution.ValueRO.Kind != EnemyProjectileResolutionKind.None)
                 continue;
@@ -1100,7 +1185,8 @@ public partial struct ProjectileCleanupSystem : ISystem
                 {
                     TargetId = resolution.ValueRO.TargetId,
                     Kind = resolution.ValueRO.Kind,
-                    Damage = damage.ValueRO.Value
+                    Damage = damage.ValueRO.Value,
+                    DamageType = damage.ValueRO.Type, UseConfiguredDamage = damage.ValueRO.UseConfiguredDamage
                 });
             }
 

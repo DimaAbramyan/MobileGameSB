@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Localization-Locales
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Localization-Locales
+  m_GUID: 0cf221485e4403f42b68845a1499d6c3
+  m_SerializeEntries:
+  - m_GUID: 2126015f55513b2418a5600a6360768a
+    m_Address: "\u7B80\u4F53\u4E2D\u6587"
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6a38cb62d2c6d2a4cb401623d5cb89dc
+    m_Address: "\u0420\u0443\u0441\u0441\u043A\u0438\u0439"
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7881f2ee0b856054c827c1b690dd261d
+    m_Address: English
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e7e174a5f665744ca05ea256f5d8a84
+    m_Address: "Espa\xF1ol"
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1327fd616010e54bb4bc5d475fca9da
+    m_Address: Deutsch
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a3a97098ef0b2984a9457e23f4205436
+    m_Address: "Fran\xE7ais"
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bec7dcf08679226409926c93f41b38c8
+    m_Address: "\u65E5\u672C\u8A9E"
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c049a0131baa76f4690693ecc3637915
+    m_Address: "Portugu\xEAs (Brasil)"
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 1
+  m_Settings: {fileID: 11400000, guid: 497cd0283dc195a4aaaf3bf67973b6d3, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: a759a76afbdf72147b46dcc4309f512d, type: 2}
+    - {fileID: 11400000, guid: a35e7b25d08b7994e96059595f4f948b, type: 2}
+    - {fileID: 11400000, guid: f6b52633765187c4cb710febc45ab851, type: 2}

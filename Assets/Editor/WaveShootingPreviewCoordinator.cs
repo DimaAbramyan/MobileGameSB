@@ -80,6 +80,7 @@ public sealed partial class WaveShootingPreviewSession : IWaveAttackCoordinatorP
             // Match runtime Restart: reset the shot sequence while retaining each slot's cooldown.
             foreach (var slot in group.Slots)
             {
+                slot.AttackProgram?.Pause(time);
                 slot.Active = false;
                 slot.Numeric.ReleaseAll();
                 foreach (var pattern in slot.Patterns) pattern.Numeric = null;
@@ -94,6 +95,11 @@ public sealed partial class WaveShootingPreviewSession : IWaveAttackCoordinatorP
         using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.AttackSequence);
         sequenceTime = time;
         sequencePlayer?.Tick(time);
+        if (sequencePlayer != null && sequencePlayer.IsComplete)
+        {
+            foreach (var pose in sequenceRotationPoses) pose.EndLayout(time, true);
+            sequenceRotationPoses.Clear();
+        }
         if (coordinated && coordinatorCycleLimit >= 0 && sequencePlayer != null && sequencePlayer.IsComplete
             && coordinatorPermissions.AllowNewAttacks && coordinatorSequenceCycles + 1 < coordinatorCycleLimit)
         { coordinatorSequenceCycles++; sequencePlayer.Begin(time, true); }

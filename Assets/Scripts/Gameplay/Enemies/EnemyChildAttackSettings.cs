@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 public enum EnemyChildAttackTriggerMode { [InspectorName("After Time")] AfterTime, [InspectorName("After Distance")] AfterDistance, [InspectorName("On Event")] OnEvent }
-public enum EnemyChildAttackEvent { [InspectorName("On Spawn")] OnSpawn, [InspectorName("Hit Player")] HitPlayer, Intercepted, Expired, [InspectorName("Burst At Point")] BurstAtPoint, [InspectorName("On Screen Boundary Reached")] OnScreenBoundaryReached }
+public enum EnemyChildAttackEvent { [InspectorName("On Spawn")] OnSpawn, [InspectorName("Hit Player")] HitPlayer, Intercepted, Expired, [InspectorName("Burst At Point")] BurstAtPoint, [InspectorName("On Screen Boundary Reached")] OnScreenBoundaryReached, [InspectorName("On Target Reached")] OnTargetReached }
 public enum EnemyChildAttackBoundary { Any, Top, Bottom, Left, Right }
 [Flags]
 public enum EnemyChildAttackBoundaries { None = 0, Left = 1, Right = 2, Top = 4, Bottom = 8, All = Left | Right | Top | Bottom }
@@ -22,6 +22,7 @@ public static class EnemyChildAttackBoundarySelection
 }
 public enum EnemyChildAttackOffsetSpace { World, Local }
 public enum EnemyChildAttackOriginMode { [InspectorName("Follow Parent")] FollowParent, [InspectorName("Capture On Start")] CaptureOnStart }
+public enum EnemyChildAttackRepeatMode { [InspectorName("Fixed Count")] FixedCount = 0, [InspectorName("Until Parent Destroyed")] UntilParentDestroyed = 1 }
 
 [Serializable]
 public sealed partial class EnemyChildAttackSettings
@@ -50,12 +51,14 @@ public sealed partial class EnemyChildAttackSettings
     [SerializeField, Tooltip("Delay in scaled game seconds after crossing. Capture On Start captures the crossing position; Follow Parent uses the moving parent's position.")]
     [Randomizable(nameof(timeOffsetRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerProjectile)]
     private float timeOffset;
+    // Zero preserves existing serialized patterns. New Inspector entries use CreateDefault.
+    [SerializeField] private EnemyChildAttackRepeatMode repeatMode;
     [SerializeField, Tooltip("Total attack executions. 1 fires once. Repeat Interval starts after the previous attack finishes, including delayed Sector launches.")]
     [Randomizable(nameof(repeatCountRandom), 1f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerProjectile)]
     private int repeatCount = 1;
     [SerializeField] [Randomizable(nameof(repeatIntervalRandom), 0f, EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerProjectile)]
     private float repeatInterval = 1f;
-    [SerializeField, Tooltip("Keeps the parent alive past its lifetime while the child attack is active, then expires it after all delayed launches. Hits/interception still resolve normally. Expiry-triggered attacks continue from the final parent pose.")]
+    [SerializeField, Tooltip("Fixed Count only: keeps the parent alive past its lifetime while the child attack is active, then expires it after all delayed launches. External destruction cancels pending launches. Until Parent Destroyed uses the parent's normal lifetime.")]
     private bool destroyParent;
     [SerializeField] [Randomizable(nameof(spawnOffsetXRandom), nameof(spawnOffsetYRandom), EnemyNumericScopes.None, EnemyNumericRandomizeOn.PerProjectile)]
     private Vector2 spawnOffset;
@@ -70,6 +73,7 @@ public sealed partial class EnemyChildAttackSettings
     public EnemyChildAttackTriggerMode TriggerMode => triggerMode;
     public float TriggerValue => Mathf.Max(0f, triggerValue);
     public EnemyChildAttackEvent EventType => eventType;
+    public bool UsesTargetReached => triggerMode==EnemyChildAttackTriggerMode.OnEvent && eventType==EnemyChildAttackEvent.OnTargetReached;
     public bool UsesScreenBoundary => triggerMode == EnemyChildAttackTriggerMode.OnEvent && eventType == EnemyChildAttackEvent.OnScreenBoundaryReached;
     public EnemyChildAttackBoundary Boundary => boundary;
     public EnemyChildAttackBoundaries TriggerBoundaries => EnemyChildAttackBoundarySelection.Resolve(triggerBoundaries, boundary);
@@ -78,9 +82,13 @@ public sealed partial class EnemyChildAttackSettings
     public float BoundaryOffset => float.IsFinite(boundaryOffset) ? boundaryOffset : 0f;
     public bool TriggerOnce => triggerOnce;
     public float TimeOffset => float.IsFinite(timeOffset) ? Mathf.Max(0f, timeOffset) : 0f;
+    public EnemyChildAttackRepeatMode RepeatMode => repeatMode;
+    public bool RepeatsUntilParentDestroyed => repeatMode == EnemyChildAttackRepeatMode.UntilParentDestroyed;
+    public static EnemyChildAttackSettings CreateDefault() => new() { repeatMode = EnemyChildAttackRepeatMode.UntilParentDestroyed };
     public int RepeatCount => Mathf.Clamp(repeatCount, 1, 32);
     public float RepeatInterval => Mathf.Max(0f, repeatInterval);
     public bool DestroyParent => destroyParent;
+    public bool DestroysParentOnCompletion => destroyParent && !RepeatsUntilParentDestroyed;
     public Vector2 SpawnOffset => spawnOffset;
     public EnemyChildAttackOffsetSpace OffsetSpace => offsetSpace;
     public EnemyChildAttackOriginMode OriginMode => originMode;
@@ -124,7 +132,7 @@ public sealed partial class EnemyChildAttackSettings
             var copy = new EnemyChildAttackSettings
             {
                 triggerMode = source.triggerMode, triggerValue = source.triggerValue,
-                eventType = source.eventType, repeatCount = source.repeatCount, repeatInterval = source.repeatInterval,
+                eventType = source.eventType, repeatMode = source.repeatMode, repeatCount = source.repeatCount, repeatInterval = source.repeatInterval,
                 boundary = source.boundary, boundaryOffset = source.boundaryOffset,
                 triggerBoundaries = source.triggerBoundaries,
                 triggerOnce = source.triggerOnce, timeOffset = source.timeOffset,

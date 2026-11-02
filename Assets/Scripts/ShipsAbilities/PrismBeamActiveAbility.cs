@@ -3,8 +3,17 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Zenject;
 
-public sealed class PrismBeamActiveAbility : ActiveAbility
+public sealed class PrismBeamActiveAbility : ActiveAbility, IStatValueResolver
 {
+    public override IStatValueProvider DisplayStatSnapshot => metaContract;
+    public bool IsRuntime => true;
+    public bool TryRead(StatValueDefinition definition, out StatValueResult result)
+    {
+        bool found = metaContract != null && definition.ProviderType == typeof(PrismShipMetaContract)
+            && definition.Property == nameof(PrismShipMetaContract.Damage);
+        result = new StatValueResult(found ? PrismEnergyWave.GetDamage(metaContract, abilityDamageMultiplier) : 0f, StatValueState.Runtime);
+        return found;
+    }
     [Inject] private DealDamageManager dealDamageManager;
     [Inject] private EnemyProjectileCollisionRegistry projectileRegistry;
 

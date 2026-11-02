@@ -22,6 +22,16 @@ public sealed class DirectedWaveAttackPattern
     public IReadOnlyList<int> SelectedEnemySlots => selectedEnemySlots;
     public DirectedWaveAttackPreset Preset => attackPreset;
 
+    public void Configure(DirectedWaveAttackSettings settings, DirectedWaveAttackPreset preset, bool overrideRate, float rate,
+        bool overrideSpeed, float speed, RandomFloatRange speedRandom, EnemySpeedRandomizeOn speedScope)
+    {
+        // Explicit authoring operation only; preserve managed-reference children independently.
+        attackSettings = JsonUtility.FromJson<DirectedWaveAttackSettings>(JsonUtility.ToJson(settings));
+        attackPreset = preset; overridePresetAttacksPerSecond = overrideRate; presetAttacksPerSecond = rate;
+        overrideBaseProjectileSpeed = overrideSpeed; baseProjectileSpeed = speed;
+        baseProjectileSpeedRandom = speedRandom?.Copy() ?? new(); baseProjectileSpeedRandomizeOn = speedScope;
+    }
+
     public void CopyResolvedSettingsTo(DirectedWaveAttackSettings destination)
     {
         if (destination == null)

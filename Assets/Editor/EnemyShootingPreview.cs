@@ -16,7 +16,7 @@ public struct EnemyEmissionPreviewFrame
 }
 
 [InitializeOnLoad]
-public static class EnemyShootingPreview
+public static partial class EnemyShootingPreview
 {
     static EnemyShootingPreview() => SceneView.duringSceneGui += DrawSelectedFormationSlot;
 
@@ -62,6 +62,9 @@ public static class EnemyShootingPreview
             ShowFormationVolley = !ShowFormationVolley;
         if (!ShowFormationVolley) return;
         NumericRandomPreviewControls.Draw();
+        bool allComposites = EditorGUILayout.Toggle(new GUIContent("Show All Composite Silhouettes",
+            "Off: one representative shape per volley, other centers only. On: draw all shapes within the Scene View preview budget."), ShowAllCompositeSilhouettes);
+        if (allComposites != ShowAllCompositeSilhouettes) ShowAllCompositeSilhouettes = allComposites;
         bool trajectories = EditorGUILayout.Toggle(new GUIContent("Projectile Trajectories",
             "Подробные траектории выбранного слота/врага. Общий обзор волны показывает только структуру залпа, чтобы Editor оставался отзывчивым."), ShowTrajectories);
         if (trajectories != ShowTrajectories) ShowTrajectories = trajectories;
@@ -112,6 +115,7 @@ public static class EnemyShootingPreview
     private struct ExecutorBinding
     {
         public Transform Root, Pivot, Point, Facing;
+        public EnemyBullet DefaultProjectile;
         public Vector3 Offset;
     }
     private static bool reuseBindings;
@@ -125,7 +129,8 @@ public static class EnemyShootingPreview
             Pivot = serialized.FindProperty("rotationTarget").objectReferenceValue as Transform,
             Point = serialized.FindProperty("projectileSpawnPoint").objectReferenceValue as Transform,
             Facing = serialized.FindProperty("facingTarget").objectReferenceValue as Transform,
-            Offset = serialized.FindProperty("projectileSpawnOffset").vector3Value };
+            Offset = serialized.FindProperty("projectileSpawnOffset").vector3Value,
+            DefaultProjectile = serialized.FindProperty("defaultProjectilePrefab").objectReferenceValue as EnemyBullet };
         if (reuseBindings) executorBindings[executor] = result;
         return result;
     }
@@ -187,11 +192,11 @@ public static class EnemyShootingPreview
     private const int TrajectorySteps = 24;
     private const float ProjectileRayLength = 1.25f;
     private static readonly Vector3[] trajectoryPoints = new Vector3[97];
-    private static readonly Color EmitterColor = new Color(.2f, .95f, 1f, .95f);
-    private static readonly Color BaseDirectionColor = new Color(.35f, .65f, 1f, .95f);
-    private static readonly Color SectorColor = new Color(.95f, .4f, .85f, .9f);
-    private static readonly Color FanColor = new Color(1f, .85f, .3f, .85f);
-    private static readonly Color ProjectileColor = new Color(1f, .55f, .15f, .95f);
+    private static Color EmitterColor => RotationTint(new Color(.2f, .95f, 1f, .95f));
+    private static Color BaseDirectionColor => RotationTint(new Color(.35f, .65f, 1f, .95f));
+    private static Color SectorColor => RotationTint(new Color(.95f, .4f, .85f, .9f));
+    private static Color FanColor => RotationTint(new Color(1f, .85f, .3f, .85f));
+    private static Color ProjectileColor => RotationTint(new Color(1f, .55f, .15f, .95f));
 
     public static void Draw(EnemyShootingSettings shooting, Vector3 position, Quaternion basis,
         float rotationTime, EnemyRotationSettings rotationOverride = null,
@@ -209,7 +214,7 @@ public static class EnemyShootingPreview
         Color previousColor = Handles.color;
         var first = EnemyShootingPreviewGeometry.GetEmitter(firstShooting, 0, frame, basis, rotationTime,
             rotationOverride, requestedDirection, useAimedShotGunDirection, stationary);
-        DrawLayoutGuide(shooting, frame, first, detailed);
+        DrawLayoutGuide(shooting, frame, first, detailed && !drawingRotationPose);
         int directions = Mathf.Min(shooting.DirectionCount, Mathf.Min(MaxPreviewDirections, Mathf.Max(1, rayBudget)));
         int raysPerDirection = Mathf.Max(1, rayBudget / directions);
         for (int sample = 0; sample < directions; sample++)
@@ -218,10 +223,13 @@ public static class EnemyShootingPreview
             var directionShooting = shooting.SampleGeometry(frame.NumericSpeed.Numeric.ForDirection(arm), true);
             var emitter = arm == 0 ? first : EnemyShootingPreviewGeometry.GetEmitter(directionShooting, arm, frame, basis, rotationTime,
                 rotationOverride, requestedDirection, useAimedShotGunDirection, stationary);
-            DrawEmitter(directionShooting, emitter, detailed);
+            DrawEmitter(directionShooting, emitter, detailed && !drawingRotationPose);
             DrawEmitterProjectiles(directionShooting, emitter, EnemyShootingPreviewGeometry.ResolveOrigin(shooting, frame), detailed, raysPerDirection, frame.NumericSpeed);
         }
-        if (detailed && (directions < shooting.DirectionCount
+        if (shooting.IsComposite)
+            DrawCompositeSilhouettes(shooting, frame, basis, rotationTime, rotationOverride,
+                requestedDirection, useAimedShotGunDirection, stationary, detailed, rayBudget);
+        if (detailed && !drawingRotationPose && (directions < shooting.DirectionCount
             || raysPerDirection < shooting.ProjectilesPerDirection / EnemyShootingPreviewGeometry.CoincidentStackCount(shooting)))
             Handles.Label(first.Position + Vector3.down * .45f, "Dense volley: sampled rays; layout/Fan boundaries retained.");
         Handles.color = previousColor;
@@ -233,7 +241,7 @@ public static class EnemyShootingPreview
         Vector3 origin = EnemyShootingPreviewGeometry.ResolveOrigin(shooting, frame);
         frame.ShootingPoint += origin - frame.EnemyPosition;
         frame.EnemyPosition = origin;
-        Handles.color = new Color(1f, .35f, .9f, .95f);
+        Handles.color = RotationTint(new Color(1f, .35f, .9f, .95f));
         Handles.DrawWireDisc(origin, Vector3.forward, .1f);
         Handles.DrawLine(origin - Vector3.right * .15f, origin + Vector3.right * .15f);
         Handles.DrawLine(origin - Vector3.up * .15f, origin + Vector3.up * .15f);
@@ -330,6 +338,16 @@ public static class EnemyShootingPreview
                 EnemyLaserScenePreview.Draw(shooting, projectile.Position, projectile.Direction);
                 continue;
             }
+            if (shooting.UsesTargetPoint && emitter.TargetPoint.HasValue)
+            {
+                Vector3 point = emitter.TargetPoint.Value;
+                Handles.color = ProjectileColor;
+                Handles.DrawLine(projectile.Position, point);
+                float length = Mathf.Min(ProjectileRayLength, Vector3.Distance(projectile.Position, point));
+                if (length > .00001f) DrawDirection(projectile.Position, projectile.Direction, length, .12f, false);
+                Handles.DrawWireDisc(point, Vector3.forward, .08f);
+                continue;
+            }
             if (projectile.StackIndex != lastStack && shooting.UsesFan && fanCount > 1)
             {
                 Vector3 start = Quaternion.Euler(0f, 0f, shooting.FanMinAngle + projectile.SpreadAngle) * emitter.BaseDirection;
@@ -338,7 +356,7 @@ public static class EnemyShootingPreview
             }
             lastStack = projectile.StackIndex;
             Handles.color = new Color(ProjectileColor.r, ProjectileColor.g, ProjectileColor.b, .4f);
-            if (detailed && ShowTrajectories)
+            if (detailed && ShowTrajectories && (!drawingRotationPose || !drawingRotationFrom))
             {
                 float? speed = numericSpeed.Active
                     ? numericSpeed.Evaluate(EnemyAttackProjectileBuilder.NumericProjectileIndex(shooting, emitter.Index, index, emitter.Index * shooting.ProjectilesPerDirection))
@@ -351,7 +369,7 @@ public static class EnemyShootingPreview
                     speed, numeric);
             }
             Handles.color = ProjectileColor;
-            DrawDirection(projectile.Position, projectile.Direction, ProjectileRayLength, .12f, false);
+            DrawDirection(projectile.Position, projectile.Direction, ProjectileRayLength, .12f, drawingRotationPose && drawingRotationFrom);
             Handles.DrawSolidDisc(projectile.Position + projectile.Direction * ProjectileRayLength, Vector3.forward, .025f);
             if (detailed && coincident > 1)
                 Handles.Label(projectile.Position + projectile.Direction * (ProjectileRayLength + .1f), $"×{coincident}");
@@ -370,7 +388,13 @@ public static class EnemyShootingPreview
         EnemyShootingSettings shooting, Vector3 enemyPosition, float time,
         EnemyRotationSettings rotationOverride, out Quaternion basis)
     {
-        var binding = GetBinding(executor);
+        return CreateFrame(GetBinding(executor), shooting, enemyPosition, time, rotationOverride, out basis);
+    }
+
+    private static EnemyEmissionPreviewFrame CreateFrame(ExecutorBinding binding,
+        EnemyShootingSettings shooting, Vector3 enemyPosition, float time,
+        EnemyRotationSettings rotationOverride, out Quaternion basis)
+    {
         Transform root = binding.Root;
         var pivot = binding.Pivot;
         if (pivot == null || shooting.EmissionLayout.Type == EnemyEmissionLayoutType.Point) pivot = root;
@@ -395,31 +419,31 @@ public static class EnemyShootingPreview
         Vector3 enemyPosition, float rotationTime, EnemyRotationSettings rotationOverride = null,
         Vector3? requestedDirection = null, bool aimed = false, Vector3? target = null,
         Vector3? capturedEnemyPosition = null, float capturedRotationTime = 0f, bool stationary = false,
-        bool detailed = true, int rayBudget = MaxDetailedRays, Vector3? originPlayerPosition = null, int numericOwner = 0, uint numericOrdinal = 1)
+        bool detailed = true, int rayBudget = MaxDetailedRays, Vector3? originPlayerPosition = null, int numericOwner = 0, uint numericOrdinal = 1, bool staticLayoutPose = false)
     {
         if (!CanDraw || executor == null) return;
-        var frame = CreateFrame(executor, shooting, enemyPosition, rotationTime, rotationOverride, out var basis);
-        frame.Target = target;
-        frame.PlayerPosition = originPlayerPosition ?? target;
-        if (EnemyEmissionOriginSettings.TryGetGameplayBounds(Camera.main, enemyPosition.z, out var bounds))
-            frame.GameplayBounds = bounds;
-        shooting = ApplyFirstNumericSample(shooting, ref frame, numericOwner, numericOrdinal);
-        frame.Origin = EnemyShootingPreviewGeometry.ResolveOrigin(shooting, frame);
-        if (capturedEnemyPosition.HasValue)
+        var context = new ExecutorPreviewContext {
+            Binding = GetBinding(executor), EnemyPosition = enemyPosition, Target = target,
+            PlayerPosition = originPlayerPosition ?? target, CapturedEnemyPosition = capturedEnemyPosition,
+            CapturedRotationTime = capturedRotationTime, CaptureAtPose = staticLayoutPose,
+            RequestedDirection = requestedDirection, Aimed = aimed, Stationary = stationary,
+            Detailed = detailed, RayBudget = rayBudget, NumericOwner = numericOwner, NumericOrdinal = numericOrdinal
+        };
+        var previousCompositePrefab = compositePreviewPrefab;
+        compositePreviewPrefab = shooting.ResolveProjectilePrefab(context.Binding.DefaultProjectile);
+        try
         {
-            var captured = CreateFrame(executor, shooting, capturedEnemyPosition.Value,
-                capturedRotationTime, rotationOverride, out _);
-            frame.HasCapturedAim = true;
-            frame.CapturedEnemyPosition = capturedEnemyPosition.Value;
-            frame.CapturedShootingPoint = captured.ShootingPoint;
-            frame.CapturedRotationTime = capturedRotationTime;
-            captured.PlayerPosition = frame.PlayerPosition;
-            captured.GameplayBounds = frame.GameplayBounds;
-            ApplyFirstNumericSample(shooting, ref captured, numericOwner, numericOrdinal);
-            frame.CapturedOrigin = EnemyShootingPreviewGeometry.ResolveOrigin(shooting, captured);
+            var frame = context.Frame(rotationTime, ref shooting, rotationOverride, out var basis);
+            rotationOverride = rotationOverride?.SampleNumeric(frame.NumericSpeed.Numeric);
+            if (shooting.Rotates)
+            {
+                DrawRotationRange(context, shooting, rotationOverride);
+                return;
+            }
+            Draw(shooting, frame.ShootingPoint, basis, rotationTime, rotationOverride, enemyPosition,
+                requestedDirection, aimed, frame, stationary, detailed, rayBudget);
         }
-        Draw(shooting, frame.ShootingPoint, basis, rotationTime, rotationOverride, enemyPosition,
-            requestedDirection, aimed, frame, stationary, detailed, rayBudget);
+        finally { compositePreviewPrefab = previousCompositePrefab; }
     }
 
     // Static guides represent the first event of a fresh run. Animated Preview owns the full event state.
@@ -432,7 +456,7 @@ public static class EnemyShootingPreview
         {
             Rect bounds = frame.GameplayBounds.GetValueOrDefault();
             if (!frame.GameplayBounds.HasValue && shooting.EmissionOrigin.RequiresBounds)
-                EnemyEmissionOriginSettings.TryGetGameplayBounds(Camera.main, frame.EnemyPosition.z, out bounds);
+                EnemyEmissionOriginSettings.TryGetGameplayBounds(WavePreviewGameplayCamera.GameplayCamera, frame.EnemyPosition.z, out bounds);
             frame.Origin = shooting.EmissionOrigin.Resolve(frame.EnemyPosition,
                 frame.PlayerPosition ?? frame.Target ?? frame.EnemyPosition, bounds, state.Offsets);
         }
@@ -619,17 +643,19 @@ public static class EnemyShootingPreview
         EnemyBurstAttackSettings patterns = executor.BurstAttackSettings;
         EnemyRotationSettings rotationOverride = pointOverride != null ? pointOverride.RotationOverride : null;
         float rotationTime = enemyTime;
-        var resolved = new DirectedWaveAttackSettings();
+        var resolved = SceneAttackSettingsCache.Defaults;
         bool hasResolvedSettings = false;
         float postStart = staticPreview ? 0f : wave.GetSimulationPreviewPostStartTime();
         var behaviour = wave.AttackPatternBehaviour;
         if (behaviour != null && behaviour.enabled)
         {
+            if (behaviour.UseAttackGroups && behaviour.GetAttackGroupForSlot(slot) == null) return;
             bool entrance = !staticPreview && elapsed < postStart;
-            hasResolvedSettings = behaviour.TryCopyResolvedAttackSettingsTo(
-                slot,
-                entrance,
-                resolved);
+            hasResolvedSettings = SceneAttackSettingsCache.TryGet(
+                behaviour, slot, entrance, out resolved, out _);
+            // Group ownership suppresses autonomous fallback, just as runtime reserves
+            // control of unassigned/non-participating enemies.
+            if (behaviour.UseAttackGroups && !hasResolvedSettings) return;
             if (hasResolvedSettings && !resolved.UsesEnemyBurstSettings
                 && (staticPreview || entrance || elapsed >= postStart + resolved.AttackStartDelay))
             {
@@ -737,7 +763,7 @@ public static class EnemyShootingPreview
                   fixedPoint ? (Vector3)fixedSettings.WorldPoint : useAimedShotGunDirection ? previewTarget ?? ((IEnemyAttackAimTarget)wave).AttackTargetPosition : (Vector3?)null,
                   capturedPosition, capturedRotationTime, stationary, detailed,
                   Mathf.Max(1, rayBudget / Mathf.Max(1, patterns.PatternCount)),
-                  previewTarget ?? ((IEnemyAttackAimTarget)wave).AttackTargetPosition, slot, numericOrdinal);
+                  previewTarget ?? ((IEnemyAttackAimTarget)wave).AttackTargetPosition, slot, numericOrdinal, staticLayoutPose: staticPreview);
         }
         int facingIndex = patterns.FacingPatternIndex;
         if (patterns.FacingMode == EnemyFacingMode.Rotation

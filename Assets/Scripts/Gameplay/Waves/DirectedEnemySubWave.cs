@@ -43,6 +43,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyEmiss
 
     protected override void Awake()
     {
+        InvalidateBehaviourComponentCache();
         ResolveBehaviourComponents();
         attackBehaviour = AttackPatternBehaviour;
         attackBehaviour?.RegisterWithWave();
@@ -82,6 +83,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyEmiss
 
     public override void PrepareForActivation()
     {
+        InvalidateBehaviourComponentCache();
         int effectiveEnemyCount = GetEffectiveEnemyCount();
         preparedFormationPositions = new Vector3[effectiveEnemyCount];
         for (int i = 0; i < effectiveEnemyCount; i++)
@@ -219,6 +221,7 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyEmiss
             attackBehaviour != null
             && attackBehaviour.AllowAutonomousAttackDuringEntrance, formationIndex);
         aliveEnemies.Add(enemy);
+        attackBehaviour?.RegisterAttackGroupSpawn(enemy, formationIndex);
         NotifyEnemySpawned(enemy, spawnStep, plannedEnemyCount);
         enemyBodies[enemy] = enemy.GetComponent<Rigidbody2D>();
         Log($"Spawned enemy instance: {enemy.name}. AliveEnemies={aliveEnemies.Count}", enemy);
@@ -2795,6 +2798,11 @@ public sealed partial class DirectedEnemySubWave : InfoAboutSubWave, IEnemyEmiss
             && formationLayout != DirectedWaveFormationLayout.CustomPoints)
         {
             EnsureProceduralFormationOverrideCapacity(GetEffectiveEnemyCount());
+        }
+
+        if (AttackPatternBehaviour != null && AttackPatternBehaviour.UseAttackGroups)
+        {
+            AttackPatternBehaviour.InvalidateSequenceGuides();
         }
 
         if (pathCheckpoints == null)

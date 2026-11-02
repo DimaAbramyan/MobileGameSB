@@ -1,5 +1,6 @@
 using UnityEngine;
 using Zenject;
+using Game.Infrastructure.Analytics;
 
 
 public class ProjectManagerInstaller : MonoInstaller
@@ -11,6 +12,7 @@ public class ProjectManagerInstaller : MonoInstaller
     [SerializeField] private ResourceCatalog resourceCatalog;
     [SerializeField] private AudioServiceHost audioHostPrefab;
     [SerializeField] private AudioVolumeSettings audioVolumeSettings = new();
+    [SerializeField] private AnalyticsConfiguration analyticsConfiguration = new();
 
     public override void InstallBindings()
     {
@@ -51,11 +53,28 @@ public class ProjectManagerInstaller : MonoInstaller
         Container.Bind<SaveManager>()
                  .AsSingle();
 
+        Container.Bind<SaveLifecycleHost>()
+                 .FromNewComponentOn(gameObject)
+                 .AsSingle()
+                 .NonLazy();
+
         Container.Bind<TeamSelectionService>()
                  .AsSingle();
 
         Container.Bind<BattleLaunchService>()
                  .AsSingle();
+
+        Container.BindInterfacesTo<UnityLocalizationService>()
+                 .AsSingle();
+
+#if UNITY_EDITOR || INCLUDE_TUTORIAL
+        Game.Tutorial.TutorialFeature.Install(Container);
+#endif
+
+        analyticsConfiguration ??= new AnalyticsConfiguration();
+        Container.Bind<AnalyticsConfiguration>().FromInstance(analyticsConfiguration).AsSingle();
+        Container.Bind<IUnityAnalyticsBackend>().To<UnityAnalyticsBackend>().AsSingle();
+        Container.BindInterfacesTo<UnityAnalyticsService>().AsSingle().NonLazy();
 
         GameObject[] ships = Resources.LoadAll<GameObject>("UI/Ships");
         GameObject[] weapons = Resources.LoadAll<GameObject>("UI/Weapons");

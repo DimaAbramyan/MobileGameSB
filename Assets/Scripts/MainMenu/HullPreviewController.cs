@@ -11,6 +11,10 @@ public sealed class HullPreviewController : MonoBehaviour
 
     [SerializeField] private Camera mainMenuCamera;
     [SerializeField] private RectTransform previewHost;
+    [SerializeField, Tooltip("Empty UI transform controlling the preview position. Keep it under the persistent CraftMenu preview host.")]
+    private RectTransform previewAnchor;
+    [SerializeField, Min(0.01f), Tooltip("Visual size multiplier for the ship and its weapon slot buttons around the preview anchor. 1 keeps the original size.")]
+    private float previewScale = 1f;
     [SerializeField] private CraftWeaponSlotButton weaponSlotButtonPrefab;
     [SerializeField, Range(8, 31)] private int previewLayer = 12;
     [SerializeField, Min(64)] private int textureResolution = 512;
@@ -139,13 +143,17 @@ public sealed class HullPreviewController : MonoBehaviour
         DestroyPreviewMaterials();
 
         if (previewInstance != null)
+        {
+            previewInstance.SetActive(false);
             Destroy(previewInstance);
+        }
 
         previewInstance = null;
     }
 
     private void LateUpdate()
     {
+        ApplyPreviewScale();
         UpdateWeaponSlotPositions();
     }
 
@@ -157,10 +165,11 @@ public sealed class HullPreviewController : MonoBehaviour
             return;
         }
 
-        if (transform.parent == previewHost)
+        Transform parent = previewAnchor != null ? previewAnchor : previewHost;
+        if (transform.parent == parent)
             return;
 
-        transform.SetParent(previewHost, true);
+        transform.SetParent(parent, true);
         transform.SetAsLastSibling();
     }
 
@@ -206,6 +215,17 @@ public sealed class HullPreviewController : MonoBehaviour
         previewImage.raycastTarget = false;
         previewImage.color = Color.white;
         previewImage.transform.SetAsLastSibling();
+        ApplyPreviewScale();
+    }
+
+    private void ApplyPreviewScale()
+    {
+        if (previewImage == null)
+            return;
+
+        Vector3 scale = Vector3.one * Mathf.Max(0.01f, previewScale);
+        if (previewImage.rectTransform.localScale != scale)
+            previewImage.rectTransform.localScale = scale;
     }
 
     private void CreatePreviewCamera()

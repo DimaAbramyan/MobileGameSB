@@ -2,8 +2,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using Zenject;
 
-public sealed class DictatorTurretActiveAbility : ActiveAbility
+public sealed class DictatorTurretActiveAbility : ActiveAbility, IStatValueResolver
 {
+    public override IStatValueProvider DisplayStatSnapshot => metaContract;
+    public bool IsRuntime => true;
+    public bool TryRead(StatValueDefinition definition, out StatValueResult result)
+    {
+        bool found = metaContract != null && definition.ProviderType == typeof(DictatorShipMetaContract)
+            && definition.Property == nameof(DictatorShipMetaContract.TurretProjectileDamage);
+        result = new StatValueResult(found ? DictatorTurret.GetProjectileDamage(metaContract, owner, abilityDamageMultiplier) : 0f, StatValueState.Runtime);
+        return found;
+    }
     [Inject] private ProjectilePoolController projectilePoolController;
     [Inject] private EnemyManager enemyManager;
 

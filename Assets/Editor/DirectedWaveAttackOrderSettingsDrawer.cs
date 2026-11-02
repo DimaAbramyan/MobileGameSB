@@ -5,18 +5,26 @@ using UnityEngine;
 [CustomPropertyDrawer(typeof(DirectedWaveAttackOrderSettings))]
 public sealed class DirectedWaveAttackOrderSettingsDrawer : PropertyDrawer
 {
-    private static readonly string[] Fields = { "mode", "attackIntervalBetweenEnemies", "enemiesPerBatch", "startSlot",
-        "reverseOrder", "loopOrder", "randomSeed", "orderSource", "waitForPreviousEnemy", "resetOrderEachCycle", "manualSlots" };
-    private static bool Visible(string field, int mode) => (field != "randomSeed" || mode == (int)DirectedWaveAttackOrderMode.Random)
-        && (field != "manualSlots" || mode == (int)DirectedWaveAttackOrderMode.Manual)
-        && (field != "enemiesPerBatch" || mode != (int)DirectedWaveAttackOrderMode.Simultaneous);
+    private static IEnumerable<string> Fields(SerializedProperty property)
+    {
+        yield return "#Order & Slots";
+        yield return "mode"; yield return "orderSource"; yield return "startSlot"; yield return "reverseOrder";
+        if (property.FindPropertyRelative("mode").enumValueIndex == (int)DirectedWaveAttackOrderMode.Manual) yield return "manualSlots";
+        yield return "#Batch Timing";
+        yield return "attackIntervalBetweenEnemies";
+        if (property.FindPropertyRelative("mode").enumValueIndex != (int)DirectedWaveAttackOrderMode.Simultaneous) yield return "enemiesPerBatch";
+        yield return "waitForPreviousEnemy";
+        yield return "#Cycles & Randomization";
+        yield return "loopOrder"; yield return "resetOrderEachCycle";
+        if (property.FindPropertyRelative("mode").enumValueIndex == (int)DirectedWaveAttackOrderMode.Random) yield return "randomSeed";
+    }
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
         float height = EditorGUIUtility.singleLineHeight;
         if (!property.FindPropertyRelative("enabled").boolValue) return height;
         int mode = property.FindPropertyRelative("mode").enumValueIndex;
-        foreach (string field in Fields)
-            if (Visible(field, mode)) height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true) + 2f;
+        height += WaveInspectorSections.Height(property, Fields(property),
+            field => EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true));
         if (mode == (int)DirectedWaveAttackOrderMode.Manual && property.FindPropertyRelative("manualSlots").arraySize == 0) height += 40f;
         return height;
     }
@@ -30,21 +38,22 @@ public sealed class DirectedWaveAttackOrderSettingsDrawer : PropertyDrawer
         {
             EditorGUI.indentLevel++;
             int mode = property.FindPropertyRelative("mode").enumValueIndex;
-            foreach (string field in Fields)
-            {
-                if (!Visible(field, mode)) continue;
-                var value = property.FindPropertyRelative(field);
-                row.y += row.height + 2f; row.height = EditorGUI.GetPropertyHeight(value, true);
+            row.y += WaveInspectorSections.Line;
+            WaveInspectorSections.Draw(ref row, property, Fields(property),
+                field => EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true),
+                (fieldRect, field) =>
+                {
+                    var value = property.FindPropertyRelative(field);
                 var fieldLabel = field == "orderSource" ? new GUIContent("Order Source", "Formation Slot Order uses stable IDs/formation geometry. Spatial Order uses current world positions, captured at cycle start.")
                     : field == "waitForPreviousEnemy" ? new GUIContent("Wait For Previous Enemy", "Wait for all enemies of the previous batch, including Burst, Sequential Sector, return and Attack Cooldown. Members of one batch may attack together.")
                     : field == "resetOrderEachCycle" ? new GUIContent("Reset Order Each Cycle", "Re-capture geometry and reset the seed each cycle. Disabled retains the first geometry snapshot and continues the random stream.")
                     : field == "loopOrder" ? new GUIContent("Loop Order", "Repeat order cycles. Disabled runs one cycle. Attack Sequence steps always run one finite cycle per repetition.")
                     : field == "manualSlots" ? new GUIContent("Manual Slots", "Formation slot IDs in firing order, independent of spawn order. Only listed slots attack; duplicates are allowed.")
                     : new GUIContent(ObjectNames.NicifyVariableName(field));
-                EditorGUI.PropertyField(row, value, fieldLabel, true);
-            }
+                    EditorGUI.PropertyField(fieldRect, value, fieldLabel, true);
+                });
             if (mode == (int)DirectedWaveAttackOrderMode.Manual && property.FindPropertyRelative("manualSlots").arraySize == 0)
-                EditorGUI.HelpBox(new Rect(position.x, row.yMax + 2f, position.width, 36f), "Manual order is empty: this group will not attack.", MessageType.Warning);
+                EditorGUI.HelpBox(new Rect(position.x, row.y, position.width, 36f), "Manual order is empty: this group will not attack.", MessageType.Warning);
             EditorGUI.indentLevel--;
         }
         EditorGUI.EndProperty();
@@ -55,13 +64,12 @@ internal sealed class DirectedWaveAttackOrderScenePreview
 {
     private sealed class Group
     {
-        public readonly DirectedWaveAttackSettings Settings = new();
+        public DirectedWaveAttackSettings Settings;
         public readonly List<DirectedWaveAttackOrderSlot> Slots = new();
         public readonly DirectedWaveAttackOrderPlan Plan = new();
     }
     private readonly Dictionary<int, Group> groups = new();
     private readonly Dictionary<int, Vector3> positions = new();
-    private readonly DirectedWaveAttackSettings resolved = new();
 
     public void Draw(DirectedEnemySubWave wave, DirectedWaveAttackBehaviour behaviour)
     {
@@ -70,9 +78,9 @@ internal sealed class DirectedWaveAttackOrderScenePreview
         positions.Clear();
         for (int slot = 0; slot < wave.GetConfiguredEnemySlotCount(); slot++)
         {
-            if (!behaviour.TryCopyResolvedAttackSettingsTo(slot, false, resolved, out int index) || !resolved.UsesAttackOrder) continue;
+            if (!SceneAttackSettingsCache.TryGet(behaviour, slot, false, out var resolved, out int index) || !resolved.UsesAttackOrder) continue;
             if (!groups.TryGetValue(index, out var group)) { group = new Group(); groups.Add(index, group); }
-            if (group.Slots.Count == 0) group.Settings.CopyFrom(resolved);
+            if (group.Slots.Count == 0) group.Settings = resolved;
             Vector3 position = wave.GetConfiguredFormationSlotPosition(slot);
             positions[slot] = position; group.Slots.Add(new DirectedWaveAttackOrderSlot(slot, position));
         }

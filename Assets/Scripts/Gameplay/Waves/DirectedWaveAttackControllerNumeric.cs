@@ -25,5 +25,5 @@ internal sealed partial class DirectedWaveAttackController
         return registry;
     }
     private float SampleNumericCooldown(Enemy enemy, EnemyBurstAttackSettings profile)
-        => EnemyAttackCooldownSampler.Sample(profile, GetNumericRegistry(enemy), settings);
+        => EnemyAttackCooldownSampler.Sample(profile, GetNumericRegistry(enemy), ShootingSettingsFor(enemy));
 }

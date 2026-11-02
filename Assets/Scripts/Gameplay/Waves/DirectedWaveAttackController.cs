@@ -8,6 +8,8 @@ internal sealed partial class DirectedWaveAttackController
     private readonly DirectedEnemySubWave wave;
     private readonly DirectedWaveAttackSettings settings;
     private readonly System.Func<Enemy, bool> isEnemyAllowed;
+    private readonly bool useGroupConfigurations;
+    private readonly bool grantedGroupDispatch;
     private readonly List<Enemy> candidates = new(16);
     private readonly List<Enemy> attackQueue = new(16);
     private readonly List<Enemy> deferredAttackQueue = new(16);
@@ -88,11 +90,13 @@ internal sealed partial class DirectedWaveAttackController
     public DirectedWaveAttackController(
         DirectedEnemySubWave wave,
         DirectedWaveAttackSettings settings,
-        System.Func<Enemy, bool> isEnemyAllowed = null)
+        System.Func<Enemy, bool> isEnemyAllowed = null, bool useGroupConfigurations = true, bool grantedGroupDispatch = false)
     {
         this.wave = wave;
         this.settings = settings;
         this.isEnemyAllowed = isEnemyAllowed;
+        this.useGroupConfigurations = useGroupConfigurations;
+        this.grantedGroupDispatch = grantedGroupDispatch;
         schedulingNumeric = settings?.CreateSchedulingNumeric();
     }
 
@@ -108,6 +112,7 @@ internal sealed partial class DirectedWaveAttackController
 
     public void Stop()
     {
+        PauseGroupPrograms();
         completedCycles = 0; cycleLimit = int.MaxValue; cycleCounted = false; permissionTick = -1f;
         isRunning = false;
         singleCycle = cyclePrepared = false; sequenceSpeed = 1f; completionTracker = null;
@@ -162,6 +167,7 @@ internal sealed partial class DirectedWaveAttackController
 
     public void NotifyEnemyDestroyed(Enemy enemy)
     {
+        RemoveGroupProgram(enemy);
         if (ReferenceEquals(dispatchClockOwner, enemy))
         {
             dispatchClockOwner = null;
@@ -203,7 +209,8 @@ internal sealed partial class DirectedWaveAttackController
             nextAttackTime += Mathf.Max(0f, now - permissionTick);
         permissionTick = now;
         CountCompletedCycle();
-        if (permissions != null && !permissions.AllowNewAttacks || completedCycles >= cycleLimit) return;
+        if (permissions != null && (permissions.Interrupted || !grantedGroupDispatch && !permissions.AllowNewAttacks)
+            || completedCycles >= cycleLimit) return;
         if (cycleLimit != int.MaxValue && cyclePrepared && !cycleCounted
             && (settings.UsesAttackOrder ? orderPlan.Exhausted : nextQueueIndex >= attackQueue.Count && deferredAttackQueue.Count == 0)) return;
         if (HasCompletedSingleCycle) return;
@@ -275,7 +282,7 @@ internal sealed partial class DirectedWaveAttackController
         activeFormationBurstEnemies.Add(enemy);
         BeginSequentialAttack(enemy);
         Coroutine formationRoutine = wave.StartCoroutine(
-            RunFormationAttack(enemy, executor, attackSettings));
+            IsGroupSequence(enemy) ? RunGroupSequence(enemy, executor) : RunFormationAttack(enemy, executor, attackSettings));
         if (activeFormationBurstEnemies.Contains(enemy))
             formationBurstRoutines[enemy] = formationRoutine;
 
@@ -454,6 +461,9 @@ internal sealed partial class DirectedWaveAttackController
             executors[enemy] = executor;
         }
 
+        // The active Sequence step owns the executor profile/completion tracker.
+        // Candidate readiness probes must not rebind it to the static group guide.
+        if (HasRunningGroupProgram(enemy)) return executor.CanPerformWaveAttack;
         EnemyBurstAttackSettings resolvedAttackSettings = ResolveAttackSettings(
             enemy,
             executor,
@@ -526,7 +536,7 @@ internal sealed partial class DirectedWaveAttackController
             if (HasFireMode(enemy) && CanFire(enemy, executor))
             {
                 EnemyBurstAttackSettings attackSettings = GetBurstSettings(enemy, executor);
-                yield return FireFullAttack(enemy, executor, attackSettings);
+                yield return FireConfiguredAttack(enemy, executor, attackSettings);
             }
 
             CompleteSequentialAttack(enemy);
@@ -566,7 +576,7 @@ internal sealed partial class DirectedWaveAttackController
         if (HasFireMode(enemy) && CanFire(enemy, executor))
         {
             EnemyBurstAttackSettings attackSettings = GetBurstSettings(enemy, executor);
-            yield return FireFullAttack(enemy, executor, attackSettings);
+            yield return FireConfiguredAttack(enemy, executor, attackSettings);
         }
 
         CompleteSequentialAttack(enemy);
@@ -756,7 +766,7 @@ internal sealed partial class DirectedWaveAttackController
         IWaveAttackExecutor executor,
         EnemyBurstAttackSettings attackSettings)
     {
-        yield return FireFullAttack(enemy, executor, attackSettings);
+        yield return FireConfiguredAttack(enemy, executor, attackSettings);
         CompleteFormationBurst(enemy);
     }
 
@@ -767,7 +777,7 @@ internal sealed partial class DirectedWaveAttackController
     {
         if (HasFireMode(enemy))
         {
-            yield return FireFullAttack(
+            yield return FireConfiguredAttack(
                 enemy,
                 executor,
                 attackSettings);
@@ -1241,7 +1251,7 @@ internal sealed partial class DirectedWaveAttackController
         {
             var local = GetAttackOverride(enemy);
             var firing = attackSettings?.Shooting.PresetFiring;
-            var fallback = firing != null && firing.enabled ? firing.stationaryFireSettings : settings.StationaryFireSettings;
+            var fallback = firing != null && firing.enabled ? firing.stationaryFireSettings : ShootingSettingsFor(enemy).StationaryFireSettings;
             var stationary = local != null ? local.ResolveStationaryFireSettings(fallback) : fallback;
             return stationary.TryFire(executor, attackSettings, forward);
         }
@@ -1263,7 +1273,7 @@ internal sealed partial class DirectedWaveAttackController
     {
         DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
         var firing = profile?.Shooting.PresetFiring;
-        var fallback = firing != null && firing.enabled ? firing.aimMode : settings.AimMode;
+        var fallback = firing != null && firing.enabled ? firing.aimMode : ShootingSettingsFor(enemy).AimMode;
         return enemyOverride != null ? enemyOverride.ResolveAimMode(fallback) : fallback;
     }
 
@@ -1300,13 +1310,13 @@ internal sealed partial class DirectedWaveAttackController
     {
         DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
         var firing = profile?.Shooting.PresetFiring;
-        var fallback = firing != null && firing.enabled ? firing.fireMode : settings.FireMode;
+        var fallback = firing != null && firing.enabled ? firing.fireMode : ShootingSettingsFor(enemy).FireMode;
         return enemyOverride != null ? enemyOverride.ResolveFireMode(fallback) : fallback;
     }
 
     private bool HasFireMode(Enemy enemy)
     {
-        return GetFireMode(enemy) != DirectedWaveAttackFireMode.None;
+        return IsGroupSequence(enemy) || GetFireMode(enemy) != DirectedWaveAttackFireMode.None;
     }
 
     private bool IsPlayerInForwardFireSector(
@@ -1318,7 +1328,7 @@ internal sealed partial class DirectedWaveAttackController
     {
         DirectedWaveEnemyOverride enemyOverride = GetAttackOverride(enemy);
         var firing = profile?.Shooting.PresetFiring;
-        float fallback = firing != null && firing.enabled ? firing.forwardFireHalfAngle : settings.ForwardFireHalfAngle;
+        float fallback = firing != null && firing.enabled ? firing.forwardFireHalfAngle : ShootingSettingsFor(enemy).ForwardFireHalfAngle;
         float halfAngle = enemyOverride != null
             ? enemyOverride.ResolveForwardFireHalfAngle(
                 fallback)
@@ -1344,7 +1354,7 @@ internal sealed partial class DirectedWaveAttackController
         out bool setWaveAttackSettings)
     {
         return EnemyAttackSettingsResolver.ResolveForWave(
-            enemy, executor, settings, GetAttackOverride(enemy),
+            enemy, executor, ShootingSettingsFor(enemy), GetAttackOverride(enemy),
             projectileBaseSpeedOverrideSettings, out setWaveAttackSettings, sequenceSpeed);
     }
 

@@ -11,12 +11,14 @@ public sealed class EnemyEmissionOriginSettingsDrawer : PropertyDrawer
             ? 1 + (axis.FindPropertyRelative("referenceMode").intValue == (int)EnemyEmissionOriginReferenceMode.Boundary ? 1 : 0)
             : axis.FindPropertyRelative("source").intValue == (int)EnemyEmissionOriginSource.Player ? 1 : 0);
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-        => Line * (1 + AxisLines(property.FindPropertyRelative("x")) + AxisLines(property.FindPropertyRelative("y")));
+        => Line * (WaveInspectorSections.Expanded(property, "Settings")
+            ? 1 + AxisLines(property.FindPropertyRelative("x")) + AxisLines(property.FindPropertyRelative("y")) : 1);
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
         Rect row = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-        EditorGUI.LabelField(row, label, EditorStyles.boldLabel); row.y += Line;
+        if (!WaveInspectorSections.Header(ref row, property, "Settings", label))
+        { EditorGUI.EndProperty(); return; }
         DrawAxis(ref row, property.FindPropertyRelative("x"), true);
         DrawAxis(ref row, property.FindPropertyRelative("y"), false);
         EditorGUI.EndProperty();

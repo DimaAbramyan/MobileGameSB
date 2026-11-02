@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "sci-fi-bullet-hell-sfx",
+  "selections": {
+    "mg-v2-reactor": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793303000747
+    },
+    "mg-v3-gamemaster-blaster": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793283058151
+    },
+    "mg-v3-bluezone-scifi-gun": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793302212426
+    },
+    "cl-jc-soft-energy": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793302339814
+    },
+    "rl-epic-whoosh": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-low-scifi-pass": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "re-game-blast": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793302417324
+    },
+    "mg-v3-dramatic-saiga": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793303023650
+    },
+    "mg-v3-dramatic-svd": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793303030095
+    },
+    "fta-burning-warble": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793303442122
+    },
+    "rl-spell-whoosh": {
+      "favorite": true,
+      "note": "",
+      "updatedAt": 1793525909779
+    },
+    "rl-pure-scifi-fast": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-smooth-air": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-space-vehicle": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-fast-whoosh": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-soft-forceful": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-cartoon-whir": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909780
+    },
+    "rl-power-whoosh": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909781
+    },
+    "rl-morph-whoosh": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909781
+    },
+    "rl-michel-fire": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909781
+    },
+    "rl-michel-rocket": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909781
+    },
+    "rl-dklon-rocket": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909781
+    },
+    "rl-mikeask-missile": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909781
+    },
+    "rl-rubberduck-rocket": {
+      "favorite": false,
+      "note": "",
+      "updatedAt": 1793525909782
+    }
+  }
+}

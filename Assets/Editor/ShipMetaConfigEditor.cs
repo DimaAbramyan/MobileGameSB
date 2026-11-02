@@ -23,6 +23,10 @@ public sealed class ShipMetaConfigEditor : Editor
     {
         serializedObject.Update();
 
+        StatDisplayLayoutEditor.Draw(serializedObject.FindProperty("statDisplay"));
+        StatDescriptionEditor.Draw(serializedObject.FindProperty("activeAbilityDescription"), "Active Ability Description");
+        StatDescriptionEditor.Draw(serializedObject.FindProperty("passiveAbilityDescription"), "Passive Ability Description");
+
         EditorGUILayout.HelpBox(
             "Meta Level 0 is the hull's initial state. Each following level "
             + "is created as an exact copy of the previous one. Contracts are "

@@ -18,8 +18,12 @@ public sealed class BattleCameraViewport : MonoBehaviour
     [Tooltip("Renders the battle between the configured upper/lower HUD boundaries. "
         + "Use a separate clear camera to fill the non-gameplay area.")]
     [SerializeField] private bool restrictRenderingToGameplayViewport = true;
-    [Header("Fixed Gameplay Format")]
-    [SerializeField] private bool useFixedGameplayAspect = true;
+    [Header("Adaptive Gameplay Viewport")]
+    [SerializeField, Tooltip("Fill the available area between HUD boundaries. Preserve the reference world width and height without letterboxing or sprite stretching. Disable to restore legacy fixed-aspect rendering.")]
+    private bool fillAvailableGameplayArea = true;
+    [Header("Reference Gameplay Format")]
+    [SerializeField, Tooltip("Use the reference aspect to preserve the authored world area. With adaptive filling disabled, this restores the legacy fixed-aspect viewport.")]
+    private bool useFixedGameplayAspect = true;
     [SerializeField, Min(0.1f)] private float fixedGameplayAspect = 9f / 17f;
     [Header("Cinemachine Lens")]
     [SerializeField, Min(0.01f)] private float lensOrthographicSize = 5.3f;
@@ -30,6 +34,7 @@ public sealed class BattleCameraViewport : MonoBehaviour
     private Rect lastAvailableRect;
     private float lastFixedGameplayAspect;
     private bool lastUsedFixedGameplayAspect;
+    private bool lastFilledAvailableGameplayArea;
     private float lastLensOrthographicSize;
     private bool hasAppliedViewport;
     private bool warnedMissingHudBoundary;
@@ -89,10 +94,22 @@ public sealed class BattleCameraViewport : MonoBehaviour
         Apply(GetAvailableScreenRect());
     }
 
-    private void Apply(Rect availableRect)
+    // Explicit display input lets non-rendering Editor previews use this same calculation
+    // without depending on whichever Editor window currently owns Screen's render context.
+    public Rect ApplyForDisplay(int screenWidth, int screenHeight, Rect screenSafeArea)
     {
-        float screenWidth = Screen.width;
-        float screenHeight = Screen.height;
+        if (screenWidth <= 0 || screenHeight <= 0 || !ResolveReferences())
+            return Rect.zero;
+
+        Apply(GetAvailableScreenRect(screenWidth, screenHeight, screenSafeArea), screenWidth, screenHeight);
+        Rect rect = targetCamera.rect;
+        return new Rect(rect.x * screenWidth, rect.y * screenHeight, rect.width * screenWidth, rect.height * screenHeight);
+    }
+
+    private void Apply(Rect availableRect) => Apply(availableRect, Screen.width, Screen.height);
+
+    private void Apply(Rect availableRect, int screenWidth, int screenHeight)
+    {
         if (screenWidth <= 0f || screenHeight <= 0f)
             return;
 
@@ -101,29 +118,40 @@ public sealed class BattleCameraViewport : MonoBehaviour
             screenHeight,
             availableRect);
         targetCamera.rect = gameplayRect;
-        ApplyCinemachineLens();
+        ApplyCinemachineLens(gameplayRect.width * screenWidth / Mathf.Max(1f, gameplayRect.height * screenHeight));
 
-        if (cinemachineCamera == null)
+        if (cinemachineCamera == null && !fillAvailableGameplayArea)
             cameraConstantWidth?.Apply();
 
-        lastScreenWidth = Screen.width;
-        lastScreenHeight = Screen.height;
+        lastScreenWidth = screenWidth;
+        lastScreenHeight = screenHeight;
         lastAvailableRect = availableRect;
         lastRestrictedViewport = restrictRenderingToGameplayViewport;
         lastFixedGameplayAspect = fixedGameplayAspect;
         lastUsedFixedGameplayAspect = useFixedGameplayAspect;
+        lastFilledAvailableGameplayArea = fillAvailableGameplayArea;
         lastLensOrthographicSize = lensOrthographicSize;
         hasAppliedViewport = true;
     }
 
-    private void ApplyCinemachineLens()
+    // Keep the authored reference rectangle visible; only expose additional world area.
+    // Both Runtime and Edit Mode use the same lens and viewport calculations.
+    private void ApplyCinemachineLens(float gameplayAspect)
     {
+        float size = GetOrthographicSize(gameplayAspect);
         if (cinemachineCamera == null)
+        {
+            if (fillAvailableGameplayArea)
+            {
+                targetCamera.orthographic = true;
+                targetCamera.orthographicSize = size;
+            }
             return;
+        }
 
         LensSettings lens = cinemachineCamera.Lens;
         lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
-        lens.OrthographicSize = Mathf.Max(0.01f, lensOrthographicSize);
+        lens.OrthographicSize = size;
         cinemachineCamera.Lens = lens;
         // Cinemachine's Brain does not update the lens in Edit Mode.
         if (!Application.isPlaying)
@@ -131,6 +159,15 @@ public sealed class BattleCameraViewport : MonoBehaviour
             targetCamera.orthographic = true;
             targetCamera.orthographicSize = lens.OrthographicSize;
         }
+    }
+
+    public float GetOrthographicSize(float gameplayAspect)
+    {
+        float referenceSize = Mathf.Max(0.01f, lensOrthographicSize);
+        if (!fillAvailableGameplayArea || !useFixedGameplayAspect)
+            return referenceSize;
+
+        return referenceSize * Mathf.Max(1f, Mathf.Max(0.1f, fixedGameplayAspect) / Mathf.Max(0.01f, gameplayAspect));
     }
 
     private Rect GetGameplayRect(
@@ -145,7 +182,7 @@ public sealed class BattleCameraViewport : MonoBehaviour
         Rect normalizedRect = new Rect(
             availableRect.x / screenWidth, availableRect.y / screenHeight,
             availableRect.width / screenWidth, availableHeight / screenHeight);
-        if (!useFixedGameplayAspect)
+        if (fillAvailableGameplayArea || !useFixedGameplayAspect)
             return normalizedRect;
 
         float targetAspect = Mathf.Max(0.1f, fixedGameplayAspect);
@@ -192,18 +229,20 @@ public sealed class BattleCameraViewport : MonoBehaviour
         return false;
     }
 
-    private Rect GetAvailableScreenRect()
+    private Rect GetAvailableScreenRect() => GetAvailableScreenRect(Screen.width, Screen.height, Screen.safeArea);
+
+    private Rect GetAvailableScreenRect(int screenWidth, int screenHeight, Rect screenSafeArea)
     {
         Rect available = respectSafeArea
-            ? Screen.safeArea
-            : new Rect(0f, 0f, Screen.width, Screen.height);
+            ? screenSafeArea
+            : new Rect(0f, 0f, screenWidth, screenHeight);
         // Device Simulator can briefly expose the previous device's safe area
         // while the Game View resolution has already changed.
         available = Rect.MinMaxRect(
-            Mathf.Clamp(available.xMin, 0f, Screen.width),
-            Mathf.Clamp(available.yMin, 0f, Screen.height),
-            Mathf.Clamp(available.xMax, 0f, Screen.width),
-            Mathf.Clamp(available.yMax, 0f, Screen.height));
+            Mathf.Clamp(available.xMin, 0f, screenWidth),
+            Mathf.Clamp(available.yMin, 0f, screenHeight),
+            Mathf.Clamp(available.xMax, 0f, screenWidth),
+            Mathf.Clamp(available.yMax, 0f, screenHeight));
         if (!restrictRenderingToGameplayViewport)
             return available;
 
@@ -249,6 +288,7 @@ public sealed class BattleCameraViewport : MonoBehaviour
                 fixedGameplayAspect,
                 lastFixedGameplayAspect)
             || useFixedGameplayAspect != lastUsedFixedGameplayAspect
+            || fillAvailableGameplayArea != lastFilledAvailableGameplayArea
             || !Mathf.Approximately(
                 lensOrthographicSize,
                 lastLensOrthographicSize);

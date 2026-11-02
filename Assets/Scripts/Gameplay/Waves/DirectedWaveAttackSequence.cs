@@ -192,6 +192,7 @@ public sealed class DirectedWaveAttackSequencePlayer
     }
     public void Pause(float time)
     {
+        if (paused) return;
         pausedAt = time; paused = true;
         // Interrupted emissions restart their current repetition on reentry; completed steps stay consumed.
         if (waiting != null) { remaining++; waiting = null; }

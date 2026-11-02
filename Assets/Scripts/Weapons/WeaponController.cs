@@ -153,10 +153,7 @@ public class WeaponController : MonoBehaviour
             if (weapon == null) continue;
             if (weapon.TryToShoot())
             {
-                weapon.Reload(
-                    reloadMultiplier /
-                    (weapon.IdenticalWeaponFireRateMultiplier
-                        * CurrentFireRateMultiplier));
+                weapon.Reload(GetEffectiveReloadMultiplier(weapon));
                 //soundManager.PlaySound(weapon.weaponData.AudioClipProjectileShot, transform.position);
             }
         }
@@ -165,6 +162,9 @@ public class WeaponController : MonoBehaviour
     {
         reloadMultiplier = newReloadMultiplier;
     }
+
+    public float GetEffectiveReloadMultiplier(Weapon weapon) => reloadMultiplier /
+        (weapon.IdenticalWeaponFireRateMultiplier * CurrentFireRateMultiplier);
 
     private float CurrentFireRateMultiplier =>
         Time.time < temporaryFireRateMultiplierUntil

@@ -2,18 +2,25 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json.Linq;
 
-public class SaveManager
+public partial class SaveManager
 {
     private const int MaxShipNameLength = 48;
 
-    public string SaveFolder => Path.Combine(Application.persistentDataPath, "Saves");
+    private readonly string persistentRoot;
+    public string SaveFolder => Path.Combine(persistentRoot, "Saves");
 
     private List<SaveShip> savedShips = new List<SaveShip>();
     public IReadOnlyList<SaveShip> SavedShips => savedShips;
 
-    public SaveManager()
+    [Zenject.Inject]
+    public SaveManager() : this(Application.persistentDataPath) { }
+
+    // Explicit root enables isolated verification without touching player data.
+    public SaveManager(string persistentDataRoot)
     {
+        persistentRoot = Path.GetFullPath(persistentDataRoot ?? throw new ArgumentNullException(nameof(persistentDataRoot)));
         LoadAllSaves();
     }
 
@@ -32,16 +39,17 @@ public class SaveManager
 
             try
             {
-                string json = File.ReadAllText(file);
-                SaveShip ship = JsonUtility.FromJson<SaveShip>(json);
-                if (ship == null)
+                var result = JsonSaveFile.Read(file, IsCraft);
+                if (!result.HasData)
                 {
-                    Debug.LogWarning($"Save file '{Path.GetFileName(file)}' does not contain a craft.");
+                    Debug.LogWarning(result.Error);
                     continue;
                 }
-
+                SaveShip ship = JsonUtility.FromJson<SaveShip>(result.Document.ToString());
                 ship.EnsureColorPalette();
                 savedShips.Add(ship);
+                if (result.Status == SaveLoadStatus.Recovered)
+                    JsonSaveFile.Write(file, JsonUtility.ToJson(ship), IsCraft);
             }
             catch (Exception exception)
             {
@@ -120,14 +128,9 @@ public class SaveManager
         try
         {
             string savePath = GetSavePath(normalizedName);
-            using FileStream stream = new FileStream(
-                savePath,
-                FileMode.CreateNew,
-                FileAccess.Write,
-                FileShare.None);
-            using StreamWriter writer = new StreamWriter(stream);
-            writer.Write(JsonUtility.ToJson(ship));
+            JsonSaveFile.Write(savePath, JsonUtility.ToJson(ship), IsCraft, false);
             LoadAllSaves();
+            Flush();
             error = string.Empty;
             return true;
         }
@@ -156,8 +159,9 @@ public class SaveManager
 
         try
         {
-            File.WriteAllText(GetSavePath(normalizedName), JsonUtility.ToJson(ship));
+            JsonSaveFile.Write(GetSavePath(normalizedName), JsonUtility.ToJson(ship), IsCraft);
             LoadAllSaves();
+            Flush();
         }
         catch (Exception exception)
         {
@@ -179,7 +183,7 @@ public class SaveManager
 
         try
         {
-            File.Delete(savePath);
+            JsonSaveFile.Delete(savePath);
             LoadAllSaves();
             error = string.Empty;
             return true;
@@ -239,7 +243,20 @@ public class SaveManager
 
         try
         {
-            files = Directory.GetFiles(SaveFolder);
+            var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string path in Directory.GetFiles(SaveFolder))
+            {
+                string candidate = path;
+                if (path.EndsWith(".json.bak.tmp", StringComparison.OrdinalIgnoreCase))
+                    candidate = path.Substring(0, path.Length - 8);
+                else if (path.EndsWith(".json.bak", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".json.tmp", StringComparison.OrdinalIgnoreCase))
+                    candidate = path.Substring(0, path.Length - 4);
+                if (IsSaveFile(candidate))
+                    paths.Add(candidate);
+            }
+            files = new string[paths.Count];
+            paths.CopyTo(files);
             return true;
         }
         catch (Exception exception)
@@ -260,5 +277,15 @@ public class SaveManager
     private string GetSavePath(string shipName)
     {
         return Path.Combine(SaveFolder, shipName + ".json");
+    }
+
+    private static bool IsCraft(JObject document)
+    {
+        if (document["shipName"]?.Type != JTokenType.String
+            || string.IsNullOrWhiteSpace(document["shipName"].Value<string>())
+            || document["shipId"]?.Type != JTokenType.Integer)
+            return false;
+        var ship = JsonUtility.FromJson<SaveShip>(document.ToString());
+        return ship != null;
     }
 }

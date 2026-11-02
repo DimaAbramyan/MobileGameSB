@@ -1,8 +1,63 @@
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 
 public static class EnemyLaserGeometryUtility
 {
+    // Length is the total travelled distance, including reflected legs. In automatic
+    // mode Length Offset extends that distance beyond the first screen edge.
+    // Settings are borrowed read-only; callers retain/reuse their segment buffer.
+    public static void BuildPath(Vector2 start, Vector2 direction, float length, float width,
+        Rect bounds, EnemyProjectileScreenSettings screen, List<EnemyLaserState> segments)
+    {
+        segments.Clear();
+        float2 position = new(start.x, start.y);
+        float2 heading = math.normalizesafe(new float2(direction.x, direction.y), new float2(0f, -1f));
+        float remaining = float.IsFinite(length) ? Mathf.Max(0f, length) : 0f;
+        bool bounce = screen.BounceOnScreenBounds && screen.BounceEdges != EnemyChildAttackBoundaries.None
+            && bounds.width > .00001f && bounds.height > .00001f;
+        int completed = 0;
+        // Outside births must enter first, just like ordinary projectiles. Do not
+        // mistake the near edge behind an outward-facing emitter for a contact.
+        if (bounce && !bounds.Contains(start))
+        {
+            float enter = 0f, exit = float.PositiveInfinity;
+            bounce = Clip(start.x, heading.x, bounds.xMin, bounds.xMax, ref enter, ref exit)
+                && Clip(start.y, heading.y, bounds.yMin, bounds.yMax, ref enter, ref exit) && enter <= remaining;
+            if (bounce && enter > 0f)
+            {
+                AddSegment(segments, position, heading, enter, width);
+                position += heading * enter;
+                remaining -= enter;
+            }
+        }
+        float2 min = new(bounds.xMin, bounds.yMin), max = new(bounds.xMax, bounds.yMax);
+        while (bounce && remaining > 0f && screen.CanBounce(completed)
+            && EnemyProjectileScreenBounce.TryNextContact(position, heading * remaining, min, max,
+                screen.BounceEdges, out float fraction, out float2 reflection))
+        {
+            float distance = remaining * fraction;
+            if (distance > 0f) AddSegment(segments, position, heading, distance, width);
+            position += heading * distance;
+            // Snap the contact to prevent round-off creating repeated zero-length bounces.
+            if (reflection.x < 0f) position.x = heading.x < 0f ? min.x : max.x;
+            if (reflection.y < 0f) position.y = heading.y < 0f ? min.y : max.y;
+            heading *= reflection;
+            remaining -= distance;
+            completed++;
+        }
+        if (remaining > 0f || segments.Count == 0) AddSegment(segments, position, heading, remaining, width);
+    }
+
+    private static void AddSegment(List<EnemyLaserState> segments, float2 start, float2 direction, float length, float width)
+        => segments.Add(new EnemyLaserState { Start = start, Direction = direction, Length = length, Width = width });
+
+    public static bool Hits(IReadOnlyList<EnemyLaserState> segments, EnemyProjectileCollisionTarget target)
+    {
+        for (int i = 0; i < segments.Count; i++) if (Hits(segments[i], target)) return true;
+        return false;
+    }
+
     // Ray/slab intersection. Outside emitters extend to the far edge after crossing the viewport.
     // A ray pointing away from the screen has zero automatic length.
     public static float ToScreenEdge(Vector2 start, Vector2 direction, Rect bounds)

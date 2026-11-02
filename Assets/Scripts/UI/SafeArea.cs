@@ -32,7 +32,9 @@ public sealed class SafeArea : MonoBehaviour
     }
 
     [ContextMenu("Apply Safe Area")]
-    public void Apply()
+    public void Apply() => Apply(Screen.width, Screen.height, Screen.safeArea);
+
+    public void Apply(int screenWidth, int screenHeight, Rect screenSafeArea)
     {
         if (rectTransform == null)
             rectTransform = GetComponent<RectTransform>();
@@ -45,12 +47,9 @@ public sealed class SafeArea : MonoBehaviour
             return;
         }
 
-        int screenWidth = Screen.width;
-        int screenHeight = Screen.height;
         if (screenWidth <= 0 || screenHeight <= 0)
             return;
 
-        Rect screenSafeArea = Screen.safeArea;
         Vector2 anchorMin = new Vector2(
             screenSafeArea.xMin / screenWidth,
             0f);

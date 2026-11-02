@@ -47,7 +47,7 @@ public sealed partial class WaveConductorShootingPreview
                 && IsCoordinatorEnabledForPreview(current) == coordinatorEnabled);
         }
     }
-    private static bool IsCoordinatorEnabledForPreview(WaveAttackCoordinator value)
+    internal static bool IsCoordinatorEnabledForPreview(WaveAttackCoordinator value)
     {
         if (value == null || !value.enabled || !value.Settings.enabled) return false;
         if (!EditorUtility.IsPersistent(value)) return value.isActiveAndEnabled;

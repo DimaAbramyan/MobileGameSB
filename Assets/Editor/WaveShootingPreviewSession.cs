@@ -13,18 +13,21 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
     private const int MaximumDirections = 128;
     private const int MaximumVolley = 512;
     private readonly DirectedEnemySubWave wave;
+    private readonly int gameplayCameraRevision = WavePreviewGameplayCamera.Revision;
     private readonly Transform previewParent;
     private readonly bool ownsProjectiles;
     private readonly bool formationOnly;
     private readonly bool stationaryFormation;
     private readonly bool hasPostMovement;
     private readonly bool usesAttackSequence;
+    private readonly bool usesAttackGroups;
+    private readonly DirectedWaveAttackSettings sharedGroupSettings = new();
     private readonly int attackConfigurationRevision;
     private readonly int presetConfigurationRevision = EnemyPresetRevision.Value;
     private readonly int numericPreviewRevision = NumericRandomPreviewControls.Revision;
     private readonly Dictionary<int, EnemyAttackNumericRegistry> numericRegistries = new();
     private readonly Dictionary<int, EnemySectorLaunchOrderRegistry> sectorOrderRegistries = new();
-    public bool IsConfigurationCurrent => (wave.AttackPatternBehaviour != null ? wave.AttackPatternBehaviour.ConfigurationRevision : 0) == attackConfigurationRevision && numericPreviewRevision == NumericRandomPreviewControls.Revision && presetConfigurationRevision == EnemyPresetRevision.Value;
+    public bool IsConfigurationCurrent => gameplayCameraRevision == WavePreviewGameplayCamera.Revision && (wave.AttackPatternBehaviour != null ? wave.AttackPatternBehaviour.ConfigurationRevision : 0) == attackConfigurationRevision && numericPreviewRevision == NumericRandomPreviewControls.Revision && presetConfigurationRevision == EnemyPresetRevision.Value;
     private DirectedWaveAttackSequencePlayer sequencePlayer;
     public string SequenceStatus => sequencePlayer?.CurrentStep;
     public int SequenceChildWaitTimeouts => sequencePlayer?.ChildWaitTimeouts ?? 0;
@@ -102,11 +105,14 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         public VisualPose Pose;
         public bool Active;
         public bool RotationStarted;
+        public bool LayoutActive;
         public float ReadyTime, CompletionTime, RotationStart, SpawnTime;
         public Vector3 Position;
         public DirectedWaveAttackAimState AttackAim;
         public Group Group;
         public bool Entrance;
+        public DirectedWaveAttackGroup AttackGroup;
+        public DirectedWaveAttackSequencePlayer AttackProgram;
     }
     private sealed class Pattern
     {
@@ -132,6 +138,7 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         public bool CoordinatorCounted;
         public bool CoordinatorEntranceClockBound;
         public bool SequenceOwned;
+        public bool GrantedGroupDispatch;
         public EnemyAttackCompletionTracker Completion;
         public int PatternIndex;
         public readonly List<Slot> Slots = new();
@@ -186,6 +193,9 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         attackConfigurationRevision = wave.AttackPatternBehaviour != null ? wave.AttackPatternBehaviour.ConfigurationRevision : 0;
         usesAttackSequence = wave.AttackPatternBehaviour != null && wave.AttackPatternBehaviour.enabled
             && wave.AttackPatternBehaviour.UsesAttackSequence;
+        usesAttackGroups = wave.AttackPatternBehaviour != null && wave.AttackPatternBehaviour.enabled
+            && wave.AttackPatternBehaviour.UseAttackGroups;
+        if (usesAttackGroups) wave.AttackPatternBehaviour.CopyCommonAttackSettingsTo(sharedGroupSettings);
         hasPostMovement = wave.HasPostBehaviour;
         stationaryFormation = formationOnly || !wave.HasPhaseEntry && !hasPostMovement;
         spawnOrder = suppliedSpawnOrder ?? BuildSpawnOrder(wave);
@@ -256,6 +266,9 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         bool resolved = suppliedSettings != null || !sequenceBase && !autonomous
             && wave.AttackPatternBehaviour != null && wave.AttackPatternBehaviour.enabled
             && wave.AttackPatternBehaviour.TryCopyResolvedAttackSettingsTo(index, entrance, settings, out patternIndex);
+        var attackGroup = usesAttackGroups && !entrance && suppliedSettings == null
+            ? wave.AttackPatternBehaviour.GetAttackGroupForSlot(index) : null;
+        bool groupBase = usesAttackGroups && !entrance && suppliedSettings == null;
         var local = wave.GetConfiguredEnemyOverrideForSlot(index);
         // ApplyTo changes the enemy's base rotation. An active Wave Override replaces
         // that profile in Runtime, so its rotation must not be overridden a second time.
@@ -305,6 +318,14 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
             visualPoses.Add(slot.Visual, slot.Pose);
         }
         slots.Add(slot);
+        if (groupBase)
+        {
+            slot.AttackGroup = attackGroup;
+            if (attackGroup == null || !resolved && !attackGroup.UsesSequence)
+            { slot.FireMode = DirectedWaveAttackFireMode.None; return slot; }
+            if (attackGroup.UsesSequence) slot.FireMode = DirectedWaveAttackFireMode.Default;
+            patternIndex = -1; // One shared dispatch/order group for every assigned slot.
+        }
         if (sequenceBase) return slot;
         if (!resolved && !serialized.FindProperty("autonomousAttack").boolValue)
         { slot.FireMode = DirectedWaveAttackFireMode.None; return slot; }
@@ -316,9 +337,10 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
                 { group = groups[i]; break; }
         if (group == null)
         {
-            group = new Group { PatternIndex = patternIndex, Settings = settings, Entrance = entrance, Autonomous = !resolved,
-                Numeric = settings.CreateSchedulingNumeric(NumericRandomPreviewControls.SeedOffset) };
-            group.NextTime = autonomous ? 0f : entrance ? float.PositiveInfinity : resolved ? postStart + settings.SampleStartDelay(group.Numeric) : 0f;
+            var scheduling = groupBase ? sharedGroupSettings : settings;
+            group = new Group { PatternIndex = patternIndex, Settings = scheduling, Entrance = entrance, Autonomous = !resolved && !groupBase,
+                Numeric = scheduling.CreateSchedulingNumeric(NumericRandomPreviewControls.SeedOffset) };
+            group.NextTime = autonomous ? 0f : entrance ? float.PositiveInfinity : resolved || groupBase ? postStart + scheduling.SampleStartDelay(group.Numeric) : 0f;
             groups.Add(group);
         }
         group.Slots.Add(slot); slot.Group = group;
@@ -333,6 +355,7 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         if (!wave.HasPhaseEntry) return;
         var behaviour = wave.AttackPatternBehaviour;
         if (behaviour == null || !behaviour.enabled) return;
+        if (behaviour.UseAttackGroups && behaviour.GetAttackGroupForSlot(index) == null) return;
         if (!behaviour.EditorPreviewEntranceSettings.IsEnabled)
         {
             if (behaviour.AllowAutonomousAttackDuringEntrance) BuildSlot(index, true, visual, true);
@@ -571,7 +594,7 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
     private void TickGroup(Group group, float time)
     {
         using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.AttackGroup);
-        if (coordinated && (!coordinatorPermissions.AllowNewAttacks
+        if (coordinated && (!group.GrantedGroupDispatch && !coordinatorPermissions.AllowNewAttacks
             || !group.SequenceOwned && !group.Entrance && !group.Autonomous && coordinatorCycleLimit >= 0 && group.CoordinatorCycles >= coordinatorCycleLimit)) return;
         if (group.Entrance && (coordinated ? positionsTime : time) >= postStart) return;
         if (coordinated && group.Entrance && !group.CoordinatorEntranceClockBound)
@@ -601,6 +624,12 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         slot.Active = true; group.Active++; slot.AttackAim = default;
         if ((group.SequenceOwned || coordinated && !group.Entrance && !group.Autonomous) && !group.Settings.UsesAttackOrder) slot.RemainingSequenceAttacks--;
         slot.CompletionTime = time; BeginRotation(slot, time);
+        if (slot.AttackGroup?.UsesSequence == true)
+        {
+            slot.AttackProgram ??= new DirectedWaveAttackSequencePlayer(slot.AttackGroup.Sequence, new SequenceHost(this, slot));
+            slot.AttackProgram.Begin(time, slot.AttackGroup.Sequence.restartOnReentry);
+            return;
+        }
         for (int i = 0; i < slot.Patterns.Length; i++)
         {
             var pattern = slot.Patterns[i]; pattern.Aim = default; pattern.CircleAimCaptured = false; pattern.Speed = default;
@@ -613,10 +642,22 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
 
     private static void BeginRotation(Slot slot, float time)
     {
+        if (!slot.LayoutActive)
+        {
+            slot.Pose.BeginLayout(EnemyRotationSettings.AttackFinishedMode(slot.Profile), time);
+            slot.LayoutActive = true;
+        }
         // Runtime binds a rotation clock to the profile, not to each cooldown cycle.
         if (slot.RotationStarted) return;
         slot.RotationStarted = true; slot.RotationStart = time;
     }
+    private static void EndLayoutRotation(Slot slot, float time)
+    {
+        if (!slot.LayoutActive) return;
+        slot.LayoutActive = false; slot.Pose.EndLayout(time);
+    }
+    private static float LayoutRotationTime(Slot slot, float time) => slot.Pose.LayoutFinish == EnemyLayoutRotationOnAttackFinished.ContinueRotation
+        ? Mathf.Max(0f, time - slot.RotationStart) : slot.Pose.LayoutTime(time);
 
     private void TickEntrance(float time, float? emissionTime = null)
     {
@@ -653,6 +694,8 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
                 }
                 sequence.Next++;
             }
+            if (sequence.Next == sequence.Count && (emissionTime ?? time) + .00001f >= sequence.Slot.CompletionTime)
+                EndLayoutRotation(sequence.Slot, emissionTime ?? time);
             if (sequence.Next == sequence.Count && sequence.LoopDuration > 0f)
             { sequence.Start += sequence.LoopDuration; sequence.Next = 0; sequence.OriginCapture = null; }
         }
@@ -662,6 +705,21 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
     {
         using var profileScope = WavePreviewProfiler.Measure(WavePreviewProfiler.Area.AttackSlot);
         if (!slot.Active) return;
+        if (slot.AttackProgram != null)
+        {
+            sequenceTime = time;
+            slot.AttackProgram.AllowNewAttacks = true;
+            slot.AttackProgram.Tick(time);
+            if (slot.AttackProgram.IsComplete)
+            {
+                EndLayoutRotation(slot, time);
+                slot.Active = false; slot.Group.Active--; slot.ReadyTime = time;
+                Observe(WavePreviewEventKind.AttackEnd, slot.Index);
+                if (slot.Group.Settings.WaitsForPreviousAttack && !slot.Group.Settings.UsesAttackOrder)
+                    slot.Group.NextTime = Mathf.Max(slot.Group.NextTime, time + slot.Group.Settings.SampleDelayAfterAttack(slot.Group.Numeric));
+            }
+            return;
+        }
         bool pending = false;
         for (int i = 0; i < slot.Patterns.Length; i++)
         {
@@ -675,10 +733,11 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
             pending |= !pattern.Schedule.IsComplete;
         }
         if (pending || time + .00001f < slot.CompletionTime) return;
+        EndLayoutRotation(slot, time);
         slot.Active = false; slot.Group.Active--;
         Observe(WavePreviewEventKind.AttackEnd, slot.Index);
         slot.ReadyTime = time + EnemyAttackCooldownSampler.Sample(slot.Profile, slot.Numeric,
-            slot.Group.SequenceOwned || slot.Group.Settings.UsesAttackOrder || slot.Group.Settings.EnemyAttackCooldownRandom.enabled ? slot.Group.Settings : null);
+            slot.AttackGroup != null ? slot.Settings : slot.Group.SequenceOwned || slot.Group.Settings.UsesAttackOrder || slot.Group.Settings.EnemyAttackCooldownRandom.enabled ? slot.Group.Settings : null);
         for (int i = 0; i < slot.Patterns.Length; i++) slot.Numeric.Release(slot.Patterns[i].Settings);
         if (slot.Group.Settings.WaitsForPreviousAttack && !slot.Group.Settings.UsesAttackOrder)
             slot.Group.NextTime = Mathf.Max(slot.Group.NextTime, time + slot.Group.Settings.SampleDelayAfterAttack(slot.Group.Numeric));
@@ -709,14 +768,14 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         var numericSpeed = (numericOverride ?? pattern.Numeric)?.PrepareSpeed(shooting, burstStart && pattern.Settings.RepeatBurst,
             shooting.InitialSpeedMode == EnemyProjectileInitialSpeedMode.Consistent ? pattern.Speed.ConsistentDelta : 0f) ?? default;
         shooting = shooting.SampleGeometry(numericSpeed.Numeric);
-        var prefab = shooting.ResolveProjectilePrefab(slot.Prefabs[shooting.ProjectileType == EnemyProjectileType.Laser ? 0 : (int)shooting.ProjectileType] ?? slot.Prefabs[0]);
+        var prefab = shooting.ResolveProjectilePrefab(slot.Prefabs[shooting.ProjectilePrefabIndex] ?? slot.Prefabs[0]);
         if (prefab == null && shooting.ProjectileType != EnemyProjectileType.Laser) { Warning = "Missing projectile prefab in the enemy executor."; return; }
-        float rotationTime = Mathf.Max(0f, time - slot.RotationStart);
+        float rotationTime = LayoutRotationTime(slot, time);
         var frame = Frame(slot, pattern, rotationTime);
         pattern.Numeric ??= slot.Numeric.Get(pattern.Settings);
         frame.PlayerPosition = pattern.OriginCapture.Prepare(shooting.EmissionOrigin, TargetPosition, burstStart, burstStart && pattern.Settings.RepeatBurst);
         frame.PlayerPosition = capturedPlayer ?? frame.PlayerPosition;
-        if (EnemyEmissionOriginSettings.TryGetGameplayBounds(Camera.main, slot.Position.z, out var bounds))
+        if (EnemyEmissionOriginSettings.TryGetGameplayBounds(WavePreviewGameplayCamera.GameplayCamera, slot.Position.z, out var bounds))
             frame.GameplayBounds = bounds;
         else if (shooting.EmissionOrigin.RequiresBounds)
         { Warning = "Emission Origin Boundary requires a gameplay camera."; return; }
@@ -810,7 +869,7 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         }
         if (remainingStepEmissions <= 0)
         { omittedRays += shooting.ProjectilesPerDirection; return; }
-        float rotationTime = Mathf.Max(0f, time - slot.RotationStart);
+        float rotationTime = LayoutRotationTime(slot, time);
         var frame = Frame(slot, volley.Pattern, rotationTime);
         frame.Origin = volley.Origin ?? slot.Position;
         bool point = volley.Stationary && volley.StationarySettings.DirectionMode == EnemyStationaryDirectionMode.WorldPoint;
@@ -830,14 +889,15 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
         int count = Mathf.Min(remainingStepEmissions, Mathf.Min(perDirection, shooting.ProjectilesPerDirection));
         remainingStepEmissions -= count;
         requests.Clear();
-        if (shooting.UsesExtendedNumericRandomization)
+        if (shooting.UsesExtendedNumericRandomization || shooting.UsesTargetPoint)
         {
-            EnemyAttackProjectileBuilder.AppendEmitter(requests, shooting.ResolveProjectilePrefab(slot.Prefabs[shooting.ProjectileType == EnemyProjectileType.Laser ? 0 : (int)shooting.ProjectileType] ?? slot.Prefabs[0]),
+            EnemyAttackProjectileBuilder.AppendEmitter(requests, shooting.ResolveProjectilePrefab(slot.Prefabs[shooting.ProjectilePrefabIndex] ?? slot.Prefabs[0]),
                 shooting, emitter.Position, frame.Origin.Value, emitter.BaseDirection, 1f, volley.Speed, volley.Spread,
                 new EnemyProjectilePrefabSet(slot.Prefabs[0], slot.Prefabs[1], slot.Prefabs[2]), maximum: count,
                 randomSpeed: volley.NumericSpeed, projectileOffset: arm * shooting.ProjectilesPerDirection, directionIndex: arm,
+                targetPoint: shooting.UsesTargetPoint ? TargetPosition : null,
                 completionTracker: slot.Group?.Completion,
-                laserOrigin: new EnemyLaserOrigin(slot.Visual, slot.Position, shooting.EmissionOrigin, Camera.main, player: targetObject.transform));
+                laserOrigin: new EnemyLaserOrigin(slot.Visual, slot.Position, shooting.EmissionOrigin, WavePreviewGameplayCamera.GameplayCamera, player: targetObject.transform, cancelWithSource: true));
             omittedRays += shooting.ProjectilesPerDirection - requests.Count;
             SpawnObserved(slot.Index); return;
         }
@@ -854,8 +914,10 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
                 speed = Mathf.Lerp(shooting.RandomInitialSpeedMinimum, shooting.RandomInitialSpeedMaximum, Random01());
             if (volley.NumericSpeed.Active) speed = volley.NumericSpeed.Evaluate(arm * shooting.ProjectilesPerDirection + projectile);
             lastStack = stack;
-            requests.Add(new EnemyProjectileSpawnRequest(shooting.ResolveProjectilePrefab(slot.Prefabs[shooting.ProjectileType == EnemyProjectileType.Laser ? 0 : (int)shooting.ProjectileType] ?? slot.Prefabs[0]),
-                emitter.Position, shooting.GetProjectileDirection(emitter.BaseDirection, 0, projectile, spread), 1f,
+            Vector3 finalDirection = shooting.GetProjectileDirection(emitter.BaseDirection, 0, projectile, spread);
+            Vector3 spawnPosition = shooting.GetProjectileSpawnPosition(emitter.Position, finalDirection, arm, projectile);
+            requests.Add(new EnemyProjectileSpawnRequest(shooting.ResolveProjectilePrefab(slot.Prefabs[shooting.ProjectilePrefabIndex] ?? slot.Prefabs[0]),
+                spawnPosition, finalDirection, 1f,
                 speed, shooting.SpeedBehavior, shooting.SpeedChangeY, shooting.SpeedByDistance,
                 shooting.SizeBehavior, shooting.SizeChangeY, shooting.SizeChangeSpeed, shooting.SizeChangeCurve, shooting.FinalSize,
                 frame.Origin.Value, shooting.MovementPattern, shooting.AngularSpeed, shooting.LateralSpeed,
@@ -871,7 +933,10 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
                 speedCurveTarget: shooting.SpeedCurveTarget, completionTracker: slot.Group?.Completion, numericSeedKey: NumericRandomStream.Hash(volley.NumericSpeed.SeedKey ^ (uint)(arm * shooting.ProjectilesPerDirection + projectile)),
                 laser: shooting.ProjectileType == EnemyProjectileType.Laser ? shooting.Laser : null,
                 laserOrigin: shooting.ProjectileType == EnemyProjectileType.Laser
-                    ? new EnemyLaserOrigin(slot.Visual, slot.Position, shooting.EmissionOrigin, Camera.main, player: targetObject.transform) : default));
+                    ? new EnemyLaserOrigin(slot.Visual, slot.Position, shooting.EmissionOrigin, WavePreviewGameplayCamera.GameplayCamera, player: targetObject.transform, cancelWithSource: true) : default,
+                screenBoundary: shooting.ScreenBoundary, composite: shooting.IsComposite ? shooting.Composite.Resolve(shooting.ProjectileType) : default,
+                baseSize: shooting.OverrideBaseSize ? shooting.BaseSize : 1f, collisionSettings: shooting.CollisionSettings,
+                targetPositionSettings: shooting.TargetPositionSettings));
         }
         omittedRays += shooting.ProjectilesPerDirection - count;
         SpawnObserved(slot.Index);
@@ -902,7 +967,7 @@ public sealed partial class WaveShootingPreviewSession : IDisposable
             Handles.Label(TargetPosition + Vector3.down * .55f, "Preview Player · drag the handle");
         }
         EditorGUI.BeginChangeCheck();
-        Vector3 next = Handles.PositionHandle(TargetPosition, Quaternion.identity);
+        Vector3 next = WavePreviewTargetHandle.Draw(TargetPosition);
         if (EditorGUI.EndChangeCheck()) { next.z = 0f; TargetPosition = next; view.Repaint(); }
     }
 

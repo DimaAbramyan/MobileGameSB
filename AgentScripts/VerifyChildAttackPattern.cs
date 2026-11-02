@@ -107,7 +107,7 @@ public static class VerifyChildAttackPattern
             Set(child.Pattern, "attackShotCount", 2); Set(child.Pattern, "attackShotInterval", .2f); child.Pattern.Validate(); var parent = Spawn(preview, child);
             preview.SimulationWorld.EntityManager.SetComponentData(parent, new EnemyProjectileResolution { Kind = kind });
             preview.Step(.1f, .1f, Target); Check(!preview.SimulationWorld.EntityManager.Exists(parent) && preview.Count == 1, "Event fires before cleanup: " + kind);
-            preview.Step(.4f, .3f, Target); Check(preview.Count == 2, "Detached event completes delayed shots: " + kind);
+            preview.Step(.4f, .3f, Target); Check(preview.Count == 1, "Death event cancels delayed shots: " + kind);
         }
     }
     private static void TestLifetimeHold()
@@ -139,7 +139,7 @@ public static class VerifyChildAttackPattern
             Set(child.Pattern, "attackShotCount", 2); Set(child.Pattern, "attackShotInterval", .3f); child.Pattern.Validate();
             var parent = Spawn(preview, child); preview.SimulationWorld.EntityManager.SetComponentData(parent, new EnemyProjectileRemainingLifetime { Value = .1f });
             preview.Step(.1f, .1f, Target); Check(!preview.SimulationWorld.EntityManager.Exists(parent) && preview.Count == 1, "Expired event resolves parent normally");
-            preview.Step(.4f, .3f, Target); Check(preview.Count == 2, "Expired event still completes delayed attack from final pose");
+            preview.Step(.4f, .3f, Target); Check(preview.Count == 1, "Expired event cancels delayed attack after parent removal");
         }
     }
     private static void TestNested()

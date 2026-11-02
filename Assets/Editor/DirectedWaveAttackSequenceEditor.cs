@@ -7,18 +7,25 @@ public sealed partial class DirectedWaveAttackBehaviourEditor
 
     private void DrawAttackSequence()
     {
-        EditorGUILayout.HelpBox("Sequence выполняет шаги по порядку. Single/Multiple внутри паттерна сохранены. "
-            + "Один шаг выполняет один цикл выбранной группы, включая Attack Cooldown. "
-            + "Без Wait For Completion можно перекрывать атаки разных слотов; один слот не используется двумя шагами одновременно.", MessageType.Info);
-        EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("sequenceMode"));
-        if (attackSequence.FindPropertyRelative("sequenceMode").enumValueIndex != (int)DirectedWaveAttackSequenceMode.Once)
-            EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("loopCount"));
-        EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("startStep"));
-        EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("restartOnReentry"),
-            new GUIContent("Restart On Reentry", "Включено: начать сначала. Выключено: продолжить; прерванное выполнение текущего шага запускается заново."));
-        EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("waitForPreviousAttack"));
-        if (attackSequence.FindPropertyRelative("sequenceMode").enumValueIndex == (int)DirectedWaveAttackSequenceMode.Random)
-            EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("seed"));
+        using (var playback = new WaveInspectorSections.Scope(serializedObject, "SequencePlayback", "Playback & Reentry"))
+        {
+            if (playback.IsExpanded)
+            {
+                EditorGUILayout.HelpBox("Sequence выполняет шаги по порядку. Single/Multiple внутри паттерна сохранены. "
+                    + "Один шаг выполняет один цикл выбранной группы, включая Attack Cooldown. "
+                    + "Без Wait For Completion можно перекрывать атаки разных слотов; один слот не используется двумя шагами одновременно.", MessageType.Info);
+                EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("sequenceMode"));
+                if (attackSequence.FindPropertyRelative("sequenceMode").enumValueIndex != (int)DirectedWaveAttackSequenceMode.Once)
+                    EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("loopCount"));
+                EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("startStep"));
+                EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("restartOnReentry"),
+                    new GUIContent("Restart On Reentry", "Включено: начать сначала. Выключено: продолжить; прерванное выполнение текущего шага запускается заново."));
+                EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("waitForPreviousAttack"));
+                if (attackSequence.FindPropertyRelative("sequenceMode").enumValueIndex == (int)DirectedWaveAttackSequenceMode.Random)
+                    EditorGUILayout.PropertyField(attackSequence.FindPropertyRelative("seed"));
+            }
+        }
+        EditorGUILayout.LabelField("Sequence Steps", EditorStyles.boldLabel);
         var steps = attackSequence.FindPropertyRelative("steps");
         if (steps.arraySize == 0) EditorGUILayout.HelpBox("Добавьте Attack, Pause или Repeat Block.", MessageType.Warning);
         else if (attackSequence.FindPropertyRelative("startStep").intValue >= steps.arraySize)
@@ -92,13 +99,19 @@ public sealed partial class DirectedWaveAttackBehaviourEditor
     {
         EditorGUILayout.PropertyField(step.FindPropertyRelative("waitForCompletion"));
         EditorGUILayout.PropertyField(step.FindPropertyRelative("attackSpeedMultiplier"));
-        EditorGUILayout.PropertyField(step.FindPropertyRelative("waitForChildAttacks"));
-        if (step.FindPropertyRelative("waitForChildAttacks").boolValue)
+        using (var completion = new WaveInspectorSections.Scope(serializedObject, step.propertyPath + ".ChildCompletion", "Child Attack Completion"))
         {
-            EditorGUILayout.PropertyField(step.FindPropertyRelative("unlimitedChildWait"),
-                new GUIContent("Unlimited Child Wait", "Явно разрешить неограниченное ожидание. Источник с бесконечным временем жизни может никогда не завершиться."));
-            if (!step.FindPropertyRelative("unlimitedChildWait").boolValue)
-                EditorGUILayout.PropertyField(step.FindPropertyRelative("childWaitTimeout"));
+            if (completion.IsExpanded)
+            {
+                EditorGUILayout.PropertyField(step.FindPropertyRelative("waitForChildAttacks"));
+                if (step.FindPropertyRelative("waitForChildAttacks").boolValue)
+                {
+                    EditorGUILayout.PropertyField(step.FindPropertyRelative("unlimitedChildWait"),
+                        new GUIContent("Unlimited Child Wait", "Явно разрешить неограниченное ожидание. Источник с бесконечным временем жизни может никогда не завершиться."));
+                    if (!step.FindPropertyRelative("unlimitedChildWait").boolValue)
+                        EditorGUILayout.PropertyField(step.FindPropertyRelative("childWaitTimeout"));
+                }
+            }
         }
         var useSlots = step.FindPropertyRelative("overrideTargetSlots");
         EditorGUILayout.PropertyField(useSlots, new GUIContent("Target Slots Override"));

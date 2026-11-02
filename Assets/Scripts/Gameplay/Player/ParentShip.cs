@@ -302,7 +302,9 @@ public class ParentShip : MonoBehaviour, iDamagable
     // Explicit opt-in for authored beam damage. Legacy enemy impacts retain their one-unit rule.
     public bool TryTakeConfiguredDamage(float damage) => ApplyIncomingDamage(damage, true);
 
-    private bool ApplyIncomingDamage(float damage, bool useConfiguredDamage)
+    public bool TryTakeConfiguredDamage(float damage, EnemyDamageType type) => ApplyIncomingDamage(damage,true,type);
+
+    private bool ApplyIncomingDamage(float damage, bool useConfiguredDamage, EnemyDamageType type = EnemyDamageType.Default)
     {
         if (IsDestroyed || damage <= 0f)
             return false;
@@ -327,14 +329,17 @@ public class ParentShip : MonoBehaviour, iDamagable
         if (damage <= 0f)
             return false;
 
-        if (CurrentShieldPoints > 0)
+        var profile = EnemyDamageProfiles.Get(type);
+        if (CurrentShieldPoints > 0 && profile.ShieldBypassFraction <= 0f)
         {
+            damage *= profile.ShieldMultiplier;
             CurrentShieldPoints -= damage;
             GrantDamageInvulnerability(HitInvulnerabilityDuration);
             OnDamageTaken?.Invoke(damage);
             return true;
         }
 
+        damage *= profile.HullMultiplier;
         float healthBeforeDamage = CurrentHealthPoints;
         CurrentHealthPoints -= damage;
         if (CurrentHealthPoints < healthBeforeDamage)

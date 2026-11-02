@@ -8,8 +8,6 @@ Unity 2D mobile shoot 'em up.
 
 Main areas:
 
-- Ship construction/crafting.
-- Player team selection.
 - ScriptableObject configs for ships, weapons, levels, waves and UI.
 - One main battle scene configured by `LevelConfig`.
 - Directed wave system with subwaves, formations, morphing and post-behaviour pipelines.
@@ -213,18 +211,6 @@ For post-behaviour:
 - Preview should respect delays, loops, parallel commands and infinite commands.
 - Do not reset positions at loop boundaries unless the command explicitly asks for reset.
 
-## Ship/weapon construction
-
-Ships are selected/built through configs and saved blueprints.
-
-Rules:
-
-- Do not assume a fixed weapon slot count.
-- Slot availability should come from UI/config/build data, not magic numbers.
-- Ship ID should come from `ShipData` where possible.
-- Weapon energy cost and ship energy capacity must be respected.
-- Saving a ship should fail if required weapon slots are not filled or energy is exceeded.
-
 ## Abilities
 
 Abilities should:
@@ -250,14 +236,19 @@ For editor/designer UI:
 
 ## Validation
 
+Keep validation proportional to the scope and risk of the change. Prefer focused checks over large test suites; avoid repeating tests or benchmarks that already passed unless relevant code changed.
+
 After meaningful code or asset changes:
 
 1. Let the running Unity Editor refresh/import and finish compilation through the CLI/Pipeline workflow.
 2. Verify the requested state in the Editor through a read-only Pipeline command or `eval` where practical.
 3. Check for new Unity compile/Console errors using an available Pipeline command when one is exposed by `unity list`.
-4. Run at least:
+4. Run targeted tests for changed behavior and related regressions when warranted. Do not run unrelated test suites by default.
+5. Run .NET builds when justified by the affected assemblies or the scope of the change. For substantial changes spanning Runtime and Editor, run both:
    - `dotnet build "Assembly-CSharp.csproj" --no-restore --verbosity:quiet --nologo`
    - `dotnet build "Assembly-CSharp-Editor.csproj" --no-restore --verbosity:quiet --nologo`
+
+If validation tools fail or return invalid data repeatedly, report the limitation instead of spending time on unrelated diagnostic tooling.
 
 If a domain reload disconnects the CLI, reconnect and verify state rather than treating the disconnect itself as a project failure.
 

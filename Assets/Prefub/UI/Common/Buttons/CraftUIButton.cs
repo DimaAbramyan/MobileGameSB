@@ -2,9 +2,30 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class CraftUIButton : MonoBehaviour
+public class CraftUIButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
+    public CraftContentDefinition Content { get; private set; }
+    private Action<CraftUIButton, bool> previewEntered, previewExited;
+    private bool pointerPreview, navigationPreview;
+
+    public void SetPreviewActions(Action<CraftUIButton, bool> entered, Action<CraftUIButton, bool> exited)
+    {
+        ReleasePreview(); previewEntered = entered; previewExited = exited;
+    }
+    public void OnPointerEnter(PointerEventData _) { pointerPreview = true; previewEntered?.Invoke(this, true); }
+    public void OnPointerExit(PointerEventData _) { pointerPreview = false; previewExited?.Invoke(this, true); }
+    public void OnSelect(BaseEventData _) { navigationPreview = true; previewEntered?.Invoke(this, false); }
+    public void OnDeselect(BaseEventData _) { navigationPreview = false; previewExited?.Invoke(this, false); }
+    private void OnDisable() => ReleasePreview();
+    private void ReleasePreview()
+    {
+        bool pointer = pointerPreview, navigation = navigationPreview;
+        pointerPreview = navigationPreview = false;
+        if (pointer) previewExited?.Invoke(this, true);
+        if (navigation) previewExited?.Invoke(this, false);
+    }
     [SerializeField] private UnityEngine.UI.Image shipSprite;
     [SerializeField] private TextMeshProUGUI shipName;
     [SerializeField] private Button button;
@@ -57,6 +78,8 @@ public class CraftUIButton : MonoBehaviour
 
     public void SetContent(CraftContentDefinition content)
     {
+        ReleasePreview();
+        Content = content;
         if (content == null)
             return;
 

@@ -1,0 +1,874 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1339217986206993038
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6335862733873851595}
+  - component: {fileID: 5970500095285485595}
+  - component: {fileID: 2717838132403575528}
+  - component: {fileID: 4606862305399316101}
+  - component: {fileID: 5927317724985715435}
+  m_Layer: 0
+  m_Name: Enemy
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6335862733873851595
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339217986206993038}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &5970500095285485595
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339217986206993038}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 1473171779247187627, guid: b9e5d091cc0a1f04f94745a3e553240e, type: 3}
+  m_Color: {r: 0, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.82, y: 0.82}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!58 &2717838132403575528
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339217986206993038}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.41
+--- !u!114 &4606862305399316101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339217986206993038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3af85ec816f1b6488031b48f0389ec0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  DoHaveBuff: 1
+  isDead: 0
+  DamageShowing: {fileID: 0}
+  Buff: {fileID: 0}
+  healthBar: {fileID: 0}
+  _maxHealth: 30
+  _currentHealth: 0
+  _fireRate: 0
+  _damage: 0
+  _speed: 0
+  enemyType: 0
+  qBeamChargeMultiplier: 1
+  metalMultiplier: 1
+  shieldPoints: 4
+--- !u!114 &5927317724985715435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1339217986206993038}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7a3ebc2372444d0a771274d7f68bc99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleEnemyAttackExecutor
+  projectileType: 0
+  defaultProjectilePrefab: {fileID: 3753107629597168881, guid: afb091c3ba610af4881b4a9c54df527f, type: 3}
+  homingProjectilePrefab: {fileID: 626020346500078768, guid: daef81fbc146338459ce5b057ef97ffb, type: 3}
+  burstAtPointProjectilePrefab: {fileID: 0}
+  projectileSpawnPoint: {fileID: 0}
+  projectileSpawnOffset: {x: 0, y: 0.25, z: 0}
+  rotationTarget: {fileID: 0}
+  facingTarget: {fileID: 0}
+  autonomousAttack: 0
+  shootingMode: 0
+  fanProjectileCount: 3
+  fanMinAngle: -45
+  fanMaxAngle: 45
+  shotGunProjectileCount: 3
+  shotGunDirection: {x: 0, y: -1}
+  shotGunInitialSpeed: 5
+  projectileSpeedBehavior: 0
+  projectileSpeedChangeY: 0
+  projectileSpeedByDistance:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 10
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  burstAttackSettings:
+    attackPatterns: 0
+    patterns: []
+    facingMode: 0
+    facingRotation:
+      direction: 0
+      rotationMode: 0
+      rotationSpeedDegreesPerSecond: 90
+      rotationProgressCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      rotationAngle: 360
+      rotationFromAngle: 0
+      resetRotationOnEnable: 1
+      rotationSpeedDegreesPerSecondRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 1
+        initialized: 0
+      rotationAngleRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 1
+        initialized: 0
+      rotationFromAngleRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 1
+        initialized: 0
+    facingLayoutVersion: 1
+    facingPatternId: 
+    facingSpeed: 360
+    facingAngleOffset: 0
+    repeatBurst: 0
+    burstAttack: 0
+    useAttackStartDelay: 0
+    attackStartDelay: 1
+    shooting:
+      shootingType: 0
+      emissionOrigin:
+        x:
+          source: 0
+          offset: 0
+          offsetRandom:
+            enabled: 0
+            min: 0
+            max: 0
+            randomizeOn: 0
+            initialized: 0
+          randomizeOn: 0
+          referenceMode: 0
+          boundary: 0
+          captureMode: 0
+        y:
+          source: 0
+          offset: 0
+          offsetRandom:
+            enabled: 0
+            min: 0
+            max: 0
+            randomizeOn: 0
+            initialized: 0
+          randomizeOn: 0
+          referenceMode: 0
+          boundary: 0
+          captureMode: 0
+      emissionLayout:
+        type: 1
+        positionOffset: {x: 0, y: 0, z: 0}
+        directionsCount: 8
+        emitterCount: 4
+        radius: 1
+        startAngle: 0
+        endAngle: 90
+        launchMode: 0
+        startDelay: 0
+        launchInterval: 0.1
+        waitUntilSectorReady: 0
+        reverseOrder: 0
+        launchOrder: 0
+        initialDirection: 0
+        resetOrderOnAttackStart: 1
+        centerOffset: {x: 0, y: 0, z: 0}
+        rotateShootingPointOffset: 0
+        positionOffsetXRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        positionOffsetYRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        centerOffsetXRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        centerOffsetYRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        directionsCountRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        emitterCountRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        radiusRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        startAngleRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        endAngleRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        startDelayRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+        launchIntervalRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 0
+          initialized: 0
+      layoutRotationEnabled: 0
+      emissionLayoutVersion: 1
+      projectileType: 0
+      laser:
+        geometry:
+          lengthMode: 0
+          laserLength: 10
+          lengthOffset: 0
+          laserWidth: 0.15
+          laserOffset: {x: 0, y: 0}
+          constantWidth: 1
+          widthCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+          constantLength: 1
+          lengthCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+        laserDuration: 2
+        activationDelay: 0
+        fadeInDuration: 0.1
+        fadeOutDuration: 0.2
+        followOrigin: 0
+        surviveSourceDestruction: 1
+        damage: 1
+        damageMode: 0
+        damageInterval: 0.5
+        enableTelegraph: 1
+        overrideTelegraphGeometry: 0
+        telegraphGeometry:
+          lengthMode: 0
+          laserLength: 10
+          lengthOffset: 0
+          laserWidth: 0.15
+          laserOffset: {x: 0, y: 0}
+          constantWidth: 1
+          widthCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+          constantLength: 1
+          lengthCurve:
+            serializedVersion: 2
+            m_Curve:
+            - serializedVersion: 3
+              time: 0
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            - serializedVersion: 3
+              time: 1
+              value: 1
+              inSlope: 0
+              outSlope: 0
+              tangentMode: 0
+              weightedMode: 0
+              inWeight: 0
+              outWeight: 0
+            m_PreInfinity: 2
+            m_PostInfinity: 2
+            m_RotationOrder: 4
+        telegraphDuration: 1
+        telegraphColor: {r: 1, g: 0, b: 0, a: 1}
+        telegraphOpacity: 0.3
+        telegraphFadeIn: 0.1
+        telegraphFadeOut: 0.1
+      overwriteProjectileCharacteristic: 0
+      projectileCharacteristic: 1
+      overwriteBaseColour: 0
+      projectileColour: {r: 1, g: 1, b: 1, a: 1}
+      overrideProjectileBaseSpeed: 0
+      projectileBaseSpeed: 1
+      projectileBaseSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      shotGunInitialSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      speedRandomizeOn: 3
+      seededInitialSpeedRandom: 0
+      numericRandomSeed: 12345
+      overrideProjectileLifetime: 1
+      projectileLifetime: 2
+      useChildAttackPattern: 0
+      childAttack:
+        rid: -2
+      initialSpeedMode: 0
+      randomInitialSpeedMinimum: 1
+      randomInitialSpeedMaximum: 2
+      consistentInitialSpeedChangePerVolley: -0.1
+      shootingMode: 0
+      fanMode: 0
+      projectilePatternVersion: 2
+      directionCount: 4
+      fanProjectileCount: 3
+      fanMinAngle: -45
+      fanMaxAngle: 45
+      randomMinAngle: -15
+      randomMaxAngle: 15
+      shotGunMode: 0
+      shotGunProjectileCount: 3
+      shotGunDirection: {x: 0, y: -1}
+      shotGunInitialSpeed: 5
+      projectileSpeedBehavior: 0
+      projectileSpeedChangeY: 0
+      projectileSpeedByDistance:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 10
+          value: 1
+          inSlope: 0
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileSpeedCurveTarget: 0
+      projectileMovementPattern: 0
+      projectileAngularSpeed: 90
+      projectileLateralSpeed: 1
+      projectileOrbitCenterMode: 0
+      projectileOrbitFixedWorldCenter: {x: 0, y: 0}
+      projectileOrbitRadius: 0
+      projectileOrbitRadialSpeed: 0
+      projectileDnaWeaveSpeed: 1
+      projectileSizeBehavior: 0
+      projectileSizeChangeY: 0
+      projectileSizeChangeSpeed: 1
+      projectileSizeChangeCurve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 0
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 0
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+      projectileFinalSize: 1
+      rotate: 1
+      rotation:
+        direction: 0
+        rotationMode: 0
+        rotationSpeedDegreesPerSecond: 90
+        rotationProgressCurve:
+          serializedVersion: 2
+          m_Curve:
+          - serializedVersion: 3
+            time: 0
+            value: 0
+            inSlope: 0
+            outSlope: 1
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          - serializedVersion: 3
+            time: 1
+            value: 1
+            inSlope: 1
+            outSlope: 0
+            tangentMode: 0
+            weightedMode: 0
+            inWeight: 0
+            outWeight: 0
+          m_PreInfinity: 2
+          m_PostInfinity: 2
+          m_RotationOrder: 4
+        rotationAngle: 360
+        rotationFromAngle: 0
+        resetRotationOnEnable: 1
+        rotationSpeedDegreesPerSecondRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 1
+          initialized: 0
+        rotationAngleRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 1
+          initialized: 0
+        rotationFromAngleRandom:
+          enabled: 0
+          min: 0
+          max: 0
+          randomizeOn: 1
+          initialized: 0
+      projectileOrbitFixedWorldCenterXRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileOrbitFixedWorldCenterYRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      shotGunDirectionXRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      shotGunDirectionYRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      fanProjectileCountRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      fanMinAngleRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      fanMaxAngleRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      shotGunProjectileCountRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      randomMinAngleRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      randomMaxAngleRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      consistentInitialSpeedChangePerVolleyRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 0
+        initialized: 0
+      projectileLifetimeRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileSpeedChangeYRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileAngularSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileLateralSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileOrbitRadiusRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileOrbitRadialSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileDnaWeaveSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileSizeChangeYRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileSizeChangeSpeedRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectileFinalSizeRandom:
+        enabled: 0
+        min: 0
+        max: 0
+        randomizeOn: 3
+        initialized: 0
+      projectilePreset: {fileID: 0}
+      projectilePresetMode: 0
+      projectilePresetOverrides: []
+      attackPatternPreset: {fileID: 0}
+      attackPatternPresetMode: 0
+      attackPatternPresetOverrides: []
+      presetFiring:
+        enabled: 0
+        fireMode: 0
+        aimMode: 0
+        stationaryFireSettings:
+          directionMode: 0
+          angle: 0
+          worldPoint: {x: 0, y: 0}
+          legacyForward: 0
+        forwardFireHalfAngle: 15
+      projectilePrefab: {fileID: 0}
+      independentProjectileSpeed: 0
+    shootingSettingsVersion: 1
+    useAreaAttack: 0
+    areaAttackProjectileCount: 3
+    areaAttackMinAngle: -45
+    areaAttackMaxAngle: 45
+    attackShotCount: 1
+    attackShotInterval: 0.15
+    attackCooldown: 0.5
+    attackCooldownRandom:
+      enabled: 0
+      min: 0
+      max: 0
+      randomizeOn: 0
+      initialized: 0
+    burstShotCount: 1
+    burstShotInterval: 0.15
+    legacyShotsPerBurst: 1
+    legacyShotInterval: 0.15
+    serializedVersion: 2
+    attackStartDelayRandom:
+      enabled: 0
+      min: 0
+      max: 0
+      randomizeOn: 1
+      initialized: 0
+    attackShotCountRandom:
+      enabled: 0
+      min: 0
+      max: 0
+      randomizeOn: 1
+      initialized: 0
+    attackShotIntervalRandom:
+      enabled: 0
+      min: 0
+      max: 0
+      randomizeOn: 0
+      initialized: 0
+    burstShotCountRandom:
+      enabled: 0
+      min: 0
+      max: 0
+      randomizeOn: 1
+      initialized: 0
+    burstShotIntervalRandom:
+      enabled: 0
+      min: 0
+      max: 0
+      randomizeOn: 0
+      initialized: 0
+  attackModeVersion: 2
+  emissionBindingVersion: 1
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }

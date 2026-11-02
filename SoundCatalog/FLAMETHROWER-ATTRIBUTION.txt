@@ -1,0 +1,38 @@
+Flamethrower: required credits for CC BY sources.
+Retain these when shipping the corresponding sounds.
+
+Fire Loop | OpenGameArt.org — qubodup
+https://opengameart.org/content/fire-loop
+CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+Изменения: выделен фрагмент, HP35/LP6500, PCM24/48kHz, постоянное усиление; стык equal-power 120 ms.
+Нужны автор, ссылка на источник, CC BY 3.0, ссылка на лицензию и указание обработки. Готовый кредит в attribution.txt; дополнительных ограничений не накладывать.
+
+Old Russian Petrol Burner Gasoline by Jagadamba — Jagadamba
+https://freesound.org/people/Jagadamba/sounds/257055/
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+Изменения: выделен фрагмент, HP35/LP6500, PCM24/48kHz, постоянное усиление; стык equal-power 120 ms.
+Нужны автор, ссылка на источник, CC BY 4.0, ссылка на лицензию и указание обработки. Готовый кредит в attribution.txt; дополнительных ограничений не накладывать.
+
+burner.wav by StarRock — StarRock
+https://freesound.org/people/StarRock/sounds/24221/
+CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+Изменения: выделен фрагмент, HP35/LP6500, PCM24/48kHz, постоянное усиление; стык equal-power 120 ms.
+Нужны автор, ссылка на источник, CC BY 3.0, ссылка на лицензию и указание обработки. Готовый кредит в attribution.txt; дополнительных ограничений не накладывать.
+
+Flamethrower by pugaeme — pugaeme
+https://freesound.org/people/pugaeme/sounds/396890/
+CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+Изменения: выделен фрагмент, HP35/LP6500, PCM24/48kHz, постоянное усиление; стык equal-power 120 ms.
+Нужны автор, ссылка на источник, CC BY 3.0, ссылка на лицензию и указание обработки. Готовый кредит в attribution.txt; дополнительных ограничений не накладывать.
+
+Small Blowtorch 2x 4sec.wav by rar2k — rar2k
+https://freesound.org/people/rar2k/sounds/513582/
+CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+Изменения: выделен фрагмент, HP35/LP6500, PCM24/48kHz, постоянное усиление; стык equal-power 120 ms.
+Нужны автор, ссылка на источник, CC BY 3.0, ссылка на лицензию и указание обработки. Готовый кредит в attribution.txt; дополнительных ограничений не накладывать.
+
+blowtorch.wav by Mighael — Mighael
+https://freesound.org/people/Mighael/sounds/593755/
+CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+Изменения: выделен фрагмент, HP35/LP6500, PCM24/48kHz, постоянное усиление; стык equal-power 120 ms.
+Нужны автор, ссылка на источник, CC BY 3.0, ссылка на лицензию и указание обработки. Готовый кредит в attribution.txt; дополнительных ограничений не накладывать.

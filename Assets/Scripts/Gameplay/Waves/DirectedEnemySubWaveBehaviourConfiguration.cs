@@ -20,11 +20,13 @@ public sealed partial class DirectedEnemySubWave
     [SerializeField] private DirectedWaveCompletionConfiguration completion;
     [SerializeField, HideInInspector] private int structuredConfigurationVersion;
 
-    private DirectedWaveFormationBehaviour cachedFormationBehaviour;
-    private DirectedWavePhaseEntryBehaviour cachedPhaseEntryBehaviour;
-    private DirectedWavePostBehaviour cachedPostBehaviour;
-    private DirectedWaveCompletionBehaviour cachedCompletionBehaviour;
-    private DirectedWaveAttackBehaviour cachedAttackBehaviour;
+    [System.NonSerialized] private DirectedWaveFormationBehaviour cachedFormationBehaviour;
+    [System.NonSerialized] private DirectedWavePhaseEntryBehaviour cachedPhaseEntryBehaviour;
+    [System.NonSerialized] private DirectedWavePostBehaviour cachedPostBehaviour;
+    [System.NonSerialized] private DirectedWaveCompletionBehaviour cachedCompletionBehaviour;
+    [System.NonSerialized] private DirectedWaveAttackBehaviour cachedAttackBehaviour;
+    [System.NonSerialized] private bool formationBehaviourResolved, phaseEntryBehaviourResolved, postBehaviourResolved;
+    [System.NonSerialized] private bool completionBehaviourResolved, attackBehaviourResolved;
 
     // Old prefabs are read through these transient snapshots until the user
     // explicitly runs a migration. They are never serialized back into assets.
@@ -234,8 +236,8 @@ public sealed partial class DirectedEnemySubWave
         || CompletionBehaviour != null;
 
     public bool UsesLegacyConfigurationCompatibility =>
-        !UsesSeparateBehaviourComponents
-        && structuredConfigurationVersion < StructuredConfigurationVersion
+        structuredConfigurationVersion < StructuredConfigurationVersion
+        && !UsesSeparateBehaviourComponents
         && HasLegacyBehaviourConfiguration();
 
     public bool HasPhaseEntry
@@ -262,31 +264,47 @@ public sealed partial class DirectedEnemySubWave
         }
     }
 
-    private DirectedWaveFormationConfiguration FormationConfig =>
-        FormationBehaviour != null
-            ? FormationBehaviour.Configuration
-            : UsesLegacyConfigurationCompatibility
+    private DirectedWaveFormationConfiguration FormationConfig
+    {
+        get
+        {
+            var component = ResolveFormationBehaviour();
+            return component != null ? component.Configuration : UsesLegacyConfigurationCompatibility
                 ? GetLegacyCompatibilityFormation()
-            : formation ??= new DirectedWaveFormationConfiguration();
+                : formation ??= new DirectedWaveFormationConfiguration();
+        }
+    }
 
-    private DirectedWavePhaseEntryConfiguration PhaseEntryConfig =>
-        PhaseEntryBehaviour != null
-            ? PhaseEntryBehaviour.Configuration
-            : UsesLegacyConfigurationCompatibility
+    private DirectedWavePhaseEntryConfiguration PhaseEntryConfig
+    {
+        get
+        {
+            var component = ResolvePhaseEntryBehaviour();
+            return component != null ? component.Configuration : UsesLegacyConfigurationCompatibility
                 ? GetLegacyCompatibilityPhaseEntry()
-            : phaseEntry ??= new DirectedWavePhaseEntryConfiguration();
+                : phaseEntry ??= new DirectedWavePhaseEntryConfiguration();
+        }
+    }
 
-    private DirectedWavePostBehaviourConfiguration PostBehaviourConfig =>
-        PostBehaviourComponent != null
-            ? PostBehaviourComponent.Configuration
-            : UsesLegacyConfigurationCompatibility
+    private DirectedWavePostBehaviourConfiguration PostBehaviourConfig
+    {
+        get
+        {
+            var component = ResolvePostBehaviour();
+            return component != null ? component.Configuration : UsesLegacyConfigurationCompatibility
                 ? GetLegacyCompatibilityPostBehaviour()
-            : postBehaviour ??= new DirectedWavePostBehaviourConfiguration();
+                : postBehaviour ??= new DirectedWavePostBehaviourConfiguration();
+        }
+    }
 
-    private DirectedWaveCompletionConfiguration CompletionConfig =>
-        CompletionBehaviour != null
-            ? CompletionBehaviour.Configuration
-            : completion ??= new DirectedWaveCompletionConfiguration();
+    private DirectedWaveCompletionConfiguration CompletionConfig
+    {
+        get
+        {
+            var component = ResolveCompletionBehaviour();
+            return component != null ? component.Configuration : completion ??= new DirectedWaveCompletionConfiguration();
+        }
+    }
 
     public void SetAttackPatternBehaviour(DirectedWaveAttackBehaviour behaviour)
     {
@@ -304,6 +322,7 @@ public sealed partial class DirectedEnemySubWave
             previousBehaviour?.UnregisterFromWave();
             attackBehaviourBlock = null;
             cachedAttackBehaviour = null;
+            attackBehaviourResolved = false;
             attackPattern = null;
             attackBehaviour = null;
             return;
@@ -316,6 +335,7 @@ public sealed partial class DirectedEnemySubWave
         attackPattern.behaviour = behaviour;
         attackBehaviourBlock = behaviour;
         cachedAttackBehaviour = behaviour;
+        attackBehaviourResolved = behaviour != null;
         attackBehaviour = behaviour;
         behaviour.RegisterWithWave();
     }
@@ -327,6 +347,7 @@ public sealed partial class DirectedEnemySubWave
 
         formationBehaviour = behaviour;
         cachedFormationBehaviour = behaviour;
+        formationBehaviourResolved = behaviour != null;
     }
 
     public void SetPhaseEntryBehaviour(DirectedWavePhaseEntryBehaviour behaviour)
@@ -336,6 +357,7 @@ public sealed partial class DirectedEnemySubWave
 
         phaseEntryBehaviour = behaviour;
         cachedPhaseEntryBehaviour = behaviour;
+        phaseEntryBehaviourResolved = behaviour != null;
     }
 
     public void SetPostBehaviourComponent(DirectedWavePostBehaviour behaviour)
@@ -345,6 +367,7 @@ public sealed partial class DirectedEnemySubWave
 
         postBehaviourBlock = behaviour;
         cachedPostBehaviour = behaviour;
+        postBehaviourResolved = behaviour != null;
     }
 
     public void SetCompletionBehaviour(DirectedWaveCompletionBehaviour behaviour)
@@ -354,6 +377,7 @@ public sealed partial class DirectedEnemySubWave
 
         completionBehaviour = behaviour;
         cachedCompletionBehaviour = behaviour;
+        completionBehaviourResolved = behaviour != null;
     }
 
     public void ClearFormationBehaviour(DirectedWaveFormationBehaviour behaviour)
@@ -363,6 +387,7 @@ public sealed partial class DirectedEnemySubWave
 
         if (cachedFormationBehaviour == behaviour)
             cachedFormationBehaviour = null;
+        formationBehaviourResolved = false;
     }
 
     public void ClearPhaseEntryBehaviour(DirectedWavePhaseEntryBehaviour behaviour)
@@ -372,6 +397,7 @@ public sealed partial class DirectedEnemySubWave
 
         if (cachedPhaseEntryBehaviour == behaviour)
             cachedPhaseEntryBehaviour = null;
+        phaseEntryBehaviourResolved = false;
     }
 
     public void ClearPostBehaviourComponent(DirectedWavePostBehaviour behaviour)
@@ -381,6 +407,7 @@ public sealed partial class DirectedEnemySubWave
 
         if (cachedPostBehaviour == behaviour)
             cachedPostBehaviour = null;
+        postBehaviourResolved = false;
     }
 
     public void ClearCompletionBehaviour(DirectedWaveCompletionBehaviour behaviour)
@@ -390,6 +417,7 @@ public sealed partial class DirectedEnemySubWave
 
         if (cachedCompletionBehaviour == behaviour)
             cachedCompletionBehaviour = null;
+        completionBehaviourResolved = false;
     }
 
     private bool IsValidBehaviourComponent(Component behaviour)
@@ -415,13 +443,16 @@ public sealed partial class DirectedEnemySubWave
         ResolveAttackBehaviour();
     }
 
-    private void InvalidateBehaviourComponentCache()
+    // Called on composition/lifecycle changes, never as a per-frame polling step.
+    public void InvalidateBehaviourComponentCache()
     {
         cachedFormationBehaviour = null;
         cachedPhaseEntryBehaviour = null;
         cachedPostBehaviour = null;
         cachedCompletionBehaviour = null;
         cachedAttackBehaviour = null;
+        formationBehaviourResolved = phaseEntryBehaviourResolved = postBehaviourResolved = false;
+        completionBehaviourResolved = attackBehaviourResolved = false;
     }
 
     private DirectedWaveFormationBehaviour ResolveFormationBehaviour()
@@ -429,15 +460,11 @@ public sealed partial class DirectedEnemySubWave
 #if UNITY_EDITOR
         WavePreviewProfiler.Count(WavePreviewProfiler.Counter.FormationResolve);
 #endif
-        if (formationBehaviour != null)
-            return formationBehaviour;
-
+        var component = ResolveBehaviourComponent(formationBehaviour, ref cachedFormationBehaviour, ref formationBehaviourResolved, out bool searched);
 #if UNITY_EDITOR
-        if (cachedFormationBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.FormationLookupMiss);
+        if (searched) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.FormationLookupMiss);
 #endif
-        cachedFormationBehaviour ??=
-            GetComponent<DirectedWaveFormationBehaviour>();
-        return cachedFormationBehaviour;
+        return component;
     }
 
     private DirectedWavePhaseEntryBehaviour ResolvePhaseEntryBehaviour()
@@ -445,15 +472,11 @@ public sealed partial class DirectedEnemySubWave
 #if UNITY_EDITOR
         WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PhaseResolve);
 #endif
-        if (phaseEntryBehaviour != null)
-            return phaseEntryBehaviour;
-
+        var component = ResolveBehaviourComponent(phaseEntryBehaviour, ref cachedPhaseEntryBehaviour, ref phaseEntryBehaviourResolved, out bool searched);
 #if UNITY_EDITOR
-        if (cachedPhaseEntryBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PhaseLookupMiss);
+        if (searched) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PhaseLookupMiss);
 #endif
-        cachedPhaseEntryBehaviour ??=
-            GetComponent<DirectedWavePhaseEntryBehaviour>();
-        return cachedPhaseEntryBehaviour;
+        return component;
     }
 
     private DirectedWavePostBehaviour ResolvePostBehaviour()
@@ -461,14 +484,11 @@ public sealed partial class DirectedEnemySubWave
 #if UNITY_EDITOR
         WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PostResolve);
 #endif
-        if (postBehaviourBlock != null)
-            return postBehaviourBlock;
-
+        var component = ResolveBehaviourComponent(postBehaviourBlock, ref cachedPostBehaviour, ref postBehaviourResolved, out bool searched);
 #if UNITY_EDITOR
-        if (cachedPostBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PostLookupMiss);
+        if (searched) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.PostLookupMiss);
 #endif
-        cachedPostBehaviour ??= GetComponent<DirectedWavePostBehaviour>();
-        return cachedPostBehaviour;
+        return component;
     }
 
     private DirectedWaveCompletionBehaviour ResolveCompletionBehaviour()
@@ -476,15 +496,11 @@ public sealed partial class DirectedEnemySubWave
 #if UNITY_EDITOR
         WavePreviewProfiler.Count(WavePreviewProfiler.Counter.CompletionResolve);
 #endif
-        if (completionBehaviour != null)
-            return completionBehaviour;
-
+        var component = ResolveBehaviourComponent(completionBehaviour, ref cachedCompletionBehaviour, ref completionBehaviourResolved, out bool searched);
 #if UNITY_EDITOR
-        if (cachedCompletionBehaviour is null) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.CompletionLookupMiss);
+        if (searched) WavePreviewProfiler.Count(WavePreviewProfiler.Counter.CompletionLookupMiss);
 #endif
-        cachedCompletionBehaviour ??=
-            GetComponent<DirectedWaveCompletionBehaviour>();
-        return cachedCompletionBehaviour;
+        return component;
     }
 
     private DirectedWaveAttackBehaviour ResolveAttackBehaviour()
@@ -495,8 +511,26 @@ public sealed partial class DirectedEnemySubWave
         if (attackPattern != null && attackPattern.behaviour != null)
             return attackPattern.behaviour;
 
-        cachedAttackBehaviour ??= GetComponent<DirectedWaveAttackBehaviour>();
-        return cachedAttackBehaviour;
+        return ResolveBehaviourComponent<DirectedWaveAttackBehaviour>(null, ref cachedAttackBehaviour, ref attackBehaviourResolved, out _);
+    }
+
+    private T ResolveBehaviourComponent<T>(T configured, ref T cached, ref bool resolved, out bool searched) where T : Component
+    {
+        searched = false;
+        if (configured != null) return configured;
+        if (resolved)
+        {
+            if (cached != null) return cached;
+            // A real null is a cached miss. A Unity fake-null means the cached
+            // component was destroyed and must be looked up again once.
+            if (ReferenceEquals(cached, null)) return null;
+        }
+        cached = null;
+        resolved = true;
+        if (this == null) return null;
+        searched = true;
+        TryGetComponent(out cached);
+        return cached;
     }
 
     private Enemy enemyPrefab

@@ -9,21 +9,108 @@ using Object = UnityEngine.Object;
 public static class EnemyPresetInspector
 {
     [Serializable] private sealed class ChildBuffer { [SerializeReference] public EnemyChildAttackSettings childAttack = new(); }
-    private sealed class Buffer : ScriptableObject { public EnemyBurstAttackSettings configuration = new(); public ChildBuffer wrapper = new(); }
-    private sealed class Cached { public string Signature; public string Root = "configuration"; public Buffer Data; public SerializedObject Serialized; }
-    private static readonly Dictionary<string, Cached> buffers = new();
+    private sealed class Buffer : ScriptableObject
+    {
+        public EnemyBurstAttackSettings configuration = new();
+        public ChildBuffer wrapper = new();
+        [NonSerialized] public Object RootOwner;
+        [NonSerialized] public Cached Cache;
+    }
+    private readonly struct Key : IEquatable<Key>
+    {
+        private readonly int owner, timingOwner;
+        private readonly string shooting, timing;
+        public Key(SerializedProperty source, SerializedProperty context)
+        {
+            owner = source.serializedObject.targetObject.GetInstanceID();
+            timingOwner = context == null ? 0 : context.serializedObject.targetObject.GetInstanceID();
+            shooting = source.propertyPath;
+            timing = context?.propertyPath;
+        }
+        public bool Equals(Key other) => owner == other.owner && timingOwner == other.timingOwner
+            && shooting == other.shooting && timing == other.timing;
+        public override bool Equals(object obj) => obj is Key other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(owner, timingOwner, shooting, timing);
+    }
+    private sealed class Cached
+    {
+        public Object Owner, TimingOwner, RootOwner;
+        public int Dirty, TimingDirty, PresetRevision, Revision;
+        public uint ContentHash;
+        public ulong LastUse;
+        public EnemyBurstAttackSettings Profile;
+        public string Root = "configuration";
+        public Buffer Data;
+        public SerializedObject Serialized;
+        public SerializedProperty Shooting, Timing;
+        public bool NeedsSerialization = true;
+    }
+    private const int MaximumCachedContexts = 32;
+    private static readonly Dictionary<Key, Cached> buffers = new();
+    private static readonly List<Key> removed = new();
+    private static int revision;
+    private static ulong lastUse;
+    private static bool trimScheduled;
+    private static readonly Unity.Profiling.ProfilerMarker CreateMarker = new("WaveEditor.Presets.CreateBuffer");
+    private static readonly Unity.Profiling.ProfilerMarker RebuildMarker = new("WaveEditor.Presets.Rebuild");
     private static float Line => EditorGUIUtility.singleLineHeight + 2f;
     static EnemyPresetInspector()
     {
         AssemblyReloadEvents.beforeAssemblyReload += ClearBuffers;
         EditorApplication.quitting += ClearBuffers;
-        Selection.selectionChanged += ClearBuffers;
-        Undo.undoRedoPerformed += () => { EnemyPresetRevision.Changed(); ClearBuffers(); SceneView.RepaintAll(); };
+        Selection.selectionChanged += ScheduleTrim;
+        EditorApplication.hierarchyChanged += ScheduleTrim;
+        EditorApplication.projectChanged += Invalidate;
+        PrefabUtility.prefabInstanceUpdated += OnPrefabUpdated;
+        Undo.undoRedoPerformed += () => { EnemyPresetRevision.Changed(); Invalidate(); SceneView.RepaintAll(); };
     }
+    private static void OnPrefabUpdated(GameObject instance) => Invalidate();
+    private static void Invalidate() { unchecked { revision++; } ScheduleTrim(); }
     private static void ClearBuffers()
     {
-        foreach (var cached in buffers.Values) if (cached.Data != null) Object.DestroyImmediate(cached.Data);
+        EditorApplication.delayCall -= Trim;
+        trimScheduled = false;
+        foreach (var cached in buffers.Values) Dispose(cached);
         buffers.Clear();
+    }
+    private static void Dispose(Cached cached)
+    {
+        cached.Shooting?.Dispose(); cached.Timing?.Dispose();
+        cached.Serialized?.Dispose();
+        if (cached.Data != null) Object.DestroyImmediate(cached.Data);
+    }
+    private static void ScheduleTrim()
+    {
+        if (trimScheduled) return;
+        trimScheduled = true;
+        EditorApplication.delayCall += Trim;
+    }
+    // Trim between GUI events, never while a nested drawer is borrowing a property.
+    private static void Trim()
+    {
+        EditorApplication.delayCall -= Trim;
+        trimScheduled = false;
+        removed.Clear();
+        foreach (var pair in buffers)
+            if (pair.Value.Owner == null || pair.Value.RootOwner == null) removed.Add(pair.Key);
+        foreach (var key in removed) { Dispose(buffers[key]); buffers.Remove(key); }
+        removed.Clear();
+        while (buffers.Count > MaximumCachedContexts)
+        {
+            bool found = false;
+            Key oldest = default;
+            ulong used = ulong.MaxValue;
+            foreach (var pair in buffers)
+            {
+                Object root = pair.Value.RootOwner;
+                bool selected = Selection.Contains(root)
+                    || root is Component component && Selection.Contains(component.gameObject);
+                if (selected || pair.Value.LastUse >= used) continue;
+                oldest = pair.Key; used = pair.Value.LastUse; found = true;
+            }
+            if (!found) break; // A large selected Inspector must remain fully usable.
+            Dispose(buffers[oldest]); buffers.Remove(oldest);
+        }
     }
     private static string Field(bool projectile) => projectile ? "projectilePreset" : "attackPatternPreset";
     private static string Mode(bool projectile) => Field(projectile) + "Mode";
@@ -34,41 +121,110 @@ public static class EnemyPresetInspector
         && shooting.FindPropertyRelative(Field(projectile)).objectReferenceValue != null
         && shooting.FindPropertyRelative(Mode(projectile)).intValue == (int)EnemyPresetUseMode.Linked;
 
+    private static readonly Unity.Profiling.ProfilerMarker ProfileReadProfile = new("WaveEditor.Presets.ReadProfile");
     public static EnemyBurstAttackSettings ReadProfile(SerializedProperty shooting, SerializedProperty timing)
     {
-        var profile = new EnemyBurstAttackSettings(); profile.Validate();
-        if (timing?.boxedValue is EnemyBurstAttackSettings burst) profile.CopyFrom(burst);
-        else if (timing != null) JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(timing.boxedValue), profile);
-        else profile.AuthoredShooting.CopyFrom((EnemyShootingSettings)shooting.boxedValue);
+        using var profileScope = ProfileReadProfile.Auto();
+        var profile = new EnemyBurstAttackSettings();
+        // boxedValue can share managed-reference children with the authored object.
+        // Detach the serialized graph before validation; CopyFrom validates its source.
+        // This round-trip occurs only when materializing a changed view or an explicit action.
+        string json = JsonUtility.ToJson((timing ?? shooting).boxedValue);
+        if (timing != null) JsonUtility.FromJsonOverwrite(json, profile);
+        else JsonUtility.FromJsonOverwrite(json, profile.AuthoredShooting);
         profile.Validate();
         return profile;
     }
 
+    private static readonly Unity.Profiling.ProfilerMarker ProfileDisplay = new("WaveEditor.Presets.Display");
     private static Cached Display(SerializedProperty shooting, SerializedProperty timing)
     {
-        string key = shooting.serializedObject.targetObject.GetInstanceID() + ":" + shooting.propertyPath;
-        string signature = EnemyPresetRevision.Value + ":" + JsonUtility.ToJson(timing?.boxedValue ?? shooting.boxedValue);
-        if (!buffers.TryGetValue(key, out var cached))
+        using var profileScope = ProfileDisplay.Auto();
+        var owner = shooting.serializedObject.targetObject;
+        var timingOwner = timing?.serializedObject.targetObject;
+        var key = new Key(shooting, timing);
+        buffers.TryGetValue(key, out var cached);
+        if (cached != null && !ReferenceEquals(cached.Owner, owner))
         {
-            var data = ScriptableObject.CreateInstance<Buffer>(); data.hideFlags = HideFlags.HideAndDontSave;
-            buffers[key] = cached = new Cached { Data = data, Serialized = new SerializedObject(data) };
+            Dispose(cached); buffers.Remove(key); cached = null;
         }
-        if (signature != cached.Signature)
+        if (cached == null)
         {
-            var profile = ReadProfile(shooting, timing);
-            cached.Data.configuration = profile.ResolvePresets();
+            cached = new Cached { Owner = owner, TimingOwner = timingOwner,
+                RootOwner = owner is Buffer parent ? parent.RootOwner : owner };
+            buffers.Add(key, cached);
+            if (buffers.Count > MaximumCachedContexts) ScheduleTrim();
+        }
+        cached.LastUse = ++lastUse;
+        // Public native hash also catches direct field edits followed by SerializedObject.Update,
+        // without materializing managed graphs or allocating a JSON string.
+        uint contentHash = (timing ?? shooting).contentHash;
+        int dirty = EditorUtility.GetDirtyCount(owner);
+        int timingDirty = timingOwner != null ? EditorUtility.GetDirtyCount(timingOwner) : 0;
+        // Unapplied changes have not incremented the object's dirty count yet.
+        // Re-read them rather than serving stale values within the same IMGUI event.
+        bool pending = shooting.serializedObject.hasModifiedProperties
+            || timing != null && timing.serializedObject.hasModifiedProperties;
+        if (cached.Profile == null || pending || cached.ContentHash != contentHash || cached.Dirty != dirty || cached.TimingDirty != timingDirty
+            || cached.PresetRevision != EnemyPresetRevision.Value || cached.Revision != revision)
+        {
+            using var rebuildSample = RebuildMarker.Auto();
+            cached.Profile = ReadProfile(shooting, timing).ResolvePresets();
             cached.Root = EnemyChildAttackSettingsDrawer.IsChildPattern(shooting) ? "wrapper.childAttack.pattern" : "configuration";
-            if (cached.Root != "configuration") cached.Data.wrapper.childAttack.Pattern.CopyFrom(cached.Data.configuration);
-            cached.Serialized.Update(); cached.Signature = signature;
+            cached.ContentHash = contentHash; cached.Dirty = dirty; cached.TimingDirty = timingDirty;
+            cached.PresetRevision = EnemyPresetRevision.Value; cached.Revision = revision;
+            cached.NeedsSerialization = true;
         }
         return cached;
     }
+    private static void EnsureSerialized(Cached cached)
+    {
+        if (cached.Data == null)
+        {
+            using var createSample = CreateMarker.Auto();
+            cached.Data = ScriptableObject.CreateInstance<Buffer>();
+            cached.Data.hideFlags = HideFlags.HideAndDontSave;
+            cached.Data.RootOwner = cached.RootOwner;
+            cached.Data.Cache = cached;
+            cached.Serialized = new SerializedObject(cached.Data);
+        }
+        if (!cached.NeedsSerialization) return;
+        cached.Shooting?.Dispose(); cached.Timing?.Dispose();
+        cached.Data.configuration = cached.Profile;
+        if (cached.Root != "configuration") cached.Data.wrapper.childAttack.Pattern.CopyFrom(cached.Profile);
+        EditorUtility.SetDirty(cached.Data); // Invalidates contexts borrowing nested buffer fields.
+        cached.Serialized.Update();
+        cached.Timing = cached.Serialized.FindProperty(cached.Root);
+        cached.Shooting = cached.Timing.FindPropertyRelative("shooting");
+        cached.NeedsSerialization = false;
+    }
     public static SerializedProperty DisplayShooting(SerializedProperty shooting, SerializedProperty timing)
-        => shooting.serializedObject.isEditingMultipleObjects || IsAssetRoot(shooting) ? shooting
-            : Display(shooting, timing) is var cached ? cached.Serialized.FindProperty(cached.Root + ".shooting") : shooting;
+    {
+        if (shooting.serializedObject.isEditingMultipleObjects || IsAssetRoot(shooting)) return shooting;
+        var cached = Display(shooting, timing);
+        EnsureSerialized(cached);
+        return cached.Shooting.Copy();
+    }
     public static SerializedProperty DisplayTiming(SerializedProperty shooting, SerializedProperty timing)
-        => timing == null || shooting.serializedObject.isEditingMultipleObjects || IsAssetRoot(shooting) ? timing
-            : Display(shooting, timing) is var cached ? cached.Serialized.FindProperty(cached.Root) : timing;
+    {
+        if (timing == null || shooting.serializedObject.isEditingMultipleObjects || IsAssetRoot(shooting)) return timing;
+        var cached = Display(shooting, timing);
+        EnsureSerialized(cached);
+        return cached.Timing.Copy();
+    }
+    // Read-only access avoids boxedValue and does not allocate a ScriptableObject or
+    // SerializedObject for Scene handles and informational timing summaries.
+    public static EnemyBurstAttackSettings DisplayProfile(SerializedProperty shooting, SerializedProperty timing)
+    {
+        if (shooting.serializedObject.isEditingMultipleObjects) return ReadProfile(shooting, timing).ResolvePresets();
+        if (shooting.serializedObject.targetObject is Buffer buffer
+            && timing != null && timing.propertyPath == buffer.Cache.Root
+            && !buffer.Cache.NeedsSerialization && !shooting.serializedObject.hasModifiedProperties)
+            return buffer.Cache.Profile;
+        return Display(shooting, timing).Profile;
+    }
+    public static EnemyShootingSettings DisplaySettings(SerializedProperty shooting, SerializedProperty timing)
+        => DisplayProfile(shooting, timing).Shooting;
 
     public static float Height(SerializedProperty shooting, SerializedProperty timing, bool projectile)
     {
@@ -199,6 +355,7 @@ public static class EnemyPresetInspector
     private static void ShowOverrideMenu(SerializedProperty shooting, SerializedProperty timing, bool projectile)
     {
         var cached = Display(shooting, timing);
+        EnsureSerialized(cached);
         var display = cached.Serialized.FindProperty(cached.Root);
         var source = display.FindPropertyRelative("shooting");
         var menu = new GenericMenu();

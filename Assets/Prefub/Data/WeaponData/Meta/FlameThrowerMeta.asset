@@ -12,10 +12,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
   m_Name: FlameThrowerMeta
   m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  statDisplay:
+    baseStats:
+      rows:
+      - cells:
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: weapon/basic
+          statId: WeaponMetaBasicStats.Damage
+          sourceAsset: {fileID: 11400000}
+          overrideLabel: 0
+          valueFormat: 
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: weapon/basic
+          statId: WeaponMetaBasicStats.ShotsPerSecond
+          sourceAsset: {fileID: 11400000}
+          overrideLabel: 0
+          valueFormat: 
+      - cells:
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: weapon/basic
+          statId: WeaponMetaBasicStats.Range
+          sourceAsset: {fileID: 11400000}
+          overrideLabel: 0
+          valueFormat: 
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: projectile/932ebeb08038431e90ee0367c7bd1a0f/basic
+          statId: ProjectileData.DamageType
+          sourceAsset: {fileID: 11400000, guid: 1a33f16e1637cea4cbd120765a66a574, type: 2}
+          overrideLabel: 0
+          valueFormat: 
+    secondaryStats:
+      rows:
+      - cells:
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: projectile/932ebeb08038431e90ee0367c7bd1a0f/ProjectileEnemyDebuffsContract/8ae29d3c558846efa904020885242f24
+          statId: EnemyDebuffApplication.AmountPerHit
+          sourceAsset: {fileID: 11400000, guid: 1a33f16e1637cea4cbd120765a66a574, type: 2}
+          overrideLabel: 0
+          valueFormat: 
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: projectile/932ebeb08038431e90ee0367c7bd1a0f/ProjectileEnemyDebuffsContract/8ae29d3c558846efa904020885242f24/config
+          statId: EnemyHeatDebuffConfig.BurningDamagePerTick
+          sourceAsset: {fileID: 11400000, guid: f4d5bf69e639736418c63855c867f86b, type: 2}
+          overrideLabel: 0
+          valueFormat: 
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: projectile/932ebeb08038431e90ee0367c7bd1a0f/ProjectileEnemyDebuffsContract/8ae29d3c558846efa904020885242f24/config
+          statId: EnemyHeatDebuffConfig.BurningDuration
+          sourceAsset: {fileID: 11400000, guid: f4d5bf69e639736418c63855c867f86b, type: 2}
+          overrideLabel: 0
+          valueFormat: 
   energyCost: 3
   projectileSlots:
   - id: 932ebeb08038431e90ee0367c7bd1a0f
     projectile: {fileID: 11400000, guid: 1a33f16e1637cea4cbd120765a66a574, type: 2}
+    spawnedByAnotherProjectile: 0
   maxLevels: 1
   levels:
   - basicStats:
@@ -24,6 +96,7 @@ MonoBehaviour:
       range: 3
       projectileSpeed: 5
       angle: 0
+      initialDirectionAngle: 0
     contracts: []
   references:
     version: 2

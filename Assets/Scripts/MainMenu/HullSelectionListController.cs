@@ -7,6 +7,7 @@ public sealed class HullSelectionListController : MonoBehaviour
     [SerializeField] private CraftUIButton craftButtonPrefab;
     [SerializeField] private Transform contentRoot;
     [SerializeField] private CraftCreationFlowController craftCreationFlow;
+    [SerializeField] private HullSelectionInfoController infoView;
     [SerializeField, Min(0.01f)] private float buttonScale = 1f;
 
     private readonly List<CraftUIButton> createdButtons = new();
@@ -45,6 +46,7 @@ public sealed class HullSelectionListController : MonoBehaviour
     public void Refresh()
     {
         ResolveDependencies();
+        if (contentProgressService != null) infoView?.SetProgressService(contentProgressService);
         if (!ValidateConfiguration())
             return;
 
@@ -65,6 +67,7 @@ public sealed class HullSelectionListController : MonoBehaviour
             button.SetAvailability(isOwned);
             button.SetInteractable(isOwned);
             button.SetClickAction(() => SelectHull(hull, button));
+            if (infoView != null) button.SetPreviewActions(infoView.Preview, infoView.EndPreview);
             createdButtons.Add(button);
         }
     }
@@ -90,7 +93,10 @@ public sealed class HullSelectionListController : MonoBehaviour
         {
             CraftUIButton button = createdButtons[i];
             if (button != null)
+            {
+                button.SetPreviewActions(null, null);
                 Destroy(button.gameObject);
+            }
         }
 
         createdButtons.Clear();
@@ -99,13 +105,25 @@ public sealed class HullSelectionListController : MonoBehaviour
     private void RegisterProgressService()
     {
         if (contentProgressService != null)
-            contentProgressService.ProgressChanged += Refresh;
+            contentProgressService.ProgressChanged += RefreshButtonVisuals;
     }
 
     private void UnregisterProgressService()
     {
         if (contentProgressService != null)
-            contentProgressService.ProgressChanged -= Refresh;
+            contentProgressService.ProgressChanged -= RefreshButtonVisuals;
+    }
+
+    private void RefreshButtonVisuals()
+    {
+        for (int i = 0; i < createdButtons.Count; i++)
+        {
+            var button = createdButtons[i];
+            if (button == null || !(button.Content is HullContentDefinition hull)) continue;
+            bool owned = contentProgressService.IsOwned(hull);
+            button.SetAvailability(owned); button.SetInteractable(owned);
+            button.SetSelected(craftCreationFlow.SelectedHull == hull);
+        }
     }
 
     private void ResolveDependencies()

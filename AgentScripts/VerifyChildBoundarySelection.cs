@@ -66,6 +66,8 @@ public static class VerifyChildBoundarySelection
         EnemyShootingSettings shooting = null, EnemyAttackCompletionTracker completion = null)
     {
         shooting ??= new EnemyShootingSettings(); shooting.SetChildAttack(child);
+        // This fixture tests repeated boundary crossings; screen cleanup is covered separately.
+        shooting.SetScreenBoundary(new EnemyProjectileScreenSettings(false));
         Set(shooting, "overrideProjectileLifetime", true); Set(shooting, "projectileLifetime", 40f); shooting.SetProjectileBaseSpeedOverride(true, speed); shooting.Validate();
         var requests = new List<EnemyProjectileSpawnRequest>();
         EnemyAttackProjectileBuilder.AppendEmitter(requests, bullet, shooting, position, Vector3.zero, direction,

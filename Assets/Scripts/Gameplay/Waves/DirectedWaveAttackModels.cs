@@ -124,6 +124,13 @@ public sealed partial class DirectedWaveAttackSettings
     [System.NonSerialized] private float runtimeProjectileBaseSpeedOverride;
     [System.NonSerialized] private float runtimeAttackSpeedMultiplier = 1f;
     public float RuntimeAttackSpeedMultiplier => runtimeAttackSpeedMultiplier;
+    public void CopyRuntimeOverridesFrom(DirectedWaveAttackSettings source)
+    {
+        runtimeAttackSpeedMultiplier = source.runtimeAttackSpeedMultiplier;
+        if (source.HasRuntimeProjectileBaseSpeedOverride)
+            SetRuntimeProjectileBaseSpeedOverride(source.RuntimeProjectileBaseSpeedOverride,
+                source.RuntimeProjectileBaseSpeedRandom, source.RuntimeProjectileBaseSpeedRandomizeOn);
+    }
     [System.NonSerialized] private RandomFloatRange runtimeProjectileBaseSpeedRandom;
     [System.NonSerialized] private EnemySpeedRandomizeOn runtimeProjectileBaseSpeedRandomizeOn = EnemySpeedRandomizeOn.PerProjectile;
     public RandomFloatRange RuntimeProjectileBaseSpeedRandom => runtimeProjectileBaseSpeedRandom;
@@ -254,6 +261,25 @@ public sealed partial class DirectedWaveAttackSettings
         AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
     public bool IsEnabled => true;
+    public void CopySchedulingFrom(DirectedWaveAttackSettings source)
+    {
+        useAttackStartDelay = source.useAttackStartDelay; attackStartDelay = source.attackStartDelay;
+        attacksPerEnemyPerCycle = source.attacksPerEnemyPerCycle; attacksPerSecond = source.attacksPerSecond;
+        waitForPreviousAttack = source.waitForPreviousAttack; delayAfterAttack = source.delayAfterAttack;
+        attackOrder ??= new DirectedWaveAttackOrderSettings(); attackOrder.CopyFrom(source.attackOrder);
+        CopyNumericFrom(source);
+    }
+    // One inner Sequence step consumes one already granted outer dispatch.
+    // Burst/Child/Projectile timing remains authored on the attack profile.
+    public void UseSingleDispatchScheduling()
+    {
+        useAttackStartDelay = false; attacksPerEnemyPerCycle = 1;
+        waitForPreviousAttack = true; delayAfterAttack = 0f;
+        attackOrder = new DirectedWaveAttackOrderSettings();
+        attackStartDelayRandom = new(); attacksPerEnemyPerCycleRandom = new();
+        delayAfterAttackRandom = new();
+        movementMode = DirectedWaveAttackMovementMode.None;
+    }
     public void ScaleSequenceScheduling(float multiplier)
     {
         multiplier = Mathf.Max(.01f, multiplier);

@@ -23,8 +23,9 @@ public enum ProjectileDamageTrigger
 }
 
 [Serializable]
-public sealed class ProjectileDamageSource
+public sealed class ProjectileDamageSource : IStatValueProvider
 {
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [SerializeField] private string id = "source";
     [SerializeField] private ProjectileDamageTrigger trigger;
     [SerializeField, Min(0f)] private float damage;
@@ -39,8 +40,9 @@ public sealed class ProjectileDamageSource
 }
 
 [Serializable]
-public abstract class ProjectileDataContract
+public abstract class ProjectileDataContract : IStatValueProvider
 {
+    public virtual void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     public abstract string DisplayName { get; }
 }
 
@@ -330,8 +332,9 @@ public readonly struct ProjectileRuntimeStats
 }
 
 [CreateAssetMenu(fileName = "ProjectileData", menuName = "Game/Projectile Data")]
-public sealed class ProjectileData : ScriptableObject
+public sealed class ProjectileData : ScriptableObject, IStatValueProvider
 {
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [Header("Delivery")]
     [SerializeField] private ProjectileDeliveryType deliveryType;
     [SerializeField] private ProjectileSimulationBackend simulationBackend;

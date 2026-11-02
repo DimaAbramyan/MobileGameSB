@@ -25,12 +25,17 @@ public static class VerifyExpandedNumericRandomization
     }
     public static object Run()
     {
-        checks=0; NumericRandomPreviewControls.SetSeedOffset(0);
+        checks=0; int previousSeed=NumericRandomPreviewControls.SeedOffset;
+        NumericRandomPreviewControls.SetSeedOffset(0);
+        try
+        {
         Scopes(); Geometry(); Timing(); Rotation(); CopyAndPresets(); ChildAimCapture();
         foreach (var layout in new[] { EnemyEmissionLayoutType.Point, EnemyEmissionLayoutType.Radial, EnemyEmissionLayoutType.Circle, EnemyEmissionLayoutType.Sector }) NativePreview(layout);
         NativePreview(EnemyEmissionLayoutType.Circle, true);NativePreview(EnemyEmissionLayoutType.Sector, true);
         RuntimeSchedule(); AutonomousSchedule();
         return new { passed=true, checks, numericScopes=4, runtimePreviewLayouts=4, multipleRuntimePreview=true, linkedCopy=true, timing=true, child=true, nativeSchedulers=2 };
+        }
+        finally { NumericRandomPreviewControls.SetSeedOffset(previousSeed); }
     }
     private static void Scopes()
     {

@@ -65,9 +65,9 @@ public sealed class RandomizableNumberDrawer : PropertyDrawer
         }
         if (!enabled.boolValue)
         {
-            Rect value = EditorGUI.PrefixLabel(position, label);
-            if (property.propertyType == SerializedPropertyType.Integer) property.intValue = Mathf.Max(minimum == float.MinValue ? int.MinValue : Mathf.CeilToInt(minimum), EditorGUI.IntField(value, property.intValue));
-            else property.floatValue = Mathf.Max(minimum, EditorGUI.FloatField(value, property.floatValue));
+            // Keep the label attached to the numeric control: Unity owns drag sensitivity and scrubbing.
+            if (property.propertyType == SerializedPropertyType.Integer) property.intValue = Mathf.Max(minimum == float.MinValue ? int.MinValue : Mathf.CeilToInt(minimum), EditorGUI.IntField(position, label, property.intValue));
+            else property.floatValue = Mathf.Max(minimum, EditorGUI.FloatField(position, label, property.floatValue));
         }
         else
         {

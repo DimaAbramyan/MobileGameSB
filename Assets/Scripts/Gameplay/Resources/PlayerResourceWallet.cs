@@ -1,27 +1,28 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 public sealed class PlayerResourceWallet
 {
-    private const string SaveFileName = "player_resources.json";
-
-    private readonly string savePath;
+    private readonly SaveManager saveManager;
     private readonly ResourceCatalog resourceCatalog;
     private readonly Dictionary<ResourceKind, PlayerResource> resources = new();
     private bool loaded;
+    internal SaveManager Persistence => saveManager;
 
     public event Action<int, int> OnChanged;
     public event Action<int, int, int> OnResourcesChanged;
     public event Action<PlayerResource> OnResourceChanged;
     public event Action<PlayerResource, int> OnResourceAdded;
 
-    public PlayerResourceWallet(ResourceCatalog resourceCatalog)
+    public PlayerResourceWallet(ResourceCatalog resourceCatalog) : this(resourceCatalog, new SaveManager()) { }
+
+    [Zenject.Inject]
+    public PlayerResourceWallet(ResourceCatalog resourceCatalog, SaveManager saveManager)
     {
         this.resourceCatalog = resourceCatalog
             ?? throw new ArgumentNullException(nameof(resourceCatalog));
-        savePath = Path.Combine(Application.persistentDataPath, SaveFileName);
+        this.saveManager = saveManager ?? throw new ArgumentNullException(nameof(saveManager));
     }
 
     public int Metal => Get(ResourceKind.Metal).Amount;
@@ -95,12 +96,14 @@ public sealed class PlayerResourceWallet
         if (!resource.TrySpend(amount))
             return false;
 
-        Save();
+        Save(true);
         NotifyChanged();
         return true;
     }
 
-    public bool TrySpend(int metalCost, int coreCost)
+    public bool TrySpend(int metalCost, int coreCost) => TrySpend(metalCost, coreCost, true);
+
+    internal bool TrySpend(int metalCost, int coreCost, bool saveImmediately)
     {
         EnsureLoaded();
 
@@ -113,7 +116,7 @@ public sealed class PlayerResourceWallet
 
         metal.TrySpend(metalAmount);
         chip.TrySpend(chipAmount);
-        Save();
+        Save(saveImmediately);
         NotifyChanged();
         return true;
     }
@@ -126,8 +129,7 @@ public sealed class PlayerResourceWallet
 
         loaded = true;
 
-        if (File.Exists(savePath))
-            File.Delete(savePath);
+        Save(true);
 
         NotifyChanged();
     }
@@ -153,57 +155,23 @@ public sealed class PlayerResourceWallet
     {
         if (loaded)
             return;
-
         loaded = true;
         EnsureResourceModels();
-
-        if (!File.Exists(savePath))
-            return;
-
-        try
-        {
-            string json = File.ReadAllText(savePath);
-            ResourceSaveData data = JsonUtility.FromJson<ResourceSaveData>(json);
-            if (data == null)
-                return;
-
-            GetResourceInternal(ResourceKind.Metal).SetAmount(data.metal);
-            GetResourceInternal(ResourceKind.Gold).SetAmount(data.gold);
-            GetResourceInternal(ResourceKind.Chip).SetAmount(data.cores);
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning(
-                $"Cannot load player resources from {savePath}: {exception.Message}");
-        }
+        ResourceSaveData data = saveManager.ReadProgression().resources;
+        GetResourceInternal(ResourceKind.Metal).SetAmount(data.metal);
+        GetResourceInternal(ResourceKind.Gold).SetAmount(data.gold);
+        GetResourceInternal(ResourceKind.Chip).SetAmount(data.cores);
     }
 
-    private void Save()
+    private void Save(bool immediately = false)
     {
-        try
+        var data = new ResourceSaveData
         {
-            string directory = Path.GetDirectoryName(savePath);
-            if (!string.IsNullOrEmpty(directory)
-                && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            ResourceSaveData data = new ResourceSaveData
-            {
-                metal = GetResourceInternal(ResourceKind.Metal).Amount,
-                gold = GetResourceInternal(ResourceKind.Gold).Amount,
-                // Keep the previous JSON key to preserve existing player saves.
-                cores = GetResourceInternal(ResourceKind.Chip).Amount
-            };
-
-            File.WriteAllText(savePath, JsonUtility.ToJson(data, true));
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning(
-                $"Cannot save player resources to {savePath}: {exception.Message}");
-        }
+            metal = GetResourceInternal(ResourceKind.Metal).Amount,
+            gold = GetResourceInternal(ResourceKind.Gold).Amount,
+            cores = GetResourceInternal(ResourceKind.Chip).Amount
+        };
+        saveManager.UpdateProgression(progress => progress.resources = data, immediately);
     }
 
     private void NotifyChanged()
@@ -219,11 +187,4 @@ public sealed class PlayerResourceWallet
         OnResourceChanged?.Invoke(chip);
     }
 
-    [Serializable]
-    private sealed class ResourceSaveData
-    {
-        public int metal;
-        public int gold;
-        public int cores;
-    }
 }

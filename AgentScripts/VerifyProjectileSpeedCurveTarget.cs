@@ -159,7 +159,10 @@ public static class VerifyProjectileSpeedCurveTarget
     {
         var e = em.CreateEntity(typeof(LocalTransform), typeof(EnemyProjectileStaticData), typeof(EnemyProjectileVelocity),
             typeof(EnemyProjectileMovement), typeof(EnemyProjectilePreviousPosition), typeof(EnemyProjectileResolution),
-            typeof(EnemyProjectileDamage), typeof(EnemyProjectileRemainingLifetime), typeof(EnemyProjectileCustomSpeed));
+            typeof(EnemyProjectileDamage), typeof(EnemyProjectileRemainingLifetime), typeof(EnemyProjectileCustomSpeed),
+            typeof(EnemyProjectileCollisionState), typeof(EnemyProjectileScreenState), typeof(EnemyProjectileCustomScale),
+            typeof(EnemyProjectileTargetPosition),typeof(EnemyProjectileHiddenAnchor));
+        em.SetComponentEnabled<EnemyProjectileHiddenAnchor>(e,false);
         em.AddBuffer<EnemyProjectileSpeedCurveSample>(e);
         var request = new EnemyProjectileSpawnRequest(null, new Vector3(2f, 0f), Vector3.up, 1f, 5f,
             EnemyProjectileSpeedBehavior.Customized, reached ? -100f : 100f, AnimationCurve.Constant(0f, 10f, multiplier),

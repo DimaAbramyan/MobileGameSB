@@ -1,8 +1,20 @@
 using UnityEngine;
 using Zenject;
 
-public sealed class ArkanoidPassiveAbility : PassiveAbility
+public sealed class ArkanoidPassiveAbility : PassiveAbility, IStatValueResolver
 {
+    public override IStatValueProvider DisplayStatSnapshot => metaContract;
+    public bool IsRuntime => true;
+    public bool TryRead(StatValueDefinition definition, out StatValueResult result)
+    {
+        object value = null;
+        if (metaContract != null && definition.ProviderType == typeof(ArkanoidShipMetaContract))
+        {
+            if (definition.Property == nameof(ArkanoidShipMetaContract.BallDamage)) value = ArkanoidBall.GetContactDamage(ballDamage, abilityDamageMultiplier);
+            if (definition.Property == nameof(ArkanoidShipMetaContract.StasisDamagePerSecond)) value = ArkanoidBall.GetStasisTickDamage(metaContract.StasisDamagePerSecond, 1f, abilityDamageMultiplier);
+        }
+        result = new StatValueResult(value, StatValueState.Runtime); return value != null;
+    }
     [InjectOptional] private DiContainer container;
 
     [Header("Prefabs")]

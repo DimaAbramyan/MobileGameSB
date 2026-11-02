@@ -227,6 +227,20 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
     private int draggedPathCheckpointIndex = -1;
     private int pathCheckpointDropIndex = -1;
 
+    private static DirectedEnemySubWaveEditor scenePreviewEditor;
+    internal static DirectedEnemySubWave ScenePreviewWave => scenePreviewEditor != null && scenePreviewEditor.previewVisible ? scenePreviewEditor.target as DirectedEnemySubWave : null;
+    internal static void DrawSceneEnemySilhouettes()
+    {
+        var editor = scenePreviewEditor;
+        var wave = ScenePreviewWave;
+        if (editor == null || wave == null) return;
+        if (editor.shootingSession != null) { editor.shootingSession.DrawEnemySilhouettes(); return; }
+        editor.RefreshWavePreviewCache(wave, editor.previewSampleElapsed);
+        if (editor.cachedWavePreviewPositions != null)
+            foreach (var item in editor.cachedWavePreviewPositions)
+                WaveSceneVisualization.DrawEnemy(wave.GetConfiguredEnemyPrefabForSlot(item.Key), item.Value);
+    }
+
     private void OnEnable()
     {
         RebindBehaviourPropertySources();
@@ -377,6 +391,7 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
 
     private void OnDisable()
     {
+        if (scenePreviewEditor == this) scenePreviewEditor = null;
         CancelPatrolPointDrag();
         CancelPathCheckpointDrag();
         StopPreview();
@@ -610,6 +625,7 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
         {
             DrawComponentComposition(wave);
             DrawPreviewHelp();
+            DrawInspectorDiagnostics();
             FinalizePendingPatrolInspectorMetrics();
             ApplyModifiedPropertiesAndInvalidatePreview(
                 patrolInspectorChangeThisEvent,
@@ -626,6 +642,7 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
         DrawPostBehavior();
         DrawCompletion();
         DrawPreviewHelp();
+        DrawInspectorDiagnostics();
 
         FinalizePendingPatrolInspectorMetrics();
         bool deferPatrolInvalidation = patrolInspectorInteractionPending
@@ -893,23 +910,27 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
         GUIUtility.ExitGUI();
     }
 
+    private void DrawInspectorDiagnostics()
+    {
+        using (var advanced = new WaveInspectorSections.Scope(serializedObject, "Diagnostics", "Advanced / Diagnostics", false))
+            if (advanced.IsExpanded)
+                EditorGUILayout.PropertyField(enableDebugLogs, new GUIContent("Enable Debug Logs",
+                    "Verbose diagnostics for this Subwave. Disable for normal authoring and large previews."));
+    }
+
     private void DrawIntro()
     {
         EditorGUILayout.HelpBox(
             "Formation is required. Phase Entry, Attack Pattern, Post Behaviour "
             + "and Completion are optional behaviour blocks.",
             MessageType.Info);
-        EditorGUILayout.PropertyField(
-            enableDebugLogs,
-            new GUIContent(
-                "Enable Debug Logs",
-                "Verbose diagnostic messages. Keep this disabled for normal play and large wave previews."));
+
     }
 
     private void DrawSpawn()
     {
-        spawnFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            spawnFoldout,
+        spawnFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "spawnFoldout",
             isEmbeddedBehaviourInspector
                 ? "Formation — Spawn"
                 : "1. Formation — Spawn");
@@ -920,7 +941,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
             EditorGUILayout.PropertyField(enemyCount);
             EditorGUILayout.PropertyField(spawnInterval);
             DrawSpawnOrderSettings();
-            EditorGUILayout.PropertyField(parentEnemiesToSubWave);
+            using (var advanced = new WaveInspectorSections.Scope(serializedObject, "SpawnHierarchy", "Advanced / Spawn Hierarchy", false))
+                if (advanced.IsExpanded) EditorGUILayout.PropertyField(parentEnemiesToSubWave);
 
             if (IsTransformPointsFormation())
             {
@@ -1142,8 +1164,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
 
     private void DrawPath()
     {
-        pathFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            pathFoldout,
+        pathFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "pathFoldout",
             isEmbeddedBehaviourInspector
                 ? "Phase Entry (optional)"
                 : "2. Phase Entry (optional)");
@@ -1180,46 +1202,65 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
                 return;
             }
 
-            EditorGUILayout.PropertyField(spawnPoint);
-            EditorGUILayout.PropertyField(entranceMode);
-            EditorGUILayout.PropertyField(
-                entranceCompletionMode,
-                new GUIContent(
-                    "After Entrance",
-                    "Move To Formation places ships into final slots. Loop Entrance Path repeats a checkpoint path and never moves ships into formation."));
-            EditorGUILayout.PropertyField(pathCoordinateSpace);
-            EditorGUILayout.PropertyField(
-                rotateEnemiesAlongEntrancePath,
-                new GUIContent(
-                    "Face Movement Direction",
-                    "Rotates each enemy so its transform up follows the direction of travel during Phase Entry."));
-            EditorGUILayout.PropertyField(settleDuration);
-            EditorGUILayout.PropertyField(settleCurve);
-
-            if (UsesEntrancePathLoop())
-                DrawEntranceLoopSettings();
-
-            if (UsesIndividualEntrancePoints())
+            using (var source = new WaveInspectorSections.Scope(serializedObject, "EntrySource", "Spawn & Orientation"))
             {
-                EditorGUILayout.Space(4f);
-                DrawIndividualEntrancePoints();
-            }
-            else
-            {
-                EditorGUILayout.Space(4f);
-                DrawPathPresetButtons();
-
-                EditorGUILayout.Space(4f);
-                DrawPathCheckpoints();
-
-                if (pathCheckpoints.arraySize < 2)
+                if (source.IsExpanded)
                 {
-                    EditorGUILayout.HelpBox(
-                        "Add at least 2 checkpoints. Duration/Speed/Motion/Ease are used "
-                        + "on the segment from this checkpoint to the next one.",
-                        MessageType.Warning);
+                    EditorGUILayout.PropertyField(spawnPoint);
+                    EditorGUILayout.PropertyField(entranceMode);
+                    EditorGUILayout.PropertyField(pathCoordinateSpace);
+                    EditorGUILayout.PropertyField(
+                        rotateEnemiesAlongEntrancePath,
+                        new GUIContent(
+                            "Face Movement Direction",
+                            "Rotates each enemy so its transform up follows the direction of travel during Phase Entry."));
                 }
             }
+            using (var arrival = new WaveInspectorSections.Scope(serializedObject, "EntryArrival", "Arrival & Looping"))
+            {
+                if (arrival.IsExpanded)
+                {
+                    EditorGUILayout.PropertyField(
+                        entranceCompletionMode,
+                        new GUIContent(
+                            "After Entrance",
+                            "Move To Formation places ships into final slots. Loop Entrance Path repeats a checkpoint path and never moves ships into formation."));
+                    EditorGUILayout.PropertyField(settleDuration);
+                    EditorGUILayout.PropertyField(settleCurve);
+
+                    if (UsesEntrancePathLoop())
+                        DrawEntranceLoopSettings();
+
+                }
+            }
+            using (var route = new WaveInspectorSections.Scope(serializedObject, "EntryRoute", "Entrance Route & Checkpoints"))
+            {
+                if (route.IsExpanded)
+                {
+                    if (UsesIndividualEntrancePoints())
+                    {
+                        EditorGUILayout.Space(4f);
+                        DrawIndividualEntrancePoints();
+                    }
+                    else
+                    {
+                        EditorGUILayout.Space(4f);
+                        DrawPathPresetButtons();
+
+                        EditorGUILayout.Space(4f);
+                        DrawPathCheckpoints();
+
+                        if (pathCheckpoints.arraySize < 2)
+                        {
+                            EditorGUILayout.HelpBox(
+                                "Add at least 2 checkpoints. Duration/Speed/Motion/Ease are used "
+                                + "on the segment from this checkpoint to the next one.",
+                                MessageType.Warning);
+                        }
+                    }
+                }
+            }
+
         }
 
         EditorGUILayout.EndFoldoutHeaderGroup();
@@ -1227,8 +1268,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
 
     private void DrawAttackPattern()
     {
-        attackPatternFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            attackPatternFoldout,
+        attackPatternFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "attackPatternFoldout",
             "4. Attack Pattern (optional)");
 
         if (attackPatternFoldout)
@@ -1340,8 +1381,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
 
     private void DrawCompletion()
     {
-        completionFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            completionFoldout,
+        completionFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "completionFoldout",
             isEmbeddedBehaviourInspector
                 ? "Completion (optional)"
                 : "6. Completion (optional)");
@@ -2278,8 +2319,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
 
     private void DrawFormation()
     {
-        formationFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            formationFoldout,
+        formationFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "formationFoldout",
             isEmbeddedBehaviourInspector
                 ? "Formation — Layout"
                 : "3. Formation — Layout");
@@ -2291,68 +2332,81 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
             bool frozen = formationFrozen.boolValue;
             using (new EditorGUI.DisabledScope(frozen))
             {
-                DrawFormationLayoutField();
-                EditorGUILayout.PropertyField(formationCoordinateSpace);
-                EditorGUILayout.PropertyField(formationCenter);
-                EditorGUILayout.PropertyField(formationOffsetStep, new GUIContent("Per-Enemy Offset",
-                    "Additional X/Y offset per slot, added to the original formation. Zero disables the offset."));
-                EditorGUILayout.PropertyField(formationOffsetOrigin, new GUIContent("Offset Origin",
-                    "First/Last keeps that slot fixed and accumulates toward the other end. Middle counts from the center index."));
-                if ((DirectedWaveFormationOffsetOrigin)formationOffsetOrigin.enumValueIndex
-                    == DirectedWaveFormationOffsetOrigin.Middle)
-                    EditorGUILayout.PropertyField(formationCenterOffsetMode, new GUIContent("Center Offset Mode",
-                        "Linear: -2, -1, 0, 1, 2. Symmetric: 2, 1, 0, 1, 2. With an even count the origin is between the middle slots."));
-
-                DirectedWaveFormationLayout layout =
-                    (DirectedWaveFormationLayout)formationLayout.enumValueIndex;
-
-                if (layout != DirectedWaveFormationLayout.Grid
-                    && layout != DirectedWaveFormationLayout.CustomPoints)
+                using (var geometry = new WaveInspectorSections.Scope(serializedObject, "FormationGeometry", "Layout & Placement"))
                 {
-                    EditorGUILayout.PropertyField(spacing);
+                    if (geometry.IsExpanded)
+                    {
+                        DrawFormationLayoutField();
+                        EditorGUILayout.PropertyField(formationCoordinateSpace);
+                        EditorGUILayout.PropertyField(formationCenter);
+                        DirectedWaveFormationLayout layout =
+                            (DirectedWaveFormationLayout)formationLayout.enumValueIndex;
+
+                        if (layout != DirectedWaveFormationLayout.Grid
+                            && layout != DirectedWaveFormationLayout.CustomPoints)
+                        {
+                            EditorGUILayout.PropertyField(spacing);
+                        }
+
+                        switch (layout)
+                        {
+                            case DirectedWaveFormationLayout.Grid:
+                                EditorGUILayout.PropertyField(columns);
+                                EditorGUILayout.PropertyField(rows);
+                                DrawGridMatrixBuilder(false);
+                                break;
+
+                            case DirectedWaveFormationLayout.Arc:
+                                EditorGUILayout.PropertyField(arcRadius);
+                                EditorGUILayout.PropertyField(arcDegrees);
+                                break;
+
+                            case DirectedWaveFormationLayout.Circle:
+                            case DirectedWaveFormationLayout.Triangle:
+                            case DirectedWaveFormationLayout.Square:
+                            case DirectedWaveFormationLayout.Diamond:
+                                DrawShapeFormationSettings();
+                                break;
+
+                            case DirectedWaveFormationLayout.CustomPoints:
+                                DrawGridMatrixBuilder(true);
+                                DrawCustomFinalPoints();
+                                DrawCustomPointUtility();
+                                break;
+
+                            case DirectedWaveFormationLayout.TransformPoints:
+                                EditorGUILayout.PropertyField(formationPointsRoot);
+                                DrawTransformPointUtility();
+                                break;
+                        }
+                    }
                 }
-
-                switch (layout)
+                using (var offset = new WaveInspectorSections.Scope(serializedObject, "FormationOffsets", "Per-Slot Offsets"))
                 {
-                    case DirectedWaveFormationLayout.Grid:
-                        EditorGUILayout.PropertyField(columns);
-                        EditorGUILayout.PropertyField(rows);
-                        DrawGridMatrixBuilder(false);
-                        break;
+                    if (offset.IsExpanded)
+                    {
+                        EditorGUILayout.PropertyField(formationOffsetStep, new GUIContent("Per-Enemy Offset",
+                            "Additional X/Y offset per slot, added to the original formation. Zero disables the offset."));
+                        EditorGUILayout.PropertyField(formationOffsetOrigin, new GUIContent("Offset Origin",
+                            "First/Last keeps that slot fixed and accumulates toward the other end. Middle counts from the center index."));
+                        if ((DirectedWaveFormationOffsetOrigin)formationOffsetOrigin.enumValueIndex
+                            == DirectedWaveFormationOffsetOrigin.Middle)
+                            EditorGUILayout.PropertyField(formationCenterOffsetMode, new GUIContent("Center Offset Mode",
+                                "Linear: -2, -1, 0, 1, 2. Symmetric: 2, 1, 0, 1, 2. With an even count the origin is between the middle slots."));
 
-                    case DirectedWaveFormationLayout.Arc:
-                        EditorGUILayout.PropertyField(arcRadius);
-                        EditorGUILayout.PropertyField(arcDegrees);
-                        break;
-
-                    case DirectedWaveFormationLayout.Circle:
-                    case DirectedWaveFormationLayout.Triangle:
-                    case DirectedWaveFormationLayout.Square:
-                    case DirectedWaveFormationLayout.Diamond:
-                        DrawShapeFormationSettings();
-                        break;
-
-                    case DirectedWaveFormationLayout.CustomPoints:
-                        DrawGridMatrixBuilder(true);
-                        DrawCustomFinalPoints();
-                        DrawCustomPointUtility();
-                        break;
-
-                    case DirectedWaveFormationLayout.TransformPoints:
-                        EditorGUILayout.PropertyField(formationPointsRoot);
-                        DrawTransformPointUtility();
-                        break;
+                    }
                 }
             }
 
             if (frozen)
                 DrawFrozenFormationSummary();
 
-            DrawEnemySlotSelectionControls();
+            using (var slots = new WaveInspectorSections.Scope(serializedObject, "FormationSelection", "Slot Selection & Editing"))
+                if (slots.IsExpanded) DrawEnemySlotSelectionControls();
+            using (var tools = new WaveInspectorSections.Scope(serializedObject, "FormationTools", "Formation Presets & Tools", false))
+                if (tools.IsExpanded)
+                    using (new EditorGUI.DisabledScope(frozen)) DrawFormationPresetButtons();
 
-            EditorGUILayout.Space(4f);
-            using (new EditorGUI.DisabledScope(frozen))
-                DrawFormationPresetButtons();
         }
 
         EditorGUILayout.EndFoldoutHeaderGroup();
@@ -4336,8 +4390,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
 
     private void DrawPostBehavior()
     {
-        postBehaviorFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            postBehaviorFoldout,
+        postBehaviorFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "postBehaviorFoldout",
             isEmbeddedBehaviourInspector
                 ? "Post Behaviour (optional)"
                 : "5. Post Behaviour (optional)");
@@ -4378,22 +4432,29 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
                 "Post Behavior starts after all enemies have reached their final formation positions.",
                 MessageType.Info);
 
-            DrawPostCommands();
-            EditorGUILayout.Space(4f);
-            EditorGUILayout.PropertyField(postStartDelay);
-            EditorGUILayout.PropertyField(
-                postCommandPipelineLoop,
-                new GUIContent(
-                    "Infinite",
-                    "Repeats the complete Post Commands sequence indefinitely."));
-            using (new EditorGUI.DisabledScope(postCommandPipelineLoop.boolValue))
+            using (var timing = new WaveInspectorSections.Scope(serializedObject, "PostTiming", "Pipeline Timing & Repeat"))
             {
-                EditorGUILayout.PropertyField(
-                    postCommandPipelineFixedCount,
-                    new GUIContent(
-                        "Fixated",
-                        "Number of complete Post Commands sequence activations."));
+                if (timing.IsExpanded)
+                {
+                    EditorGUILayout.PropertyField(postStartDelay);
+                    EditorGUILayout.PropertyField(
+                        postCommandPipelineLoop,
+                        new GUIContent(
+                            "Loop Pipeline",
+                            "Repeats the complete Post Commands sequence indefinitely."));
+                    using (new EditorGUI.DisabledScope(postCommandPipelineLoop.boolValue))
+                    {
+                        EditorGUILayout.PropertyField(
+                            postCommandPipelineFixedCount,
+                            new GUIContent(
+                                "Repeat Count",
+                                "Number of complete Post Commands sequence activations."));
+                    }
+                }
             }
+            using (var commands = new WaveInspectorSections.Scope(serializedObject, "PostCommands", "Command Pipeline"))
+                if (commands.IsExpanded) DrawPostCommands();
+
         }
 
         EditorGUILayout.EndFoldoutHeaderGroup();
@@ -6034,8 +6095,8 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
     private void DrawPreviewHelp()
     {
         EnemyShootingPreview.DrawPreviewControls();
-        previewFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(
-            previewFoldout,
+        previewFoldout = WaveInspectorSections.BeginHeaderGroup(
+            serializedObject, "previewFoldout",
             "Scene View Editing");
 
         if (previewFoldout)
@@ -6058,7 +6119,7 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
             EditorGUILayout.Space(4f);
             DrawPreviewControls();
             EditorGUILayout.Space(4f);
-            DrawMobileBoundsControls();
+            // Camera bounds are controlled once at Wave level.
         }
 
         EditorGUILayout.EndFoldoutHeaderGroup();
@@ -6287,6 +6348,7 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
         if (simulateShooting) EnemyShootingPreview.ShowFormationVolley = true;
         FramePreviewArea();
         previewVisible = true;
+        scenePreviewEditor = this;
         previewPlaying = true;
         double now = EditorApplication.timeSinceStartup;
         previewStartTime = now - previewSampleElapsed;
@@ -6313,6 +6375,7 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
     {
         if (simulateShooting) EnemyShootingPreview.ShowFormationVolley = true;
         previewVisible = true;
+        scenePreviewEditor = this;
         previewPlaying = false;
         previewRequestedTime = Mathf.Clamp(time, 0f, GetPreviewTotalDuration());
         // Backward scrubbing rebuilds deterministic shooting history; forward scrubbing reuses it.
@@ -6550,14 +6613,16 @@ public sealed partial class DirectedEnemySubWaveEditor : Editor
         }
     }
 
+    private static readonly Unity.Profiling.ProfilerMarker SceneRepaintMarker = new("WaveEditor.ShootingSceneGUI.Repaint");
     private void OnSceneGUI()
     {
+        using var repaintSample = Event.current.type == EventType.Repaint ? SceneRepaintMarker.Auto() : default;
         patrolSceneCommitThisEvent = false;
         UpdatePropertySources();
 
         DirectedEnemySubWave wave = (DirectedEnemySubWave)target;
 
-        DrawMobileScreenBounds();
+        // Persistent Wave-level bounds are drawn by WaveSceneVisualization.
         if (enemySlotSelectionMode)
         {
             DrawEnemySlotSelectionHandles(wave);

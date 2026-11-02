@@ -35,6 +35,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
     private DirectedWaveAttackSequenceRuntime sequenceRuntime;
     private DirectedWaveAttackSequencePlayer sequencePlayer;
     private DirectedWaveAttackExecutionMode runtimeExecutionMode;
+    private bool runtimeAttackGroups;
     private readonly Dictionary<int, DirectedWaveAttackSequenceStep> sequenceGuideSteps = new();
     private int configurationRevision;
     public int ConfigurationRevision
@@ -42,6 +43,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
         get
         {
             int stamp = configurationRevision * 397 ^ (attackPreset != null ? attackPreset.ConfigurationRevision : 0);
+            if (useAttackGroups) return GroupPresetRevision(stamp);
             if (UsesAttackSequence) return SequencePresetRevision(AttackSequence.steps, stamp, 0);
             if (attackPatterns == null) return stamp;
             for (int i = 0; i < attackPatterns.Count; i++)
@@ -61,7 +63,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
         return stamp;
     }
     public void InvalidateSequenceGuides() { sequenceGuideSteps.Clear(); configurationRevision++; }
-    public bool UsesAttackSequence => executionMode == DirectedWaveAttackExecutionMode.Sequence;
+    public bool UsesAttackSequence => !useAttackGroups && executionMode == DirectedWaveAttackExecutionMode.Sequence;
     public DirectedWaveAttackSequenceSettings AttackSequence => attackSequence ??= new DirectedWaveAttackSequenceSettings();
     public string ActiveSequenceStep => sequencePlayer?.CurrentStep;
     public bool AllowsSequenceSlot(int slot) => !useSelectedEnemySlots || selectedEnemySlots.Contains(slot);
@@ -150,6 +152,15 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
             if (!entranceAttackSettings.IsEnabled
                 || useSelectedEnemySlots && !selectedEnemySlots.Contains(slotIndex))
                 return false;
+        }
+        else if (useAttackGroups)
+        {
+            if (!TryGetGroupAttackSettings(slotIndex, out var grouped) || grouped == null) return false;
+            destination.CopyFrom(grouped);
+            RefreshResolvedAttackSettings();
+            destination.CopySchedulingFrom(resolvedAttackSettings);
+            destination.CopyRuntimeOverridesFrom(grouped);
+            return true;
         }
         else if (UsesAttackSequence)
         {
@@ -295,6 +306,8 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     private void OnDisable()
     {
+        groupSpawnSlots.Clear();
+        ReleaseAttackGroupControl();
         sequencePlayer?.Pause(Time.time);
         sequenceRuntime?.ReleaseControl();
         attackController?.Stop();
@@ -307,6 +320,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
     private void OnValidate()
     {
         InvalidateSequenceGuides();
+        ValidateAttackGroups();
         entranceAttackSettings ??= new DirectedWaveEntranceAttackSettings();
         baseProjectileSpeed = Mathf.Max(0.01f, baseProjectileSpeed);
         RefreshResolvedAttackSettings();
@@ -319,6 +333,8 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
         DirectedEnemySubWave hostWave)
     {
         runtimeExecutionMode = executionMode;
+        runtimeAttackGroups = useAttackGroups;
+        ReleaseAttackGroupControl();
         StopContinuousEntranceAttack();
         entranceAttackController?.Stop();
 
@@ -361,13 +377,18 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
             resolvedAttackSettings,
             CanEnemyAttack);
         attackController.Begin();
+        ReserveAttackGroupControl();
     }
 
     void IDirectedWavePostTimelineBehaviour.TickPostTimeline()
     {
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+        using var performanceScope = PerformanceMarker.Auto();
+#endif
         TickExternalPermissionClock();
+        ReserveAttackGroupControl();
         ApplyCoordinatedCycleLimit();
-        if (runtimeExecutionMode != executionMode)
+        if (runtimeExecutionMode != executionMode || runtimeAttackGroups != useAttackGroups)
             ((IDirectedWavePostTimelineBehaviour)this).OnPostTimelineStarted(wave);
         if (UsesAttackSequence)
         { TickCoordinatedSequence(); sequenceRuntime?.KeepControl(); return; }
@@ -375,9 +396,13 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
         for (int i = 0; i < attackPatternControllers.Count; i++)
             attackPatternControllers[i]?.Tick();
     }
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+    private static readonly Unity.Profiling.ProfilerMarker PerformanceMarker = new("PerformanceSuite.AttackBehaviour");
+#endif
 
     void IDirectedWavePostTimelineBehaviour.OnPostTimelineStopped()
     {
+        ReleaseAttackGroupControl();
         sequencePlayer?.Pause(Time.time);
         sequenceRuntime?.ReleaseControl();
         attackController?.Stop();
@@ -386,6 +411,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     void IDirectedWavePostTimelineBehaviour.OnWaveEnemyDestroyed(Enemy enemy)
     {
+        groupSpawnSlots.Remove(enemy);
         attackActivities.Remove(enemy);
         sequenceRuntime?.NotifyEnemyDestroyed(enemy);
         entranceAttackController?.NotifyEnemyDestroyed(enemy);
@@ -422,6 +448,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
         DirectedWaveRuntimeCheckpoint[] checkpoints,
         bool isLoopRestart = false)
     {
+        if (useAttackGroups && GetAttackGroupForSlot(enemySlotIndex) == null) return;
         entranceAttackController?.NotifyCheckpointReached(
             enemy,
             enemySlotIndex,
@@ -456,6 +483,8 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
             return;
 
         wave ??= GetComponent<DirectedEnemySubWave>();
+        // Adding a behaviour must invalidate an earlier cached absence.
+        if (wave != null) wave.InvalidateBehaviourComponentCache();
         if (wave == null || wave.AttackPatternBehaviour != this)
             return;
 
@@ -474,6 +503,8 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     private bool CanEnemyAttack(Enemy enemy)
     {
+        if (useAttackGroups) return wave != null && wave.TryGetFormationIndex(enemy, out int slot)
+            && (GetAttackGroupForSlot(slot)?.UsesSequence == true || TryGetGroupAttackSettings(slot, out var grouped) && grouped != null);
         if (!useSelectedEnemySlots)
             return true;
 
@@ -484,7 +515,7 @@ public sealed partial class DirectedWaveAttackBehaviour : MonoBehaviour,
 
     private bool UsesAttackPatterns()
     {
-        return attackPatterns != null && attackPatterns.Count > 0;
+        return !useAttackGroups && attackPatterns != null && attackPatterns.Count > 0;
     }
 
     private bool TryGetAttackPattern(

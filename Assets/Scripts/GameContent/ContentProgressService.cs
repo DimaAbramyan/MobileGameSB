@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 public enum ContentProgressStatus
@@ -39,9 +38,7 @@ public readonly struct ContentProgressState
 
 public sealed class ContentProgressService
 {
-    private const string SaveFileName = "content_progress.json";
-
-    private readonly string savePath;
+    private readonly SaveManager saveManager;
     private readonly ContentAvailabilityService availabilityService;
     private readonly PlayerResourceWallet resourceWallet;
     private readonly Dictionary<string, ContentProgressEntry> entriesById = new();
@@ -49,13 +46,19 @@ public sealed class ContentProgressService
 
     public ContentProgressService(
         LevelProgressService levelProgressService,
-        PlayerResourceWallet resourceWallet)
+        PlayerResourceWallet resourceWallet) : this(levelProgressService, resourceWallet, resourceWallet?.Persistence) { }
+
+    [Zenject.Inject]
+    public ContentProgressService(
+        LevelProgressService levelProgressService,
+        PlayerResourceWallet resourceWallet,
+        SaveManager saveManager)
     {
         availabilityService = new ContentAvailabilityService(
             levelProgressService ?? throw new ArgumentNullException(nameof(levelProgressService)));
         this.resourceWallet = resourceWallet
             ?? throw new ArgumentNullException(nameof(resourceWallet));
-        savePath = Path.Combine(Application.persistentDataPath, SaveFileName);
+        this.saveManager = saveManager ?? throw new ArgumentNullException(nameof(saveManager));
     }
 
     public event Action ProgressChanged;
@@ -84,9 +87,9 @@ public sealed class ContentProgressService
                 $"У '{content.DisplayName}' не задан постоянный id.");
         }
 
-        ContentProgressEntry entry = null;
+        bool hasOwnedEntry = TryGetOwnedEntry(content.Id, out ContentProgressEntry entry);
         bool isOwned = content.IsStarterUnlocked
-            || TryGetOwnedEntry(content.Id, out entry);
+            || hasOwnedEntry;
         int upgradeLevel = isOwned && entry != null
             ? Mathf.Clamp(entry.upgradeLevel, 0, content.MaxUpgradeLevel)
             : 0;
@@ -166,7 +169,7 @@ public sealed class ContentProgressService
         if (!state.CanPurchase)
             return false;
 
-        if (!resourceWallet.TrySpend(state.ActionCost.Metal, state.ActionCost.Cores))
+        if (!resourceWallet.TrySpend(state.ActionCost.Metal, state.ActionCost.Cores, false))
             return false;
 
         ContentProgressEntry entry = GetOrCreateEntry(content.Id);
@@ -183,7 +186,7 @@ public sealed class ContentProgressService
         if (!state.IsOwned || !state.CanUpgrade)
             return false;
 
-        if (!resourceWallet.TrySpend(state.ActionCost.Metal, state.ActionCost.Cores))
+        if (!resourceWallet.TrySpend(state.ActionCost.Metal, state.ActionCost.Cores, false))
             return false;
 
         ContentProgressEntry entry = GetOrCreateEntry(content.Id);
@@ -201,8 +204,7 @@ public sealed class ContentProgressService
         entriesById.Clear();
         loaded = true;
 
-        if (File.Exists(savePath))
-            File.Delete(savePath);
+        Save();
 
         ProgressChanged?.Invoke();
     }
@@ -230,70 +232,26 @@ public sealed class ContentProgressService
     {
         if (loaded)
             return;
-
         loaded = true;
         entriesById.Clear();
-
-        if (!File.Exists(savePath))
-            return;
-
-        try
+        ContentProgressSaveData data = saveManager.ReadProgression().content;
+        for (int i = 0; i < data.entries.Count; i++)
         {
-            string json = File.ReadAllText(savePath);
-            ContentProgressSaveData data =
-                JsonUtility.FromJson<ContentProgressSaveData>(json);
-            if (data?.entries == null)
-                return;
-
-            for (int i = 0; i < data.entries.Count; i++)
-            {
-                ContentProgressEntry entry = data.entries[i];
-                if (entry == null || string.IsNullOrWhiteSpace(entry.contentId))
-                    continue;
-
-                entry.upgradeLevel = Mathf.Max(0, entry.upgradeLevel);
-                entriesById[entry.contentId] = entry;
-            }
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning(
-                $"Cannot load content progress from {savePath}: {exception.Message}");
+            ContentProgressEntry entry = data.entries[i];
+            if (entry == null || string.IsNullOrWhiteSpace(entry.contentId))
+                continue;
+            entry.upgradeLevel = Mathf.Max(0, entry.upgradeLevel);
+            entriesById[entry.contentId] = entry;
         }
     }
 
     private void Save()
     {
-        try
+        var data = new ContentProgressSaveData
         {
-            string directory = Path.GetDirectoryName(savePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-
-            ContentProgressSaveData data = new ContentProgressSaveData
-            {
-                entries = new List<ContentProgressEntry>(entriesById.Values)
-            };
-            File.WriteAllText(savePath, JsonUtility.ToJson(data, true));
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning(
-                $"Cannot save content progress to {savePath}: {exception.Message}");
-        }
+            entries = new List<ContentProgressEntry>(entriesById.Values)
+        };
+        saveManager.UpdateProgression(progress => progress.content = data, true);
     }
 
-    [Serializable]
-    private sealed class ContentProgressSaveData
-    {
-        public List<ContentProgressEntry> entries = new();
-    }
-
-    [Serializable]
-    private sealed class ContentProgressEntry
-    {
-        public string contentId;
-        public bool isOwned;
-        public int upgradeLevel;
-    }
 }

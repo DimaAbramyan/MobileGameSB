@@ -19,6 +19,8 @@ using Object = UnityEngine.Object;
 // Execute one case per Pipeline request; files are written only under AgentArtifacts.
 public static class ProfileWaveFastSeek
 {
+    private static string outputPrefix = "fast-seek-profile";
+    private static bool captureLogicalFingerprint;
     private const BindingFlags F = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
     private static readonly string[] Paths = {
         "Assets/Waves/1/1_Extreme/1_1_extrime.prefab", "Assets/Waves/1/1_Extreme/1_4_extrime.prefab",
@@ -64,6 +66,8 @@ public static class ProfileWaveFastSeek
         public Dictionary<string, long> counters;
         public AllocationCapture nativeAllocations;
         public List<SnapshotMemory> snapshotMemory;
+        public string logicalStateSha256;
+        public int logicalStateCharacters;
     }
     public sealed class SnapshotMemory
     { public int copies; public long unityBytes, monoUsedBytes, managedBytes, estimatedBytes; public double captureMs; }
@@ -254,6 +258,26 @@ public static class ProfileWaveFastSeek
                 for (int flush = 0; flush < 10 && native.capturedSteps < 1800; flush++) { await Task.Delay(30); native.Read(); }
                 result.nativeAllocations = native;
             }
+            if (captureLogicalFingerprint)
+            {
+                var fixture = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("VerifyWavePreviewFastSeek")).LastOrDefault(t => t != null);
+                if (fixture == null) throw new Exception("Load VerifyWavePreviewFastSeek.Run before the comparison benchmark.");
+                var method = fixture.GetMethod("FullState", BindingFlags.Static | BindingFlags.NonPublic);
+                string state = (string)method.Invoke(null, new object[] { player.Simulation, player.Events });
+                // These Editor invalidation counters change when restoring the
+                // same Seed or reloading assemblies. They are not simulation data.
+                state = System.Text.RegularExpressions.Regex.Replace(state,
+                    @"\|(numericPreviewRevision|attackConfigurationRevision|presetConfigurationRevision)=-?\d+", "|$1=revision");
+                result.logicalStateCharacters = state.Length;
+                using (var file = File.Create($"AgentArtifacts/{outputPrefix}-{index}-{variant}-{repeat}-state.txt.gz"))
+                using (var gzip = new System.IO.Compression.GZipStream(file, System.IO.Compression.CompressionLevel.Fastest))
+                {
+                    byte[] stateBytes = System.Text.Encoding.UTF8.GetBytes(state);
+                    gzip.Write(stateBytes, 0, stateBytes.Length);
+                }
+                using var sha = System.Security.Cryptography.SHA256.Create();
+                result.logicalStateSha256 = BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(state))).Replace("-", "");
+            }
             if (variant == "memory")
             {
                 var extraSnapshots = new List<IDisposable>(); result.snapshotMemory = new();
@@ -291,11 +315,22 @@ public static class ProfileWaveFastSeek
             result.worldsAfterDispose = World.All.Count; result.worldCleanup = result.worldsAfterDispose == worldCount;
             result.prefabUnchanged = before.SequenceEqual(File.ReadAllBytes(path));
         }
-        string output = $"AgentArtifacts/fast-seek-profile-{index}-{variant}-{repeat}.json";
+        string output = $"AgentArtifacts/{outputPrefix}-{index}-{variant}-{repeat}.json";
         File.WriteAllText(output, Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
         if (!result.prefabUnchanged || !result.worldCleanup || result.steps != 1800) throw new Exception("Profiling invariant failed: " + output);
         return new { result.wave, variant, repeat, result.wallSeconds, result.activeMilliseconds, result.waitingMilliseconds,
             stepsPerUpdate = result.stepsPerUpdate.mean, stepMs = result.stepMs?.mean, result.gc0, result.snapshotEstimateBytes, result.worldCleanup, output };
+    }
+    public static async Task<object> CacheBenchmark(int index, string phase, string variant, int repeat)
+    {
+        string previousPrefix = outputPrefix; bool previousFingerprint = captureLogicalFingerprint;
+        try
+        {
+            outputPrefix = "behaviour-cache-" + phase;
+            captureLogicalFingerprint = variant != "warmup";
+            return await Run(index, variant, repeat);
+        }
+        finally { outputPrefix = previousPrefix; captureLogicalFingerprint = previousFingerprint; }
     }
     public static async Task<object> Gui(int index)
     {

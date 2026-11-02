@@ -16,8 +16,11 @@ public enum EnemyDebuffThresholdAction
 }
 
 [Serializable]
-public sealed class EnemyDebuffApplication
+public sealed class EnemyDebuffApplication : IStatValueProvider
 {
+    [SerializeField, HideInInspector] private string statSourceId = Guid.NewGuid().ToString("N");
+    public string StatSourceId => statSourceId;
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [SerializeField] private EnemyDebuffConfig debuff;
     [SerializeField, Min(0f)] private float amountPerHit = 1f;
 
@@ -78,8 +81,9 @@ public readonly struct EnemyDebuffThresholdEvent
     public float Threshold { get; }
 }
 
-public abstract class EnemyDebuffConfig : ScriptableObject
+public abstract class EnemyDebuffConfig : ScriptableObject, IStatValueProvider
 {
+    public virtual void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [Header("Threshold Event")]
     [SerializeField] private EnemyDebuffThresholdMode thresholdMode =
         EnemyDebuffThresholdMode.Disabled;

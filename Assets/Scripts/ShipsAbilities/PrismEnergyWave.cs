@@ -6,6 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D), typeof(Rigidbody2D))]
 public sealed class PrismEnergyWave : EnemyProjectileInterceptor
 {
+    public static float GetDamage(PrismShipMetaContract settings, float multiplier) => settings.Damage * multiplier;
     private readonly HashSet<Enemy> damagedEnemies = new();
     private Collider2D[] overlaps = new Collider2D[32];
     private RaycastHit2D[] castHits = new RaycastHit2D[32];
@@ -37,7 +38,7 @@ public sealed class PrismEnergyWave : EnemyProjectileInterceptor
         damageManager = manager; projectileRegistry = registry;
         direction = ((Vector2)transform.up).normalized;
         previousCenter = transform.position;
-        damage = settings.Damage * damageMultiplier;
+        damage = GetDamage(settings, damageMultiplier);
         hitbox = GetComponent<BoxCollider2D>();
         hitbox.isTrigger = true; hitbox.size = new Vector2(settings.WaveWidth, settings.WaveThickness);
         body = GetComponent<Rigidbody2D>();

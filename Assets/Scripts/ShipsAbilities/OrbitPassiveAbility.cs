@@ -3,8 +3,18 @@ using UnityEngine;
 using Zenject;
 
 [DefaultExecutionOrder(-600)]
-public sealed class OrbitPassiveAbility : PassiveAbility
+public sealed class OrbitPassiveAbility : PassiveAbility, IStatValueResolver
 {
+    public override IStatValueProvider DisplayStatSnapshot => settings;
+    public float RuntimeContactDamage => settings != null ? settings.ContactDamage * damageMultiplier : 0f;
+    public bool IsRuntime => true;
+    public bool TryRead(StatValueDefinition definition, out StatValueResult result)
+    {
+        bool found = settings != null && definition.ProviderType == typeof(OrbitShipMetaContract)
+            && definition.Property == nameof(OrbitShipMetaContract.ContactDamage);
+        result = new StatValueResult(RuntimeContactDamage, StatValueState.Runtime);
+        return found;
+    }
     [SerializeField, Tooltip("Separate circular satellite prefab, without a ParentShip component.")]
     private OrbitSatellite satellitePrefab;
 
@@ -168,7 +178,7 @@ public sealed class OrbitPassiveAbility : PassiveAbility
             return;
 
         nextEnemyHitTimes[enemy] = Time.time + settings.DamageInterval;
-        float damage = settings.ContactDamage * damageMultiplier;
+        float damage = RuntimeContactDamage;
         damageManager.DealDamage(enemy, owner, damage, settings.DamageType);
     }
 

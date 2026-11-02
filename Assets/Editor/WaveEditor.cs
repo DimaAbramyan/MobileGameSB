@@ -5,16 +5,9 @@ using UnityEngine;
 [CustomEditor(typeof(Wave))]
 public sealed class WaveEditor : Editor
 {
-    private const string ShowCameraBoundsKey =
-        "WaveEditor.ShowCameraBounds";
-    private const string CameraBoundsOrthoSizeKey =
-        "WaveEditor.CameraBoundsOrthoSize";
-    private const string CameraBoundsAspectKey =
-        "WaveEditor.CameraBoundsAspect";
-    private const string CameraBoundsCenterXKey =
-        "WaveEditor.CameraBoundsCenterX";
-    private const string CameraBoundsCenterYKey =
-        "WaveEditor.CameraBoundsCenterY";
+    internal static WaveEditor ActivePreview { get; private set; }
+    internal Wave PreviewWave => target as Wave;
+    internal WaveConductorShootingPreview ScenePreview => shootingPreview;
     private const string PreviewDurationKey =
         "WaveEditor.PreviewDuration";
     private const string LegacyDirectedPostPreviewDurationKey =
@@ -47,10 +40,6 @@ public sealed class WaveEditor : Editor
     private double nextPreviewInspectorTime;
     private float previewSampleElapsed;
     private int previewSampleVersion;
-    private bool showCameraBounds;
-    private float cameraBoundsOrthoSize;
-    private float cameraBoundsAspect;
-    private Vector2 cameraBoundsCenter;
     private float previewDuration;
     private bool showAttackPatterns;
     private Vector3 previewPlayerPosition = new(0f, -3f, 0f);
@@ -71,16 +60,6 @@ public sealed class WaveEditor : Editor
         enableDebugLogs = serializedObject.FindProperty("enableDebugLogs");
         showAttackPatterns = SessionState.GetBool(ShowAttackPatternsKey, false);
 
-        showCameraBounds = EditorPrefs.GetBool(ShowCameraBoundsKey, true);
-        cameraBoundsOrthoSize = EditorPrefs.GetFloat(
-            CameraBoundsOrthoSizeKey,
-            5f);
-        cameraBoundsAspect = EditorPrefs.GetFloat(
-            CameraBoundsAspectKey,
-            9f / 16f);
-        cameraBoundsCenter = new Vector2(
-            EditorPrefs.GetFloat(CameraBoundsCenterXKey, 0f),
-            EditorPrefs.GetFloat(CameraBoundsCenterYKey, 0f));
         if (EditorPrefs.HasKey(PreviewDurationKey))
         {
             previewDuration = EditorPrefs.GetFloat(
@@ -121,15 +100,20 @@ public sealed class WaveEditor : Editor
             + "Use the same Start Delay for simultaneous groups.",
             MessageType.Info);
 
-        EditorGUILayout.PropertyField(enableDebugLogs);
+        EditorGUILayout.LabelField("Wave", EditorStyles.boldLabel);
+        WaveSceneVisualization.DrawControls((Wave)target);
 
-        EditorGUILayout.Space(4f);
-        EditorGUILayout.LabelField("Conductor Schedule", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(scheduledSubWaves, true);
-
+        using (var schedule = new WaveInspectorSections.Scope(serializedObject, "Schedule", "Conductor Schedule"))
+            if (schedule.IsExpanded) EditorGUILayout.PropertyField(scheduledSubWaves, true);
         DrawScheduleWarnings();
-        DrawLegacyTools();
-        DrawPreviewControls();
+        using (var preview = new WaveInspectorSections.Scope(serializedObject, "Preview", "Preview & Visualization"))
+            if (preview.IsExpanded) DrawPreviewControls();
+        using (var advanced = new WaveInspectorSections.Scope(serializedObject, "Advanced", "Advanced / Diagnostics & Legacy", false))
+            if (advanced.IsExpanded)
+            {
+                EditorGUILayout.PropertyField(enableDebugLogs);
+                DrawLegacyTools();
+            }
 
         if (serializedObject.ApplyModifiedProperties())
         {
@@ -170,7 +154,6 @@ public sealed class WaveEditor : Editor
     private void DrawPreviewControls()
     {
         EditorGUILayout.Space(8f);
-        EditorGUILayout.LabelField("Conductor Preview", EditorStyles.boldLabel);
         using (new EditorGUI.DisabledScope(Application.isPlaying))
             if (GUILayout.Button("Open Wave Preview Player"))
             { StopPreview(); WavePreviewPlayerWindow.Open((Wave)target); }
@@ -272,7 +255,7 @@ public sealed class WaveEditor : Editor
             }
         }
 
-        DrawCameraBoundsControls();
+
     }
 
     private void StartPreview()
@@ -280,6 +263,7 @@ public sealed class WaveEditor : Editor
         if (Application.isPlaying) return;
         InvalidatePreviewCaches();
         previewPlaying = true;
+        ActivePreview = this;
         if (showAttackPatterns)
         {
             EnemyShootingPreview.ShowFormationVolley = true;
@@ -299,6 +283,7 @@ public sealed class WaveEditor : Editor
     private void StopPreview()
     {
         previewPlaying = false;
+        if (ActivePreview == this) ActivePreview = null;
         SceneView.duringSceneGui -= DrawPreviewInScene;
         EditorApplication.update -= UpdatePreview;
         InvalidatePreviewCaches();
@@ -394,7 +379,7 @@ public sealed class WaveEditor : Editor
             : 0f;
 
         Handles.zTest = UnityEngine.Rendering.CompareFunction.Always;
-        DrawCameraBoundsPreview();
+
         DrawDangerWarningPreview(wave, dangerWarning, elapsed);
 
         int cueCount = GetPreviewCueCount();
@@ -422,6 +407,24 @@ public sealed class WaveEditor : Editor
             $"Wave Conductor Preview\n"
             + $"Time: {elapsed:0.00}s / {GetTotalPreviewDuration():0.00}s\n"
             + $"Active scheduled subwaves: {visibleSubWaves}/{cueCount}");
+    }
+
+    internal void DrawSceneEnemySilhouettes()
+    {
+        if (!(target is Wave wave)) return;
+        var warning = wave.GetComponent<WaveDangerWarningController>();
+        float warningDelay = warning != null && warning.ShouldPlayWarning ? warning.WarningDuration : 0f;
+        for (int cue = 0; cue < GetPreviewCueCount(); cue++)
+        {
+            var prefab = GetPreviewCuePrefab(cue);
+            float time = previewSampleElapsed - GetPreviewCueStartDelay(cue) - warningDelay;
+            if (prefab == null || time < 0f) continue;
+            var cache = GetCuePreviewCache(cue, prefab);
+            if (cache.directed == null) continue;
+            RefreshCuePreviewCache(cache, cue, wave, time, cache.directed.GetSimulationEnemyCount());
+            foreach (var item in cache.positions)
+                WaveSceneVisualization.DrawEnemy(cache.directed.GetConfiguredEnemyPrefabForSlot(item.Key), item.Value);
+        }
     }
 
     private void DrawSubWavePreview(
@@ -878,115 +881,6 @@ public sealed class WaveEditor : Editor
     private float GetPreviewElapsed()
     {
         return Mathf.Max(0f, (float)(EditorApplication.timeSinceStartup - previewStartTime));
-    }
-
-    private void DrawCameraBoundsControls()
-    {
-        EditorGUILayout.Space(6f);
-        EditorGUILayout.LabelField("Camera View Bounds", EditorStyles.boldLabel);
-
-        EditorGUI.BeginChangeCheck();
-
-        showCameraBounds = EditorGUILayout.Toggle(
-            "Show In Preview",
-            showCameraBounds);
-        cameraBoundsOrthoSize = Mathf.Max(
-            0.01f,
-            EditorGUILayout.FloatField(
-                "Orthographic Size",
-                cameraBoundsOrthoSize));
-        cameraBoundsAspect = Mathf.Max(
-            0.01f,
-            EditorGUILayout.FloatField(
-                "Aspect",
-                cameraBoundsAspect));
-        cameraBoundsCenter = EditorGUILayout.Vector2Field(
-            "Center",
-            cameraBoundsCenter);
-
-        using (new EditorGUILayout.HorizontalScope())
-        {
-            if (GUILayout.Button("9:16"))
-                cameraBoundsAspect = 9f / 16f;
-
-            if (GUILayout.Button("9:19.5"))
-                cameraBoundsAspect = 9f / 19.5f;
-
-            if (GUILayout.Button("Use Camera"))
-                ApplyCameraBoundsFromCurrentCamera();
-        }
-
-        if (EditorGUI.EndChangeCheck())
-        {
-            SaveCameraBoundsPrefs();
-            SceneView.RepaintAll();
-        }
-    }
-
-    private void ApplyCameraBoundsFromCurrentCamera()
-    {
-        Camera camera = Camera.main;
-        if (camera == null)
-            camera = SceneView.lastActiveSceneView?.camera;
-
-        if (camera == null)
-            return;
-
-        if (camera.orthographic)
-            cameraBoundsOrthoSize = camera.orthographicSize;
-
-        cameraBoundsAspect = Mathf.Max(0.01f, camera.aspect);
-        cameraBoundsCenter = camera.transform.position;
-        SaveCameraBoundsPrefs();
-        SceneView.RepaintAll();
-    }
-
-    private void SaveCameraBoundsPrefs()
-    {
-        EditorPrefs.SetBool(ShowCameraBoundsKey, showCameraBounds);
-        EditorPrefs.SetFloat(CameraBoundsOrthoSizeKey, cameraBoundsOrthoSize);
-        EditorPrefs.SetFloat(CameraBoundsAspectKey, cameraBoundsAspect);
-        EditorPrefs.SetFloat(CameraBoundsCenterXKey, cameraBoundsCenter.x);
-        EditorPrefs.SetFloat(CameraBoundsCenterYKey, cameraBoundsCenter.y);
-    }
-
-    private void DrawCameraBoundsPreview()
-    {
-        if (!showCameraBounds)
-            return;
-
-        float height = cameraBoundsOrthoSize * 2f;
-        float width = height * cameraBoundsAspect;
-        Vector3 center = new Vector3(
-            cameraBoundsCenter.x,
-            cameraBoundsCenter.y,
-            0f);
-
-        Vector3 leftTop = center + new Vector3(-width * 0.5f, height * 0.5f, 0f);
-        Vector3 rightTop = center + new Vector3(width * 0.5f, height * 0.5f, 0f);
-        Vector3 rightBottom = center + new Vector3(width * 0.5f, -height * 0.5f, 0f);
-        Vector3 leftBottom = center + new Vector3(-width * 0.5f, -height * 0.5f, 0f);
-
-        Handles.color = new Color(0.15f, 0.8f, 1f, 0.12f);
-        Handles.DrawSolidRectangleWithOutline(
-            new[] { leftTop, rightTop, rightBottom, leftBottom },
-            new Color(0.15f, 0.8f, 1f, 0.08f),
-            new Color(0.15f, 0.8f, 1f, 0.95f));
-
-        Handles.color = new Color(0.15f, 0.8f, 1f, 0.45f);
-        Handles.DrawDottedLine(
-            center + Vector3.left * width * 0.5f,
-            center + Vector3.right * width * 0.5f,
-            4f);
-        Handles.DrawDottedLine(
-            center + Vector3.down * height * 0.5f,
-            center + Vector3.up * height * 0.5f,
-            4f);
-
-        Handles.color = Color.white;
-        Handles.Label(
-            rightTop + new Vector3(0.15f, 0.15f, 0f),
-            $"Camera View\n{width:0.00} x {height:0.00}\nAspect {cameraBoundsAspect:0.###}");
     }
 
     private float GetTotalPreviewDuration()

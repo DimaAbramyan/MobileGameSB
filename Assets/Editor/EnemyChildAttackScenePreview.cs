@@ -22,7 +22,7 @@ public sealed class EnemyChildAttackScenePreview : IDisposable
             var frame = EnemyShootingPreview.CreateFrame(executor, profiles.GetPattern(i).Shooting, executor.transform.position, 0f, null, out var basis);
             key += frame.ShootingPoint.ToString("R") + basis.ToString("R");
         }
-        if (Camera.main != null) key += Camera.main.projectionMatrix.ToString("R") + Camera.main.transform.localToWorldMatrix.ToString("R") + Camera.main.rect;
+        if (WavePreviewGameplayCamera.GameplayCamera != null) key += WavePreviewGameplayCamera.GameplayCamera.projectionMatrix.ToString("R") + WavePreviewGameplayCamera.GameplayCamera.transform.localToWorldMatrix.ToString("R") + WavePreviewGameplayCamera.GameplayCamera.rect;
         if (world != null && signature == key && Mathf.Approximately(previewTime, time)) return;
         Dispose(); signature = key; previewTime = time;
         world = new EnemyProjectilePreviewWorld();
@@ -71,8 +71,8 @@ public sealed class EnemyChildAttackScenePreview : IDisposable
                     EnemyAttackProjectileBuilder.AppendEmitter(requests, prefab, directionShooting, emitter.Position,
                         EnemyShootingPreviewGeometry.ResolveOrigin(shooting, frame), emitter.BaseDirection, 1f, speeds[p],
                         shooting.RandomPreviewAngle, prefabs, maximum: Mathf.Max(0, 512 - requests.Count),
-                        randomSpeed: numeric[p], directionIndex: arm, projectileOffset: arm * directionShooting.ProjectilesPerDirection,
-                        laserOrigin: new EnemyLaserOrigin(executor.transform, executor.transform.position, shooting.EmissionOrigin, Camera.main));
+                        randomSpeed: numeric[p], directionIndex: arm, targetPoint: shooting.UsesTargetPoint ? target : null, projectileOffset: arm * directionShooting.ProjectilesPerDirection,
+                        laserOrigin: new EnemyLaserOrigin(executor.transform, executor.transform.position, shooting.EmissionOrigin, WavePreviewGameplayCamera.GameplayCamera));
                 }
             }
             world.Spawn(requests);

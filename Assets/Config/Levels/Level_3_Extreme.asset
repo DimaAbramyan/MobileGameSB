@@ -20,7 +20,13 @@ MonoBehaviour:
   goldReward: 0
   coreReward: 0
   metalPickupPrefab: {fileID: 3886868107388774, guid: 5fa59a7895d3c6f4abe58c09fb53f0ce, type: 3}
-  waveMetalDrops: []
+  waveMetalDrops:
+  - minMetal: 0
+    maxMetal: 0
+    carrierChance: 0
+  - minMetal: 0
+    maxMetal: 0
+    carrierChance: 0
   enemyHullHealthMultiplier: 1
   enemyShieldHealthMultiplier: 1
   enemyDamageMultiplier: 1
@@ -36,4 +42,6 @@ MonoBehaviour:
   farthestLayerSpeedMultiplier: 0.25
   parallaxLayers: []
   randomBackgroundObjects: []
-  waves: []
+  waves:
+  - {fileID: 5142897750625784009, guid: 9382bd51aea5abd428a5ae6f1301336a, type: 3}
+  - {fileID: 5142897750625784009, guid: 1102fe8f1e20f004eb7198d299b7d2e9, type: 3}

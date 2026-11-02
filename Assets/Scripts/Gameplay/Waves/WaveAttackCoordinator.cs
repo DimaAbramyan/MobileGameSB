@@ -78,6 +78,9 @@ public sealed class WaveAttackCoordinator : MonoBehaviour
     }
     private void Update()
     {
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+        using var performanceScope = PerformanceMarker.Auto();
+#endif
         if (!CoordinationEnabled) { DisposePlayer(); return; }
         if (runningRequested && player == null) BeginCoordination(Time.time);
         player?.Tick(Time.time);
@@ -92,6 +95,9 @@ public sealed class WaveAttackCoordinator : MonoBehaviour
         return participants.TryGetValue(index, out var participant) ? participant : null;
     }
     public void StopCoordination() { runningRequested = false; DisposePlayer(); }
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+    private static readonly Unity.Profiling.ProfilerMarker PerformanceMarker = new("PerformanceSuite.WaveAttackCoordinator");
+#endif
     public void RestartCoordination() => BeginCoordination(Time.time);
     private void DisposePlayer() { player?.Dispose(); player = null; }
     private void OnDisable() => DisposePlayer();

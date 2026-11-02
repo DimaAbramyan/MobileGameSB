@@ -7,6 +7,7 @@ public struct EnemyPreviewEmitter
     public int Index, LaunchOrder;
     public float LaunchDelay;
     public Vector3 Position, BaseDirection;
+    public Vector3? TargetPoint;
 }
 
 public struct EnemyPreviewProjectile
@@ -21,6 +22,14 @@ public struct EnemyFacingPreviewGuide
     public Vector3 Direction;
     public float TurnAngle;
     public bool PingPong;
+}
+
+public struct EnemyLayoutRotationPreviewRange
+{
+    public float FromTime, ToTime, FromAngle, ToAngle, InitialAngle;
+    public bool Continuous;
+    public float MinimumAngle => Mathf.Min(InitialAngle, Mathf.Min(FromAngle, ToAngle));
+    public float MaximumAngle => Mathf.Max(InitialAngle, Mathf.Max(FromAngle, ToAngle));
 }
 
 public static class EnemyShootingPreviewGeometry
@@ -58,12 +67,31 @@ public static class EnemyShootingPreviewGeometry
         return EnemyAttackFacing.Preview(patterns, initial, basis, time, rotationOverride);
     }
 
+    // Times are taken from the existing runtime rotation model. PingPong includes its initial approach.
+    public static EnemyLayoutRotationPreviewRange GetLayoutRotationRange(EnemyShootingSettings shooting,
+        EnemyRotationSettings rotationOverride = null)
+    {
+        if (!shooting.Rotates) return default;
+        var rotation = rotationOverride ?? shooting.Rotation;
+        float fromTime = 0f, toTime = rotation.Duration;
+        bool continuous = rotation.RotationMode == FourWayEnemyRotationMode.Continuous;
+        if (continuous) toTime = 360f / rotation.RotationSpeedDegreesPerSecond;
+        else if (rotation.RotationMode == FourWayEnemyRotationMode.PingPongByAngle)
+        {
+            fromTime = Mathf.Abs(rotation.RotationFromAngle) / rotation.RotationSpeedDegreesPerSecond;
+            toTime = fromTime + Mathf.Abs(rotation.RotationAngle - rotation.RotationFromAngle) / rotation.RotationSpeedDegreesPerSecond;
+        }
+        return new EnemyLayoutRotationPreviewRange { FromTime = fromTime, ToTime = toTime,
+            FromAngle = rotation.EvaluateAngle(fromTime), ToAngle = rotation.EvaluateAngle(toTime),
+            InitialAngle = rotation.EvaluateAngle(0f), Continuous = continuous };
+    }
+
     public static Vector3 ResolveOrigin(EnemyShootingSettings shooting, EnemyEmissionPreviewFrame frame)
     {
         if (frame.Origin.HasValue) return frame.Origin.Value;
         Rect bounds = frame.GameplayBounds ?? default;
         if (!frame.GameplayBounds.HasValue && shooting.EmissionOrigin.RequiresBounds)
-            EnemyEmissionOriginSettings.TryGetGameplayBounds(Camera.main, frame.EnemyPosition.z, out bounds);
+            EnemyEmissionOriginSettings.TryGetGameplayBounds(WavePreviewGameplayCamera.GameplayCamera, frame.EnemyPosition.z, out bounds);
         return shooting.EmissionOrigin.Resolve(frame.EnemyPosition,
             frame.PlayerPosition ?? frame.Target ?? frame.EnemyPosition, bounds);
     }
@@ -86,6 +114,7 @@ public static class EnemyShootingPreviewGeometry
             requested = frame.Target.Value - aimOrigin;
         }
         return new EnemyPreviewEmitter { Index = index, Position = origin,
+            TargetPoint = shooting.UsesTargetPoint ? frame.PlayerPosition ?? frame.Target : null,
             BaseDirection = shooting.GetEmissionDirection(index, basis, time, requested, aimed, rotationOverride, stationary),
             LaunchOrder = shooting.EmissionLayout.GetLaunchOrder(index), LaunchDelay = shooting.EmissionLayout.GetLaunchDelay(index) };
     }
@@ -98,8 +127,12 @@ public static class EnemyShootingPreviewGeometry
             ? shooting.UsesShotGun ? shooting.GetShotGunPreviewRandomAngle(stackIndex) : shooting.RandomPreviewAngle : 0f;
         if (shooting.ShootingMode == EnemyProjectileFireMode.Random && shooting.UsesExtendedNumericRandomization && numeric.Active)
             spread = shooting.NumericSpread(numeric.ForProjectile(shooting.UsesShotGun ? stackIndex * fanCount : 0));
-        return new EnemyPreviewProjectile { Position = emitter.Position, StackIndex = stackIndex, FanIndex = index % fanCount,
-            SpreadAngle = spread, Direction = shooting.GetProjectileDirection(emitter.BaseDirection, 0, index, spread, numeric),
+        Vector3 direction = shooting.GetProjectileDirection(emitter.BaseDirection, 0, index, spread, numeric);
+        Vector3 spawnPosition = shooting.GetProjectileSpawnPosition(emitter.Position, direction, emitter.Index, index, numeric);
+        if (shooting.UsesTargetPoint && emitter.TargetPoint.HasValue)
+            direction = (emitter.TargetPoint.Value - spawnPosition).normalized;
+        return new EnemyPreviewProjectile { Position = spawnPosition, StackIndex = stackIndex, FanIndex = index % fanCount,
+            SpreadAngle = spread, Direction = direction,
             DnaMedian = shooting.UsesDnaOrbit ? shooting.GetDnaMedianDirection(emitter.BaseDirection, 0, spread, numeric) : Vector3.zero };
     }
 
@@ -110,6 +143,6 @@ public static class EnemyShootingPreviewGeometry
         => Quaternion.Euler(0f, 0f, shooting.EmissionLayout.SectorSweep) * SectorStartDirection(shooting, first);
 
     public static int CoincidentStackCount(EnemyShootingSettings shooting)
-        => shooting.UsesShotGun && shooting.ShootingMode != EnemyProjectileFireMode.Random
+        => !shooting.EnableSpawnOffset && shooting.UsesShotGun && shooting.ShootingMode != EnemyProjectileFireMode.Random
             ? shooting.ProjectilesPerDirection / (shooting.UsesFan ? shooting.FanProjectileCount : 1) : 1;
 }

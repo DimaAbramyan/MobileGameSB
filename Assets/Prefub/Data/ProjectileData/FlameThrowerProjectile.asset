@@ -73,5 +73,6 @@ MonoBehaviour:
       type: {class: ProjectileEnemyDebuffsContract, ns: , asm: Assembly-CSharp}
       data:
         debuffs:
-        - debuff: {fileID: 11400000, guid: f4d5bf69e639736418c63855c867f86b, type: 2}
+        - statSourceId: 8ae29d3c558846efa904020885242f24
+          debuff: {fileID: 11400000, guid: f4d5bf69e639736418c63855c867f86b, type: 2}
           amountPerHit: 3

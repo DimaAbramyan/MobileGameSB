@@ -4,6 +4,9 @@ using Zenject;
 
 public sealed class ArkanoidBall : EnemyProjectileInterceptor
 {
+    public static float GetContactDamage(float damage, float multiplier) => damage * multiplier;
+    public static float GetStasisTickDamage(float damagePerSecond, float interval, float multiplier)
+        => damagePerSecond * interval * multiplier;
     private EnemyProjectileDestructionPolicy projectileDestructionPolicy = EnemyProjectileDestructionPolicy.FragileOnly;
     public override EnemyProjectileDestructionPolicy ProjectileDestructionPolicy => projectileDestructionPolicy;
     [Header("References")]
@@ -447,7 +450,7 @@ public sealed class ArkanoidBall : EnemyProjectileInterceptor
         }
 
         nextEnemyHitTimes[enemy] = Time.time + sameEnemyHitCooldown;
-        float damage = contactDamage * abilityDamageMultiplier;
+        float damage = GetContactDamage(contactDamage, abilityDamageMultiplier);
         damageManager.DealDamage(enemy, owner, damage, contactDamageType);
     }
 
@@ -494,9 +497,7 @@ public sealed class ArkanoidBall : EnemyProjectileInterceptor
             GetWorldRadius(),
             stasisEnemyFilter,
             stasisHits);
-        float damage = stasisDamagePerSecond
-            * stasisTickInterval
-            * abilityDamageMultiplier;
+        float damage = GetStasisTickDamage(stasisDamagePerSecond, stasisTickInterval, abilityDamageMultiplier);
 
         for (int i = 0; i < count; i++)
         {

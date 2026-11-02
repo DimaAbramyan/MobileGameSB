@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -78,11 +78,11 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
         if (!Application.isPlaying)
         {
             EditorGUI.BeginChangeCheck();
-            previewTime = EditorGUILayout.Slider("Layout Preview Time", previewTime, 0f, 20f);
+            previewTime = EditorGUILayout.Slider("Projectile Preview Time", previewTime, 0f, 20f);
             if (HasChildren(((SimpleEnemyAttackExecutor)target).BurstAttackSettings))
             {
                 childPreviewTarget = EditorGUILayout.Vector2Field("Child Preview Target", childPreviewTarget);
-                EditorGUILayout.HelpBox("Layout Preview Time simulates one initial volley and its child attacks. Preview Wave simulates the full wave, including Burst and entrance attacks.", MessageType.Info);
+                EditorGUILayout.HelpBox("Projectile Preview Time simulates one initial volley and its child attacks. Rotation guides automatically show both extreme volleys and their swept area. Preview Wave simulates the full wave, including Burst and entrance attacks.", MessageType.Info);
             }
             if (EditorGUI.EndChangeCheck())
                 SceneView.RepaintAll();
@@ -135,7 +135,7 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
         if (enabled && !wasEnabled)
         {
             var executor = (SimpleEnemyAttackExecutor)target;
-            var type = (EnemyProjectileType)shooting.FindPropertyRelative("projectileType").enumValueIndex;
+            var type = (EnemyProjectileType)shooting.FindPropertyRelative("projectileType").intValue;
             float value;
             bool found = lifetime ? executor.TryGetProjectileBaseLifetime(type, out value) : executor.TryGetProjectileBaseSpeed(type, out value);
             if (found) shooting.FindPropertyRelative(lifetime ? "projectileLifetime" : "projectileBaseSpeed").floatValue = value;
@@ -144,7 +144,7 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
     }
     private void CheckProjectileReference(SerializedProperty shooting, string label)
     {
-        var type = (EnemyProjectileType)shooting.FindPropertyRelative("projectileType").enumValueIndex;
+        var type = (EnemyProjectileType)shooting.FindPropertyRelative("projectileType").intValue;
         if (type == EnemyProjectileType.Laser) return;
         string reference = type switch
         {
@@ -179,7 +179,7 @@ public sealed class SimpleEnemyAttackExecutorEditor : Editor
         for (int i = 0; i < patterns.PatternCount; i++)
         {
             var shooting = patterns.GetPattern(i).Shooting;
-            EnemyShootingPreview.DrawExecutorPattern(executor, shooting, executor.transform.position, previewTime);
+            EnemyShootingPreview.DrawExecutorPattern(executor, shooting, executor.transform.position, previewTime, staticLayoutPose: true);
         }
         int facingIndex = patterns.FacingPatternIndex;
         if (patterns.FacingMode == EnemyFacingMode.Rotation

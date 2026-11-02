@@ -5,8 +5,18 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Zenject;
 
-public class CreateBladeAbility : ActiveAbility
+public class CreateBladeAbility : ActiveAbility, IStatValueResolver
 {
+    private BladeShipMetaContract displayStatSnapshot;
+    public override IStatValueProvider DisplayStatSnapshot => displayStatSnapshot;
+    public bool IsRuntime => true;
+    public bool TryRead(StatValueDefinition definition, out StatValueResult result)
+    {
+        bool found = displayStatSnapshot != null && definition.ProviderType == typeof(BladeShipMetaContract)
+            && definition.Property == nameof(BladeShipMetaContract.Damage);
+        result = new StatValueResult(MaterializedBladeTrail.GetDamage(bladeDamage, owner, abilityDamageMultiplier), StatValueState.Runtime);
+        return found;
+    }
     [Inject] private EnemyProjectileCollisionRegistry projectileCollisionRegistry;
     [Inject] private DealDamageManager damageManager;
     private EnemyDamageType damageType = EnemyDamageType.Default;
@@ -35,6 +45,7 @@ public class CreateBladeAbility : ActiveAbility
             return;
 
         recordingDuration = contract.RecordingDuration;
+        displayStatSnapshot = contract;
         sampleInterval = contract.SampleInterval;
         bladeWidth = contract.Width;
         bladeSpeed = contract.Speed;
@@ -223,6 +234,9 @@ public class CreateBladeAbility : ActiveAbility
 
 public sealed class MaterializedBladeTrail : EnemyProjectileInterceptor
 {
+    public static float GetDamage(float baseDamage, ParentShip source, float fallbackMultiplier)
+        => baseDamage * (source != null && source.ShipData != null
+            ? source.ShipData.GetAbilityDamageMultiplier(source.GetLevel()) : fallbackMultiplier);
     private DealDamageManager damageManager;
     private EnemyDamageType damageType = EnemyDamageType.Default;
     private readonly ContactFilter2D damageFilter = new ContactFilter2D { useTriggers = true };
@@ -422,7 +436,7 @@ public sealed class MaterializedBladeTrail : EnemyProjectileInterceptor
             return;
 
         damagedEnemies.Add(enemy);
-        float amount = damage * GetCurrentDamageMultiplier();
+        float amount = GetDamage(damage, owner, fallbackDamageMultiplier);
         if (damageManager != null) damageManager.DealDamage(enemy, owner, amount, damageType);
         else
         {
@@ -463,10 +477,4 @@ public sealed class MaterializedBladeTrail : EnemyProjectileInterceptor
         previousDamagePosition = currentPosition;
     }
 
-      private float GetCurrentDamageMultiplier()
-      {
-          return owner != null && owner.ShipData != null
-              ? owner.ShipData.GetAbilityDamageMultiplier(owner.GetLevel())
-              : fallbackDamageMultiplier;
-      }
   }

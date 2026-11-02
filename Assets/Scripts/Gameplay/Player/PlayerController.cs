@@ -88,6 +88,8 @@ public class PlayerController : MonoBehaviour, ISerializationCallbackReceiver
     ShipSelect shipSelect;
 
     public bool ControlsLocked => Time.time < controlsLockedUntil;
+    public PlayerActionLocks ActionLocks { get; } = new();
+    public bool MovementLocked => ControlsLocked || ActionLocks.Blocks(PlayerActions.Movement);
     public PlayerMovementMode MovementMode => movementMode;
     public float JoystickMaxSpeed => overrideMaxSpeed
         ? Mathf.Max(0f, maxSpeed)
@@ -97,7 +99,7 @@ public class PlayerController : MonoBehaviour, ISerializationCallbackReceiver
         || movementMode == PlayerMovementMode.JoystickFocus;
     private bool UsesShipSwitchButton => movementMode == PlayerMovementMode.JoystickFocus
         && !switchShipOnFocusRelease;
-    public bool ShipSwitchLocked => Time.time < shipSwitchLockedUntil;
+    public bool ShipSwitchLocked => Time.time < shipSwitchLockedUntil || ActionLocks.Blocks(PlayerActions.ShipSwitch);
     public float ShipSwitchPressWindow => Mathf.Clamp(shipSwitchPressWindow, 0.05f, 1f);
     public float ShipSwitchTouchDistancePercent => Mathf.Clamp(shipSwitchTouchDistancePercent, 0f, 25f);
     public PlayerEffectController Effects => EnsureEffectController();
@@ -116,7 +118,7 @@ public class PlayerController : MonoBehaviour, ISerializationCallbackReceiver
     private void FixedUpdate()
     {
         SynchronizeMovementMode();
-        if (ControlsLocked || UsesDirectMovement)
+        if (MovementLocked || UsesDirectMovement)
             return;
 
         PositionController();
@@ -129,7 +131,13 @@ public class PlayerController : MonoBehaviour, ISerializationCallbackReceiver
             CurrentVelocity = Vector2.zero;
         if (!ControlsLocked)
         {
-            if (UsesJoystick)
+            if (ActionLocks.Blocks(PlayerActions.Movement))
+            {
+                ResetMovementTouch();
+                CurrentVelocity = Vector2.zero;
+                if (playerRB != null) playerRB.linearVelocity = Vector2.zero;
+            }
+            else if (UsesJoystick)
                 MoveByJoystick(Time.deltaTime);
             else
             {

@@ -24,6 +24,7 @@ public sealed partial class WaveConductorShootingPreview : IDisposable
     }
 
     private readonly Wave owner;
+    private readonly int gameplayCameraRevision = WavePreviewGameplayCamera.Revision;
     private readonly List<Cue> cues = new();
     private readonly EnemyProjectilePreviewWorld projectiles = new();
     private readonly Stopwatch timer = new();
@@ -46,6 +47,7 @@ public sealed partial class WaveConductorShootingPreview : IDisposable
     {
         get
         {
+            if (gameplayCameraRevision != WavePreviewGameplayCamera.Revision) return false;
             if (numericPreviewRevision != NumericRandomPreviewControls.Revision || presetRevision != EnemyPresetRevision.Value) return false;
             if (!IsCoordinatorCurrent) return false;
             foreach (var item in configurationObjects)
@@ -145,7 +147,7 @@ public sealed partial class WaveConductorShootingPreview : IDisposable
 
     public bool AdvanceTo(float destination, double budgetMilliseconds = 4d, bool captureRenderState = true,
         Action<int> beforeStep = null, Action<int> afterStep = null, int maxSteps = 120,
-        bool deferPresentation = false)
+        bool deferPresentation = false, Func<bool> stopAfterStep = null)
     {
         if (disposed) return true;
         timer.Restart();
@@ -166,7 +168,7 @@ public sealed partial class WaveConductorShootingPreview : IDisposable
             projectiles.Step((StepCount + 1) * step, step, TargetPosition);
             Time = ++StepCount * step;
             afterStep?.Invoke(StepCount);
-            if (++steps >= Mathf.Max(1, maxSteps) || timer.Elapsed.TotalMilliseconds >= budgetMilliseconds) break;
+            if (++steps >= Mathf.Max(1, maxSteps) || stopAfterStep?.Invoke() == true || timer.Elapsed.TotalMilliseconds >= budgetMilliseconds) break;
         }
         if (captureRenderState) projectiles.CaptureRenderState();
         return destination - Time < step + .00001f;
@@ -181,6 +183,12 @@ public sealed partial class WaveConductorShootingPreview : IDisposable
         projectiles.SetVisible(visible);
         if (target.TryGetComponent<Renderer>(out var renderer)) renderer.forceRenderingOff = !visible;
         for (int i = 0; i < cues.Count; i++) cues[i].Session?.SetVisible(visible && cues[i].Started);
+    }
+
+    internal void DrawEnemySilhouettes()
+    {
+        foreach (var cue in cues)
+            if (cue.Started) cue.Session?.DrawEnemySilhouettes();
     }
 
     internal void PublishRenderState()
@@ -236,7 +244,7 @@ public sealed partial class WaveConductorShootingPreview : IDisposable
         }
         if (!allowTargetEditing) return;
         EditorGUI.BeginChangeCheck();
-        Vector3 position = Handles.PositionHandle(TargetPosition, Quaternion.identity);
+        Vector3 position = WavePreviewTargetHandle.Draw(TargetPosition);
         if (EditorGUI.EndChangeCheck()) { position.z = 0f; TargetPosition = position; view.Repaint(); }
     }
 

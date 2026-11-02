@@ -11,18 +11,20 @@ public static class EnemyPresetFields
     public static readonly string[] Projectile = {
         "projectileOrbitFixedWorldCenterXRandom", "projectileOrbitFixedWorldCenterYRandom",
         "projectileLifetimeRandom", "projectileSpeedChangeYRandom", "projectileAngularSpeedRandom", "projectileLateralSpeedRandom", "projectileOrbitRadiusRandom", "projectileOrbitRadialSpeedRandom", "projectileDnaWeaveSpeedRandom", "projectileSizeChangeYRandom", "projectileSizeChangeSpeedRandom", "projectileFinalSizeRandom", "consistentInitialSpeedChangePerVolleyRandom",
-        "projectileType", "projectilePrefab", "independentProjectileSpeed", "laser", "overwriteProjectileCharacteristic", "projectileCharacteristic",
-        "overwriteBaseColour", "projectileColour", "overrideProjectileBaseSpeed", "projectileBaseSpeed",
+        "projectileType", "projectilePrefab", "independentProjectileSpeed", "laser", "composite", "overwriteProjectileCharacteristic", "projectileCharacteristic",
+        "overrideProjectileDamage", "projectileDamage", "overwriteBaseColour", "projectileColour", "overrideProjectileBaseSpeed", "projectileBaseSpeed",
         "projectileBaseSpeedRandom", "speedRandomizeOn", "seededInitialSpeedRandom", "numericRandomSeed",
         "shotGunInitialSpeed", "shotGunInitialSpeedRandom", "overrideProjectileLifetime", "projectileLifetime",
         "initialSpeedMode", "randomInitialSpeedMinimum", "randomInitialSpeedMaximum", "consistentInitialSpeedChangePerVolley",
         "projectileSpeedBehavior", "projectileSpeedChangeY", "projectileSpeedByDistance", "projectileSpeedCurveTarget",
-        "projectileMovementPattern", "projectileAngularSpeed", "projectileLateralSpeed", "projectileOrbitCenterMode",
+        "targetScreenBoundary", "targetBoundaries", "targetBoundaryOffset", "hideParentOnTargetReached", "targetPointSpeedByRemainingDistance", "projectileMovementPattern", "projectileAngularSpeed", "projectileLateralSpeed", "projectileOrbitCenterMode",
         "projectileOrbitFixedWorldCenter", "projectileOrbitRadius", "projectileOrbitRadialSpeed", "projectileDnaWeaveSpeed",
         "projectileSizeBehavior", "projectileSizeChangeY", "projectileSizeChangeSpeed", "projectileSizeChangeCurve",
-        "projectileFinalSize", "useChildAttackPattern"
+        "overrideBaseSize", "baseSize", "projectileFinalSize", "useChildAttackPattern", "screenBoundary", "collisionSettings"
     };
     public static readonly string[] Layout = {
+        "enableSpawnOffset", "baseOffsetX", "baseOffsetY", "stepOffsetX", "stepOffsetY",
+        "baseOffsetXRandom", "baseOffsetYRandom", "stepOffsetXRandom", "stepOffsetYRandom",
         "shotGunDirectionXRandom", "shotGunDirectionYRandom",
         "fanProjectileCountRandom", "fanMinAngleRandom", "fanMaxAngleRandom", "shotGunProjectileCountRandom", "randomMinAngleRandom", "randomMaxAngleRandom",
         "shootingType", "emissionOrigin", "emissionLayout", "layoutRotationEnabled", "emissionLayoutVersion",

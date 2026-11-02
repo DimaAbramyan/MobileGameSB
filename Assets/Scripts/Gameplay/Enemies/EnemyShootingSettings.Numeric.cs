@@ -27,14 +27,24 @@ public sealed partial class EnemyShootingSettings
     [SerializeField, HideInInspector] private RandomFloatRange projectileSizeChangeYRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerProjectile };
     [SerializeField, HideInInspector] private RandomFloatRange projectileSizeChangeSpeedRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerProjectile };
     [SerializeField, HideInInspector] private RandomFloatRange projectileFinalSizeRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerProjectile };
+    [SerializeField, HideInInspector] private RandomFloatRange baseOffsetXRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerShot };
+    [SerializeField, HideInInspector] private RandomFloatRange baseOffsetYRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerShot };
+    [SerializeField, HideInInspector] private RandomFloatRange stepOffsetXRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerShot };
+    [SerializeField, HideInInspector] private RandomFloatRange stepOffsetYRandom = new() { randomizeOn = EnemyNumericRandomizeOn.PerShot };
+    public bool UsesSpawnOffsetRandomization => enableSpawnOffset && (EnemyNumericSample.Enabled(baseOffsetXRandom)
+        || EnemyNumericSample.Enabled(baseOffsetYRandom) || EnemyNumericSample.Enabled(stepOffsetXRandom) || EnemyNumericSample.Enabled(stepOffsetYRandom));
     public bool UsesGeometryRandomization => EnemyNumericSample.Enabled(shotGunDirectionXRandom) || EnemyNumericSample.Enabled(shotGunDirectionYRandom) || EnemyNumericSample.Enabled(fanProjectileCountRandom) || EnemyNumericSample.Enabled(fanMinAngleRandom) || EnemyNumericSample.Enabled(fanMaxAngleRandom) || EnemyNumericSample.Enabled(shotGunProjectileCountRandom) || EnemyNumericSample.Enabled(randomMinAngleRandom) || EnemyNumericSample.Enabled(randomMaxAngleRandom) || EnemyNumericSample.Enabled(consistentInitialSpeedChangePerVolleyRandom) || EmissionLayout.UsesNumericRandomization || Rotation.UsesNumericRandomization;
     public bool UsesProjectileRandomization => EnemyNumericSample.Enabled(projectileOrbitFixedWorldCenterXRandom) || EnemyNumericSample.Enabled(projectileOrbitFixedWorldCenterYRandom) || EnemyNumericSample.Enabled(projectileLifetimeRandom) || EnemyNumericSample.Enabled(projectileSpeedChangeYRandom) || EnemyNumericSample.Enabled(projectileAngularSpeedRandom) || EnemyNumericSample.Enabled(projectileLateralSpeedRandom) || EnemyNumericSample.Enabled(projectileOrbitRadiusRandom) || EnemyNumericSample.Enabled(projectileOrbitRadialSpeedRandom) || EnemyNumericSample.Enabled(projectileDnaWeaveSpeedRandom) || EnemyNumericSample.Enabled(projectileSizeChangeYRandom) || EnemyNumericSample.Enabled(projectileSizeChangeSpeedRandom) || EnemyNumericSample.Enabled(projectileFinalSizeRandom);
-    public bool UsesExtendedNumericRandomization => UsesGeometryRandomization || UsesProjectileRandomization;
+    public bool UsesExtendedNumericRandomization => UsesSpawnOffsetRandomization || UsesGeometryRandomization || UsesProjectileRandomization || IsComposite && Composite.UsesNumericRandomization;
     internal static bool AtScope(EnemyNumericRandomizeOn frequency, bool perDirection) => perDirection
         ? frequency == EnemyNumericRandomizeOn.PerDirection : frequency == EnemyNumericRandomizeOn.PerAttack || frequency == EnemyNumericRandomizeOn.PerShot;
     private void CopyNumericFrom(EnemyShootingSettings source)
     {
         geometrySampled = directionSampled = needsDirectionSamples = false;
+        baseOffsetXRandom = source.baseOffsetXRandom?.Copy() ?? new();
+        baseOffsetYRandom = source.baseOffsetYRandom?.Copy() ?? new();
+        stepOffsetXRandom = source.stepOffsetXRandom?.Copy() ?? new();
+        stepOffsetYRandom = source.stepOffsetYRandom?.Copy() ?? new();
         projectileOrbitFixedWorldCenterXRandom = source.projectileOrbitFixedWorldCenterXRandom?.Copy() ?? new();
         projectileOrbitFixedWorldCenterYRandom = source.projectileOrbitFixedWorldCenterYRandom?.Copy() ?? new();
         shotGunDirectionXRandom = source.shotGunDirectionXRandom?.Copy() ?? new();
@@ -96,7 +106,7 @@ public sealed partial class EnemyShootingSettings
         sample.Float(projectileDnaWeaveSpeedRandom, DnaWeaveSpeed, 307u, .01f),
         sample.Float(projectileSizeChangeYRandom, SizeChangeY, 308u, float.MinValue),
         sample.Float(projectileSizeChangeSpeedRandom, SizeChangeSpeed, 309u, .01f),
-        sample.Float(projectileFinalSizeRandom, FinalSize, 310u, .01f),
+        sample.Float(projectileFinalSizeRandom, FinalSize, 310u, 0f),
         new Vector2(sample.Float(projectileOrbitFixedWorldCenterXRandom, projectileOrbitFixedWorldCenter.x, 311u), sample.Float(projectileOrbitFixedWorldCenterYRandom, projectileOrbitFixedWorldCenter.y, 312u))
     );
     public float NumericFanStart(EnemyNumericSample sample) => fanMinAngleRandom?.randomizeOn == EnemyNumericRandomizeOn.PerProjectile ? sample.Float(fanMinAngleRandom, fanMinAngle, 102u) : fanMinAngle;

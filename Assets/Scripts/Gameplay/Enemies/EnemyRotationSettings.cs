@@ -1,5 +1,7 @@
 using UnityEngine;
 
+public enum EnemyLayoutRotationOnAttackFinished { ContinueRotation, PauseRotation, ResetRotation }
+
 [System.Serializable]
 public partial class EnemyRotationSettings
 {
@@ -13,6 +15,15 @@ public partial class EnemyRotationSettings
     [SerializeField] [Randomizable(nameof(rotationFromAngleRandom), float.MinValue, EnemyNumericScopes.Volley, EnemyNumericRandomizeOn.PerAttack)]
     private float rotationFromAngle;
     [SerializeField] private bool resetRotationOnEnable = true;
+    [SerializeField] private EnemyLayoutRotationOnAttackFinished onAttackFinished;
+    public EnemyLayoutRotationOnAttackFinished OnAttackFinished => onAttackFinished;
+    public static EnemyLayoutRotationOnAttackFinished AttackFinishedMode(EnemyBurstAttackSettings profile)
+    {
+        var mode = EnemyLayoutRotationOnAttackFinished.ContinueRotation;
+        for (int i = 0; i < profile.PatternCount; i++)
+            if (profile.GetPattern(i).Shooting.Rotation.OnAttackFinished > mode) mode = profile.GetPattern(i).Shooting.Rotation.OnAttackFinished;
+        return mode;
+    }
 
     public FourWayEnemyRotationDirection Direction => direction;
     public FourWayEnemyRotationMode RotationMode => rotationMode;
@@ -95,6 +106,7 @@ public partial class EnemyRotationSettings
             return;
         source.Validate();
         CopyNumericFrom(source);
+        onAttackFinished = source.onAttackFinished;
         Configure(source.direction, source.rotationMode, source.rotationSpeedDegreesPerSecond,
             source.CreateRotationProgressCurve(), source.rotationAngle, source.rotationFromAngle, source.resetRotationOnEnable);
     }

@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 public sealed class LevelProgressService
 {
-    private const string SaveFileName = "level_progress.json";
-
-    private readonly string savePath;
+    private readonly SaveManager saveManager;
     private readonly HashSet<int> completedLevelIds = new HashSet<int>();
     private readonly HashSet<long> completedDifficultyKeys = new();
     private bool loaded;
 
-    public LevelProgressService()
+    public LevelProgressService() : this(new SaveManager()) { }
+
+    [Zenject.Inject]
+    public LevelProgressService(SaveManager saveManager)
     {
-        savePath = Path.Combine(Application.persistentDataPath, SaveFileName);
+        this.saveManager = saveManager ?? throw new ArgumentNullException(nameof(saveManager));
     }
 
     public bool IsLevelCompleted(LevelConfig level)
@@ -100,8 +100,7 @@ public sealed class LevelProgressService
         completedDifficultyKeys.Clear();
         loaded = true;
 
-        if (File.Exists(savePath))
-            File.Delete(savePath);
+        Save();
     }
 
     private void EnsureLoaded()
@@ -113,71 +112,38 @@ public sealed class LevelProgressService
         completedLevelIds.Clear();
         completedDifficultyKeys.Clear();
 
-        if (!File.Exists(savePath))
-            return;
+        LevelProgressSaveData data = saveManager.ReadProgression().levels;
 
-        try
+        // Older saves contain only level IDs; those remain Normal completions.
+        data.completedLevelIds ??= new List<int>();
+        for (int i = 0; i < data.completedLevelIds.Count; i++)
         {
-            string json = File.ReadAllText(savePath);
-            LevelProgressSaveData data =
-                JsonUtility.FromJson<LevelProgressSaveData>(json);
-
-            if (data == null)
-                return;
-
-            // Older saves contain only level IDs; those remain Normal completions.
-            data.completedLevelIds ??= new List<int>();
-            for (int i = 0; i < data.completedLevelIds.Count; i++)
-            {
-                int id = data.completedLevelIds[i];
-                if (id >= 0)
-                    completedLevelIds.Add(id);
-            }
-
-            if (data.completedDifficultyKeys != null)
-            {
-                for (int i = 0; i < data.completedDifficultyKeys.Count; i++)
-                {
-                    long key = data.completedDifficultyKeys[i];
-                    uint difficulty = (uint)key;
-                    if (key >= 0 && difficulty >= (uint)LevelDifficulty.Hard
-                        && difficulty <= (uint)LevelDifficulty.Extreme)
-                        completedDifficultyKeys.Add(key);
-                }
-            }
+            int id = data.completedLevelIds[i];
+            if (id >= 0)
+                completedLevelIds.Add(id);
         }
-        catch (Exception exception)
+
+        if (data.completedDifficultyKeys != null)
         {
-            Debug.LogWarning(
-                $"Cannot load level progress from {savePath}: {exception.Message}");
+            for (int i = 0; i < data.completedDifficultyKeys.Count; i++)
+            {
+                long key = data.completedDifficultyKeys[i];
+                uint difficulty = (uint)key;
+                if (key >= 0 && difficulty >= (uint)LevelDifficulty.Hard
+                    && difficulty <= (uint)LevelDifficulty.Extreme)
+                    completedDifficultyKeys.Add(key);
+            }
         }
     }
 
     private void Save()
     {
-        try
+        var data = new LevelProgressSaveData
         {
-            string directory = Path.GetDirectoryName(savePath);
-            if (!string.IsNullOrEmpty(directory)
-                && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            LevelProgressSaveData data = new LevelProgressSaveData
-            {
-                completedLevelIds = new List<int>(completedLevelIds),
-                completedDifficultyKeys = new List<long>(completedDifficultyKeys)
-            };
-
-            string json = JsonUtility.ToJson(data, true);
-            File.WriteAllText(savePath, json);
-        }
-        catch (Exception exception)
-        {
-            Debug.LogWarning(
-                $"Cannot save level progress to {savePath}: {exception.Message}");
-        }
+            completedLevelIds = new List<int>(completedLevelIds),
+            completedDifficultyKeys = new List<long>(completedDifficultyKeys)
+        };
+        saveManager.UpdateProgression(progress => progress.levels = data, true);
     }
 
     private static long GetDifficultyKey(int levelId, LevelDifficulty difficulty)
@@ -185,10 +151,4 @@ public sealed class LevelProgressService
         return ((long)levelId << 32) | (uint)difficulty;
     }
 
-    [Serializable]
-    private sealed class LevelProgressSaveData
-    {
-        public List<int> completedLevelIds = new List<int>();
-        public List<long> completedDifficultyKeys = new();
-    }
 }

@@ -14,6 +14,7 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
     [SerializeField] private int speedIndex = 2;
     [SerializeField] private bool followSelection = true;
     private WavePreviewPlayer player;
+    internal static WavePreviewPlayer ActivePlayer { get; private set; }
     private double previousUpdate;
     private bool invalidated;
     private float viewStart, viewLength = 30f;
@@ -73,11 +74,13 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
         Undo.postprocessModifications -= Modifications;
     }
     private void SceneChanged(Scene previous, Scene current) => Release();
-    private void SceneClosing(Scene scene, bool removingScene) => Release();
+    private void SceneClosing(Scene scene, bool removingScene)
+    { if (!EditorSceneManager.IsPreviewScene(scene)) Release(); }
     private void PlayModeChanged(PlayModeStateChange state)
     { if (state == PlayModeStateChange.ExitingEditMode) Release(); }
     private void Release()
     {
+        if (ActivePlayer == player) ActivePlayer = null;
         player?.Dispose(); player = null;
         if (coordinatorEditor != null) DestroyImmediate(coordinatorEditor);
         SceneView.RepaintAll(); Repaint();
@@ -118,6 +121,7 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
             player = new WavePreviewPlayer(source, previewDuration, targetPosition)
             { SnapshotInterval = snapshotInterval, SnapshotMemoryLimitMB = snapshotMemoryLimitMB, RecordPlayerMovement = recordPlayerMovement,
                 SimulationTimeBudget = simulationTimeBudget, MaxStepsPerUpdate = maxStepsPerUpdate };
+        ActivePlayer = player;
         return player;
     }
     private void Tick()
@@ -156,7 +160,7 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
         if (!player.IsLoading)
         {
             EditorGUI.BeginChangeCheck();
-            var next = Handles.PositionHandle(targetPosition, Quaternion.identity);
+            var next = WavePreviewTargetHandle.Draw(targetPosition);
             if (EditorGUI.EndChangeCheck())
             { next.z = 0f; player.TargetPosition = next; targetPosition = player.TargetPosition; Repaint(); }
         }
@@ -192,6 +196,7 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
             if (GUILayout.Button("Step ▶", EditorStyles.toolbarButton)) EnsurePlayer().Step(1);
             speedIndex = EditorGUILayout.Popup(speedIndex, SpeedLabels, EditorStyles.toolbarPopup, GUILayout.Width(92f));
         }
+        DrawCoordinatorNavigation();
         EditorGUI.BeginChangeCheck();
         previewDuration = Mathf.Max(WavePreviewPlayer.StepInterval, EditorGUILayout.FloatField(new GUIContent("Preview Duration",
             "Preview horizon, not an enemy-death prediction. Loops and combat-dependent waves have no fixed total duration."), previewDuration));
@@ -262,6 +267,30 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
         DrawEvents();
         DrawCoordinator();
     }
+    private void DrawCoordinatorNavigation()
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            using (new EditorGUI.DisabledScope(!WavePreviewPlayer.HasEnabledCoordinator(source) || player != null && (player.IsLoading || player.IsFindingCoordinatorEvent)))
+            {
+                if (GUILayout.Button(new GUIContent("Previous Event", "Pause at the first completed fixed step after the previous active-group change."), GUILayout.Width(120f))) EnsurePlayer().PreviousCoordinatorEvent();
+                if (GUILayout.Button(new GUIContent("Next Event", "Find the next active-group change without moving the current world, then pause immediately after it."), GUILayout.Width(120f))) EnsurePlayer().NextCoordinatorEvent();
+            }
+            if (player != null && player.IsFindingCoordinatorEvent)
+            {
+                EditorGUILayout.LabelField($"Finding Coordinator event · {player.CoordinatorSearchTime:0.00}s");
+                if (GUILayout.Button("Cancel", GUILayout.Width(60f))) player.CancelCoordinatorEventNavigation();
+            }
+        }
+        if (!string.IsNullOrEmpty(player?.CoordinatorNavigationMessage))
+            EditorGUILayout.HelpBox(player.CoordinatorNavigationMessage, MessageType.Info);
+        var selected = player?.SelectedCoordinatorEvent;
+        if (selected == null) return;
+        EditorGUILayout.LabelField($"{selected.Time:0.00}s — {selected.Summary}", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Activated", selected.Activated);
+        EditorGUILayout.LabelField("Deactivated", selected.Deactivated);
+        EditorGUILayout.LabelField("Active after event", selected.Active);
+    }
     private void DrawCoordinator()
     {
         EditorGUILayout.Space(8f);
@@ -312,7 +341,7 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
         EditorGUI.DrawRect(strip, new Color(.13f, .14f, .17f));
         if (player != null)
         {
-            var observations = player.Events;
+            var observations = player.CoordinatorEvents;
             // Pixel buckets keep rendering bounded even when the event history is dense.
             int previousPixel = -1;
             for (int i = 0; i < observations.Count; i++)
@@ -322,23 +351,26 @@ public sealed class WavePreviewPlayerWindow : EditorWindow
                 int pixel = Mathf.FloorToInt((observation.Time - viewStart) / viewLength * strip.width);
                 if (pixel == previousPixel) continue;
                 previousPixel = pixel;
-                EditorGUI.DrawRect(new Rect(strip.x + pixel, strip.y + 8f, 2f, 26f), EventColor(observation.Kind));
+                EditorGUI.DrawRect(new Rect(strip.x + pixel, strip.y + 8f, 2f, 26f), Color.cyan);
             }
             float cursor = (player.CurrentTime - viewStart) / viewLength;
             if (cursor >= 0f && cursor <= 1f) EditorGUI.DrawRect(new Rect(strip.x + cursor * strip.width, strip.y, 2f, strip.height), Color.white);
         }
         if ((Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag) && strip.Contains(Event.current.mousePosition) && Event.current.button == 0)
-        { EnsurePlayer().Seek(viewStart + Mathf.Clamp01((Event.current.mousePosition.x - strip.x) / strip.width) * viewLength); Event.current.Use(); }
+        {
+            WavePreviewCoordinatorEvent selected = null;
+            float nearest = 6f;
+            if (Event.current.type == EventType.MouseDown && player != null)
+                foreach (var observation in player.CoordinatorEvents)
+                {
+                    float distance = Mathf.Abs(strip.x + (observation.Time - viewStart) / viewLength * strip.width - Event.current.mousePosition.x);
+                    if (distance < nearest) { nearest = distance; selected = observation; }
+                }
+            if (selected != null) EnsurePlayer().SeekCoordinatorEvent(selected);
+            else EnsurePlayer().Seek(viewStart + Mathf.Clamp01((Event.current.mousePosition.x - strip.x) / strip.width) * viewLength);
+            Event.current.Use();
+        }
     }
-    private static Color EventColor(WavePreviewEventKind kind) => kind switch
-    {
-        WavePreviewEventKind.EnemySpawn => Color.green,
-        WavePreviewEventKind.ProjectileSpawn => Color.yellow,
-        WavePreviewEventKind.AttackStart => new Color(1f, .4f, .3f),
-        WavePreviewEventKind.AttackEnd => new Color(.6f, .6f, .9f),
-        WavePreviewEventKind.CoordinatorGroupChange => Color.cyan,
-        _ => new Color(1f, .4f, 1f)
-    };
     private void DrawEvents()
     {
         showEvents = EditorGUILayout.Foldout(showEvents, $"Observed Events ({player?.Events.Count ?? 0})", true);

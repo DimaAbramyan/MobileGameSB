@@ -8,8 +8,8 @@ public enum EnemyLaserDamageMode { OnContact, Periodic }
 public sealed class EnemyLaserGeometry
 {
     [SerializeField] private EnemyLaserLengthMode lengthMode;
-    [SerializeField, Min(0f)] private float laserLength = 10f;
-    [SerializeField] private float lengthOffset;
+    [SerializeField, Min(0f), Tooltip("Total beam distance, including all Bounce segments.")] private float laserLength = 10f;
+    [SerializeField, Tooltip("Added to the distance to the first screen edge. Positive values allow Bounce to continue beyond that edge.")] private float lengthOffset;
     [SerializeField, Min(0f)] private float laserWidth = .15f;
     [SerializeField, Tooltip("World-space offset from the resolved emission point. Fan/Stack keep their existing emission geometry.")]
     private Vector2 laserOffset;
@@ -54,7 +54,8 @@ public sealed class EnemyLaserSettings
     [SerializeField, Min(0f), Tooltip("Visual tail after the active duration; the fading tail does not deal damage.")]
     private float fadeOutDuration = .2f;
     [SerializeField] private bool followOrigin;
-    [SerializeField] private bool surviveSourceDestruction = true;
+    [SerializeField, Tooltip("Applies to non-enemy sources. Enemy-owned lasers always cancel when the owning enemy dies or disappears.")]
+    private bool surviveSourceDestruction = true;
     [SerializeField, Min(0f)] private float damage = 1f;
     [SerializeField] private EnemyLaserDamageMode damageMode;
     [SerializeField, Min(.01f)] private float damageInterval = .5f;

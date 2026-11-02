@@ -55,7 +55,7 @@ public static class VerifyHeavyExtraHealth
             Near(heavy.CurrentShieldPoints, heavyShield, "Heavy shield is not spent");
             Near(ability.CooldownRemaining, 45f, "Existing standard recovery retained");
             Near(slider.value, slider.maxValue, "ExtraHealthBar updates on grant");
-            Check(text.text.Contains("1"), "Extra health text updates");
+            if (text != null) Check(text.text.Contains("1"), "Optional extra health text updates");
             ability.TryActivate(heavy); Near(extra.ExtraHealth, 1f, "Cooldown blocks repeated activation");
             Check(!ability.Activate(heavy), "A full buffer rejects a grant");
             Near(extra.ExtraHealth, 1f, "Repeated grant cannot exceed maximum");

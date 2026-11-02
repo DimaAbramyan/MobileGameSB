@@ -12,6 +12,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
   m_Name: DrillMeta
   m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  statDisplay:
+    baseStats:
+      rows:
+      - cells:
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 0
+          sourcePath: 
+          statId: 
+          sourceAsset: {fileID: 0}
+          overrideLabel: 0
+          valueFormat: 
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 0
+          sourcePath: 
+          statId: 
+          sourceAsset: {fileID: 0}
+          overrideLabel: 0
+          valueFormat: 
+      - cells: []
+    secondaryStats:
+      rows: []
   energyCost: 2
   projectileSlots:
   - id: 232df04a9376462789d389ff154d1ee8
@@ -34,8 +59,15 @@ MonoBehaviour:
     - rid: 3397719010030125149
       type: {class: FanFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
       data:
+        fanFireDisabled: 0
         projectileCount: 5
         totalSpreadAngle: 17.5
         customAngles: 0
         angles:
         - 0
+        usePartialFan: 0
+        cyclePartialFanGroups: 0
+        partialFanGroups:
+        - statSourceId: 316e0dbabf0047118b8d1c43b668062e
+          projectileCount: 1
+          angleOffset: 0

@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 public class DestroyUIElement : MonoBehaviour
 {
+    [Zenject.Inject(Optional = true)] private SaveManager saveManager;
     [SerializeField] private GameObject toDestroy;
 
     public void ToDestroy()
@@ -17,7 +18,9 @@ public class DestroyUIElement : MonoBehaviour
             toDestroy.GetComponent<SaveButtonView>()?.ClearTargetSlot();
         }
         string I = toDestroy.GetComponentInChildren<TMP_Text>().text;
-        File.Delete(Application.persistentDataPath + "/Saves/" + I + ".json");
+        saveManager ??= new SaveManager();
+        if (!saveManager.TryDeleteShip(I, out string error))
+            Debug.LogWarning(error);
         Destroy(toDestroy);
 
     }

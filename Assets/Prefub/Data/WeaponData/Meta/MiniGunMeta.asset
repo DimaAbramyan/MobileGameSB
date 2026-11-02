@@ -12,6 +12,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f0ef5653a76f74e87639ed347e72b5, type: 3}
   m_Name: MiniGunMeta
   m_EditorClassIdentifier: Assembly-CSharp::WeaponMetaConfig
+  statDisplay:
+    baseStats:
+      rows:
+      - cells:
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: weapon/basic
+          statId: WeaponMetaBasicStats.Damage
+          sourceAsset: {fileID: 11400000}
+          overrideLabel: 0
+          valueFormat: 
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: weapon/basic
+          statId: WeaponMetaBasicStats.ReloadTime
+          sourceAsset: {fileID: 11400000}
+          overrideLabel: 0
+          valueFormat: 
+      - cells:
+        - label: Stat
+          value: "\u2014"
+          labelLocalizationKey: 
+          useBinding: 1
+          sourcePath: weapon/basic
+          statId: WeaponMetaBasicStats.Range
+          sourceAsset: {fileID: 11400000}
+          overrideLabel: 0
+          valueFormat: 
+    secondaryStats:
+      rows: []
   energyCost: 2
   projectileSlots:
   - id: 232df04a9376462789d389ff154d1ee8
@@ -34,8 +68,15 @@ MonoBehaviour:
     - rid: 3397719010030125149
       type: {class: FanFireWeaponMetaContract, ns: , asm: Assembly-CSharp}
       data:
+        fanFireDisabled: 0
         projectileCount: 5
         totalSpreadAngle: 17.5
         customAngles: 0
         angles:
         - 0
+        usePartialFan: 0
+        cyclePartialFanGroups: 0
+        partialFanGroups:
+        - statSourceId: 5fccf54491884291b30699984a299aac
+          projectileCount: 1
+          angleOffset: 0

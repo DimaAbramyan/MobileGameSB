@@ -36,7 +36,8 @@ public enum EnemyProjectileMovementPattern : byte
     Default = 0,
     AngularTurn = 1,
     Lateral = 2,
-    Orbit = 3
+    Orbit = 3,
+    TargetPoint = 4
 }
 
 public enum EnemyProjectileOrbitCenterMode : byte
@@ -54,9 +55,16 @@ public enum EnemyProjectileSpeedCurveTarget : byte
 }
 
 [System.Serializable]
-public sealed partial class EnemyShootingSettings
+public sealed partial class EnemyShootingSettings : ISerializationCallbackReceiver
 {
     private const int CurrentProjectilePatternVersion = 2;
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+    public void SetPerformanceChild(EnemyChildAttackSettings settings)
+    {
+        useChildAttackPattern = settings != null;
+        childAttack = settings;
+    }
+#endif
     private const int LegacyShotGunFireModeValue = 1;
 
     [System.NonSerialized] private bool hasRuntimeProjectileBaseSpeedOverride;
@@ -70,6 +78,13 @@ public sealed partial class EnemyShootingSettings
     [SerializeField] private EnemyProjectileType projectileType;
     [SerializeField] private EnemyLaserSettings laser = new();
     public EnemyLaserSettings Laser => laser ??= new();
+    [SerializeField] private EnemyCompositeProjectileSettings composite = new();
+    public EnemyCompositeProjectileSettings Composite => composite ??= new();
+    public bool IsComposite => projectileType >= EnemyProjectileType.CompositeCircle && projectileType <= EnemyProjectileType.CompositeSegmentedRing;
+    public int ProjectilePrefabIndex => projectileType == EnemyProjectileType.Homing ? 1 : projectileType == EnemyProjectileType.BurstAtPoint ? 2 : 0;
+    [SerializeField] private bool overrideProjectileDamage;
+    [SerializeField, Min(0f), Tooltip("Exact contact damage; disabled preserves the existing projectile damage rules.")]
+    private float projectileDamage = 1f;
     [SerializeField] private bool overwriteProjectileCharacteristic;
     [SerializeField] private EnemyProjectileCharacteristic projectileCharacteristic = EnemyProjectileCharacteristic.Fragile;
     [SerializeField, Tooltip("Replaces the selected projectile prefab's visual colour for this attack profile.")]
@@ -109,6 +124,9 @@ public sealed partial class EnemyShootingSettings
     [SerializeField, Tooltip("Used only when Override Projectile Lifetime is enabled.")]
     [Randomizable(nameof(projectileLifetimeRandom), .01f, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerProjectile)]
     private float projectileLifetime = 1f;
+    [SerializeField] private EnemyProjectileScreenSettings screenBoundary;
+    public EnemyProjectileScreenSettings ScreenBoundary => screenBoundary;
+    public void SetScreenBoundary(EnemyProjectileScreenSettings settings) => screenBoundary = settings;
     [SerializeField] private bool useChildAttackPattern;
     [SerializeReference] private EnemyChildAttackSettings childAttack;
 
@@ -148,6 +166,16 @@ public sealed partial class EnemyShootingSettings
     [SerializeField] private EnemyProjectileSpeedCurveTarget projectileSpeedCurveTarget = EnemyProjectileSpeedCurveTarget.Both;
     [Header("Projectile Movement")]
     [SerializeField] private EnemyProjectileMovementPattern projectileMovementPattern;
+    [SerializeField, Tooltip("X: remaining distance / initial distance (1 = launch, 0 = target). Y: base-speed multiplier. Values below 0.01 use a 1% approach floor to guarantee arrival. TargetPoint takes priority over prefab Homing/Burst and screen bounce.")]
+    private AnimationCurve targetPointSpeedByRemainingDistance = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+    [SerializeField, Tooltip("Use the first selected screen-edge crossing as TargetPosition. TargetPoint movement uses its captured player destination instead.")]
+    private bool targetScreenBoundary;
+    [SerializeField] private EnemyChildAttackBoundaries targetBoundaries = EnemyChildAttackBoundaries.All;
+    [SerializeField, Tooltip("Positive points inward from the gameplay viewport; negative points outward.")]
+    private float targetBoundaryOffset;
+    [SerializeField, Tooltip("At TargetPosition, hide the projectile and disable all combat interactions. Keep it only while Child Attack generation is pending. Fixed Count finishes automatically; an infinite repeat remains active until system cleanup.")]
+    private bool hideParentOnTargetReached;
+    public EnemyProjectileTargetPositionSettings TargetPositionSettings => new(targetScreenBoundary,targetBoundaries,targetBoundaryOffset,hideParentOnTargetReached);
     [SerializeField, Tooltip("Degrees per second. Positive turns clockwise; negative turns counterclockwise.")]
     [Randomizable(nameof(projectileAngularSpeedRandom), float.MinValue, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerProjectile)]
     private float projectileAngularSpeed = 90f;
@@ -167,6 +195,26 @@ public sealed partial class EnemyShootingSettings
     [SerializeField, Tooltip("Multiplier of Angular Velocity for the shared DNA weaving rhythm. All projectiles of a fan cross together.")]
     [Randomizable(nameof(projectileDnaWeaveSpeedRandom), .01f, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerProjectile)]
     private float projectileDnaWeaveSpeed = 1f;
+    [SerializeField] private bool overrideBaseSize;
+    [SerializeField, Min(0f), Tooltip("Uniform scale relative to the authored projectile. 1 preserves its dimensions; Size Curve multiplies this base.")]
+    private float baseSize = 1f;
+    public bool OverrideBaseSize => overrideBaseSize;
+    public float BaseSize => float.IsFinite(baseSize) ? Mathf.Max(0f, baseSize) : 1f;
+    [SerializeField] private EnemyProjectileCollisionSettings collisionSettings;
+    public EnemyProjectileCollisionSettings CollisionSettings => collisionSettings;
+
+    [Header("Projectile Spawn Offset")]
+    [SerializeField] private bool enableSpawnOffset;
+    [SerializeField, Randomizable(nameof(baseOffsetXRandom), float.MinValue, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerShot)]
+    private float baseOffsetX;
+    [SerializeField, Randomizable(nameof(baseOffsetYRandom), float.MinValue, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerShot)]
+    private float baseOffsetY;
+    [SerializeField, Randomizable(nameof(stepOffsetXRandom), float.MinValue, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerShot)]
+    private float stepOffsetX;
+    [SerializeField, Randomizable(nameof(stepOffsetYRandom), float.MinValue, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerShot)]
+    private float stepOffsetY;
+    public bool EnableSpawnOffset => enableSpawnOffset;
+
     [Header("Projectile Size Change")]
     [SerializeField] private EnemyProjectileSizeBehavior projectileSizeBehavior;
     [SerializeField] [Randomizable(nameof(projectileSizeChangeYRandom), float.MinValue, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerProjectile)]
@@ -177,7 +225,7 @@ public sealed partial class EnemyShootingSettings
     [SerializeField, Tooltip("Maps normalized size-change progress from 0 to 1 to the size interpolation.")]
     private AnimationCurve projectileSizeChangeCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
     [SerializeField, Tooltip("Final multiplier of the selected projectile prefab's authored visual and collision size.")]
-    [Randomizable(nameof(projectileFinalSizeRandom), .01f, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerProjectile)]
+    [Randomizable(nameof(projectileFinalSizeRandom), 0f, EnemyNumericScopes.All, EnemyNumericRandomizeOn.PerProjectile)]
     private float projectileFinalSize = 1f;
     [SerializeField, HideInInspector] private bool rotate = true;
     [SerializeField] private EnemyRotationSettings rotation = new EnemyRotationSettings();
@@ -191,9 +239,11 @@ public sealed partial class EnemyShootingSettings
     {
         get { MigrateEmissionLayout(); return emissionLayout; }
     }
-    public EnemyChildAttackSettings ChildAttack => useChildAttackPattern ? childAttack ??= new EnemyChildAttackSettings() : null;
+    public EnemyChildAttackSettings ChildAttack => useChildAttackPattern ? childAttack ??= EnemyChildAttackSettings.CreateDefault() : null;
     public void SetChildAttack(EnemyChildAttackSettings settings) { childAttack = settings; useChildAttackPattern = settings != null; }
-    public EnemyProjectileType ProjectileType => projectileType;
+    public EnemyProjectileType ProjectileType { get { MigrateCompositeType(); return projectileType; } }
+    public bool OverridesProjectileDamage => overrideProjectileDamage;
+    public float ProjectileDamage => float.IsFinite(projectileDamage) ? Mathf.Max(0f, projectileDamage) : 0f;
     public bool OverwritesProjectileCharacteristic => overwriteProjectileCharacteristic;
     public EnemyProjectileCharacteristic ProjectileCharacteristic => projectileCharacteristic;
     public bool UsesFragileCharacteristic => overwriteProjectileCharacteristic
@@ -232,9 +282,11 @@ public sealed partial class EnemyShootingSettings
     public float RandomMinAngle => Mathf.Min(randomMinAngle, randomMaxAngle);
     public float RandomMaxAngle => Mathf.Max(randomMinAngle, randomMaxAngle);
     public float RandomPreviewAngle => (RandomMinAngle + RandomMaxAngle) * 0.5f;
-    public EnemyProjectileSpeedBehavior SpeedBehavior => projectileSpeedBehavior;
+    public bool UsesTargetPoint => projectileMovementPattern == EnemyProjectileMovementPattern.TargetPoint;
+    public AnimationCurve TargetPointSpeedByRemainingDistance => targetPointSpeedByRemainingDistance;
+    public EnemyProjectileSpeedBehavior SpeedBehavior => UsesTargetPoint ? EnemyProjectileSpeedBehavior.Customized : projectileSpeedBehavior;
     public float SpeedChangeY => projectileSpeedChangeY;
-    public AnimationCurve SpeedByDistance => projectileSpeedByDistance;
+    public AnimationCurve SpeedByDistance => UsesTargetPoint ? targetPointSpeedByRemainingDistance : projectileSpeedByDistance;
     public EnemyProjectileSpeedCurveTarget SpeedCurveTarget => projectileSpeedCurveTarget;
     public EnemyProjectileMovementPattern MovementPattern => projectileMovementPattern;
     public float AngularSpeed => projectileAngularSpeed;
@@ -370,6 +422,44 @@ public sealed partial class EnemyShootingSettings
         return Quaternion.Euler(0f, 0f, angle) * baseDirection;
     }
 
+    // Circle owns one Fan/Stack group per emitter. Radial/Sector use direction-major
+    // order across the full volley, independent of delayed/reversed launch order.
+    public float GetSpawnOffsetGroupCenter(int directionIndex, EnemyNumericSample numeric = default)
+    {
+        int perDirection = ProjectilesPerDirection;
+        if (EmissionLayout.Type != EnemyEmissionLayoutType.Radial && EmissionLayout.Type != EnemyEmissionLayoutType.Sector)
+            return -(perDirection - 1) * .5f;
+        if (!numeric.Active || !(UsesFan && EnemyNumericSample.PerDirection(fanProjectileCountRandom)
+            || UsesShotGun && EnemyNumericSample.PerDirection(shotGunProjectileCountRandom)))
+            return (float)((double)directionIndex * perDirection - ((double)DirectionCount * perDirection - 1) * .5);
+        double prefix = 0, total = 0;
+        for (int arm = 0; arm < DirectionCount; arm++)
+        {
+            var sample = numeric.ForDirection(arm);
+            int fan = UsesFan ? sample.Int(fanProjectileCountRandom, FanProjectileCount, 101u, 1) : 1;
+            int stack = UsesShotGun ? sample.Int(shotGunProjectileCountRandom, shotGunProjectileCount, 104u, 1) : 1;
+            double count = System.Math.Min(int.MaxValue, (long)fan * stack);
+            if (arm < directionIndex) prefix += count;
+            total += count;
+        }
+        return (float)(prefix - (total - 1) * .5);
+    }
+
+    public Vector3 GetProjectileSpawnPosition(Vector3 position, Vector3 finalDirection,
+        int directionIndex, int projectileIndex, EnemyNumericSample numeric = default, float? groupCenter = null)
+    {
+        if (!enableSpawnOffset) return position;
+        float centered = projectileIndex + (groupCenter ?? GetSpawnOffsetGroupCenter(directionIndex, numeric));
+        float x = numeric.Float(baseOffsetXRandom, baseOffsetX, 1801u)
+            + centered * numeric.Float(stepOffsetXRandom, stepOffsetX, 1803u);
+        float y = numeric.Float(baseOffsetYRandom, baseOffsetY, 1802u)
+            + centered * numeric.Float(stepOffsetYRandom, stepOffsetY, 1804u);
+        finalDirection.z = 0f;
+        Vector3 forward = finalDirection.sqrMagnitude > .0001f ? finalDirection.normalized : Vector3.up;
+        Vector3 right = new Vector3(forward.y, -forward.x, 0f);
+        return position + right * x + forward * y;
+    }
+
     public void ConfigureLegacy(EnemyProjectileType type, int legacyShootingMode,
         int fanCount, float minAngle, float maxAngle, int shotgunCount, Vector2 shotgunDirection,
         float shotgunSpeed, EnemyProjectileSpeedBehavior speedBehavior, float speedChangeY, AnimationCurve speedCurve)
@@ -411,7 +501,19 @@ public sealed partial class EnemyShootingSettings
             rotation.CopyFrom(settings);
     }
 
-    public void SetProjectileType(EnemyProjectileType type) => projectileType = type;
+    public void SetProjectileType(EnemyProjectileType type) { projectileType = type; MigrateCompositeType(); }
+
+    // Pure managed migration: safe during Unity deserialization, including nested child patterns.
+    // No AssetDatabase writes or blanket asset resaves are needed.
+    public bool MigrateCompositeType()
+    {
+        if (projectileType != EnemyProjectileType.CompositePolygon && projectileType != EnemyProjectileType.CompositeSegmentedRing) return false;
+        Composite.SetShape(projectileType == EnemyProjectileType.CompositePolygon ? EnemyCompositeShape.RegularPolygon : EnemyCompositeShape.SegmentedRing);
+        projectileType = EnemyProjectileType.Composite;
+        return true;
+    }
+    public void OnBeforeSerialize() { }
+    public void OnAfterDeserialize() => MigrateCompositeType();
 
     public void SetProjectileBaseSpeedOverride(bool enabled, float speed)
     {
@@ -479,6 +581,8 @@ public sealed partial class EnemyShootingSettings
         emissionLayoutVersion = source.emissionLayoutVersion;
         projectileType = source.projectileType;
         laser = source.laser?.Copy();
+        overrideProjectileDamage = source.overrideProjectileDamage;
+        projectileDamage = source.projectileDamage;
         overwriteProjectileCharacteristic = source.overwriteProjectileCharacteristic;
         projectileCharacteristic = source.projectileCharacteristic;
         overwriteBaseColour = source.overwriteBaseColour;
@@ -495,6 +599,9 @@ public sealed partial class EnemyShootingSettings
         randomMaxAngle = source.randomMaxAngle;
         shotGunProjectileCount = source.shotGunProjectileCount;
         shotGunDirection = source.shotGunDirection;
+        enableSpawnOffset = source.enableSpawnOffset;
+        baseOffsetX = source.baseOffsetX; baseOffsetY = source.baseOffsetY;
+        stepOffsetX = source.stepOffsetX; stepOffsetY = source.stepOffsetY;
         shotGunInitialSpeed = source.shotGunInitialSpeed;
         overrideProjectileBaseSpeed = source.overrideProjectileBaseSpeed;
         projectileBaseSpeed = source.projectileBaseSpeed;
@@ -504,6 +611,8 @@ public sealed partial class EnemyShootingSettings
         numericRandomSeed = source.numericRandomSeed; runtimeProjectileBaseSpeedRandom = null;
         overrideProjectileLifetime = source.overrideProjectileLifetime;
         projectileLifetime = source.projectileLifetime;
+        screenBoundary = source.screenBoundary;
+        composite = source.Composite.Copy();
         initialSpeedMode = source.initialSpeedMode;
         randomInitialSpeedMinimum = source.randomInitialSpeedMinimum;
         randomInitialSpeedMaximum = source.randomInitialSpeedMaximum;
@@ -513,7 +622,11 @@ public sealed partial class EnemyShootingSettings
         projectileSpeedChangeY = source.projectileSpeedChangeY;
         projectileSpeedByDistance = CloneCurve(source.projectileSpeedByDistance);
         projectileSpeedCurveTarget = source.projectileSpeedCurveTarget;
+        targetScreenBoundary=source.targetScreenBoundary;targetBoundaries=source.targetBoundaries;targetBoundaryOffset=source.targetBoundaryOffset;hideParentOnTargetReached=source.hideParentOnTargetReached;
         projectileMovementPattern = source.projectileMovementPattern;
+        targetPointSpeedByRemainingDistance = source.targetPointSpeedByRemainingDistance != null
+            ? new AnimationCurve(source.targetPointSpeedByRemainingDistance.keys) { preWrapMode = source.targetPointSpeedByRemainingDistance.preWrapMode, postWrapMode = source.targetPointSpeedByRemainingDistance.postWrapMode }
+            : AnimationCurve.Linear(0f, 0f, 1f, 1f);
         projectileAngularSpeed = source.projectileAngularSpeed;
         projectileLateralSpeed = source.projectileLateralSpeed;
         projectileOrbitCenterMode = source.projectileOrbitCenterMode;
@@ -521,6 +634,8 @@ public sealed partial class EnemyShootingSettings
         projectileOrbitRadius = source.projectileOrbitRadius;
         projectileOrbitRadialSpeed = source.projectileOrbitRadialSpeed;
         projectileDnaWeaveSpeed = source.projectileDnaWeaveSpeed;
+        overrideBaseSize = source.overrideBaseSize; baseSize = source.baseSize;
+        collisionSettings = source.collisionSettings;
         projectileSizeBehavior = source.projectileSizeBehavior;
         projectileSizeChangeY = source.projectileSizeChangeY;
         projectileSizeChangeSpeed = source.projectileSizeChangeSpeed;
@@ -534,6 +649,7 @@ public sealed partial class EnemyShootingSettings
 
     public void Validate()
     {
+        MigrateCompositeType();
         if (useChildAttackPattern) ChildAttack.Validate();
         emissionOrigin ??= new EnemyEmissionOriginSettings();
         MigrateEmissionLayout();
@@ -552,7 +668,7 @@ public sealed partial class EnemyShootingSettings
         projectileOrbitRadius = Mathf.Max(0f, projectileOrbitRadius);
         projectileDnaWeaveSpeed = Mathf.Max(0.01f, projectileDnaWeaveSpeed);
         projectileSizeChangeSpeed = Mathf.Max(0.01f, projectileSizeChangeSpeed);
-        projectileFinalSize = Mathf.Max(0.01f, projectileFinalSize);
+        projectileFinalSize = Mathf.Max(0f, projectileFinalSize);
         if (projectileSizeChangeCurve == null || projectileSizeChangeCurve.length == 0)
             projectileSizeChangeCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
         rotation ??= new EnemyRotationSettings();

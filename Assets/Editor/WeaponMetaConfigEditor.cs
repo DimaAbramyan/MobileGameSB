@@ -23,6 +23,9 @@ public sealed class WeaponMetaConfigEditor : Editor
     {
         serializedObject.Update();
 
+        StatDisplayLayoutEditor.Draw(serializedObject.FindProperty("statDisplay"));
+        StatDescriptionEditor.Draw(serializedObject.FindProperty("description"), "Description");
+
         EditorGUILayout.HelpBox(
             "Weapon fields are configured here. Projectile sections below edit the "
             + "linked Projectile Data directly, including its contract fields.",

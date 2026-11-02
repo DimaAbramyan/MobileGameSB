@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15cd9235561177e438cb1f3077e5cb76, type: 3}
+  m_Name: TutorialConfiguration
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Tutorial.TutorialConfiguration
+  includeTutorial: 1
+  definition: {fileID: 11400000, guid: 29ba3ed1a636bcb48876f6cad6aba9e6, type: 2}
+  autoStart: 0
+  restartOnNewVersion: 0
+  allowDevelopmentLaunch: 1
+  forceStartInDevelopment: 0
+  font: {fileID: 0}
+  continueLabel:
+    m_TableReference:
+      m_TableCollectionName: UI
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: tutorial.continue
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  skipLabel:
+    m_TableReference:
+      m_TableCollectionName: UI
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: tutorial.skip
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  skipStepLabel:
+    m_TableReference:
+      m_TableCollectionName: UI
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: tutorial.skip_step
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  references:
+    version: 2
+    RefIds: []

@@ -2,6 +2,9 @@ using UnityEngine;
 
 public sealed class DictatorTurret : MonoBehaviour
 {
+    public static float GetProjectileDamage(DictatorShipMetaContract config, ParentShip source, float fallbackMultiplier)
+        => config.TurretProjectileDamage * (source != null && source.ShipData != null
+            ? source.ShipData.GetAbilityDamageMultiplier(source.GetLevel()) : fallbackMultiplier);
     private ParentShip owner;
     private ProjectilePoolController projectilePoolController;
     private EnemyManager enemyManager;
@@ -75,8 +78,7 @@ public sealed class DictatorTurret : MonoBehaviour
             new ProjectileParams
             {
                 speed = contract.TurretProjectileSpeed,
-                  damage = contract.TurretProjectileDamage
-                      * GetCurrentDamageMultiplier(),
+                  damage = GetProjectileDamage(contract, owner, abilityDamageMultiplier),
                 maxLength = contract.TurretTargetingRange,
                 maxAngle = 0f,
                 direction = direction
@@ -96,10 +98,4 @@ public sealed class DictatorTurret : MonoBehaviour
           reloadRemaining = contract.TurretReloadTime;
       }
 
-      private float GetCurrentDamageMultiplier()
-      {
-          return owner != null && owner.ShipData != null
-              ? owner.ShipData.GetAbilityDamageMultiplier(owner.GetLevel())
-              : abilityDamageMultiplier;
-      }
   }

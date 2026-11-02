@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 [Serializable]
-public sealed class ShipMetaBasicStats
+public sealed class ShipMetaBasicStats : IStatValueProvider
 {
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [SerializeField, Min(0f)] private float maximumHealthPoints;
     [SerializeField, Min(0f)] private float maximumShieldPoints;
     [SerializeField, Min(0f)] private float healthRegenRatePercent =
@@ -101,15 +102,17 @@ public readonly struct ShipMetaRuntimeStats
 }
 
 [Serializable]
-public abstract class ShipMetaContract
+public abstract class ShipMetaContract : IStatValueProvider
 {
+    public virtual void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     public abstract string DisplayName { get; }
     public abstract ShipMetaContract Clone();
 }
 
 [Serializable]
-public struct AbilityMetaRecoverySettings
+public struct AbilityMetaRecoverySettings : IStatValueProvider
 {
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     public UltimateAbilityMode Mode;
     public float Cooldown;
     public int MaxCharges;
@@ -446,8 +449,11 @@ public sealed class ArkanoidShipMetaContract : ShipMetaContract, IEnemyProjectil
 }
 
 [Serializable]
-public sealed class DictatorTurretSpawnGroup
+public sealed class DictatorTurretSpawnGroup : IStatValueProvider
 {
+    [SerializeField, HideInInspector] private string statSourceId = Guid.NewGuid().ToString("N");
+    public string StatSourceId => statSourceId;
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [SerializeField] private Vector2 localPosition;
     [SerializeField, Min(1)] private int count = 1;
     [SerializeField, Min(0f)] private float horizontalSpacing = 0.45f;
@@ -475,7 +481,7 @@ public sealed class DictatorTurretSpawnGroup
         return new DictatorTurretSpawnGroup(
             LocalPosition,
             Count,
-            HorizontalSpacing);
+            HorizontalSpacing) { statSourceId = statSourceId };
     }
 }
 
@@ -795,8 +801,14 @@ public sealed class ShipMetaLevel
 }
 
 [CreateAssetMenu(fileName = "ShipMetaConfig", menuName = "Game/Ship Meta Config")]
-public sealed class ShipMetaConfig : ScriptableObject
+public sealed class ShipMetaConfig : ScriptableObject, IStatDisplaySource
 {
+    [SerializeField] private StatDisplaySettings statDisplay = new();
+    public StatDisplaySettings StatDisplay => statDisplay ??= new();
+    [SerializeField] private StatDescriptionSettings activeAbilityDescription = new();
+    [SerializeField] private StatDescriptionSettings passiveAbilityDescription = new();
+    public StatDescriptionSettings ActiveAbilityDescription => activeAbilityDescription ??= new();
+    public StatDescriptionSettings PassiveAbilityDescription => passiveAbilityDescription ??= new();
     [SerializeField] private ShipData sourceShipData;
     [SerializeField] private ParentShip sourceHullPrefab;
     [SerializeField, Min(1)] private int maxLevels = 1;

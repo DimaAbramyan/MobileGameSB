@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: UI Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: UI
+  m_TableCollectionNameGuidString: dde3bb7fde9a7dc418505c5707b936c5
+  m_Entries:
+  - m_Id: 3071041536
+    m_Key: foundation.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3352059904
+    m_Key: foundation.items
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3368837120
+    m_Key: foundation.fallback
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799226408960
+    m_Key: tutorial.welcome
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352000
+    m_Key: tutorial.movement
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352001
+    m_Key: tutorial.move
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352002
+    m_Key: tutorial.switch_explanation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352003
+    m_Key: tutorial.switch
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352004
+    m_Key: tutorial.finish
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352005
+    m_Key: tutorial.continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352006
+    m_Key: tutorial.skip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1571799268352007
+    m_Key: tutorial.skip_step
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 7121728612516233530
+  references:
+    version: 2
+    RefIds:
+    - rid: 7121728612516233530
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1792585281250

@@ -73,6 +73,35 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
     private float patternRotationTime;
     private float facingRotationTime;
     private bool patternRotationRunning;
+    private int layoutAttackCount, layoutProgramDepth;
+    private bool layoutRotationHeld;
+    private bool layoutProgramHasAttack;
+    private EnemyLayoutRotationOnAttackFinished layoutFinishMode;
+    private readonly List<EnemyBurstAttackSettings> layoutPendingEnds = new();
+
+    public void BeginLayoutRotationProgram()
+    { if (layoutProgramDepth++ == 0) layoutProgramHasAttack = false; }
+    public void EndLayoutRotationProgram()
+    {
+        if (layoutProgramDepth > 0) layoutProgramDepth--;
+        FinishLayoutRotationIfIdle();
+    }
+    private void FinishLayoutRotationIfIdle()
+    {
+        if (layoutAttackCount > 0 || layoutProgramDepth > 0 || layoutFinishMode == EnemyLayoutRotationOnAttackFinished.ContinueRotation) return;
+        layoutRotationHeld = false;
+        if (layoutFinishMode == EnemyLayoutRotationOnAttackFinished.ResetRotation) RestartRotation();
+        PauseRotation(); layoutRotationHeld = true;
+    }
+    private void TickLayoutAttackEnds()
+    {
+        for (int i = layoutPendingEnds.Count - 1; i >= 0; i--)
+        {
+            if (HasPendingEmissions(layoutPendingEnds[i])) continue;
+            layoutPendingEnds.RemoveAt(i); layoutAttackCount = Mathf.Max(0, layoutAttackCount - 1);
+        }
+        if (!layoutRotationHeld) FinishLayoutRotationIfIdle();
+    }
     private Quaternion firingEnemyLocalRotation;
     private Quaternion firingPivotRelativeRotation;
     private Vector3 firingDefaultSpawnOffset;
@@ -278,6 +307,8 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
 
     private void OnDisable()
     {
+        layoutAttackCount = layoutProgramDepth = 0; layoutPendingEnds.Clear(); layoutRotationHeld = false;
+        layoutFinishMode = EnemyLayoutRotationOnAttackFinished.ContinueRotation;
         CancelPendingEmissions();
         sectorOrders.Clear();
         patternRotationRunning = false;
@@ -311,6 +342,7 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
             return;
         }
         float rotationDeltaTime = PatternRotationDeltaTime;
+        TickLayoutAttackEnds();
         if (patternRotationRunning)
             patternRotationTime += rotationDeltaTime;
         facingRotationTime += rotationDeltaTime;
@@ -460,6 +492,16 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
         if (settings == null)
             return;
 
+        if (!resettingNumericSchedule)
+        {
+            var mode = EnemyRotationSettings.AttackFinishedMode(settings);
+            if (layoutAttackCount == 0 && (layoutProgramDepth == 0 || !layoutProgramHasAttack)) layoutFinishMode = mode;
+            else if (mode > layoutFinishMode) layoutFinishMode = mode;
+            layoutAttackCount++; layoutProgramHasAttack = true;
+            if (layoutRotationHeld || mode != EnemyLayoutRotationOnAttackFinished.ContinueRotation) ResumeRotation();
+            layoutRotationHeld = false;
+        }
+
         PrepareRandomSpreadSequences(settings);
         if (!resettingNumericSchedule) BeginSectorLaunchOrder(settings);
         for (int index = 0; index < settings.PatternCount; index++)
@@ -545,6 +587,13 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
     {
         if (settings == null)
             return;
+
+        if (layoutAttackCount > 0)
+        {
+            if (HasPendingEmissions(settings)) layoutPendingEnds.Add(settings);
+            else layoutAttackCount--;
+            FinishLayoutRotationIfIdle();
+        }
 
         for (int index = 0; index < settings.PatternCount; index++)
         {
@@ -753,7 +802,7 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
                 new EnemyProjectilePrefabSet(defaultProjectilePrefab, homingProjectilePrefab, burstAtPointProjectilePrefab), childSpreadSampler,
                 completionTracker: completionTracker, randomSpeed: randomSpeed, projectileOffset: arm * shooting.ProjectilesPerDirection,
                 maximum: shooting.UsesExtendedNumericRandomization ? Mathf.Max(0, EnemyChildAttackSettings.MaximumPerStep - projectileSpawnRequests.Count) : int.MaxValue,
-                directionIndex: arm,
+                directionIndex: arm, targetPoint: shooting.UsesTargetPoint ? GetOriginPlayerPosition() : null,
                 laserOrigin: shooting.ProjectileType == EnemyProjectileType.Laser
                     ? new EnemyLaserOrigin(transform, transform.position, shooting.EmissionOrigin, GetOriginCamera(), waveAimTarget,
                         originPlayer != null ? originPlayer.transform : null) : default);
@@ -872,6 +921,7 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
     {
         float facingTime = facingRotationTime;
         RefreshRotation(true);
+        patternRotationTime = 0f;
         facingRotationTime = facingTime;
     }
     public void PauseRotation()
@@ -893,6 +943,9 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
 
     private void RefreshRotation(bool restart)
     {
+        float previousLayoutTime = patternRotationTime;
+        bool preserveLayout = layoutFinishMode != EnemyLayoutRotationOnAttackFinished.ContinueRotation
+            && (layoutRotationHeld || layoutProgramDepth > 0 || layoutAttackCount > 0);
         RestoreFacingPose();
         CaptureVirtualBasis();
         if (restart)
@@ -901,6 +954,8 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
             facingRotationTime = 0f;
         }
         patternRotationRunning = true;
+        if (preserveLayout) patternRotationTime = previousLayoutTime;
+        if (layoutRotationHeld && layoutAttackCount == 0 && layoutProgramDepth == 0) patternRotationRunning = false;
         if (ActivePatterns.FacingMode == EnemyFacingMode.FollowPattern && ActivePatterns.FacingPatternIndex < 0)
             Debug.LogWarning("Facing Pattern is missing. Select an existing pattern in the attack profile.", this);
     }
@@ -1055,9 +1110,18 @@ public sealed partial class SimpleEnemyAttackExecutor : MonoBehaviour,
                 schedule.Begin(pattern, currentTime, rate, false, NumericRegistry.Get(pattern));
                 BeginAttackSequence(pattern);
                 BeginEmissionOriginAttack(pattern);
+                autonomousPatternStarted[i] = true;
             }
             if (!schedule.IsDue(currentTime))
                 continue;
+            // Initial schedules are prepared during ResetAttackSchedule without
+            // starting an attack lifecycle. Bind it when that pattern first runs.
+            if (!autonomousPatternStarted[i])
+            {
+                BeginAttackSequence(pattern);
+                BeginEmissionOriginAttack(pattern);
+                autonomousPatternStarted[i] = true;
+            }
             if (!PrepareEmissionOriginShot(pattern, schedule.IsBurstStart)) continue;
             TryFireAutonomousPattern(pattern, schedule.IsBurstStart);
             autonomousPatternStarted[i] = true;
@@ -1192,5 +1256,10 @@ public enum EnemyProjectileType : byte
     Default = 0,
     Homing = 1,
     BurstAtPoint = 2,
-    Laser = 3
+    Laser = 3,
+    Composite = 4,
+    // Retain the public aliases and numeric IDs for old serialized waves, presets and spawn specifications.
+    CompositeCircle = 4,
+    CompositePolygon = 5,
+    CompositeSegmentedRing = 6
 }

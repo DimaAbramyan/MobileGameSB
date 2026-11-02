@@ -38,21 +38,24 @@ public sealed class WaveAttackCoordinatorPlayer : IDisposable
     public bool IsComplete => exhausted && active.Count == 0;
     public int Timeouts { get; private set; }
     public int NextGroupIndex => exhausted ? -1 : nextIndex;
+    private IReadOnlyList<WaveAttackCoordinatorGroup> Groups => settings.groups
+        ?? (IReadOnlyList<WaveAttackCoordinatorGroup>)Array.Empty<WaveAttackCoordinatorGroup>();
 
     public WaveAttackCoordinatorPlayer(WaveAttackCoordinatorSettings settings, Func<int, IWaveAttackCoordinatorParticipant> resolve)
     { this.settings = settings; this.resolve = resolve; }
     public void Begin(float time)
     {
+        if (disposed) throw new ObjectDisposedException(nameof(WaveAttackCoordinatorPlayer));
         if (started) throw new InvalidOperationException("Dispose the previous coordinator run before restarting.");
         started = true;
-        nextIndex = Mathf.Clamp(settings.startGroupIndex, 0, Mathf.Max(0, settings.groups.Count - 1));
+        nextIndex = Mathf.Clamp(settings.startGroupIndex, 0, Mathf.Max(0, Groups.Count - 1));
         nextAt = time + Mathf.Max(0f, settings.startDelay);
-        for (int i = 0; i < settings.groups.Count; i++)
-            if (settings.groups[i]?.controlledSubWaves != null)
-                foreach (var reference in settings.groups[i].controlledSubWaves)
+        for (int i = 0; i < Groups.Count; i++)
+            if (Groups[i]?.controlledSubWaves != null)
+                foreach (var reference in Groups[i].controlledSubWaves)
                     if (reference != null && !members.ContainsKey(reference.scheduleIndex))
                         members.Add(reference.scheduleIndex, resolve(reference.scheduleIndex));
-        exhausted = settings.groups.Count == 0;
+        exhausted = Groups.Count == 0;
         ApplyPermissions();
     }
     public void Tick(float time)
@@ -63,7 +66,7 @@ public sealed class WaveAttackCoordinatorPlayer : IDisposable
         // A bounded amount of scheduling work; zero-duration loops cannot stall a frame.
         for (int guard = 0; guard < 64 && !exhausted && time >= nextAt; guard++)
         {
-            var group = settings.groups[nextIndex];
+            var group = Groups[nextIndex];
             var state = new GroupState { Index = nextIndex, Settings = group ?? new(), RequestedAt = time };
             nextAt = float.PositiveInfinity;
             active.Add(state);
@@ -95,12 +98,13 @@ public sealed class WaveAttackCoordinatorPlayer : IDisposable
         if (age < group.startDelay) { run.Status = "Start delay"; run.Remaining = group.startDelay - age; return; }
         if (float.IsNaN(run.StartedAt))
         {
-            if (group.waitUntilReady)
+            var references = group.controlledSubWaves;
+            if (group.waitUntilReady && references != null)
                 foreach (var reference in group.controlledSubWaves)
                     if (reference != null && members.TryGetValue(reference.scheduleIndex, out var pending)
                         && pending != null && pending.State == WaveAttackParticipantState.Pending)
                     { run.Status = "Waiting for spawn / entry"; return; }
-            foreach (var reference in group.controlledSubWaves)
+            if (references != null) foreach (var reference in references)
             {
                 // Only a participant lost during this activation may complete it through the death policy.
                 if (reference == null || run.Baselines.ContainsKey(reference.scheduleIndex)
@@ -147,7 +151,7 @@ public sealed class WaveAttackCoordinatorPlayer : IDisposable
         if (run.NextScheduled) return;
         run.NextScheduled = true;
         nextIndex = run.Index + 1;
-        if (nextIndex >= settings.groups.Count)
+        if (nextIndex >= Groups.Count)
         {
             nextIndex = 0; pass++;
             if (!settings.loopSequence && pass >= Mathf.Max(1, settings.loopCount)) { exhausted = true; return; }

@@ -13,16 +13,20 @@ public readonly struct EnemyLaserOrigin
     private readonly Vector3 sourceAtRelease, playerAtRelease;
     private readonly EnemyEmissionOriginSource x, y;
     private readonly bool boundaryX, boundaryY, upperX, upperY, hasSource, freezeTranslation;
+    public readonly bool CancelWithSource;
     private readonly Rect boundsAtRelease;
     public readonly Camera Camera;
 
     public EnemyLaserOrigin(Transform source, Vector3 sourcePosition, EnemyEmissionOriginSettings settings,
         Camera camera = null, IEnemyAttackAimTarget target = null, Transform player = null, Entity entity = default,
-        bool freezeTranslation = false)
+        bool freezeTranslation = false, bool cancelWithSource = false)
     {
         this.freezeTranslation = freezeTranslation;
         this.source = source; this.player = player; this.target = target; this.entity = entity;
-        enemy = source != null ? source.GetComponent<Enemy>() : null;
+        enemy = source != null ? source.GetComponentInParent<Enemy>() : null;
+        // Capture ownership now: Unity's destroyed-object null semantics must not
+        // turn an enemy-owned beam into an independent beam after destruction.
+        CancelWithSource = cancelWithSource || enemy != null;
         hasSource = source != null || entity != Entity.Null;
         sourceAtRelease = sourcePosition;
         playerAtRelease = player != null ? player.position : target != null ? target.AttackTargetPosition : sourcePosition;

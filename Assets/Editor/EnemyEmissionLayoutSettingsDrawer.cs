@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -47,6 +47,7 @@ public sealed class EnemyEmissionLayoutSettingsDrawer : PropertyDrawer
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
         float height = EditorGUIUtility.singleLineHeight + 2f;
+        if (!WaveInspectorSections.Expanded(property, "Settings")) return height;
         foreach (string field in Fields(property))
             height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true) + 2f;
         return height;
@@ -56,7 +57,9 @@ public sealed class EnemyEmissionLayoutSettingsDrawer : PropertyDrawer
     {
         EditorGUI.BeginProperty(position, label, property);
         position.height = EditorGUIUtility.singleLineHeight;
-        EditorGUI.LabelField(position, label, EditorStyles.boldLabel);
+        Rect heading = position;
+        if (!WaveInspectorSections.Header(ref heading, property, "Settings", label))
+        { EditorGUI.EndProperty(); return; }
         EditorGUI.indentLevel++;
         foreach (string field in Fields(property))
         {

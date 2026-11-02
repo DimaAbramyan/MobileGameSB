@@ -18,11 +18,14 @@ public sealed class EnemyRotationSettingsDrawer : PropertyDrawer
         if (mode != FourWayEnemyRotationMode.Continuous)
             yield return "rotationAngle";
         yield return "resetRotationOnEnable";
+        if (UsesLayoutRandom(property)) yield return "onAttackFinished";
     }
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        float height = EditorGUIUtility.singleLineHeight + 2f;
+        bool hasHeading = !UsesLayoutRandom(property);
+        float height = hasHeading ? WaveInspectorSections.Line : 0f;
+        if (hasHeading && !WaveInspectorSections.Expanded(property, "Settings")) return height;
         foreach (string field in Fields(property))
         {
             var child = property.FindPropertyRelative(field);
@@ -36,11 +39,11 @@ public sealed class EnemyRotationSettingsDrawer : PropertyDrawer
     {
         EditorGUI.BeginProperty(position, label, property);
         position.height = EditorGUIUtility.singleLineHeight;
-        EditorGUI.LabelField(position, label, EditorStyles.boldLabel);
+        if (!UsesLayoutRandom(property) && !WaveInspectorSections.Header(ref position, property, "Settings", label))
+        { EditorGUI.EndProperty(); return; }
         EditorGUI.indentLevel++;
         foreach (string field in Fields(property))
         {
-            position.y += position.height + 2f;
             var child = property.FindPropertyRelative(field);
             position.height = EditorGUI.GetPropertyHeight(child, true);
             if (!UsesLayoutRandom(property) && child.propertyType == SerializedPropertyType.Float) position.height = EditorGUIUtility.singleLineHeight;
@@ -62,6 +65,7 @@ public sealed class EnemyRotationSettingsDrawer : PropertyDrawer
                 EditorGUI.EndProperty();
             }
             else EditorGUI.PropertyField(position, child, fieldLabel, true);
+            position.y += position.height + 2f;
         }
         EditorGUI.indentLevel--;
         EditorGUI.EndProperty();

@@ -42,32 +42,15 @@ public sealed class EnemyLaserSettingsDrawer : PropertyDrawer
         yield return "telegraphFadeIn"; yield return "telegraphFadeOut"; yield return "overrideTelegraphGeometry";
         if (p.FindPropertyRelative("overrideTelegraphGeometry").boolValue) yield return "telegraphGeometry";
     }
-    internal static float Height(SerializedProperty p, IEnumerable<string> fields)
-    {
-        float height = 0f;
-        foreach (string field in fields) height += field[0] == '#' ? EditorGUIUtility.singleLineHeight + 5f
-            : EditorGUI.GetPropertyHeight(p.FindPropertyRelative(field), true) + 2f;
-        return height;
-    }
+    internal static float Height(SerializedProperty p, IEnumerable<string> fields) =>
+        WaveInspectorSections.Height(p, fields, field => EditorGUI.GetPropertyHeight(p.FindPropertyRelative(field), true));
+
     internal static void Draw(Rect position, SerializedProperty p, IEnumerable<string> fields)
     {
         EditorGUI.BeginProperty(position, GUIContent.none, p);
-        foreach (string field in fields)
-        {
-            if (field[0] == '#')
-            {
-                position.height = EditorGUIUtility.singleLineHeight;
-                EditorGUI.LabelField(position, field.Substring(1), EditorStyles.boldLabel);
-                position.y += position.height + 5f;
-            }
-            else
-            {
-                var child = p.FindPropertyRelative(field);
-                position.height = EditorGUI.GetPropertyHeight(child, true);
-                EditorGUI.PropertyField(position, child, true);
-                position.y += position.height + 2f;
-            }
-        }
+        WaveInspectorSections.Draw(ref position, p, fields,
+            field => EditorGUI.GetPropertyHeight(p.FindPropertyRelative(field), true),
+            (rect, field) => EditorGUI.PropertyField(rect, p.FindPropertyRelative(field), true));
         EditorGUI.EndProperty();
     }
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label) => Height(property, Fields(property));

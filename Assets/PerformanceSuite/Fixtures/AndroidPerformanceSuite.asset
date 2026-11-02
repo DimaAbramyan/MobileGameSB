@@ -1,0 +1,390 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 002bee061cf577d44a0b79b52d0e195e, type: 3}
+  m_Name: AndroidPerformanceSuite
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Performance.PerformanceSuiteConfig
+  bullet: {fileID: 3753107629597168881, guid: afb091c3ba610af4881b4a9c54df527f, type: 3}
+  homingBullet: {fileID: 626020346500078768, guid: daef81fbc146338459ce5b057ef97ffb, type: 3}
+  enemy: {fileID: 4606862305399316101, guid: 7c1fe8fe6e4aee944bdf940b2138a4d7, type: 3}
+  ship: {fileID: 2850019063220920164, guid: 86bfc6bb00d69f54aa352264b7bd49ea, type: 3}
+  scenarios:
+  - id: ecs_500
+    enabled: 1
+    workload: 0
+    projectiles: 500
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: ecs_1000
+    enabled: 1
+    workload: 0
+    projectiles: 1000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: ecs_2000
+    enabled: 1
+    workload: 0
+    projectiles: 2000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: ecs_5000
+    enabled: 1
+    workload: 0
+    projectiles: 5000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: ecs_churn_2000
+    enabled: 1
+    workload: 1
+    projectiles: 2000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 0.7
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: ecs_collision_1000
+    enabled: 1
+    workload: 2
+    projectiles: 1000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: homing_1000
+    enabled: 1
+    workload: 3
+    projectiles: 1000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: angular_2000
+    enabled: 1
+    workload: 4
+    projectiles: 2000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: orbit_2000
+    enabled: 1
+    workload: 5
+    projectiles: 2000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: child_single
+    enabled: 1
+    workload: 6
+    projectiles: 300
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: child_three_generations
+    enabled: 1
+    workload: 6
+    projectiles: 300
+    enemies: 24
+    subwaves: 2
+    childGenerations: 3
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: laser_telegraph_32
+    enabled: 1
+    workload: 7
+    projectiles: 32
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: waves_16
+    enabled: 1
+    workload: 8
+    projectiles: 500
+    enemies: 16
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: waves_48
+    enabled: 1
+    workload: 8
+    projectiles: 500
+    enemies: 48
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: waves_96
+    enabled: 1
+    workload: 8
+    projectiles: 500
+    enemies: 96
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 0
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: coordinator_groups
+    enabled: 1
+    workload: 8
+    projectiles: 500
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 1
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: team_combat
+    enabled: 1
+    workload: 9
+    projectiles: 500
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 1
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 3
+    measurementSeconds: 20
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  - id: soak_world_reuse
+    enabled: 1
+    workload: 10
+    projectiles: 2000
+    enemies: 24
+    subwaves: 2
+    childGenerations: 1
+    childRootsPerSecond: 8
+    coordinator: 1
+    lifetime: 3
+    baseSpeed: 2
+    angularSpeed: 90
+    lateralSpeed: 0.5
+    orbitRadius: 0.3
+    orbitRadialSpeed: 0.2
+    warmupSeconds: 10
+    measurementSeconds: 300
+    repetitions: 3
+    seed: 53
+    wavePrefab: {fileID: 0}
+  maximumLiveProjectiles: 10000
+  maximumSamples: 200000
+  memoryInterval: 1
+  cleanupSettleSeconds: 2
+  abortFrameMilliseconds: 1500
+  abortAllocatedMegabytes: 2048
+  renderProjectiles: 1
+  forceCollectionAfterCleanup: 0
+  captureProfilerTrace: 0
+  showPlayerOverlay: 0
+  autoRunPlayer: 1

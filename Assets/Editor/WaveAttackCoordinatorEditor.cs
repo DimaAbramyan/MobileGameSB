@@ -38,18 +38,34 @@ public sealed class WaveAttackCoordinatorEditor : Editor
         serializedObject.Update();
         EditorGUILayout.LabelField("Wave Attack Coordinator", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(settings.FindPropertyRelative("enabled"), new GUIContent("Enabled"));
-        foreach (string name in new[] { "startDelay", "loopSequence", "loopCount", "globalCooldown", "startGroupIndex", "randomSeed", "switchMode", "reactivation" })
-        {
-            if (name == "loopCount" && settings.FindPropertyRelative("loopSequence").boolValue) continue;
-            EditorGUILayout.PropertyField(settings.FindPropertyRelative(name));
-        }
-        groups.DoLayoutList();
-        using (new EditorGUI.DisabledScope(groups.index < 0 || groups.index >= groups.count))
-            if (GUILayout.Button("Duplicate selected group"))
+        using (var playback = new WaveInspectorSections.Scope(serializedObject, "Playback", "Sequence & Switching"))
+            if (playback.IsExpanded)
             {
-                var list = settings.FindPropertyRelative("groups");
-                list.InsertArrayElementAtIndex(groups.index);
-                groups.index++;
+                foreach (string name in new[] { "startDelay", "loopSequence", "loopCount", "globalCooldown", "startGroupIndex", "switchMode", "reactivation" })
+                {
+                    if (name == "loopCount" && settings.FindPropertyRelative("loopSequence").boolValue) continue;
+                    EditorGUILayout.PropertyField(settings.FindPropertyRelative(name));
+                }
+            }
+        using (var groupSection = new WaveInspectorSections.Scope(serializedObject, "Groups", "Attack Groups"))
+        {
+            if (groupSection.IsExpanded)
+            {
+                groups.DoLayoutList();
+                using (new EditorGUI.DisabledScope(groups.index < 0 || groups.index >= groups.count))
+                    if (GUILayout.Button("Duplicate selected group"))
+                    {
+                        var list = settings.FindPropertyRelative("groups");
+                        list.InsertArrayElementAtIndex(groups.index);
+                        groups.index++;
+                    }
+            }
+        }
+        using (var advanced = new WaveInspectorSections.Scope(serializedObject, "Advanced", "Advanced / Randomization & Help", false))
+            if (advanced.IsExpanded)
+            {
+                EditorGUILayout.PropertyField(settings.FindPropertyRelative("randomSeed"));
+                DrawCoordinatorHelp();
             }
         serializedObject.ApplyModifiedProperties();
         DrawWarnings((WaveAttackCoordinator)target);
@@ -59,6 +75,9 @@ public sealed class WaveAttackCoordinatorEditor : Editor
                 if (GUILayout.Button("Restart Coordinator")) ((WaveAttackCoordinator)target).RestartCoordination();
                 if (GUILayout.Button("Stop Coordinator")) ((WaveAttackCoordinator)target).StopCoordination();
             }
+    }
+    private static void DrawCoordinatorHelp()
+    {
         EditorGUILayout.HelpBox("All Completed = one full cycle in every attack group; Sequence = one traversal (including Repeat Blocks). Released projectiles and child attacks continue. Resume preserves the interrupted attack and cooldown. Overlap allows the next group while outgoing attacks drain; Timed groups can start the next group before Duration ends.", MessageType.Info);
     }
     private static void DrawWarnings(WaveAttackCoordinator coordinator)
@@ -135,35 +154,32 @@ public sealed class WaveAttackCoordinatorGroupDrawer : PropertyDrawer
 {
     private static IEnumerable<string> Fields(SerializedProperty property)
     {
-        yield return "groupName"; yield return "controlledSubWaves"; yield return "startDelay";
-        yield return "waitUntilReady"; yield return "completionMode";
+        yield return "groupName"; yield return "controlledSubWaves";
+        yield return "#Activation & Completion";
+        yield return "startDelay"; yield return "waitUntilReady"; yield return "completionMode";
         var mode = (WaveAttackGroupCompletion)property.FindPropertyRelative("completionMode").enumValueIndex;
         if (mode == WaveAttackGroupCompletion.Timed) yield return "duration";
         if (mode == WaveAttackGroupCompletion.AttackCycles) yield return "attackCyclesCount";
-        yield return "maxWaitDuration"; yield return "delayAfterGroup";
-        yield return "overlapDuration"; yield return "onEnemyDeath";
+        yield return "onEnemyDeath";
+        yield return "#Transition";
+        yield return "delayAfterGroup"; yield return "overlapDuration";
+        yield return "#Advanced / Safety Timeout";
+        yield return "maxWaitDuration";
     }
-    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-    {
-        float height = EditorGUIUtility.singleLineHeight;
-        if (property.isExpanded) foreach (string field in Fields(property)) height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true) + 3f;
-        return height;
-    }
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label) =>
+        WaveInspectorSections.Line + (WaveInspectorSections.Expanded(property, "Group Settings", property.isExpanded)
+            ? WaveInspectorSections.Height(property, Fields(property), field => EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true)) : 0f);
+
     public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(rect, label, property);
-        var line = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
-        property.isExpanded = EditorGUI.Foldout(line, property.isExpanded, label, true);
-        if (property.isExpanded)
+        bool expanded = WaveInspectorSections.Header(ref rect, property, "Group Settings", label, property.isExpanded);
+        if (expanded)
         {
             EditorGUI.indentLevel++;
-            foreach (string field in Fields(property))
-            {
-                line.y += line.height + 3f;
-                var child = property.FindPropertyRelative(field);
-                line.height = EditorGUI.GetPropertyHeight(child, true);
-                EditorGUI.PropertyField(line, child, true);
-            }
+            WaveInspectorSections.Draw(ref rect, property, Fields(property),
+                field => EditorGUI.GetPropertyHeight(property.FindPropertyRelative(field), true),
+                (row, field) => EditorGUI.PropertyField(row, property.FindPropertyRelative(field), true));
             EditorGUI.indentLevel--;
         }
         EditorGUI.EndProperty();

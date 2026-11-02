@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -64,6 +64,18 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
     private EnemyProjectileEcsSpawner burstProjectileSpawner;
 
     [Inject] private PlayerController playerController;
+
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+    private World performanceWorld;
+    public void BindPerformanceWorld(World world, PlayerController player)
+    {
+        if (world == null || !world.IsCreated || entityWorld != null)
+            throw new System.InvalidOperationException("Bind once, before the registry is used.");
+        performanceWorld = world;
+        playerController = player;
+        EnsureRegistryEntity();
+    }
+#endif
 
     public void RegisterShip(ParentShip ship)
     {
@@ -232,7 +244,7 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         }
     }
 
-    public void ClearEnemyProjectiles(Vector2 center, float radius)
+    public void ClearEnemyProjectiles(Vector2 center, float radius, bool systemCleanup = false)
     {
         if (radius <= 0f || !EnsureRegistryEntity()) return;
         using EntityQuery query = entityManager.CreateEntityQuery(
@@ -245,6 +257,11 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         for (int i = 0; i < entities.Length; i++)
         {
             Entity entity = entities[i];
+            bool anchor=EnemyProjectileTargetPositionUtility.IsHidden(entityManager,entity);
+            if(anchor && !systemCleanup)continue;
+            if (entityManager.HasComponent<EnemyCompositeCenter>(entity) && !(anchor&&systemCleanup)) continue;
+            if (!systemCleanup && entityManager.GetComponentData<EnemyProjectileStaticData>(entity).Characteristic
+                == EnemyProjectileCharacteristic.Indestructible) continue;
             if (entityManager.GetComponentData<EnemyProjectileResolution>(entity).Kind
                 != EnemyProjectileResolutionKind.None) continue;
             float2 position = entityManager.GetComponentData<LocalTransform>(entity).Position.xy;
@@ -276,6 +293,9 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
         }
 
         World world = World.DefaultGameObjectInjectionWorld;
+#if UNITY_EDITOR || ANDROID_PERFORMANCE_SUITE
+        world = performanceWorld ?? world;
+#endif
         if (world == null || !world.IsCreated)
             return false;
 
@@ -316,7 +336,8 @@ public sealed class EnemyProjectileCollisionRegistry : MonoBehaviour
                 case EnemyProjectileResolutionKind.HitPlayer:
                     if (IsCurrentShip(target.Ship))
                     {
-                        if (resolutionEvent.UseConfiguredDamage != 0) target.Ship.TryTakeConfiguredDamage(resolutionEvent.Damage);
+                        if (resolutionEvent.UseConfiguredDamage == 2) target.Ship.TryTakeConfiguredDamage(resolutionEvent.Damage,resolutionEvent.DamageType);
+                        else if (resolutionEvent.UseConfiguredDamage != 0) target.Ship.TryTakeConfiguredDamage(resolutionEvent.Damage);
                         else target.Ship.TryTakeDamage(resolutionEvent.Damage);
                     }
                     break;

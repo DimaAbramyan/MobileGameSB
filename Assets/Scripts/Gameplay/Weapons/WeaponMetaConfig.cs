@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public sealed class WeaponMetaBasicStats
+public sealed class WeaponMetaBasicStats : IStatValueProvider
 {
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [SerializeField, Min(0f)] private float reloadTime = 1f;
     [SerializeField, Min(0f)] private float damage = 1f;
     [SerializeField, Min(0f)] private float range = 10f;
@@ -64,8 +65,9 @@ public sealed class WeaponProjectileSlot
 }
 
 [Serializable]
-public abstract class WeaponMetaContract
+public abstract class WeaponMetaContract : IStatValueProvider
 {
+    public virtual void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     public abstract string DisplayName { get; }
     public abstract WeaponMetaContract Clone();
 }
@@ -301,8 +303,11 @@ public sealed class FanFireWeaponMetaContract : WeaponMetaContract
 }
 
 [Serializable]
-public sealed class FanFireAngleGroup
+public sealed class FanFireAngleGroup : IStatValueProvider
 {
+    [SerializeField, HideInInspector] private string statSourceId = Guid.NewGuid().ToString("N");
+    public string StatSourceId => statSourceId;
+    public void CollectDisplayStats(StatSourceBuilder source) => StatContractDeclarations.Collect(this, source);
     [SerializeField, Min(1)] private int projectileCount = 1;
     [SerializeField, Min(0f)] private float angleOffset;
 
@@ -333,7 +338,7 @@ public sealed class FanFireAngleGroup
 
     public FanFireAngleGroup Clone()
     {
-        return new FanFireAngleGroup(ProjectileCount, AngleOffset);
+        return new FanFireAngleGroup(ProjectileCount, AngleOffset) { statSourceId = statSourceId };
     }
 }
 
@@ -550,8 +555,12 @@ public readonly struct WeaponMetaDpsInfo
 [CreateAssetMenu(
     fileName = "WeaponMetaConfig",
     menuName = "Game/Weapon Meta Config")]
-public sealed class WeaponMetaConfig : ScriptableObject
+public sealed class WeaponMetaConfig : ScriptableObject, IStatDisplaySource
 {
+    [SerializeField] private StatDisplaySettings statDisplay = new();
+    public StatDisplaySettings StatDisplay => statDisplay ??= new();
+    [SerializeField] private StatDescriptionSettings description = new();
+    public StatDescriptionSettings Description => description ??= new();
     [Header("Build")]
     [SerializeField, Min(0)] private int energyCost = 1;
 
@@ -758,11 +767,17 @@ public sealed class WeaponMetaConfig : ScriptableObject
             }
         }
 
+        return CalculateDpsInfo(weaponStats, fanProjectileCount, damage, usesContinuousDamage, continuousDamageTickInterval);
+    }
+
+    public static WeaponMetaDpsInfo CalculateDpsInfo(WeaponRuntimeStats weaponStats, float fanProjectileCount,
+        float damage, bool usesContinuousDamage, float continuousDamageTickInterval, float reloadMultiplier = 1f)
+    {
           int volleys = Mathf.Max(1, weaponStats.VolleysPerActivation);
           float projectilesPerActivation = volleys
               * Mathf.Max(1, weaponStats.ProjectilesPerVolley)
               * fanProjectileCount;
-          float attackCycleDuration = weaponStats.ReloadTime
+          float attackCycleDuration = weaponStats.ReloadTime * reloadMultiplier
               + (volleys - 1) * Mathf.Max(0f, weaponStats.DelayBetweenVolleys);
           float shotsPerSecond = attackCycleDuration <= 0f
               ? 0f

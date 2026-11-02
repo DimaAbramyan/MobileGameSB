@@ -103,5 +103,10 @@ public class FightingInstaller : MonoInstaller
           Container.BindInterfacesAndSelfTo<EnemyDebuffController>()
             .AsSingle()
             .NonLazy();
+
+#if UNITY_EDITOR || INCLUDE_TUTORIAL
+        if (Container.HasBinding<Game.Tutorial.ITutorialService>())
+            Container.BindInterfacesTo<Game.Tutorial.TutorialBattleBridge>().AsSingle().NonLazy();
+#endif
     }
 }

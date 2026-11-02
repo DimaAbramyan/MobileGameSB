@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(EnemyBurstAttackSettings))]
@@ -138,12 +138,17 @@ internal static class EnemyAttackPatternFields
         EnemyShootingSettingsDrawer.DrawSettings(ref position, property.FindPropertyRelative("shooting"), property, hasDelay);
     }
 
-    public static void DrawTiming(ref Rect position, SerializedProperty property, bool hasDelay)
+    private static readonly Unity.Profiling.ProfilerMarker ProfileDrawTiming = new("WaveEditor.Inspector.DrawTiming");
+    public static void DrawTiming(ref Rect position, SerializedProperty property, bool hasDelay, bool showHeader = true)
     {
+        using var profileScope = ProfileDrawTiming.Auto();
         var shooting = property.FindPropertyRelative("shooting");
         position.height = EditorGUIUtility.singleLineHeight;
-        EditorGUI.LabelField(position, "Attack Timing", EditorStyles.miniBoldLabel);
-        position.y += position.height + Spacing;
+        if (showHeader)
+        {
+            EditorGUI.LabelField(position, "Attack Timing", EditorStyles.miniBoldLabel);
+            position.y += position.height + Spacing;
+        }
         if (hasDelay)
         {
             Field(ref position, property.FindPropertyRelative("useAttackStartDelay"), "Delay Attack Start");
@@ -167,13 +172,13 @@ internal static class EnemyAttackPatternFields
         }
         int events = Mathf.Max(1, count.intValue) * (repeats ? Mathf.Max(1, burstCount.intValue) : 1);
         int projectiles = events * EnemyShootingSettingsDrawer.GetProjectilesPerVolley(shooting);
+        var summary = EnemyPresetInspector.DisplayProfile(shooting, property);
         float duration = EnemyBurstAttackSettings.CalculateAttackDuration(repeats, count.intValue,
             interval.floatValue, burstCount.intValue, burstInterval.floatValue)
-            + ((EnemyEmissionLayoutSettings)shooting.FindPropertyRelative("emissionLayout").boxedValue).LaunchDuration;
+            + summary.Shooting.EmissionLayout.LaunchDuration;
         position.height = EditorGUIUtility.singleLineHeight;
-        bool randomTiming = property.boxedValue is EnemyBurstAttackSettings burst ? burst.UsesRandomTiming
-            : property.boxedValue is EnemyAttackPatternSettings pattern && pattern.UsesRandomTiming;
-        bool randomGeometry = ((EnemyShootingSettings)shooting.boxedValue).UsesGeometryRandomization;
+        bool randomTiming = summary.UsesRandomTiming;
+        bool randomGeometry = summary.Shooting.UsesGeometryRandomization;
         EditorGUI.LabelField(position, randomTiming || randomGeometry
             ? $"Randomized attack · fixed values: {duration:0.###} s / {events} events / {projectiles} projectiles"
             : $"Attack duration: {duration:0.###} s ({events} shot events / {projectiles} projectiles)", EditorStyles.miniLabel);

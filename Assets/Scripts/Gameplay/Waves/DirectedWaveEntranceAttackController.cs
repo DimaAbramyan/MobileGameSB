@@ -710,6 +710,7 @@ internal sealed class DirectedWaveEntranceAttackController
         executor = null;
         if (!IsAliveEnemy(enemy))
             return false;
+        if (wave.AttackPatternBehaviour != null && !wave.AttackPatternBehaviour.AllowsAttackGroupEnemy(enemy)) return false;
 
         if (!executors.TryGetValue(enemy, out executor)
             || !IsAliveExecutor(executor))

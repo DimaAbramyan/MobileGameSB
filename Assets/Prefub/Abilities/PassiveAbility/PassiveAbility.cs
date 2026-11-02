@@ -2,6 +2,7 @@ using UnityEngine;
 
 public abstract class PassiveAbility : MonoBehaviour
 {
+    public virtual IStatValueProvider DisplayStatSnapshot => null;
     [SerializeField]
     protected ParentShip owner;
     protected bool isActive; 

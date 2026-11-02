@@ -7,6 +7,7 @@ public sealed class WeaponSelectionListController : MonoBehaviour
     [SerializeField] private CraftUIButton craftButtonPrefab;
     [SerializeField] private Transform contentRoot;
     [SerializeField] private CraftCreationFlowController craftCreationFlow;
+    [SerializeField] private WeaponSelectionInfoController infoView;
     [SerializeField, Min(0.01f)] private float buttonScale = 1f;
 
     private readonly List<CraftUIButton> createdButtons = new();
@@ -48,6 +49,7 @@ public sealed class WeaponSelectionListController : MonoBehaviour
     public void Refresh()
     {
         ResolveDependencies();
+        if (contentProgressService != null) infoView?.SetProgressService(contentProgressService);
         if (!ValidateConfiguration())
             return;
 
@@ -68,6 +70,7 @@ public sealed class WeaponSelectionListController : MonoBehaviour
             button.SetAvailability(isOwned);
             button.SetInteractable(CanSelectWeapon(weapon));
             button.SetClickAction(() => SelectWeapon(weapon));
+            if (infoView != null) button.SetPreviewActions(infoView.Preview, infoView.EndPreview);
             createdButtons.Add(button);
             buttonWeapons.Add(button, weapon);
         }
@@ -123,13 +126,13 @@ public sealed class WeaponSelectionListController : MonoBehaviour
     private void RegisterProgressService()
     {
         if (contentProgressService != null)
-            contentProgressService.ProgressChanged += Refresh;
+            contentProgressService.ProgressChanged += RefreshFocusVisuals;
     }
 
     private void UnregisterProgressService()
     {
         if (contentProgressService != null)
-            contentProgressService.ProgressChanged -= Refresh;
+            contentProgressService.ProgressChanged -= RefreshFocusVisuals;
     }
 
     private void HandleWeaponFocusChanged(WeaponContentDefinition _)
@@ -148,7 +151,10 @@ public sealed class WeaponSelectionListController : MonoBehaviour
         {
             CraftUIButton button = createdButtons[i];
             if (button != null)
+            {
+                button.SetPreviewActions(null, null);
                 Destroy(button.gameObject);
+            }
         }
 
         createdButtons.Clear();

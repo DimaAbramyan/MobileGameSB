@@ -9,6 +9,16 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
     [Header("Flow")]
     [SerializeField] private CraftCreationFlowController craftCreationFlow;
 
+    [Header("Stat Blocks")]
+    [SerializeField] private StatBlocksView statBlocksView;
+    [SerializeField] private StatDescriptionView descriptionView;
+    [SerializeField] private Weapon runtimeWeapon;
+    [SerializeField] private WeaponController runtimeWeaponController;
+    private WeaponContentDefinition shownWeapon;
+    private CraftUIButton pointerPreview, navigationPreview;
+    public WeaponContentDefinition DisplayedWeapon { get; private set; }
+    public StatBlocksView StatBlocks => statBlocksView;
+
     [Header("Top")]
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text weaponNameText;
@@ -34,20 +44,29 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
     private ContentProgressService contentProgressService;
 
     [Inject]
-    private void Construct(ContentProgressService progressService)
+    private void Construct(ContentProgressService progressService) => SetProgressService(progressService);
+
+    public void SetProgressService(ContentProgressService progressService)
     {
+        if (ReferenceEquals(contentProgressService, progressService)) return;
+        if (contentProgressService != null) contentProgressService.ProgressChanged -= RefreshCurrent;
         contentProgressService = progressService;
 
         if (isActiveAndEnabled)
+        {
+            if (contentProgressService != null) contentProgressService.ProgressChanged += RefreshCurrent;
             Refresh(craftCreationFlow != null ? craftCreationFlow.FocusedWeapon : null);
+        }
     }
 
     private void OnEnable()
     {
+        if (contentProgressService != null) contentProgressService.ProgressChanged += RefreshCurrent;
         if (craftCreationFlow != null)
         {
             craftCreationFlow.WeaponFocusChanged += Refresh;
             craftCreationFlow.WeaponSlotFocusChanged += RefreshAssignedWeapon;
+            craftCreationFlow.WeaponAssignmentChanged += RefreshAssignment;
         }
 
         Refresh(craftCreationFlow != null ? craftCreationFlow.FocusedWeapon : null);
@@ -55,29 +74,59 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (contentProgressService != null) contentProgressService.ProgressChanged -= RefreshCurrent;
+        pointerPreview = navigationPreview = null;
         if (craftCreationFlow != null)
         {
             craftCreationFlow.WeaponFocusChanged -= Refresh;
             craftCreationFlow.WeaponSlotFocusChanged -= RefreshAssignedWeapon;
+            craftCreationFlow.WeaponAssignmentChanged -= RefreshAssignment;
         }
     }
 
     public void Show(WeaponContentDefinition weapon)
     {
-        Refresh(weapon);
+        shownWeapon = weapon;
+        RefreshCurrent();
+    }
+
+    public void SetRuntimeSource(Weapon weapon, WeaponController controller = null)
+    { runtimeWeapon = weapon; runtimeWeaponController = controller; RefreshCurrent(); }
+
+    public void Preview(CraftUIButton button, bool pointer)
+    {
+        if (button == null || !(button.Content is WeaponContentDefinition)) return;
+        if (pointer) pointerPreview = button; else navigationPreview = button;
+        RefreshCurrent();
+    }
+    public void EndPreview(CraftUIButton button, bool pointer)
+    {
+        if (pointer) { if (pointerPreview != button) return; pointerPreview = null; }
+        else { if (navigationPreview != button) return; navigationPreview = null; }
+        RefreshCurrent();
+    }
+    private void RefreshCurrent()
+    {
+        WeaponContentDefinition weapon = craftCreationFlow != null
+            ? craftCreationFlow.GetWeaponForSlot(craftCreationFlow.FocusedWeaponSlotId) ?? craftCreationFlow.FocusedWeapon
+            : shownWeapon;
+        var preview = pointerPreview != null ? pointerPreview : navigationPreview;
+        if (preview != null && preview.Content is WeaponContentDefinition hovered) weapon = hovered;
+        RefreshDetails(weapon);
     }
 
     private void RefreshAssignedWeapon(string slotId)
     {
-        WeaponContentDefinition weapon = craftCreationFlow != null
-            ? craftCreationFlow.GetWeaponForSlot(slotId)
-            : null;
-
-        if (weapon != null)
-            Refresh(weapon);
+        RefreshCurrent();
+    }
+    private void RefreshAssignment(string slotId, WeaponContentDefinition weapon)
+    {
+        if (craftCreationFlow != null && craftCreationFlow.FocusedWeaponSlotId == slotId) RefreshCurrent();
     }
 
-    private void Refresh(WeaponContentDefinition weapon)
+    private void Refresh(WeaponContentDefinition _) => RefreshCurrent();
+
+    private void RefreshDetails(WeaponContentDefinition weapon)
     {
         bool hasWeapon = weapon != null && weapon.Data != null;
         if (!hasWeapon)
@@ -87,9 +136,16 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         }
 
         WeaponData data = weapon.Data;
+        DisplayedWeapon = weapon;
         int upgradeLevel = CraftProgressionText.GetUpgradeLevel(
             weapon,
             contentProgressService);
+        if (statBlocksView != null)
+        {
+            if (runtimeWeapon != null && runtimeWeapon.gameObject.scene.IsValid() && runtimeWeapon.weaponData == data)
+                statBlocksView.Bind(runtimeWeapon, runtimeWeaponController);
+            else statBlocksView.Preview(data.WeaponMetaConfig, upgradeLevel);
+        }
         bool canPreviewUpgrade = craftCreationFlow == null
             && contentProgressService != null
             && contentProgressService.GetState(weapon).CanUpgrade;
@@ -156,11 +212,14 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
                 "0.#"));
         SetText(platformTierText, $"Platform tier: {weapon.RequiredPlatformTier}");
         SetText(energyCostInfoText, $"Energy cost: {data.EnergyCost}");
-        SetText(descriptionText, GetDescription(weapon));
+        if (descriptionView != null) descriptionView.SetFallback(GetDescription(weapon));
+        else SetText(descriptionText, GetDescription(weapon));
     }
 
     private void Clear()
     {
+        DisplayedWeapon = null;
+        if (statBlocksView != null && statBlocksView.Meta != null) statBlocksView.Show(null);
         if (iconImage != null)
         {
             iconImage.sprite = null;
@@ -177,7 +236,8 @@ public sealed class WeaponSelectionInfoController : MonoBehaviour
         SetText(rangeText, string.Empty);
         SetText(platformTierText, string.Empty);
         SetText(energyCostInfoText, string.Empty);
-        SetText(descriptionText, string.Empty);
+        if (descriptionView != null) descriptionView.SetFallback("");
+        else SetText(descriptionText, string.Empty);
     }
 
     private static string GetDescription(WeaponContentDefinition weapon)

@@ -1,0 +1,206 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de68cd2ad28cdb8469ada7bcaad62673, type: 3}
+  m_Name: FirstLaunchTutorial
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Tutorial.TutorialDefinition
+  version: 1
+  level: {fileID: 0}
+  steps:
+  - id: welcome
+    hint:
+      m_TableReference:
+        m_TableCollectionName: UI
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: tutorial.welcome
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    start:
+      match: 0
+      conditions:
+      - type: 0
+        value: 1
+        signal: 
+    completion:
+      match: 0
+      conditions:
+      - type: 5
+        value: 1
+        signal: 
+    startDelay: 0
+    canSkip: 1
+    placement: 0
+    target: 0
+    anchorId: 
+    highlightTarget: 0
+    showPointer: 0
+    pointerOffset: {x: 0, y: 80}
+    restrictActions: 0
+  - id: movement_explanation
+    hint:
+      m_TableReference:
+        m_TableCollectionName: UI
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: tutorial.movement
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    start:
+      match: 0
+      conditions:
+      - type: 1
+        value: 1
+        signal: 
+    completion:
+      match: 0
+      conditions:
+      - type: 5
+        value: 1
+        signal: 
+    startDelay: 0
+    canSkip: 1
+    placement: 0
+    target: 0
+    anchorId: 
+    highlightTarget: 0
+    showPointer: 0
+    pointerOffset: {x: 0, y: 80}
+    restrictActions: 0
+  - id: move
+    hint:
+      m_TableReference:
+        m_TableCollectionName: UI
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: tutorial.move
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    start:
+      match: 0
+      conditions:
+      - type: 1
+        value: 1
+        signal: 
+    completion:
+      match: 0
+      conditions:
+      - type: 6
+        value: 0.5
+        signal: 
+    startDelay: 0
+    canSkip: 0
+    placement: 0
+    target: 2
+    anchorId: 
+    highlightTarget: 1
+    showPointer: 0
+    pointerOffset: {x: 0, y: 80}
+    restrictActions: 0
+  - id: switch_explanation
+    hint:
+      m_TableReference:
+        m_TableCollectionName: UI
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: tutorial.switch_explanation
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    start:
+      match: 0
+      conditions:
+      - type: 3
+        value: 1
+        signal: 
+    completion:
+      match: 0
+      conditions:
+      - type: 5
+        value: 1
+        signal: 
+    startDelay: 0
+    canSkip: 1
+    placement: 0
+    target: 0
+    anchorId: 
+    highlightTarget: 0
+    showPointer: 0
+    pointerOffset: {x: 0, y: 80}
+    restrictActions: 0
+  - id: switch
+    hint:
+      m_TableReference:
+        m_TableCollectionName: UI
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: tutorial.switch
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    start:
+      match: 0
+      conditions:
+      - type: 3
+        value: 1
+        signal: 
+    completion:
+      match: 0
+      conditions:
+      - type: 7
+        value: 1
+        signal: 
+    startDelay: 0
+    canSkip: 0
+    placement: 0
+    target: 2
+    anchorId: 
+    highlightTarget: 0
+    showPointer: 1
+    pointerOffset: {x: 0, y: 80}
+    restrictActions: 0
+  - id: finish
+    hint:
+      m_TableReference:
+        m_TableCollectionName: UI
+      m_TableEntryReference:
+        m_KeyId: 0
+        m_Key: tutorial.finish
+      m_FallbackState: 0
+      m_WaitForCompletion: 0
+      m_LocalVariables: []
+    start:
+      match: 0
+      conditions:
+      - type: 0
+        value: 1
+        signal: 
+    completion:
+      match: 0
+      conditions:
+      - type: 5
+        value: 1
+        signal: 
+    startDelay: 0
+    canSkip: 1
+    placement: 0
+    target: 0
+    anchorId: 
+    highlightTarget: 0
+    showPointer: 0
+    pointerOffset: {x: 0, y: 80}
+    restrictActions: 0
+  references:
+    version: 2
+    RefIds: []

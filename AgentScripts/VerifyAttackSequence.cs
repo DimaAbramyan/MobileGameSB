@@ -158,6 +158,8 @@ public static class VerifyAttackSequence
         Set(settings, "burstSettingsSource", DirectedWaveBurstSettingsSource.WaveOverride);
         settings.WaveBurstSettings.ConfigureLegacySingleAttack(1, .2f, 0f);
         settings.WaveBurstSettings.Shooting.EmissionLayout.Configure(layout, count);
+        // This fixture counts all emitted bullets at 8s, independently of screen cleanup.
+        settings.WaveBurstSettings.Shooting.SetScreenBoundary(new EnemyProjectileScreenSettings(false));
         Set(settings.WaveBurstSettings.Shooting, "overrideProjectileLifetime", true);
         Set(settings.WaveBurstSettings.Shooting, "projectileLifetime", 10f);
         return step;
@@ -186,7 +188,7 @@ public static class VerifyAttackSequence
             {
                 while (!preview.AdvanceTo(8f, 1000d)) { }
                 Check(preview.ProjectileCount == 30 && preview.SequenceStatus == "Complete",
-                    "Requested example: 3 aimed, radial, pause, rotating sequential Sector, two loops");
+                    $"Requested example: 3 aimed, radial, pause, rotating sequential Sector, two loops; actual={preview.ProjectileCount}, status={preview.SequenceStatus}");
             }
 
             var first = Attack("Slot 0", EnemyEmissionLayoutType.Point, 1); first.overrideTargetSlots = true;

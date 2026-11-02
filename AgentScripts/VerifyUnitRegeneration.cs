@@ -20,6 +20,9 @@ public static class VerifyUnitRegeneration
         {
             var ship = clone.GetComponent<ParentShip>();
             ship.Awake();
+            // Exercise recovery steps independently of editable hull balance values.
+            ship.AddMaxHealthPoints(5f - ship.MaximumHealthPoints);
+            ship.AddMaxShieldPoints(5f - ship.MaximumShieldPoints);
             var hp = clone.GetComponent<HealthRegeneration>() ?? clone.AddComponent<HealthRegeneration>();
             var shield = clone.GetComponent<ShieldRegeneration>() ?? clone.AddComponent<ShieldRegeneration>();
             Invoke(hp, "Awake"); Invoke(shield, "Awake");
@@ -72,8 +75,9 @@ public static class VerifyUnitRegeneration
             Check(ship.TryTakeDamage(999), "Incoming hit accepted", checks);
             Invoke(hp, "Update"); Invoke(shield, "Update");
             Check(ship.CurrentHealthPoints == 2 && ship.CurrentShieldPoints == 1
-                && ship.HealthRegenerationCooldownProgress == 0 && ship.ShieldRegenerationCooldownProgress == 0,
-                "Damage restarts both recovery timers", checks);
+                && Mathf.Abs(ship.HealthRegenerationCooldownProgress - 55f / 60f) < .001f
+                && ship.ShieldRegenerationCooldownProgress == 0,
+                "Shield damage preserves hull recovery and restarts shield recovery", checks);
             SetElapsed(hp, 120); SetElapsed(shield, 120);
             Invoke(hp, "Update"); Invoke(shield, "Update");
             Check(ship.CurrentHealthPoints == 3 && ship.CurrentShieldPoints == 2,

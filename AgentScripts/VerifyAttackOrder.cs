@@ -103,7 +103,9 @@ public static class VerifyAttackOrder
             Set(behaviour, "attackPatterns", new List<DirectedWaveAttackPattern>());
             Set(behaviour, "attackPreset", null); Set(behaviour, "useSelectedEnemySlots", true);
             Set(behaviour, "selectedEnemySlots", new List<int> { 0, 1, 2, 3 });
-            var settings = (DirectedWaveAttackSettings)Get(behaviour, "attackSettings");
+            // Test order scheduling independently of this editable wave's Sector/child/random overrides.
+            var settings = new DirectedWaveAttackSettings();
+            Set(behaviour, "attackSettings", settings);
             Set(settings, "fireMode", DirectedWaveAttackFireMode.Default);
             Set(settings, "burstSettingsSource", DirectedWaveBurstSettingsSource.WaveOverride);
             Set(settings, "useAttackStartDelay", false);
@@ -132,7 +134,9 @@ public static class VerifyAttackOrder
                 Advance(preview, .7f); var group = ((System.Collections.IList)Get(preview, "groups"))[0];
                 var plan = (DirectedWaveAttackOrderPlan)Get(group, "OrderPlan");
                 Check(plan.Cursor == 1, "Previous batch waits for all shots and cooldown");
-                Advance(preview, 1f); Check(plan.Cursor >= 2, "Next enemy starts after previous cooldown");
+                Advance(preview, 1f); Check(plan.Cursor >= 2, "Next enemy starts after previous cooldown; cursor=" + plan.Cursor
+                    + "; slots=" + DescribeSlots(group) + "; override=" + settings.OverridesEnemyAttackCooldown
+                    + "; cooldown=" + settings.EnemyAttackCooldown);
             }
             Set(behaviour, "executionMode", DirectedWaveAttackExecutionMode.Sequence);
             var step = new DirectedWaveAttackSequenceStep { name = "Ordered slots" };
@@ -202,6 +206,13 @@ public static class VerifyAttackOrder
         }
         finally
         { foreach (var obj in created) UnityEngine.Object.DestroyImmediate(obj); PrefabUtility.UnloadPrefabContents(root); }
+    }
+    private static string DescribeSlots(object group)
+    {
+        var values = new List<string>();
+        foreach (var slot in (System.Collections.IEnumerable)Get(group, "Slots"))
+            values.Add(Get(slot, "Index") + ":active=" + Get(slot, "Active") + ",ready=" + Get(slot, "ReadyTime"));
+        return string.Join(";", values);
     }
     private static void Advance(WaveShootingPreviewSession preview, float time) { while (!preview.AdvanceTo(time, 1000d)) { } }
     private static void Test(DirectedWaveAttackOrderPlan plan, List<DirectedWaveAttackOrderSlot> slots,

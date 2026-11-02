@@ -3,10 +3,10 @@
   <Project Path="Zenject.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Zenject-Editor.csproj" />
-  <Project Path="FMODUnityResonanceEditor.csproj" />
   <Project Path="FMODUnityEditor.csproj" />
-  <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="FMODUnity.csproj" />
-  <Project Path="FMODUnityHaptics.csproj" />
+  <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="FMODUnityResonance.csproj" />
+  <Project Path="FMODUnityResonanceEditor.csproj" />
+  <Project Path="FMODUnityHaptics.csproj" />
 </Solution>

@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEngine;
 
 // Transport, input history and checkpoints; movement/shooting stay in the existing conductor.
-public sealed class WavePreviewPlayer : IDisposable
+public sealed partial class WavePreviewPlayer : IDisposable
 {
     public const int MaximumEvents = 12000;
     public const float StepInterval = WaveShootingPreviewSession.StepInterval;
@@ -81,7 +81,7 @@ public sealed class WavePreviewPlayer : IDisposable
         {
             if (recordPlayerMovement == value) return;
             recordPlayerMovement = value;
-            if (!value) { history.FreezeAfter(CurrentFrame); snapshots.InvalidateAfter(CurrentFrame); }
+            if (!value) { history.FreezeAfter(CurrentFrame); snapshots.InvalidateAfter(CurrentFrame); InvalidateCoordinatorEventsAfter(CurrentFrame); }
         }
     }
     public float RequestedTime => destinationFrame * StepInterval;
@@ -91,6 +91,7 @@ public sealed class WavePreviewPlayer : IDisposable
         get => duration;
         set
         {
+            CancelCoordinatorSearch();
             duration = float.IsFinite(value) ? Mathf.Max(StepInterval, value) : 30f;
             if (RequestedTime > duration) Seek(duration);
         }
@@ -103,7 +104,7 @@ public sealed class WavePreviewPlayer : IDisposable
             if (!float.IsFinite(value.x) || !float.IsFinite(value.y) || !float.IsFinite(value.z)) return;
             if (!history.Set(CurrentFrame, value)) return;
             if (CurrentFrame > 0) recordPlayerMovement = true;
-            targetPosition = value; snapshots.InvalidateAfter(CurrentFrame);
+            targetPosition = value; snapshots.InvalidateAfter(CurrentFrame); InvalidateCoordinatorEventsAfter(CurrentFrame);
             if (simulation != null) simulation.TargetPosition = value;
         }
     }
@@ -117,10 +118,12 @@ public sealed class WavePreviewPlayer : IDisposable
     {
         if (disposed || source == null) return;
         if (CurrentFrame >= LastFrame && !IsSeeking) Seek(0f);
+        CancelCoordinatorSearch(); SelectedCoordinatorEvent = null;
         EnsureSimulation(); IsPlaying = true;
     }
     public void Pause()
     {
+        CancelCoordinatorSearch();
         bool pending = IsSeeking;
         bool invalidState = resetRequested || CurrentFrame > validThroughFrame;
         IsPlaying = false; destinationFrame = CurrentFrame;
@@ -137,6 +140,7 @@ public sealed class WavePreviewPlayer : IDisposable
     }
     public void Stop()
     {
+        ClearCoordinatorEvents();
         IsPlaying = false; destinationFrame = 0; playhead = 0; resetRequested = restoreRequested = manualSeek = false;
         validThroughFrame = int.MaxValue; LastRestoreFrame = -1; RestoredSnapshots = 0;
         seekMeasured = false; seekStarted = seekFinished = 0; StepsProcessed = presentedFrame = 0;
@@ -146,6 +150,7 @@ public sealed class WavePreviewPlayer : IDisposable
     public void Seek(float time)
     {
         if (disposed || source == null || !float.IsFinite(time)) return;
+        CancelCoordinatorSearch(); SelectedCoordinatorEvent = null; CoordinatorNavigationMessage = null;
         int next = Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp(time, 0f, Duration) / StepInterval), 0, LastFrame);
         bool changed = next != destinationFrame;
         destinationFrame = next;
@@ -163,6 +168,7 @@ public sealed class WavePreviewPlayer : IDisposable
     { Pause(); Seek((CurrentFrame + Math.Sign(direction)) * StepInterval); }
     public void Invalidate()
     {
+        ClearCoordinatorEvents();
         resetRequested = manualSeek = true; playhead = RequestedTime; snapshots.Clear(false);
         BeginSeekMeasurement(); simulation?.SetVisible(false);
     }
@@ -175,7 +181,7 @@ public sealed class WavePreviewPlayer : IDisposable
         int frame = Mathf.Clamp(Mathf.RoundToInt(time / StepInterval), 0, LastFrame);
         if (frame == CurrentFrame) { TargetPosition = position; return; }
         if (!history.Set(frame, position)) return;
-        recordPlayerMovement = true; snapshots.InvalidateAfter(frame);
+        recordPlayerMovement = true; snapshots.InvalidateAfter(frame); InvalidateCoordinatorEventsAfter(frame);
         if (frame < CurrentFrame)
         {
             validThroughFrame = Mathf.Min(validThroughFrame, frame); restoreRequested = manualSeek = true;
@@ -191,6 +197,7 @@ public sealed class WavePreviewPlayer : IDisposable
         long batchStarted = Stopwatch.GetTimestamp();
         double budget = double.IsFinite(budgetMilliseconds) ? Math.Max(.1d, budgetMilliseconds) : SimulationTimeBudget;
         if (simulation != null && !simulation.IsConfigurationCurrent) Invalidate();
+        if (IsFindingCoordinatorEvent) return UpdateCoordinatorSearch(budget);
         bool catchingUp = IsSeeking;
         int previous = CurrentFrame;
         if (resetRequested) ResetSimulation();
@@ -211,6 +218,7 @@ public sealed class WavePreviewPlayer : IDisposable
             if (checkpoint != null && (CurrentFrame > destinationFrame || CurrentFrame > validThroughFrame || checkpoint.Frame > CurrentFrame))
             {
                 checkpoint.Restore(); events.Clear(); events.AddRange(checkpoint.Events); OmittedEvents = checkpoint.OmittedEvents;
+                coordinatorObserver.Reset(simulation);
                 LastRestoreFrame = checkpoint.Frame; RestoredSnapshots++; ApplyTarget(CurrentFrame);
             }
             restoreRequested = false; validThroughFrame = int.MaxValue;
@@ -251,6 +259,7 @@ public sealed class WavePreviewPlayer : IDisposable
         simulation.DeferRenderCapture = true;
         simulation.EnableSnapshots();
         simulation.PrepareInitialState();
+        coordinatorObserver.Reset(simulation);
         snapshots.Capture(simulation, events, OmittedEvents); ApplyTarget(0);
         simulation.SetVisible(!IsLoading && EnemyShootingPreview.ShowFormationVolley);
     }
@@ -278,6 +287,7 @@ public sealed class WavePreviewPlayer : IDisposable
     private void CompletedStep(int frame)
     {
         ApplyTarget(frame);
+        coordinatorObserver.Observe(simulation, source, frame, coordinatorEvents);
         int interval = Mathf.Max(1, Mathf.RoundToInt(snapshotInterval / StepInterval));
         if (frame % interval == 0 && !WavePreviewProfiler.SkipNewSnapshots) snapshots.Capture(simulation, events, OmittedEvents);
     }

@@ -16,6 +16,7 @@ public sealed class EnemyChildAttackSettingsDrawer : PropertyDrawer
     }
     private static IEnumerable<string> Fields(SerializedProperty p)
     {
+        yield return "#Trigger";
         yield return "triggerMode";
         if (p.FindPropertyRelative("triggerMode").intValue == (int)EnemyChildAttackTriggerMode.OnEvent)
         {
@@ -25,22 +26,37 @@ public sealed class EnemyChildAttackSettingsDrawer : PropertyDrawer
                 yield return "triggerBoundaries"; yield return "boundaryOffset";
                 yield return "triggerOnce"; yield return "timeOffset";
             }
+            if(p.FindPropertyRelative("eventType").intValue==(int)EnemyChildAttackEvent.OnTargetReached)yield return "timeOffset";
         }
         else yield return "triggerValue";
-        yield return "repeatCount"; yield return "repeatInterval"; yield return "destroyParent";
-        yield return "spawnOffset"; yield return "offsetSpace"; yield return "originMode";
+        yield return "#Repetition & Parent Lifetime";
+        yield return "repeatMode";
+        if (p.FindPropertyRelative("repeatMode").intValue == (int)EnemyChildAttackRepeatMode.FixedCount)
+            yield return "repeatCount";
+        yield return "repeatInterval"; yield return "destroyParent";
+        yield return "#Child Emission Origin";
+        yield return "spawnOffset"; yield return "offsetSpace";
+        bool fixedTargetOrigin=p.FindPropertyRelative("triggerMode").intValue==(int)EnemyChildAttackTriggerMode.OnEvent
+            && p.FindPropertyRelative("eventType").intValue==(int)EnemyChildAttackEvent.OnTargetReached;
+        if(!fixedTargetOrigin)yield return "originMode";
+        yield return "#Child Aiming";
         yield return "fireMode";
         int mode = p.FindPropertyRelative("fireMode").intValue;
         if (mode == (int)DirectedWaveAttackFireMode.Aimed) yield return "aimMode";
         if (mode == (int)DirectedWaveAttackFireMode.Stationary) yield return "stationaryFireSettings";
     }
+    private static readonly Unity.Profiling.ProfilerMarker ProfileGetPropertyHeight = new("WaveEditor.Inspector.ChildHeight");
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
+        using var profileScope = ProfileGetPropertyHeight.Auto();
         if (Depth(property) > EnemyChildAttackSettings.MaximumDepth) return 46f;
-        if (property.managedReferenceValue == null) return Line;
-        float height = Line + 46f;
-        foreach (string name in Fields(property)) height += FieldHeight(property.FindPropertyRelative(name)) + 2f;
-        return height + EnemyAttackPatternFields.Height(property.FindPropertyRelative("pattern"), true);
+        if (string.IsNullOrEmpty(property.managedReferenceFullTypename)) return Line;
+        float height = 2 * Line + WaveInspectorSections.Height(property, Fields(property),
+            name => FieldHeight(property.FindPropertyRelative(name)));
+        if (WaveInspectorSections.Expanded(property, "Child Shooting Pattern"))
+            height += EnemyAttackPatternFields.Height(property.FindPropertyRelative("pattern"), true);
+        if (WaveInspectorSections.Expanded(property, "Advanced / Child Limits")) height += 46f;
+        return height;
     }
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
@@ -50,40 +66,50 @@ public sealed class EnemyChildAttackSettingsDrawer : PropertyDrawer
             EditorGUI.HelpBox(position, "Maximum nested child attack depth is 8. Further child attacks are not executed.", MessageType.Warning);
             EditorGUI.EndProperty(); return;
         }
-        if (property.managedReferenceValue == null)
+        if (string.IsNullOrEmpty(property.managedReferenceFullTypename))
         {
-            property.managedReferenceValue = new EnemyChildAttackSettings();
+            property.managedReferenceValue = EnemyChildAttackSettings.CreateDefault();
             property.serializedObject.ApplyModifiedProperties();
             EditorGUI.EndProperty(); return;
         }
         position.height = EditorGUIUtility.singleLineHeight;
-        EditorGUI.LabelField(position, "Child Attack Pattern", EditorStyles.boldLabel);
-        position.y += Line;
-        EditorGUI.indentLevel++;
-        foreach (string name in Fields(property))
+        WaveInspectorSections.Draw(ref position, property, Fields(property),
+            name => FieldHeight(property.FindPropertyRelative(name)),
+            (fieldRect, name) => DrawField(fieldRect, property, name));
+        if (WaveInspectorSections.Header(ref position, property, "Child Shooting Pattern"))
+            EnemyAttackPatternFields.Draw(ref position, property.FindPropertyRelative("pattern"), true);
+        if (WaveInspectorSections.Header(ref position, property, "Advanced / Child Limits"))
         {
-            var field = property.FindPropertyRelative(name);
-            position.height = FieldHeight(field);
-            GUIContent fieldLabel = name == "triggerValue"
-                ? new GUIContent("Trigger Value", property.FindPropertyRelative("triggerMode").intValue == (int)EnemyChildAttackTriggerMode.AfterTime ? "Seconds since this projectile was created (scaled game time)." : "Actual travelled path length, including curved movement and slow fields.")
-                : new GUIContent(field.displayName, field.tooltip);
-            if (name == "triggerBoundaries") DrawTriggerBoundaries(position, property, field);
-            else if (name == "fireMode")
-            {
-                int selected = field.intValue == (int)DirectedWaveAttackFireMode.Aimed ? 1 : field.intValue == (int)DirectedWaveAttackFireMode.Stationary ? 2 : 0;
-                EditorGUI.BeginChangeCheck();
-                selected = EditorGUI.Popup(position, "Fire Mode", selected, new[] { "Default (Parent Direction)", "Aimed", "Stationary" });
-                if (EditorGUI.EndChangeCheck()) field.intValue = selected == 1 ? (int)DirectedWaveAttackFireMode.Aimed : selected == 2 ? (int)DirectedWaveAttackFireMode.Stationary : (int)DirectedWaveAttackFireMode.Default;
-            }
-            else EditorGUI.PropertyField(position, field, fieldLabel, true);
-            position.y += position.height + 2f;
+            position.height = 44f;
+            bool untilDestroyed = property.FindPropertyRelative("repeatMode").intValue == (int)EnemyChildAttackRepeatMode.UntilParentDestroyed;
+            EditorGUI.HelpBox(position, untilDestroyed
+                ? "Repeats while the parent exists; Destroy Parent does not apply. Interval starts after all shots finish. Limits: 8 generations, 2048 descendants per repetition, 512 child spawns per step."
+                : "Origin is Parent + Spawn Offset. Repeat Interval starts after all shots and Sector launches finish. Limits: 8 generations, 2048 descendants per root, 512 child spawns per simulation step.", MessageType.Info);
+            position.y += 46f;
         }
-        position.height = 44f;
-        EditorGUI.HelpBox(position, "Origin is Parent + Spawn Offset. Repeat Interval starts after all shots and Sector launches finish. Limits: 8 generations, 2048 descendants per root, 512 child spawns per simulation step.", MessageType.Info);
-        position.y += 46f;
-        EnemyAttackPatternFields.Draw(ref position, property.FindPropertyRelative("pattern"), true);
-        EditorGUI.indentLevel--;
         EditorGUI.EndProperty();
+    }
+
+    private static void DrawField(Rect position, SerializedProperty property, string name)
+    {
+        var field = property.FindPropertyRelative(name);
+        GUIContent fieldLabel = name == "triggerValue"
+            ? new GUIContent("Trigger Value", property.FindPropertyRelative("triggerMode").intValue == (int)EnemyChildAttackTriggerMode.AfterTime ? "Seconds since this projectile was created (scaled game time)." : "Actual travelled path length, including curved movement and slow fields.")
+            : new GUIContent(field.displayName, field.tooltip);
+        if (name == "triggerBoundaries") DrawTriggerBoundaries(position, property, field);
+        else if (name == "fireMode")
+        {
+            int selected = field.intValue == (int)DirectedWaveAttackFireMode.Aimed ? 1 : field.intValue == (int)DirectedWaveAttackFireMode.Stationary ? 2 : 0;
+            EditorGUI.BeginChangeCheck();
+            selected = EditorGUI.Popup(position, "Fire Mode", selected, new[] { "Default (Parent Direction)", "Aimed", "Stationary" });
+            if (EditorGUI.EndChangeCheck()) field.intValue = selected == 1 ? (int)DirectedWaveAttackFireMode.Aimed : selected == 2 ? (int)DirectedWaveAttackFireMode.Stationary : (int)DirectedWaveAttackFireMode.Default;
+        }
+        else
+        {
+            using (new EditorGUI.DisabledScope(name == "destroyParent"
+                && property.FindPropertyRelative("repeatMode").intValue == (int)EnemyChildAttackRepeatMode.UntilParentDestroyed))
+                EditorGUI.PropertyField(position, field, fieldLabel, true);
+        }
     }
 
     private static float FieldHeight(SerializedProperty field) => field.name == "triggerBoundaries"

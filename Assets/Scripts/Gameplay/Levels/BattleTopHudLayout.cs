@@ -24,14 +24,15 @@ public sealed class BattleTopHudLayout : MonoBehaviour
     }
 
     [ContextMenu("Apply Top HUD Layout")]
-    public void Apply()
+    public void Apply() => Apply(battleCameraViewport != null ? battleCameraViewport.GameplayScreenRect : Rect.zero);
+
+    public void Apply(Rect gameplayRect)
     {
         if (battleCameraViewport == null || playerShip1 == null || playerShip2 == null)
             return;
 
         JoinPlayerShipPanels();
 
-        Rect gameplayRect = battleCameraViewport.GameplayScreenRect;
         if (gameplayRect.height > 0f)
         {
             MovePanelBottomToScreenY(playerShip1, gameplayRect.yMax);

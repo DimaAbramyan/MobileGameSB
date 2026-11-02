@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Fighting/Fighting.unity
     guid: bcf1f7919fa0e034abf7bd193c6cc754
-  m_configObjects: {}
+  m_configObjects:
+    Game.Tutorial.Configuration: {fileID: 11400000, guid: 135f12d668cb8354ca99ba879c7e98da, type: 2}
+    com.unity.addressableassets: {fileID: 11400000, guid: a8f4fb984fb26864dae75467a4b17970, type: 2}
+    com.unity.localization.settings: {fileID: 11400000, guid: 7053f1641d621aa40811a273e14e4584, type: 2}
   m_UseUCBPForAssetBundles: 0
